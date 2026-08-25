@@ -6,6 +6,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.repository.UserRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.LoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.RegisterRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class AuthServiceImpl implements AuthService{
     private final UserRepository userRepository;
     private final AuthMapper authMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Override
     public AuthResponseDTO register(RegisterRequest request) {
@@ -34,7 +36,7 @@ public class AuthServiceImpl implements AuthService{
                 .isLocked(false)
                 .build();
         User savedUser = userRepository.save(newUser);
-        return authMapper.toDTO(savedUser, "mock-token-xyz");
+        return authMapper.toDTO(savedUser, jwtService.generateToken(savedUser));
     }
 
     @Override
@@ -56,6 +58,6 @@ public class AuthServiceImpl implements AuthService{
         {
             throw  new RuntimeException("Invalid email/phone or password!");
         }
-        return authMapper.toDTO(user, "mock-token-xyz");
+        return authMapper.toDTO(user, jwtService.generateToken(user));
     }
 }
