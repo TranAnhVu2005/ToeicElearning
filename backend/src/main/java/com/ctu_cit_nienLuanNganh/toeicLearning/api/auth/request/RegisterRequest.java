@@ -21,6 +21,8 @@ public class RegisterRequest {
     @Pattern(regexp = "^0\\d{9}$", message = "Number phone must begin with 0 and have 10 characters")
     private String userNumberphone;
 
+    private String userAvatar;
+
     @NotBlank(message = "User password can't empty")
     @Size(min = 6, max = 100, message = "Password must at least 6 characters")
     private String userPassword;

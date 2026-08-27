@@ -28,6 +28,9 @@ public class User extends BaseCreatedUpdatedModel {
     @Column(name = "user_password", nullable = false)
     private String userPassword;
 
+    @Column(name = "user_avatar")
+    private String userAvatar;
+
     @Builder.Default
     @Column(name = "is_locked")
     private Boolean isLocked = false;
