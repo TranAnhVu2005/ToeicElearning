@@ -23,6 +23,6 @@ public class PaginateParams {
         if (sortDirection == null) {
             sortDirection = Sort.Direction.DESC;
         }
-        return PageRequest.of(numberPage, sizeOfPage, Sort.by(sortDirection, sortBy));
+        return PageRequest.of(Math.max(0, numberPage -1), sizeOfPage, Sort.by(sortDirection, sortBy));
     }
 }
