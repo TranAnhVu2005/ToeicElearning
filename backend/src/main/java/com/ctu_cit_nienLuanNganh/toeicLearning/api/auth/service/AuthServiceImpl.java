@@ -6,6 +6,8 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.repository.UserRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.LoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.RegisterRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.exception.AppException;
+import com.ctu_cit_nienLuanNganh.toeicLearning.exception.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,10 +25,10 @@ public class AuthServiceImpl implements AuthService{
     public AuthResponseDTO register(RegisterRequest request) {
         if(userRepository.existsByUserEmail(request.getUserEmail()))
         {
-            throw new RuntimeException("Email is already in use!");
+            throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
         if(userRepository.existsByUserNumberphone(request.getUserNumberphone())) {
-            throw new RuntimeException("Number phone is already in use!");
+            throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
         User newUser = User.builder()
                 .userName(request.getUserName())
@@ -47,16 +49,16 @@ public class AuthServiceImpl implements AuthService{
         if(identifier.contains("@"))
         {
             user = userRepository.findByUserEmail(identifier)
-                    .orElseThrow(() -> new RuntimeException("Invalid email or password!"));
+                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
         else {
             user = userRepository.findByUserNumberphone(identifier)
-                    .orElseThrow(() -> new RuntimeException("Invalid phone number or password!"));
+                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
 
         if(!passwordEncoder.matches(request.getUserPassword(), user.getUserPassword()))
         {
-            throw  new RuntimeException("Invalid email/phone or password!");
+            throw  new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
         return authMapper.toDTO(user, jwtService.generateToken(user));
     }

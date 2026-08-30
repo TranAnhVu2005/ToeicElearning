@@ -5,6 +5,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.request.UserChangePasswordRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.request.UserUpdateProfileRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.service.UserService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.helper.base.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,15 +19,15 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponeDTO>  viewProfile(@AuthenticationPrincipal User currentUser)
+    public ResponseEntity<ApiResponse<UserResponeDTO>>  viewProfile(@AuthenticationPrincipal User currentUser)
     {
         UserResponeDTO response = userService.viewProfile(currentUser);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
 
     @PatchMapping("/updateprofile")
-    public ResponseEntity<UserResponeDTO> updateProfile(
+    public ResponseEntity<ApiResponse<UserResponeDTO>> updateProfile(
             @AuthenticationPrincipal User currentUser,
             @Validated @RequestBody UserUpdateProfileRequest request
     ) {
@@ -35,16 +36,16 @@ public class UserController {
         // Vì khi user đã nộp dữ liệu lên server thì user biết mình sửa cái gì
 
         //Dùng pathch trả về 200 ok là phù hợp restful
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/changepassword")
-    public ResponseEntity changePassword(
+    public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal User currentUser,
             @RequestBody UserChangePasswordRequest request
     )
     {
         userService.changePassword(currentUser, request);
-        return ResponseEntity.ok("Đổi mật khẩu thành công");
+        return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
     }
 }

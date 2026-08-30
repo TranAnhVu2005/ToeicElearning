@@ -26,6 +26,7 @@ public class ApiResponse<T> {
     private LocalDateTime timestamp = LocalDateTime.now();
 
     // 1. success + message + data
+    // Message tự gửi
     public static <T> ApiResponse<T> success(String message, T data){
         return ApiResponse.<T>builder()
                 .code(1000)
@@ -35,6 +36,7 @@ public class ApiResponse<T> {
     }
 
     // 2. success + message + data
+    // Message cơ bản là "Thao tác thành công"
     public static <T> ApiResponse<T> success(T data){
         return ApiResponse.<T>builder()
                 .code(1000)

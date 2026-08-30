@@ -4,6 +4,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.dto.AuthResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.LoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.request.RegisterRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.service.AuthService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.helper.base.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,16 +21,18 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequest request)
+    public ResponseEntity<ApiResponse<AuthResponseDTO>> register(@Valid @RequestBody RegisterRequest request)
     {
         AuthResponseDTO response = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Đăng ký tài khoản thành công", response));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequest request)
+    public ResponseEntity<ApiResponse<AuthResponseDTO>> login(@Valid @RequestBody LoginRequest request)
     {
         AuthResponseDTO response = authService.login(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
     }
 }

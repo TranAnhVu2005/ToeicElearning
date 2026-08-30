@@ -4,6 +4,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.helper.base.model.BaseCreatedUpda
 import com.ctu_cit_nienLuanNganh.toeicLearning.helper.base.model.BaseModel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

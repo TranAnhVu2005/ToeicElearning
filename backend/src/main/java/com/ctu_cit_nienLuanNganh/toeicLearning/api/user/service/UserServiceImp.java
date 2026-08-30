@@ -6,6 +6,8 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.dto.UserResponeDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.mapper.UserMapper;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.request.UserChangePasswordRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.api.user.request.UserUpdateProfileRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.exception.AppException;
+import com.ctu_cit_nienLuanNganh.toeicLearning.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -48,11 +50,11 @@ public class UserServiceImp implements UserService{
     public void changePassword(User currentUser, UserChangePasswordRequest request) {
         if(!passwordEncoder.matches(request.getOldUserPassword(), currentUser.getUserPassword()))
         {
-            throw new RuntimeException("Mật khẩu cũ không chính xác");
+            throw new AppException(ErrorCode.OLD_PASSWORD_INCORRECT);
         }
         if(passwordEncoder.matches(request.getNewUserPassword(), currentUser.getUserPassword()))
         {
-            throw new RuntimeException("Mật khẩu mới không được trùng với mật khẩu cũ");
+            throw new AppException(ErrorCode.NEW_PASSWORD_SAME_AS_OLD);
         }
         currentUser.setUserPassword(passwordEncoder.encode(request.getNewUserPassword()));
         User updatedUser = userRepository.save(currentUser);
