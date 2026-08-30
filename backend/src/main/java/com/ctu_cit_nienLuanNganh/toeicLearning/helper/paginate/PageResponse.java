@@ -18,17 +18,19 @@ public class PageResponse<T> {
     private int pageSize;          // Số lượng phần tử trên 1 trang
     private long totalElements;    // Tổng số bản ghi trong Database
     private int totalPages;        // Tổng số trang
-    private boolean last;          // Kiểm tra xem đã là trang cuối cùng chưa
+    private boolean isFirst;        //Kiểm tra xem phải là trang đầu không
+    private boolean isLast;          // Kiểm tra xem đã là trang cuối cùng chưa
 
 
     public static <T> PageResponse<T> of(Page<T> page) {
         return PageResponse.<T>builder()
                 .content(page.getContent())
-                .pageNumber(page.getNumber())
+                .pageNumber(page.getNumber() + 1)
                 .pageSize(page.getSize())
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages())
-                .last(page.isLast())
+                .isFirst(page.isFirst())
+                .isLast(page.isLast())
                 .build();
     }
 }
