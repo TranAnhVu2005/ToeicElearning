@@ -1,9 +1,9 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.security;
 
-import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.Role;
-import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.User;
-import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.repository.RoleRepository;
-import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.repository.UserRepository;
+import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Role;
+import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
+import com.ctu_cit_nienLuanNganh.toeicLearning.repository.RoleRepository;
+import com.ctu_cit_nienLuanNganh.toeicLearning.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,13 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,12 +47,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("--> 3. Token cắt ra được: " + jwt);
         try{
             userId = jwtService.extractUserId(jwt);
-            log.info("--> 4. UserId trích xuất từ token: " + userId);
+            log.info("--> 4. Use    rId trích xuất từ token: " + userId);
             if(userId != null && SecurityContextHolder.getContext().getAuthentication() == null)
             {
                 User user = userRepository.findById(userId).orElse(null);
                 log.info("--> 5. Tìm user trong Database: " + (user != null ? "Tìm thấy (" + user.getUserEmail() + ")" : "Không tìm thấy user với ID này!"));
                 if(user !=null && jwtService.isTokenValid(jwt, user)){
+                    if(Boolean.TRUE.equals(user.getIsLocked()))
+                    {
+                        log.warn("Tài khoản {} đã bị khóa, từ chối request", user.getUserEmail());
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
                     log.info("--> 6. Token hợp lệ! Tiến hành xác thực...");
 
                     // ROLE_Vaitro là quy chuẩn nhận diện của spring security

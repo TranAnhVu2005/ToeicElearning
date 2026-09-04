@@ -1,12 +1,11 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.security;
 
-import com.ctu_cit_nienLuanNganh.toeicLearning.api.auth.model.User;
+import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;

@@ -1,7 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.security;
 
-import com.ctu_cit_nienLuanNganh.toeicLearning.exception.ErrorCode;
-import com.ctu_cit_nienLuanNganh.toeicLearning.helper.base.response.ApiResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

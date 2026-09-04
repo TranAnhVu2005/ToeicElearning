@@ -1,6 +1,8 @@
 -- Tạo và sử dụng database
 CREATE DATABASE IF NOT EXISTS toeiclearning;
 USE toeiclearning;
+select * from user;
+
 
 -- ==============================================================================
 -- 1. BẢNG CẤU HÌNH (Đã chuyển sang UUID để đồng bộ hoàn toàn)
@@ -12,6 +14,9 @@ CREATE TABLE role (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+INSERT INTO role (role_name) VALUES ('ROLE_ADMIN'), ('ROLE_USER');
+ 
+
 
 CREATE TABLE part (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -46,7 +51,7 @@ CREATE TABLE `user` (
     
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES role(id)
 );
-update `user` add columns 
+select * from user;
 
 CREATE TABLE context_question (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
