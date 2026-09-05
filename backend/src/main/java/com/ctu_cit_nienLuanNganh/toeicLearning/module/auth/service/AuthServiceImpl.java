@@ -12,6 +12,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.RegisterReque
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.security.JwtService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class AuthServiceImpl implements AuthService{
     private final JwtService jwtService;
 
     @Override
+    @Transactional
     public AuthResponseDTO register(RegisterRequest request) {
         if(userRepository.existsByUserEmail(request.getUserEmail()))
         {
@@ -58,11 +60,11 @@ public class AuthServiceImpl implements AuthService{
 
         if(identifier.contains("@"))
         {
-            user = userRepository.findByUserEmail(identifier)
+            user = userRepository.findByUserEmailWithRole(identifier)
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
         else {
-            user = userRepository.findByUserNumberphone(identifier)
+            user = userRepository.findByUserNumberPhoneWithRole(identifier)
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
 

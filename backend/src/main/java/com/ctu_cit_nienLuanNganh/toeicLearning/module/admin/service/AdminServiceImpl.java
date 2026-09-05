@@ -31,16 +31,14 @@ public class AdminServiceImpl implements AdminService{
 
     @Override
     public AdminResponseDTO lockUser(User currentUser, LockUserRequest request) {
+        User targetUser = userRepository.findByIdWithRole(request.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        User targetUser = userRepository.findById(request.getUserId())
-                        .orElseThrow(()->new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        if(currentUser.getId().equals(targetUser.getId())){
+        if (currentUser.getId().equals(targetUser.getId())) {
             throw new AppException(ErrorCode.CANNOT_LOCK_CURRENT_USER);
         }
         targetUser.setIsLocked(request.isLocked());
         User savedUser = userRepository.save(targetUser);
         return adminMapper.toDTO(savedUser);
-
     }
 }

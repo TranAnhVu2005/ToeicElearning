@@ -15,8 +15,11 @@ public class AdminMapper {
                 .userName(user.getUserName())
                 .userEmail(user.getUserEmail())
                 .userNumberphone(user.getUserNumberphone())
+                .userAvatar(user.getUserAvatar())
                 .isLocked(user.getIsLocked())
-                .roleName(user.getRole() != null ? user.getRole().getRoleName() : null)
+                .roleName(user.getRole() != null ? user.getRole().getRoleName() : "ROLE_USER")
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
                 .build();
     }
 }

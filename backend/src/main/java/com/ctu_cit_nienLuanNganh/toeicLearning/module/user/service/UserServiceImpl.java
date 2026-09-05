@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService{
     public UserResponseDTO viewProfile(User u) {
         User user = userRepository.findByIdWithRole(u.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return userMapper.toDTO(u);
+        return userMapper.toDTO(user);
     }
 
     @Override
@@ -48,19 +48,18 @@ public class UserServiceImpl implements UserService{
                 }
                 user.setUserEmail(newEmail);
             }
-            user.setUserEmail(request.getUserEmail());
-        } if(request.getUserNumberphone() != null && !request.getUserNumberphone().isBlank())
+        }
+        if(request.getUserNumberphone() != null && !request.getUserNumberphone().isBlank())
         {
-            String newNumberphone = request.getUserNumberphone().trim().toLowerCase();
-            if(!newNumberphone.equalsIgnoreCase(user.getUserEmail()))
+            String newNumberphone = request.getUserNumberphone().trim();
+            if(!newNumberphone.equals(user.getUserNumberphone()))
             {
-                if(userRepository.existsByUserEmail(newNumberphone))
+                if(userRepository.existsByUserNumberphone(newNumberphone))
                 {
                     throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
                 }
-                user.setUserEmail(newNumberphone);
+                user.setUserNumberphone(newNumberphone);
             }
-            user.setUserNumberphone(request.getUserNumberphone());
         }
         if(request.getUserAvatar() != null)
         {
@@ -74,15 +73,18 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public void changePassword(User currentUser, UserChangePasswordRequest request) {
-        if(!passwordEncoder.matches(request.getOldUserPassword(), currentUser.getUserPassword()))
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if(!passwordEncoder.matches(request.getOldUserPassword(), user.getUserPassword()))
         {
             throw new AppException(ErrorCode.OLD_PASSWORD_INCORRECT);
         }
-        if(passwordEncoder.matches(request.getNewUserPassword(), currentUser.getUserPassword()))
+        if(passwordEncoder.matches(request.getNewUserPassword(), user.getUserPassword()))
         {
             throw new AppException(ErrorCode.NEW_PASSWORD_SAME_AS_OLD);
         }
-        currentUser.setUserPassword(passwordEncoder.encode(request.getNewUserPassword()));
-        User updatedUser = userRepository.save(currentUser);
+        user.setUserPassword(passwordEncoder.encode(request.getNewUserPassword()));
+        userRepository.save(user);
     }
 }
