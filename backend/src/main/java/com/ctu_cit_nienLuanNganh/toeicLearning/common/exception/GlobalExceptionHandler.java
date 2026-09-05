@@ -109,6 +109,7 @@ public class GlobalExceptionHandler {
     // 8. Bắt các lỗi còn lại
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleAllException(Exception ex){
+        log.error("Unhandled Exception: ", ex);
         ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));

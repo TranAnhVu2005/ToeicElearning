@@ -8,6 +8,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserChangePas
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserUpdateProfileRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,32 +22,57 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserResponseDTO viewProfile(User u) {
+        User user = userRepository.findByIdWithRole(u.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toDTO(u);
     }
 
     @Override
+    @Transactional
     public UserResponseDTO updateProfile(User currentUser, UserUpdateProfileRequest request) {
+        User user = userRepository.findByIdWithRole(currentUser.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
         if(request.getUserName() != null)
         {
-            currentUser.setUserName(request.getUserName());
+            user.setUserName(request.getUserName());
         }
-        if(request.getUserEmail() != null)
+        if(request.getUserEmail() != null && !request.getUserEmail().isBlank())
         {
-            currentUser.setUserEmail(request.getUserEmail());
-        } if(request.getUserNumberphone() != null)
+            String newEmail = request.getUserEmail().trim().toLowerCase();
+            if(!newEmail.equalsIgnoreCase(user.getUserEmail()))
+            {
+                if(userRepository.existsByUserEmail(newEmail))
+                {
+                    throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
+                }
+                user.setUserEmail(newEmail);
+            }
+            user.setUserEmail(request.getUserEmail());
+        } if(request.getUserNumberphone() != null && !request.getUserNumberphone().isBlank())
         {
-            currentUser.setUserNumberphone(request.getUserNumberphone());
+            String newNumberphone = request.getUserNumberphone().trim().toLowerCase();
+            if(!newNumberphone.equalsIgnoreCase(user.getUserEmail()))
+            {
+                if(userRepository.existsByUserEmail(newNumberphone))
+                {
+                    throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
+                }
+                user.setUserEmail(newNumberphone);
+            }
+            user.setUserNumberphone(request.getUserNumberphone());
         }
         if(request.getUserAvatar() != null)
         {
-            currentUser.setUserAvatar(request.getUserAvatar());
+            user.setUserAvatar(request.getUserAvatar());
         }
 
-        User updatedUser = userRepository.save(currentUser);
+        User updatedUser = userRepository.save(user);
         return userMapper.toDTO(updatedUser);
     }
 
     @Override
+    @Transactional
     public void changePassword(User currentUser, UserChangePasswordRequest request) {
         if(!passwordEncoder.matches(request.getOldUserPassword(), currentUser.getUserPassword()))
         {

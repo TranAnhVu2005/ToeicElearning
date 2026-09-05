@@ -12,6 +12,8 @@ public class AuthMapper {
                 .userName(u.getUserName())
                 .userEmail(u.getUserEmail())
                 .userNumberphone(u.getUserNumberphone())
+                .userAvatar(u.getUserAvatar())
+                .role(u.getRole() != null ? u.getRole().getRoleName() : "ROLE_USER")
                 .accessToken(token)
                 .build();
     }

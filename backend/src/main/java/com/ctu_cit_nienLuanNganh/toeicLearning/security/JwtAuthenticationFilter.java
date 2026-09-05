@@ -27,7 +27,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -50,22 +49,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.info("--> 4. Use    rId trích xuất từ token: " + userId);
             if(userId != null && SecurityContextHolder.getContext().getAuthentication() == null)
             {
-                User user = userRepository.findById(userId).orElse(null);
+                User user = userRepository.findByIdWithRole(userId).orElse(null);
                 log.info("--> 5. Tìm user trong Database: " + (user != null ? "Tìm thấy (" + user.getUserEmail() + ")" : "Không tìm thấy user với ID này!"));
                 if(user !=null && jwtService.isTokenValid(jwt, user)){
                     if(Boolean.TRUE.equals(user.getIsLocked()))
                     {
                         log.warn("Tài khoản {} đã bị khóa, từ chối request", user.getUserEmail());
-                        filterChain.doFilter(request, response);
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"error\": \"Tài khoản của bạn đã bị khóa.\"}");
                         return;
                     }
                     log.info("--> 6. Token hợp lệ! Tiến hành xác thực...");
 
                     // ROLE_Vaitro là quy chuẩn nhận diện của spring security
                     String roleName = "ROLE_USER";
-                    if(user.getRoleId() !=null)
+                    if(user.getRole() != null && user.getRole().getId() != null)
                     {
-                        Role role = roleRepository.findById(user.getRoleId()).orElse(null);
+                        Role role = user.getRole();
                         if(role !=null && role.getRoleName() !=null)
                         {
                             roleName = role.getRoleName();

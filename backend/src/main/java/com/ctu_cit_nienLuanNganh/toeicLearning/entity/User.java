@@ -1,9 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -34,6 +32,9 @@ public class User extends BaseCreatedUpdatedEntity {
     @Column(name = "is_locked")
     private Boolean isLocked = false;
 
-    @Column(name = "role_id", length = 36)
-    private String roleId;
+    //Cơ chế tải lười, khi lấy user, hibernate chưa vội lấy Role ngay, nó thực hiện sql lấy role khi
+    // gọi user.getRole();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name= "role_id", nullable = false) // Xác định khóa ngoại
+    private Role role;
 }

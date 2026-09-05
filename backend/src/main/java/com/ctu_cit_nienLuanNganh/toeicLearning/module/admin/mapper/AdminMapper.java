@@ -16,7 +16,7 @@ public class AdminMapper {
                 .userEmail(user.getUserEmail())
                 .userNumberphone(user.getUserNumberphone())
                 .isLocked(user.getIsLocked())
-                .roleId(user.getRoleId())
+                .roleName(user.getRole() != null ? user.getRole().getRoleName() : null)
                 .build();
     }
 }

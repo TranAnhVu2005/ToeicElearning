@@ -10,5 +10,7 @@ public class AuthResponseDTO {
     private String userName;
     private String userEmail;
     private String userNumberphone;
+    private String userAvatar;
+    private String role;
     private String accessToken; //Sử dụng sau cho JWT, hiện giờ chưa hiểu lắm
 }

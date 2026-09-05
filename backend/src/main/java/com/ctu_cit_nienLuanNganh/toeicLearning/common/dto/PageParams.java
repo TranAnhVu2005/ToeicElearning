@@ -19,10 +19,8 @@ public class PageParams {
     private String keyWord = "";
     public Pageable toPageable() {
         direction = direction.toLowerCase(Locale.ROOT);
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction);
-        if (sortDirection == null) {
-            sortDirection = Sort.Direction.DESC;
-        }
-        return PageRequest.of(Math.max(0, numberPage -1), sizeOfPage, Sort.by(sortDirection, sortBy));
+        Sort.Direction sortDirection = "ASC".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        int size = (sizeOfPage <= 0 || sizeOfPage > 100) ? 10 : sizeOfPage;
+        return PageRequest.of(Math.max(0, numberPage -1), size, Sort.by(sortDirection, sortBy));
     }
 }

@@ -25,6 +25,8 @@ public enum ErrorCode {
     OLD_PASSWORD_INCORRECT(2007, "Mật khẩu cũ không chính xác",HttpStatus.BAD_REQUEST),
     NEW_PASSWORD_SAME_AS_OLD(2008, "Mật khẩu mới không được trùng với mật khẩu cũ", HttpStatus.BAD_REQUEST),
     USER_ACCOUNT_LOCKED(2009, "Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên", HttpStatus.FORBIDDEN),
+    CANNOT_LOCK_CURRENT_USER(2010, "Quản trị viên không thể tự khóa tài khoản của chính mình", HttpStatus.BAD_REQUEST),
+
 
 
     // 3000 - 3999: Nghiệp vụ TOEIC (Làm bài, Câu hỏi, Đề thi)

@@ -17,5 +17,5 @@ public class AdminResponseDTO extends BaseCreatedUpdatedDTO {
 
     @JsonProperty("isLocked")
     private boolean isLocked;
-    private String roleId;
+    private String roleName;
 }
