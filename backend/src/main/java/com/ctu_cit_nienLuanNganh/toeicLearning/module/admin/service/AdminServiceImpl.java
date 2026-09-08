@@ -37,7 +37,7 @@ public class AdminServiceImpl implements AdminService{
         if (currentUser.getId().equals(targetUser.getId())) {
             throw new AppException(ErrorCode.CANNOT_LOCK_CURRENT_USER);
         }
-        targetUser.setIsLocked(request.isLocked());
+        targetUser.setIsLocked(request.getIsLocked());
         User savedUser = userRepository.save(targetUser);
         return adminMapper.toDTO(savedUser);
     }

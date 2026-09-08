@@ -19,16 +19,27 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle global errors (e.g. 401 Unauthorized)
+// Response interceptor: handle 401 (Unauthorized) & 403 (Forbidden / Locked Account)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear token and trigger logout if unauthenticated on protected routes
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('currentUser');
-      if (window.location.pathname.startsWith('/profile') || window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/login';
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+
+      // Handle 401 (Unauthorized) or 403 (Forbidden / Locked Account)
+      if (status === 401 || status === 403) {
+        const errorMsg = typeof data === 'string' ? data : (data?.error || data?.message || '');
+        const isLockError = errorMsg.toLowerCase().includes('khóa') || errorMsg.toLowerCase().includes('locked');
+
+        // Clear credentials
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('currentUser');
+
+        // Redirect immediately to login
+        if (window.location.pathname !== '/login') {
+          window.location.href = isLockError ? '/login?locked=true' : '/login';
+        }
       }
     }
     return Promise.reject(error);

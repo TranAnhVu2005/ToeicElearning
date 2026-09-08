@@ -102,7 +102,7 @@ const Navbar = () => {
                   aria-expanded={dropdownOpen}
                 >
                   <img
-                    src={user.userAvatar || '/images/teacher-1.webp'}
+                    src={user.userAvatar || '/images/default-avatar.svg'}
                     alt={user.userName || 'User'}
                     className="user-avatar-small"
                     onError={(e) => {

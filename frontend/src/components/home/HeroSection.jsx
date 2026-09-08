@@ -52,7 +52,7 @@ const HeroSection = () => {
           <div className="hero-visual">
             <div className="hero-image-card">
               <img
-                src="/images/course-1.webp"
+                src="/images/courses-2.webp"
                 alt="TOEIC Study"
                 className="hero-main-img"
                 onError={(e) => {

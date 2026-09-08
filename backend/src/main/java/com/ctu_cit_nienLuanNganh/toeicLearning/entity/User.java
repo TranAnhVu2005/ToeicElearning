@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name= "user")
 @Getter
@@ -31,6 +33,21 @@ public class User extends BaseCreatedUpdatedEntity {
     @Builder.Default
     @Column(name = "is_locked")
     private Boolean isLocked = false;
+
+    @Builder.Default
+    @Column(name = "current_streak")
+    private Integer currentStreak = 0;
+
+    @Builder.Default
+    @Column(name = "highest_streak")
+    private Integer highestStreak = 0;
+
+    @Builder.Default
+    @Column(name = "total_score")
+    private Integer totalScore = 0;
+
+    @Column(name = "last_active_date")
+    private LocalDate lastActiveDate;
 
     //Cơ chế tải lười, khi lấy user, hibernate chưa vội lấy Role ngay, nó thực hiện sql lấy role khi
     // gọi user.getRole();

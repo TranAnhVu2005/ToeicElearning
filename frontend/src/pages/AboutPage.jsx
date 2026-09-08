@@ -45,7 +45,7 @@ const AboutPage = () => {
 
           <div className="about-image-card">
             <img
-              src="/images/course-2.webp"
+              src="/images/students-7.webp"
               alt="Học nhóm TOEIC"
               className="about-img"
               onError={(e) => {

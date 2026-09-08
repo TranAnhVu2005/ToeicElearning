@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { adminService } from '../../services/adminService';
+import { useAuth } from '../../context/AuthContext';
 import {
   Users,
   Search,
@@ -10,20 +11,28 @@ import {
   UserCheck,
   AlertTriangle,
   RefreshCw,
-  Clock
+  Clock,
+  ArrowUpDown
 } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 
 const UserManagementPage = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Search state with debouncing
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
+  
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [direction, setDirection] = useState('DESC');
 
   // Status toggle confirmation modal
   const [selectedUser, setSelectedUser] = useState(null);
@@ -31,12 +40,38 @@ const UserManagementPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Fetch users from backend
-  const fetchUsers = useCallback(async () => {
+  // Bulletproof helper to extract locked status from any representation (boolean, 1/0, string, any key)
+  const getIsLocked = (userObj) => {
+    if (!userObj) return false;
+    const val = userObj.isLocked ?? userObj.locked ?? userObj.is_locked;
+    if (val === true || val === 1 || val === '1' || val === 'true') return true;
+    return false;
+  };
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Debounce search input (350ms) to avoid lagging on every keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedKeyword(searchInput);
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchInput]);
+
+  // Fetch users from backend (GET /api/admin/users)
+  const fetchUsers = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await adminService.getUsers(currentPage, pageSize, searchTerm);
+      if (showLoading) setLoading(true);
+      const res = await adminService.getUsers(currentPage, pageSize, debouncedKeyword, sortBy, direction);
       if (res.code === 1000 && res.data) {
+        console.log('Fetched admin users from backend:', res.data.content);
         setUsers(res.data.content || []);
         setTotalPages(res.data.totalPages || 1);
         setTotalElements(res.data.totalElements || 0);
@@ -48,19 +83,13 @@ const UserManagementPage = () => {
         message: err.response?.data?.message || 'Không thể tải danh sách người dùng.',
       });
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, debouncedKeyword, sortBy, direction]);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(true);
   }, [fetchUsers]);
-
-  // Search input handler
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // reset to page 1 on search
-  };
 
   // Open modal to confirm status change
   const handleOpenStatusModal = (user) => {
@@ -70,27 +99,57 @@ const UserManagementPage = () => {
 
   // Execute lock/unlock
   const handleConfirmStatusChange = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || actionLoading) return;
+    
+    const targetId = selectedUser.id;
+    const currentLockedStatus = getIsLocked(selectedUser);
+    const nextIsLocked = !currentLockedStatus; // Flip isLocked boolean
+    
     try {
       setActionLoading(true);
-      const nextStatus = !selectedUser.userStatus; // flip boolean status
-      const res = await adminService.changeUserStatus(selectedUser.id, nextStatus);
+
+      // 1. Optimistic update: Update state immediately so UI changes without delay
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.id === targetId ? { ...u, isLocked: nextIsLocked, locked: nextIsLocked } : u))
+      );
+      
+      // Close modal right away
+      setStatusModalOpen(false);
+
+      // 2. Call backend API
+      const res = await adminService.changeUserStatus(targetId, nextIsLocked);
+      console.log('Change status response:', res);
 
       if (res.code === 1000) {
         setToast({
           type: 'success',
-          message: `Đã ${nextStatus ? 'mở khóa' : 'khóa'} tài khoản ${selectedUser.userEmail} thành công!`,
+          message: `Đã ${nextIsLocked ? 'khóa' : 'mở khóa'} tài khoản ${selectedUser.userEmail} thành công!`,
         });
-        setStatusModalOpen(false);
-        fetchUsers(); // Refresh table
+        // Silent sync from backend
+        fetchUsers(false);
+      } else {
+        // Revert on error response
+        setUsers((prevUsers) =>
+          prevUsers.map((u) => (u.id === targetId ? { ...u, isLocked: currentLockedStatus, locked: currentLockedStatus } : u))
+        );
+        setToast({
+          type: 'error',
+          message: res.message || 'Thao tác không thành công.',
+        });
       }
     } catch (err) {
+      console.error('Change status error:', err);
+      // Revert on failure
+      setUsers((prevUsers) =>
+        prevUsers.map((u) => (u.id === targetId ? { ...u, isLocked: currentLockedStatus, locked: currentLockedStatus } : u))
+      );
       setToast({
         type: 'error',
         message: err.response?.data?.message || 'Thao tác không thành công. Vui lòng thử lại!',
       });
     } finally {
       setActionLoading(false);
+      setSelectedUser(null);
     }
   };
 
@@ -108,6 +167,16 @@ const UserManagementPage = () => {
     } catch {
       return dateString;
     }
+  };
+
+  const toggleSort = (field) => {
+    if (sortBy === field) {
+      setDirection((prev) => (prev === 'ASC' ? 'DESC' : 'ASC'));
+    } else {
+      setSortBy(field);
+      setDirection('DESC');
+    }
+    setCurrentPage(1);
   };
 
   return (
@@ -156,7 +225,7 @@ const UserManagementPage = () => {
             </div>
             <div>
               <div className="admin-stat-count">
-                {users.filter((u) => u.userStatus).length}
+                {users.filter((u) => !getIsLocked(u)).length}
               </div>
               <div className="admin-stat-label">Đang hoạt động (Trang này)</div>
             </div>
@@ -182,20 +251,30 @@ const UserManagementPage = () => {
             <input
               type="text"
               placeholder="Tìm theo tên, email hoặc số điện thoại..."
-              value={searchTerm}
-              onChange={handleSearchChange}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="toolbar-search-input"
             />
+            {searchInput && (
+              <button
+                onClick={() => setSearchInput('')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)', fontSize: '0.85rem' }}
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => fetchUsers()}
-            disabled={loading}
-            title="Làm mới dữ liệu"
-          >
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> Làm mới
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => fetchUsers(true)}
+              disabled={loading}
+              title="Làm mới dữ liệu"
+            >
+              <RefreshCw size={16} className={loading ? 'spin' : ''} /> Làm mới
+            </button>
+          </div>
         </div>
 
         {/* Users Data Table */}
@@ -203,12 +282,24 @@ const UserManagementPage = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Người dùng</th>
-                <th>Liên hệ</th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('id')}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    ID <ArrowUpDown size={12} />
+                  </span>
+                </th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('userName')}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    Người dùng <ArrowUpDown size={12} />
+                  </span>
+                </th>
+                <th>Số điện thoại</th>
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
-                <th>Ngày tạo</th>
+                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('createdAt')}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    Ngày tạo <ArrowUpDown size={12} />
+                  </span>
+                </th>
                 <th style={{ textAlign: 'right' }}>Hành động</th>
               </tr>
             </thead>
@@ -227,66 +318,84 @@ const UserManagementPage = () => {
                   </td>
                 </tr>
               ) : (
-                users.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <span style={{ fontFamily: 'monospace', color: 'var(--gray-500)' }}>#{item.id}</span>
-                    </td>
-                    <td>
-                      <div className="user-table-cell">
-                        <div className="user-avatar-initials">
-                          {item.userName ? item.userName.charAt(0).toUpperCase() : 'U'}
+                users.map((item) => {
+                  const isSelf = currentUser?.id === item.id;
+                  const locked = getIsLocked(item);
+                  return (
+                    <tr key={item.id}>
+                      <td>
+                        <span style={{ fontFamily: 'monospace', color: 'var(--gray-500)', fontSize: '0.8rem' }}>
+                          #{item.id ? item.id.substring(0, 8) + '...' : '-'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="user-table-cell">
+                          <img
+                            src={item.userAvatar || '/images/default-avatar.svg'}
+                            alt={item.userName || 'User'}
+                            className="user-avatar-small"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.userName || 'User') + '&background=198754&color=fff';
+                            }}
+                          />
+                          <div>
+                            <div className="user-table-name">
+                              {item.userName} {isSelf && <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>Bạn</span>}
+                            </div>
+                            <div className="user-table-email">{item.userEmail}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="user-table-name">{item.userName}</div>
-                          <div className="user-table-email">{item.userEmail}</div>
+                      </td>
+                      <td>
+                        <span className="user-table-phone">{item.userNumberphone || '-'}</span>
+                      </td>
+                      <td>
+                        <span className={`badge ${item.roleName === 'ROLE_ADMIN' ? 'badge-primary' : 'badge-neutral'}`}>
+                          {item.roleName === 'ROLE_ADMIN' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <Shield size={12} /> Admin
+                            </span>
+                          ) : (
+                            'Học viên'
+                          )}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={`badge ${locked ? 'badge-danger' : 'badge-primary'}`}
+                          style={{ transition: 'all 0.2s ease' }}
+                        >
+                          {locked ? 'Đã khóa' : 'Hoạt động'}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--gray-500)', fontSize: '0.85rem' }}>
+                          <Clock size={13} /> {formatDate(item.createdAt)}
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="user-table-phone">{item.userNumberphone || '-'}</span>
-                    </td>
-                    <td>
-                      <span className={`badge ${item.roleName === 'ROLE_ADMIN' ? 'badge-primary' : 'badge-neutral'}`}>
-                        {item.roleName === 'ROLE_ADMIN' ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            <Shield size={12} /> Admin
-                          </span>
-                        ) : (
-                          'Học viên'
-                        )}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`badge ${item.userStatus ? 'badge-primary' : 'badge-danger'}`}>
-                        {item.userStatus ? 'Hoạt động' : 'Đã khóa'}
-                      </span>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--gray-500)', fontSize: '0.85rem' }}>
-                        <Clock size={13} /> {formatDate(item.createdAt)}
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className={`btn btn-sm ${item.userStatus ? 'btn-danger' : 'btn-primary'}`}
-                        style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                        onClick={() => handleOpenStatusModal(item)}
-                        title={item.userStatus ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
-                      >
-                        {item.userStatus ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Lock size={13} /> Khóa
-                          </span>
-                        ) : (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <Unlock size={13} /> Mở khóa
-                          </span>
-                        )}
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className={`btn btn-sm ${locked ? 'btn-primary' : 'btn-danger'}`}
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', transition: 'all 0.15s ease' }}
+                          onClick={() => handleOpenStatusModal(item)}
+                          disabled={isSelf}
+                          title={isSelf ? 'Không thể tự khóa tài khoản của chính mình' : locked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
+                        >
+                          {locked ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Unlock size={13} /> Mở khóa
+                            </span>
+                          ) : (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Lock size={13} /> Khóa
+                            </span>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -308,8 +417,8 @@ const UserManagementPage = () => {
       {/* Confirmation Modal */}
       <Modal
         isOpen={statusModalOpen}
-        onClose={() => setStatusModalOpen(false)}
-        title={selectedUser?.userStatus ? 'Xác nhận khóa tài khoản' : 'Xác nhận mở khóa tài khoản'}
+        onClose={() => !actionLoading && setStatusModalOpen(false)}
+        title={getIsLocked(selectedUser) ? 'Xác nhận mở khóa tài khoản' : 'Xác nhận khóa tài khoản'}
         footer={
           <>
             <button
@@ -320,11 +429,11 @@ const UserManagementPage = () => {
               Hủy bỏ
             </button>
             <button
-              className={`btn ${selectedUser?.userStatus ? 'btn-danger' : 'btn-primary'}`}
+              className={`btn ${getIsLocked(selectedUser) ? 'btn-primary' : 'btn-danger'}`}
               onClick={handleConfirmStatusChange}
               disabled={actionLoading}
             >
-              {actionLoading ? 'Đang xử lý...' : selectedUser?.userStatus ? 'Khóa ngay' : 'Mở khóa ngay'}
+              {actionLoading ? 'Đang xử lý...' : getIsLocked(selectedUser) ? 'Mở khóa ngay' : 'Khóa ngay'}
             </button>
           </>
         }
@@ -334,23 +443,23 @@ const UserManagementPage = () => {
             style={{
               padding: 12,
               borderRadius: '50%',
-              background: selectedUser?.userStatus ? '#fee2e2' : '#e6f4ea',
-              color: selectedUser?.userStatus ? 'var(--danger)' : 'var(--primary)',
+              background: getIsLocked(selectedUser) ? '#e6f4ea' : '#fee2e2',
+              color: getIsLocked(selectedUser) ? 'var(--primary)' : 'var(--danger)',
             }}
           >
             <AlertTriangle size={24} />
           </div>
           <div>
             <p style={{ fontWeight: 600, color: 'var(--gray-900)', marginBottom: 6 }}>
-              Bạn có chắc chắn muốn {selectedUser?.userStatus ? 'khóa' : 'mở khóa'} tài khoản này?
+              Bạn có chắc chắn muốn {getIsLocked(selectedUser) ? 'mở khóa' : 'khóa'} tài khoản này?
             </p>
             <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: 8 }}>
               Người dùng: <strong>{selectedUser?.userName}</strong> ({selectedUser?.userEmail})
             </p>
             <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)' }}>
-              {selectedUser?.userStatus
-                ? 'Sau khi khóa, người dùng sẽ không thể đăng nhập hoặc thực hiện các hoạt động làm bài trên hệ thống.'
-                : 'Tài khoản sẽ được kích hoạt trở lại và có thể đăng nhập bình thường.'}
+              {getIsLocked(selectedUser)
+                ? 'Tài khoản sẽ được mở khóa và có thể đăng nhập, sử dụng hệ thống bình thường.'
+                : 'Sau khi khóa, người dùng sẽ không thể đăng nhập hoặc làm bài thi trên hệ thống.'}
             </p>
           </div>
         </div>

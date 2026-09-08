@@ -35,7 +35,7 @@ public class AdminController {
             @Valid @RequestBody LockUserRequest request)
     {
         AdminResponseDTO adRes = adminService.lockUser(currentUser, request);
-        return ResponseEntity.ok(ApiResponse.success(request.isLocked() ? "Khóa tài khoản thành công" : "Mở khóa tài khoản thành công", adRes));
+        return ResponseEntity.ok(ApiResponse.success(request.getIsLocked() ? "Khóa tài khoản thành công" : "Mở khóa tài khoản thành công", adRes));
     }
 
 

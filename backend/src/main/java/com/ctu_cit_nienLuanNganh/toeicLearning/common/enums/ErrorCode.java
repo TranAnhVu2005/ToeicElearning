@@ -13,6 +13,7 @@ public enum ErrorCode {
     DATA_INTEGRITY_VIOLATION(1004, "Dữ liệu đã tồn tại trên hệ thống hoặc vi phạm ràng buộc dữ liệu", HttpStatus.CONFLICT),
     REQUEST_BODY_MALFORMED(1005, "Định dạng JSON gửi lên không hợp lệ", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(1006, "Cấu hình sai, chưa có vai trò là user tôi thiểu trong database", HttpStatus.BAD_REQUEST),
+    PART_NOT_FOUND(1007, "Chọn part không đúng chuẩn hoặc không tồn tại part này trong format hiện tại của IIG", HttpStatus.BAD_REQUEST),
 
 
     // 2000 - 2999: Lỗi Xác thực & Người dùng (Auth & User)

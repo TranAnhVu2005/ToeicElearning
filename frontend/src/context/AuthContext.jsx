@@ -24,6 +24,13 @@ export const AuthProvider = ({ children }) => {
           }
         } catch (err) {
           console.error('Failed to fetch user profile:', err);
+          // If token expired, invalid, or user was locked (401/403)
+          if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('currentUser');
+            setToken(null);
+            setUser(null);
+          }
         }
       }
       setLoading(false);
@@ -87,7 +94,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         isAdmin,
-        isAuthenticated: !!token,
+        isAuthenticated: !!token && !!user,
       }}
     >
       {children}

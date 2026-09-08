@@ -16,5 +16,5 @@ public class LockUserRequest {
     // Dùng not null vì not blank chỉ dùng cho dữ liệu dạng String
     @NotNull(message = "Trạng thái khóa không được để trống")
     @JsonProperty("isLocked")
-    private boolean isLocked;
+    private Boolean isLocked;
 }

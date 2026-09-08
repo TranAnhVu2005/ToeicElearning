@@ -1,19 +1,39 @@
 /* ==============================================================================
-   TOEIC MASTER - ACADEMICA EDUCATION DESIGN SYSTEM
+   TOEIC MASTER - ACADEMICA EDUCATION DESIGN SYSTEM (TAILWIND CSS V4)
    ============================================================================== */
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #198754;
+  --color-primary-hover: #146c43;
+  --color-primary-light: #e8f5e9;
+  --color-primary-lighter: #f1f8f5;
+  --color-primary-dark: #0e4b2d;
+
+  --color-secondary: #0d6efd;
+  --color-accent: #f59e0b;
+  --color-danger: #dc3545;
+  --color-danger-light: #fde8e8;
+  --color-success: #198754;
+  --color-warning: #f59e0b;
+  --color-info: #0ea5e9;
+
+  --color-page-bg: #f8faf9;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+
+  --font-heading: 'Outfit', 'Nunito', sans-serif;
+  --font-body: 'Nunito', 'Roboto', system-ui, -apple-system, sans-serif;
+}
 
 :root {
-  /* Fonts */
-  --font-body: 'Nunito', 'Roboto', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Outfit', 'Nunito', sans-serif;
-
   /* Colors */
   --primary: #198754;
   --primary-hover: #146c43;
   --primary-light: #e8f5e9;
   --primary-lighter: #f1f8f5;
   --primary-dark: #0e4b2d;
-  
+
   --secondary: #0d6efd;
   --accent: #f59e0b;
   --danger: #dc3545;
@@ -28,7 +48,7 @@
   --surface-hover: #f3f4f6;
   --border: #e2e8f0;
   --border-light: #edf2f7;
-  
+
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -39,10 +59,10 @@
   --gray-700: #334155;
   --gray-800: #1e293b;
   --gray-900: #0f172a;
-  
+
   --dark-bg: #0f172a;
   --dark-surface: #1e293b;
-  
+
   /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -63,20 +83,7 @@
   --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ==============================================================================
-   RESET & BASE
-   ============================================================================== */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  font-size: 16px;
-  scroll-behavior: smooth;
-}
-
+/* Base Styles */
 body {
   font-family: var(--font-body);
   background-color: var(--bg-page);
@@ -102,7 +109,12 @@ body {
   flex: 1;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   color: var(--gray-900);
   font-weight: 700;
@@ -121,12 +133,7 @@ img {
   display: block;
 }
 
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-/* Utility Helpers */
+/* Layout Utilities */
 .container {
   width: 100%;
   max-width: 1240px;
@@ -154,9 +161,7 @@ button, input, select, textarea {
   justify-content: center;
 }
 
-/* ==============================================================================
-   BUTTONS
-   ============================================================================== */
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -229,9 +234,7 @@ button, input, select, textarea {
   border-radius: var(--radius-lg);
 }
 
-/* ==============================================================================
-   BADGES & CHIPS
-   ============================================================================== */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -264,9 +267,7 @@ button, input, select, textarea {
   color: var(--gray-700);
 }
 
-/* ==============================================================================
-   FORMS & INPUTS
-   ============================================================================== */
+/* Forms */
 .form-group {
   margin-bottom: 18px;
   display: flex;
@@ -312,9 +313,7 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
 }
 
-/* ==============================================================================
-   HEADER & NAVBAR (ACADEMICA STYLE)
-   ============================================================================== */
+/* Header & Navbar */
 .site-header {
   position: sticky;
   top: 0;
@@ -421,7 +420,8 @@ button, input, select, textarea {
   padding: 6px 0;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--primary);
 }
 
@@ -448,7 +448,6 @@ button, input, select, textarea {
   gap: 10px;
 }
 
-/* User Profile Menu */
 .user-menu-wrapper {
   position: relative;
 }
@@ -556,9 +555,7 @@ button, input, select, textarea {
   cursor: pointer;
 }
 
-/* ==============================================================================
-   HERO SECTION
-   ============================================================================== */
+/* Hero Section */
 .hero-section {
   padding: 70px 0 60px;
   background: linear-gradient(180deg, #f0fdf4 0%, var(--bg-page) 100%);
@@ -674,8 +671,15 @@ button, input, select, textarea {
 }
 
 @keyframes floatAnim {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .floating-badge-icon {
@@ -702,14 +706,12 @@ button, input, select, textarea {
   font-weight: 600;
 }
 
-/* ==============================================================================
-   STATS COUNTER (ACADEMICA GREEN BAR)
-   ============================================================================== */
+/* Stats Counter */
 .stats-section {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #ffffff;
   padding: 45px 0;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stats-grid {
@@ -743,9 +745,7 @@ button, input, select, textarea {
   font-weight: 500;
 }
 
-/* ==============================================================================
-   SECTION HEADERS
-   ============================================================================== */
+/* Section Header */
 .section-header {
   text-align: center;
   max-width: 700px;
@@ -775,9 +775,7 @@ button, input, select, textarea {
   font-size: 1.05rem;
 }
 
-/* ==============================================================================
-   TOEIC PARTS SECTION
-   ============================================================================== */
+/* TOEIC Parts Section */
 .toeic-parts-section {
   background-color: #ffffff;
 }
@@ -879,9 +877,7 @@ button, input, select, textarea {
   color: var(--primary-hover);
 }
 
-/* ==============================================================================
-   FEATURES GRID
-   ============================================================================== */
+/* Features Grid */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -925,9 +921,7 @@ button, input, select, textarea {
   line-height: 1.6;
 }
 
-/* ==============================================================================
-   PRACTICE PAGE
-   ============================================================================== */
+/* Practice Page */
 .page-header-banner {
   background: linear-gradient(135deg, var(--dark-bg) 0%, #1e293b 100%);
   color: #ffffff;
@@ -1052,9 +1046,7 @@ button, input, select, textarea {
   color: var(--gray-700);
 }
 
-/* ==============================================================================
-   ABOUT PAGE
-   ============================================================================== */
+/* About Page */
 .about-intro-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -1085,9 +1077,7 @@ button, input, select, textarea {
   box-shadow: var(--shadow-xl);
 }
 
-/* ==============================================================================
-   AUTH PAGES (LOGIN / REGISTER)
-   ============================================================================== */
+/* Auth Pages */
 .auth-page-wrapper {
   min-height: calc(100vh - 180px);
   padding: 60px 0;
@@ -1178,9 +1168,7 @@ button, input, select, textarea {
   text-decoration: underline;
 }
 
-/* ==============================================================================
-   PROFILE PAGE
-   ============================================================================== */
+/* Profile Page */
 .profile-layout {
   display: grid;
   grid-template-columns: 300px 1fr;
@@ -1301,9 +1289,7 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25);
 }
 
-/* ==============================================================================
-   ADMIN PAGE & TABLE
-   ============================================================================== */
+/* Admin Management Page */
 .admin-stats-bar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1504,9 +1490,7 @@ button, input, select, textarea {
   cursor: not-allowed;
 }
 
-/* ==============================================================================
-   MODAL
-   ============================================================================== */
+/* Modal */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -1559,9 +1543,7 @@ button, input, select, textarea {
   border-top: 1px solid var(--border);
 }
 
-/* ==============================================================================
-   TOAST
-   ============================================================================== */
+/* Toast */
 .toast {
   display: flex;
   align-items: center;
@@ -1614,22 +1596,34 @@ button, input, select, textarea {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ==============================================================================
-   FOOTER (ACADEMICA STYLE)
-   ============================================================================== */
+/* Footer */
 .site-footer {
   background-color: var(--dark-bg);
   color: var(--gray-400);
@@ -1719,44 +1713,42 @@ button, input, select, textarea {
   color: var(--gray-500);
 }
 
-/* ==============================================================================
-   RESPONSIVE MEDIA QUERIES
-   ============================================================================== */
+/* Responsive Media Queries */
 @media (max-width: 992px) {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  
+
   .hero-visual {
     max-width: 500px;
     margin: 0 auto;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .features-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .footer-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .about-intro-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .auth-card-container {
     grid-template-columns: 1fr;
   }
-  
+
   .auth-visual-side {
     display: none;
   }
-  
+
   .profile-layout {
     grid-template-columns: 1fr;
   }
@@ -1766,19 +1758,19 @@ button, input, select, textarea {
   .hidden-mobile {
     display: none !important;
   }
-  
+
   .topbar-right {
     display: none;
   }
-  
+
   .nav-links {
     display: none;
   }
-  
+
   .mobile-toggle-btn {
     display: block;
   }
-  
+
   .mobile-nav-panel {
     display: flex;
     flex-direction: column;
@@ -1787,35 +1779,35 @@ button, input, select, textarea {
     border-top: 1px solid var(--border-light);
     box-shadow: var(--shadow-md);
   }
-  
+
   .mobile-nav-link {
     padding: 10px 0;
     font-weight: 600;
     color: var(--gray-800);
     border-bottom: 1px solid var(--border-light);
   }
-  
+
   .mobile-nav-link.active {
     color: var(--primary);
   }
-  
+
   .hero-title {
     font-size: 2.2rem;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .admin-stats-bar {
     grid-template-columns: 1fr;
   }
-  
+
   .footer-grid {
     grid-template-columns: 1fr;
   }

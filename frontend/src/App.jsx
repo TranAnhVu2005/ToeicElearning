@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
+
 // Layout
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';

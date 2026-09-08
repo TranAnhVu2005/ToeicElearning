@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, LogIn, AlertCircle, BookOpen, CheckCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, BookOpen, CheckCircle, AlertTriangle } from 'lucide-react';
 import Toast from '../components/common/Toast';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    userEmail: '',
+    emailOrPhone: '',
     userPassword: '',
   });
   const [errorMsg, setErrorMsg] = useState('');
@@ -15,6 +15,14 @@ const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if kicked out due to account locking
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('locked') === 'true') {
+      setErrorMsg('Tài khoản của bạn đã bị Khóa bởi Quản trị viên. Bạn đã bị đăng xuất khỏi hệ thống.');
+    }
+  }, [location.search]);
 
   const redirectPath = location.state?.from?.pathname || '/';
 
@@ -28,8 +36,8 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.userEmail.trim() || !formData.userPassword) {
-      setErrorMsg('Vui lòng nhập đầy đủ Email và Mật khẩu.');
+    if (!formData.emailOrPhone.trim() || !formData.userPassword) {
+      setErrorMsg('Vui lòng nhập Email hoặc Số điện thoại và Mật khẩu.');
       return;
     }
 
@@ -92,7 +100,7 @@ const LoginPage = () => {
           <div className="auth-form-side">
             <div className="auth-header">
               <h2 className="auth-title">Chào mừng trở lại!</h2>
-              <p className="auth-subtitle">Vui lòng đăng nhập vào tài khoản của bạn</p>
+              <p className="auth-subtitle">Đăng nhập bằng Email hoặc Số điện thoại</p>
             </div>
 
             {errorMsg && (
@@ -103,18 +111,18 @@ const LoginPage = () => {
 
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
-                <label className="form-label" htmlFor="userEmail">
-                  Email học viên <span style={{ color: 'var(--danger)' }}>*</span>
+                <label className="form-label" htmlFor="emailOrPhone">
+                  Email hoặc Số điện thoại <span style={{ color: 'var(--danger)' }}>*</span>
                 </label>
                 <div className="input-with-icon">
                   <span className="input-icon"><Mail size={18} /></span>
                   <input
-                    type="email"
-                    id="userEmail"
-                    name="userEmail"
+                    type="text"
+                    id="emailOrPhone"
+                    name="emailOrPhone"
                     className="form-control"
-                    placeholder="ví_dụ@gmail.com"
-                    value={formData.userEmail}
+                    placeholder="ví_dụ@gmail.com hoặc 0912345678"
+                    value={formData.emailOrPhone}
                     onChange={handleChange}
                     required
                     disabled={isLoading}
