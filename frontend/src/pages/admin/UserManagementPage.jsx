@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -12,7 +13,8 @@ import {
   AlertTriangle,
   RefreshCw,
   Clock,
-  ArrowUpDown
+  ArrowUpDown,
+  BookOpen,
 } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
@@ -182,20 +184,73 @@ const UserManagementPage = () => {
   return (
     <div className="admin-page-wrapper bg-gray-50">
       {/* Admin Header Banner */}
-      <div className="page-header-banner">
+      <div className="page-header-banner" style={{ padding: '36px 0 24px' }}>
         <div className="container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span className="badge badge-primary">Hệ thống quản trị</span>
-            <span className="badge badge-warning">Quyền Admin</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
+              <Users size={24} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span className="badge badge-primary" style={{ fontSize: '0.72rem' }}>Hệ Thống Quản Trị</span>
+                <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>Admin Portal</span>
+              </div>
+              <h1 className="page-title" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                Quản Lý Người Dùng
+              </h1>
+              <p className="page-subtitle" style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
+                Theo dõi, tìm kiếm và phân quyền trạng thái hoạt động của học viên trong hệ thống ({totalElements} tài khoản)
+              </p>
+            </div>
           </div>
-          <h1 className="page-title">Quản Lý Người Dùng</h1>
-          <p className="page-subtitle">
-            Theo dõi, tìm kiếm và phân quyền trạng thái hoạt động của học viên trong hệ thống.
-          </p>
+
+          {/* Admin Navigation Tabs */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 24, borderBottom: '2px solid #e2e8f0' }}>
+            <Link
+              to="/admin/tests"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 20px',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                color: '#64748b',
+                borderBottom: '3px solid transparent',
+                marginBottom: -2,
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#0f172a')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#64748b')}
+            >
+              <BookOpen size={18} /> Quản lý Đề thi
+            </Link>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 20px',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                color: '#198754',
+                borderBottom: '3px solid #198754',
+                marginBottom: -2,
+                cursor: 'default',
+              }}
+            >
+              <Users size={18} /> Quản lý Người dùng
+              <span style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 800 }}>
+                {totalElements}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="container section-padding">
+
         {/* Toast Alert */}
         {toast && (
           <div style={{ marginBottom: 20 }}>
@@ -282,10 +337,8 @@ const UserManagementPage = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('id')}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    ID <ArrowUpDown size={12} />
-                  </span>
+                <th style={{ width: 75, textAlign: 'center' }}>
+                  STT
                 </th>
                 <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('userName')}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -318,15 +371,14 @@ const UserManagementPage = () => {
                   </td>
                 </tr>
               ) : (
-                users.map((item) => {
+                users.map((item, index) => {
+                  const stt = (currentPage - 1) * pageSize + index + 1;
                   const isSelf = currentUser?.id === item.id;
                   const locked = getIsLocked(item);
                   return (
                     <tr key={item.id}>
-                      <td>
-                        <span style={{ fontFamily: 'monospace', color: 'var(--gray-500)', fontSize: '0.8rem' }}>
-                          #{item.id ? item.id.substring(0, 8) + '...' : '-'}
-                        </span>
+                      <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--gray-500)' }}>
+                        #{stt.toString().padStart(2, '0')}
                       </td>
                       <td>
                         <div className="user-table-cell">

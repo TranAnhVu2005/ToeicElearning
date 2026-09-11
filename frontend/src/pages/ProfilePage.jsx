@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/userService';
-import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Link as LinkIcon, Info } from 'lucide-react';
+import { uploadAvatar } from '../services/uploadService';
+import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Info, RefreshCw } from 'lucide-react';
 import Toast from '../components/common/Toast';
 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'password'
-  const [avatarMode, setAvatarMode] = useState('preset'); // 'preset' | 'upload' | 'url'
   const fileInputRef = useRef(null);
 
   // Profile Edit State
@@ -19,6 +19,8 @@ const ProfilePage = () => {
   });
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileToast, setProfileToast] = useState(null);
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState(null);
 
   // Password Change State
   const [passwordData, setPasswordData] = useState({
@@ -29,21 +31,6 @@ const ProfilePage = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordToast, setPasswordToast] = useState(null);
 
-  // 12 diverse, colorful cartoon/animated avatars (under 80 chars, safe for DB VARCHAR(255))
-  const avatarOptions = [
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Luna&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Milo&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Chloe&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Oliver&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Sophie&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/adventurer/svg?seed=Zoe&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/bottts/svg?seed=Rocky&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/bottts/svg?seed=Spark&backgroundColor=ffd5dc',
-  ];
 
   // Fetch fresh profile on mount
   useEffect(() => {
@@ -78,7 +65,7 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  // Handle local file upload with canvas downscaling
+  // Handle local file selection with instant preview (0 network requests!)
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -88,33 +75,24 @@ const ProfilePage = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        // Draw to 120x120 square
-        const canvas = document.createElement('canvas');
-        const size = 120;
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
+    // Tạo URL xem trước ngay lập tức từ bộ nhớ trình duyệt mà không tốn 1 byte mạng
+    const localPreview = URL.createObjectURL(file);
+    setSelectedAvatarFile(file);
+    setPreviewAvatarUrl(localPreview);
+    setProfileToast({
+      type: 'info',
+      message: 'Đã nạp ảnh xem trước! Bấm nút "Lưu thay đổi" bên dưới để hệ thống cập nhật vào tài khoản.',
+    });
+  };
 
-        // Center crop
-        const minDim = Math.min(img.width, img.height);
-        const sx = (img.width - minDim) / 2;
-        const sy = (img.height - minDim) / 2;
-        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        setProfileData((prev) => ({ ...prev, userAvatar: dataUrl }));
-        setProfileToast({
-          type: 'info',
-          message: 'Đã nạp ảnh vào khung xem trước! Hãy bấm "Lưu thay đổi" để gửi lên hệ thống.',
-        });
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+  const handleCancelSelectedFile = () => {
+    setSelectedAvatarFile(null);
+    if (previewAvatarUrl) {
+      URL.revokeObjectURL(previewAvatarUrl);
+      setPreviewAvatarUrl(null);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setProfileToast({ type: 'info', message: 'Đã hủy chọn ảnh mới, giữ lại ảnh đại diện cũ.' });
   };
 
   // Handle Profile Update
@@ -140,15 +118,22 @@ const ProfilePage = () => {
 
     try {
       setProfileLoading(true);
+      // Gửi ĐÚNG 1 REQUEST DUY NHẤT: Backend tự tải lên Cloudinary và lưu MySQL
       const res = await userService.updateProfile({
         userName: profileData.userName,
         userEmail: profileData.userEmail,
         userNumberphone: profileData.userNumberphone,
-        userAvatar: profileData.userAvatar,
+        file: selectedAvatarFile, // Gửi file nếu người dùng chọn ảnh mới từ máy
       });
 
       if (res.code === 1000 && res.data) {
         updateUser(res.data);
+        setSelectedAvatarFile(null);
+        setPreviewAvatarUrl(null);
+        setProfileData((prev) => ({
+          ...prev,
+          userAvatar: res.data.userAvatar || prev.userAvatar,
+        }));
         setProfileToast({ type: 'success', message: 'Cập nhật thông tin & ảnh đại diện thành công!' });
       }
     } catch (err) {
@@ -158,7 +143,7 @@ const ProfilePage = () => {
       if (err.response?.data?.code === 1004 || errorMsg.includes('ràng buộc')) {
         setProfileToast({
           type: 'error',
-          message: 'Lỗi độ dài dữ liệu ảnh: Cột user_avatar trong MySQL mặc định là VARCHAR(255) nên không chứa được chuỗi ảnh tải lên (Base64). Bạn vui lòng chọn ảnh mẫu có sẵn hoặc đổi cột user_avatar thành LONGTEXT trong backend nhé!',
+          message: 'Lỗi lưu trữ ảnh: Đường dẫn ảnh vượt quá độ dài cho phép. Vui lòng tải file ảnh trực tiếp từ máy để hệ thống tự tối ưu qua Cloudinary nhé!',
         });
       } else {
         setProfileToast({ type: 'error', message: errorMsg });
@@ -231,7 +216,7 @@ const ProfilePage = () => {
             <div className="profile-avatar-block">
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <img
-                  src={profileData.userAvatar || '/images/default-avatar.svg'}
+                  src={previewAvatarUrl || profileData.userAvatar || '/images/default-avatar.svg'}
                   alt={user?.userName || 'User'}
                   className="profile-avatar-large"
                   onError={(e) => {
@@ -309,137 +294,48 @@ const ProfilePage = () => {
                 <form onSubmit={handleProfileSubmit}>
                   {/* Avatar Selection Section */}
                   <div className="form-group" style={{ marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-                      <label className="form-label" style={{ margin: 0 }}>
-                        Ảnh đại diện tài khoản
-                      </label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          type="button"
-                          className={`btn btn-sm ${avatarMode === 'preset' ? 'btn-primary' : 'btn-outline'}`}
-                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                          onClick={() => setAvatarMode('preset')}
-                        >
-                          Ảnh mẫu có sẵn
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn btn-sm ${avatarMode === 'upload' ? 'btn-primary' : 'btn-outline'}`}
-                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                          onClick={() => setAvatarMode('upload')}
-                        >
-                          <Upload size={13} /> Tải từ máy
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn btn-sm ${avatarMode === 'url' ? 'btn-primary' : 'btn-outline'}`}
-                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
-                          onClick={() => setAvatarMode('url')}
-                        >
-                          <LinkIcon size={13} /> Dán link URL
-                        </button>
-                      </div>
-                    </div>
+                    <label className="form-label" style={{ marginBottom: 8, display: 'block' }}>
+                      Ảnh đại diện tài khoản
+                    </label>
 
-                    {/* Mode 1: Presets (100% fits VARCHAR(255)) */}
-                    {avatarMode === 'preset' && (
-                      <div>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 12 }}>
-                          Chọn 1 trong 12 ảnh đại diện hoạt hình bên dưới:
-                        </p>
-                        <div className="avatar-selection-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                          {avatarOptions.map((av, idx) => {
-                            const isSelected = profileData.userAvatar === av;
-                            return (
-                              <div
-                                key={idx}
-                                style={{ position: 'relative', cursor: 'pointer' }}
-                                onClick={() => setProfileData({ ...profileData, userAvatar: av })}
-                                title={`Avatar mẫu ${idx + 1}`}
-                              >
-                                <img
-                                  src={av}
-                                  alt={`Avatar ${idx + 1}`}
-                                  className={`avatar-option-item ${isSelected ? 'selected' : ''}`}
-                                  style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                                {isSelected && (
-                                  <span
-                                    style={{
-                                      position: 'absolute',
-                                      top: -2,
-                                      right: -2,
-                                      background: 'var(--primary)',
-                                      color: '#fff',
-                                      borderRadius: '50%',
-                                      width: 18,
-                                      height: 18,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      border: '1.5px solid #fff',
-                                    }}
-                                  >
-                                    <Check size={11} strokeWidth={3} />
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mode 2: Upload from Computer */}
-                    {avatarMode === 'upload' && (
-                      <div style={{ background: '#f8fafc', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                          <input
-                            type="file"
-                            ref={fileInputRef}
-                            accept="image/*"
-                            style={{ display: 'none' }}
-                            onChange={handleFileUpload}
-                          />
+                    <div style={{ background: '#f8fafc', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/png, image/jpeg, image/webp"
+                          style={{ display: 'none' }}
+                          onChange={handleFileUpload}
+                          disabled={profileLoading}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-primary btn-sm inline-flex items-center gap-2"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={profileLoading}
+                        >
+                          <Upload size={15} /> {selectedAvatarFile ? 'Chọn ảnh khác' : 'Chọn ảnh đại diện từ thiết bị'}
+                        </button>
+                        {selectedAvatarFile && (
                           <button
                             type="button"
-                            className="btn btn-primary btn-sm"
-                            onClick={() => fileInputRef.current?.click()}
+                            className="btn btn-outline btn-sm text-red-600 border-red-300 hover:bg-red-50"
+                            onClick={handleCancelSelectedFile}
                           >
-                            <Upload size={15} /> Chọn file ảnh từ thiết bị
+                            Hủy ảnh vừa chọn
                           </button>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
-                            Hỗ trợ JPG, PNG, WebP (Tự động cắt vuông)
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 10, fontSize: '0.8rem', color: 'var(--gray-600)' }}>
-                          <Info size={15} style={{ flexShrink: 0, marginTop: 1, color: 'var(--primary)' }} />
-                          <span>
-                            Lưu ý: Để lưu được ảnh tải lên từ máy tính, backend cần hỗ trợ kiểu <code>LONGTEXT</code> cho thuộc tính <code>user_avatar</code>.
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Mode 3: Direct URL */}
-                    {avatarMode === 'url' && (
-                      <div style={{ marginTop: 8 }}>
-                        <div className="input-with-icon">
-                          <span className="input-icon"><LinkIcon size={16} /></span>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Dán link ảnh online (ví dụ: https://...)"
-                            value={profileData.userAvatar}
-                            onChange={(e) => setProfileData({ ...profileData, userAvatar: e.target.value })}
-                            disabled={profileLoading}
-                          />
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: 4, display: 'block' }}>
-                          Có thể dùng link ảnh từ Imgur, Unsplash hoặc các nguồn ảnh trực tuyến.
+                        )}
+                        <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
+                          {selectedAvatarFile ? `Đã chọn: ${selectedAvatarFile.name}` : 'Hỗ trợ file PNG, JPG, JPEG, WebP'}
                         </span>
                       </div>
-                    )}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 12, fontSize: '0.8rem', color: '#15803d' }}>
+                        <Check size={15} style={{ flexShrink: 0, marginTop: 1, color: '#16a34a' }} />
+                        <span>
+                          Ảnh được nạp xem trước tức thì trên khung tròn bên trái. Khi bạn bấm nút <strong>"Lưu thay đổi"</strong> bên dưới, hệ thống mới chính thức tải ảnh lên Cloudinary và cập nhật tài khoản.
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="form-group">

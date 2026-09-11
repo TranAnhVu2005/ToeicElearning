@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
 @Entity
 @Table(name = "context_question")
 @Getter
@@ -37,4 +39,7 @@ public class ContextQuestion extends BaseCreatedUpdatedEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "part_id")
     private Part part;
+
+    @OneToMany(mappedBy = "contextQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Question> questions;
 }

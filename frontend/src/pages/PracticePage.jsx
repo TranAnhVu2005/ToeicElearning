@@ -113,6 +113,44 @@ const PracticePage = () => {
       </div>
 
       <div className="container section-padding">
+        {/* Banner to Full Test Catalog */}
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: 'var(--radius-lg)',
+            border: '1.5px solid #bbf7d0',
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+            padding: '24px 28px',
+            marginBottom: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 20,
+            flexWrap: 'wrap',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ maxWidth: 650 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>Khuyên dùng</span>
+              <span style={{ fontSize: '0.85rem', color: '#166534', fontWeight: 700 }}>Đề thi Full Test 2 kỹ năng</span>
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 6px 0' }}>
+              Bạn muốn trải nghiệm Đề thi TOEIC hoàn chỉnh 120 phút?
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.6 }}>
+              Làm trọn bộ các đề thi ETS mới nhất từ Part 1 đến Part 7 với đồng hồ đếm ngược, audio chuẩn và tự động tính điểm thi 990.
+            </p>
+          </div>
+          <Link
+            to="/courses"
+            className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 22px', fontWeight: 700 }}
+          >
+            <BookOpen size={18} /> Xem tất cả đề thi & khóa học
+          </Link>
+        </div>
+
         {/* Category Filter Controls */}
         <div className="filter-bar">
           <div className="filter-label">
@@ -166,11 +204,11 @@ const PracticePage = () => {
 
               <div className="practice-action-box">
                 {isAuthenticated ? (
-                  <button className="btn btn-primary" style={{ width: '100%' }}>
-                    <PlayCircle size={18} /> Bắt đầu làm bài
-                  </button>
+                  <Link to="/courses" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                    <PlayCircle size={18} /> Chọn đề làm bài ngay
+                  </Link>
                 ) : (
-                  <Link to="/login" className="btn btn-outline" style={{ width: '100%' }}>
+                  <Link to="/login" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
                     Đăng nhập để làm bài
                   </Link>
                 )}

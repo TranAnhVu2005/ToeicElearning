@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   BookOpen,
@@ -20,6 +20,8 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminActive = location.pathname.startsWith('/admin');
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -79,14 +81,20 @@ const Navbar = () => {
             <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Trang chủ
             </NavLink>
+            <NavLink to="/courses" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              Khóa học & Đề thi
+            </NavLink>
             <NavLink to="/practice" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Luyện thi
             </NavLink>
             <NavLink to="/about" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Giới thiệu
             </NavLink>
+            <NavLink to="/contact" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              Liên hệ
+            </NavLink>
             {isAdmin && (
-              <NavLink to="/admin/users" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <NavLink to="/admin/tests" className={() => `nav-link ${isAdminActive ? 'active' : ''}`}>
                 Quản trị
               </NavLink>
             )}
@@ -135,13 +143,22 @@ const Navbar = () => {
                     </Link>
 
                     {isAdmin && (
-                      <Link
-                        to="/admin/users"
-                        className="dropdown-item"
-                        onClick={() => setDropdownOpen(false)}
-                      >
-                        <ShieldCheck size={16} /> Quản lý người dùng
-                      </Link>
+                      <>
+                        <Link
+                          to="/admin/tests"
+                          className="dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <BookOpen size={16} /> Quản lý đề thi
+                        </Link>
+                        <Link
+                          to="/admin/users"
+                          className="dropdown-item"
+                          onClick={() => setDropdownOpen(false)}
+                        >
+                          <ShieldCheck size={16} /> Quản lý người dùng
+                        </Link>
+                      </>
                     )}
 
                     <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', margin: '6px 0' }} />
@@ -189,6 +206,13 @@ const Navbar = () => {
               Trang chủ
             </NavLink>
             <NavLink
+              to="/courses"
+              className="mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Khóa học & Đề thi
+            </NavLink>
+            <NavLink
               to="/practice"
               className="mobile-nav-link"
               onClick={() => setMobileMenuOpen(false)}
@@ -202,13 +226,20 @@ const Navbar = () => {
             >
               Giới thiệu
             </NavLink>
+            <NavLink
+              to="/contact"
+              className="mobile-nav-link"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Liên hệ
+            </NavLink>
             {isAdmin && (
               <NavLink
-                to="/admin/users"
-                className="mobile-nav-link"
+                to="/admin/tests"
+                className={`mobile-nav-link ${isAdminActive ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Quản trị hệ thống
+                <ShieldCheck size={16} style={{ marginRight: 8 }} /> Quản trị hệ thống
               </NavLink>
             )}
 

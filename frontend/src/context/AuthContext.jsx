@@ -81,7 +81,10 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
-  const isAdmin = user?.role === 'ROLE_ADMIN' || user?.role?.roleName === 'ROLE_ADMIN';
+  const isAdmin =
+    user?.role === 'ROLE_ADMIN' ||
+    user?.roleName === 'ROLE_ADMIN' ||
+    user?.role?.roleName === 'ROLE_ADMIN';
 
   return (
     <AuthContext.Provider

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children, footer }) => {
+const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px' }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -24,7 +24,11 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-container"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+      >
         <div className="modal-header">
           <h3 className="modal-title">{title}</h3>
           <button
@@ -41,7 +45,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body">{children}</div>
+        <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>

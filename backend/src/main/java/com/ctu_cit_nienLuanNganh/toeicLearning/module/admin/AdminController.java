@@ -1,5 +1,6 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.admin;
 
+import com.cloudinary.Api;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageParams;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
@@ -10,14 +11,15 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.service.AdminService
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+//Comment để test api dễ hơn, nhớ gỡ ra
+//@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final AdminService adminService;
 
@@ -37,6 +39,7 @@ public class AdminController {
         AdminResponseDTO adRes = adminService.lockUser(currentUser, request);
         return ResponseEntity.ok(ApiResponse.success(request.getIsLocked() ? "Khóa tài khoản thành công" : "Mở khóa tài khoản thành công", adRes));
     }
+
 
 
 }

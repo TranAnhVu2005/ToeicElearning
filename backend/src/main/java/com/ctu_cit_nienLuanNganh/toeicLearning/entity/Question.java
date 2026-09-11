@@ -1,6 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,5 +40,6 @@ public class Question extends BaseCreatedUpdatedEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "context_question_id")
+    @JsonIgnore
     private ContextQuestion contextQuestion;
 }

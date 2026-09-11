@@ -4,6 +4,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageParams;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.CloudinaryService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.ContextQuestion;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Part;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Question;
@@ -30,6 +31,7 @@ public class ExamService {
     private final PartRepository partRepository;
     private final ContextQuestionRepository contextQuestionRepository;
     private final QuestionRepository questionRepository;
+    private final CloudinaryService cloudinaryService;
 
     public PageResponse<Test> getFullTest(PageParams pageParams){
         Page<Test> listTest = testRepository.findAll(pageParams.toPageable());
@@ -67,6 +69,17 @@ public class ExamService {
     @Transactional
     public void deleteFullTest(String testID){
         Test test = testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if(test.getContextQuestions()!=null){
+            for(ContextQuestion contextQuestion : test.getContextQuestions()){
+                if(contextQuestion.getAudioUrl()!=null && !contextQuestion.getAudioUrl().isBlank()){
+                    cloudinaryService.deleteFileByUrl(contextQuestion.getAudioUrl());
+                }
+                if(contextQuestion.getImageUrl()!=null && !contextQuestion.getImageUrl().isBlank()){
+                    cloudinaryService.deleteFileByUrl(contextQuestion.getImageUrl());
+                }
+                testRepository.delete(test);
+            }
+        }
         testRepository.delete(test);
     }
 

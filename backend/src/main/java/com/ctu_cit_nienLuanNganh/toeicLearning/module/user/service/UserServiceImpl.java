@@ -1,5 +1,6 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.user.service;
 
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.CloudinaryService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.UserRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.dto.UserResponseDTO;
@@ -19,6 +20,8 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final CloudinaryService cloudinaryService;
+
 
     @Override
     public UserResponseDTO viewProfile(User u) {
@@ -61,10 +64,13 @@ public class UserServiceImpl implements UserService{
                 user.setUserNumberphone(newNumberphone);
             }
         }
-        if(request.getUserAvatar() != null)
-        {
-            user.setUserAvatar(request.getUserAvatar());
+
+        if(request.getFile()!=null && !request.getFile().isEmpty()){ // Thêm !isEmpty() vì có thể file không gửi lên nhưng nó vẫn gửi dưới dạng byte 0
+            cloudinaryService.deleteFileByUrl(currentUser.getUserAvatar());
+            String newAvatarUrl = cloudinaryService.uploadFile(request.getFile(),"toeic-learning/avatars");
+            user.setUserAvatar(newAvatarUrl);
         }
+
 
         User updatedUser = userRepository.save(user);
         return userMapper.toDTO(updatedUser);

@@ -8,13 +8,27 @@ export const userService = {
   },
 
   // PATCH /api/user/updateprofile
-  // updateData: { userName, userEmail, userNumberphone, userAvatar }
+  // Hỗ trợ cả FormData (chứa file nhị phân) và Object thông thường
   updateProfile: async (updateData) => {
-    const response = await apiClient.patch('/user/updateprofile', {
-      userName: updateData.userName?.trim(),
-      userEmail: updateData.userEmail?.trim().toLowerCase(),
-      userNumberphone: updateData.userNumberphone?.trim(),
-      userAvatar: updateData.userAvatar,
+    let payload;
+    if (updateData instanceof FormData) {
+      payload = updateData;
+    } else {
+      payload = new FormData();
+      if (updateData.userName) payload.append('userName', updateData.userName.trim());
+      if (updateData.userEmail) payload.append('userEmail', updateData.userEmail.trim().toLowerCase());
+      if (updateData.userNumberphone) payload.append('userNumberphone', updateData.userNumberphone.trim());
+      
+      // Nếu có file ảnh mới từ thiết bị
+      if (updateData.file) {
+        payload.append('file', updateData.file);
+      }
+    }
+
+    const response = await apiClient.patch('/user/updateprofile', payload, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data; // ApiResponse<UserResponseDTO>
   },

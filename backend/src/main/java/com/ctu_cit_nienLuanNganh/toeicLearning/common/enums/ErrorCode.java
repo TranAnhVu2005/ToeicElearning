@@ -33,6 +33,8 @@ public enum ErrorCode {
     // 3000 - 3999: Nghiệp vụ TOEIC (Làm bài, Câu hỏi, Đề thi)
     TEST_NOT_FOUND(3001, "Không tìm thấy bài thi yêu cầu", HttpStatus.NOT_FOUND),
     QUESTION_NOT_FOUND(3002, "Không tìm thấy câu hỏi yêu cầu", HttpStatus.NOT_FOUND),
+    FILE_NOT_FOUND(3003, "Không tìm thấy file", HttpStatus.NOT_FOUND),
+    FILE_UPLOAD_FAILED(3004, "Tải file lên hệ thống thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
 
 
     // Đặt vào trong enum ErrorCode.java

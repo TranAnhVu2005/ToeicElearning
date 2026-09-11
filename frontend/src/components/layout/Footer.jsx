@@ -32,8 +32,10 @@ const Footer = () => {
             <h4 className="footer-heading">Liên kết nhanh</h4>
             <ul className="footer-links">
               <li><Link to="/"><ArrowRight size={14} /> Trang chủ</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Luyện thi TOEIC</Link></li>
+              <li><Link to="/courses"><ArrowRight size={14} /> Khóa học & Đề thi</Link></li>
+              <li><Link to="/practice"><ArrowRight size={14} /> Luyện tập theo Part</Link></li>
               <li><Link to="/about"><ArrowRight size={14} /> Giới thiệu trung tâm</Link></li>
+              <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ & Hỗ trợ</Link></li>
               <li><Link to="/login"><ArrowRight size={14} /> Đăng nhập hệ thống</Link></li>
               <li><Link to="/register"><ArrowRight size={14} /> Đăng ký tài khoản</Link></li>
             </ul>

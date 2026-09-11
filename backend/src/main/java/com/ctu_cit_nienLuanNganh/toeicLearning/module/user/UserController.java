@@ -1,5 +1,6 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.user;
 
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.CloudinaryService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.dto.UserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserChangePasswordRequest;
@@ -30,7 +31,7 @@ public class UserController {
     @PatchMapping("/updateprofile")
     public ResponseEntity<ApiResponse<UserResponseDTO>> updateProfile(
             @AuthenticationPrincipal User currentUser,
-            @Validated @RequestBody UserUpdateProfileRequest request
+            @Validated @ModelAttribute UserUpdateProfileRequest request
     ) {
         UserResponseDTO response = userService.updateProfile(currentUser, request);
         //Trường hợp dùng put Nếu trả về 200 ok là không chuẩn restful, trả về 204 no content thì mới đúng chuẩn
