@@ -28,7 +28,7 @@ import Toast from '../components/common/Toast';
 const CourseDetailPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { isAdmin, canManageTests } = useAuth();
 
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +64,25 @@ const CourseDetailPage = () => {
       setActionLoading(false);
     }
   };
+
+  const handlePublishTestNow = async () => {
+    try {
+      setActionLoading(true);
+      const res = await examService.publishTest(testId);
+      if (res.code === 1000) {
+        setTest((prev) => ({ ...prev, status: 'PUBLISHED' }));
+        setToast({ type: 'success', message: 'Xuất bản đề thi thành công! Học viên đã có thể tham gia thi.' });
+      } else {
+        setToast({ type: 'error', message: res.message || 'Không thể xuất bản đề thi.' });
+      }
+    } catch (err) {
+      console.error('Publish error:', err);
+      setToast({ type: 'error', message: err.response?.data?.message || 'Lỗi khi xuất bản đề thi.' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -159,11 +178,27 @@ const CourseDetailPage = () => {
               <span className="badge badge-primary" style={{ backgroundColor: '#eab308' }}>
                 Miễn Phí 100%
               </span>
+              {test.status === 'DRAFT' && (
+                <span className="badge badge-warning text-xs font-bold inline-flex items-center gap-1">
+                  <Clock size={13} /> Bản nháp (DRAFT)
+                </span>
+              )}
             </div>
 
-            {/* Quick Admin Actions */}
-            {isAdmin && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Quick Admin / Teacher Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {test.status === 'DRAFT' && canManageTests && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm inline-flex items-center gap-1.5 font-bold"
+                  onClick={handlePublishTestNow}
+                  disabled={actionLoading}
+                >
+                  <CheckCircle2 size={15} /> Xuất bản ngay
+                </button>
+              )}
+
+              {canManageTests && (
                 <Link
                   to={`/admin/tests?editId=${test.id}`}
                   className="btn btn-outline btn-sm inline-flex items-center gap-1.5 font-bold"
@@ -171,6 +206,9 @@ const CourseDetailPage = () => {
                 >
                   <Edit2 size={15} /> Chỉnh sửa đề thi
                 </Link>
+              )}
+
+              {isAdmin && (
                 <button
                   type="button"
                   className="btn btn-outline btn-sm inline-flex items-center gap-1.5 font-bold text-red-600 border-red-300 hover:bg-red-50"
@@ -178,9 +216,10 @@ const CourseDetailPage = () => {
                 >
                   <Trash2 size={15} /> Xóa đề thi
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
 
           {/* Title */}
           <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--text-main, #1e293b)', margin: '0 0 14px 0', lineHeight: 1.3 }}>

@@ -13,14 +13,15 @@ const HeroSection = () => {
           {/* Left Content */}
           <div className="hero-content">
             <div className="hero-badge">
-              <Sparkles size={16} /> Nền tảng học TOEIC hiện đại #1 CTU
+              <Sparkles size={16} /> Nền tảng ToeicElearning - Trường Đại Học Cần Thơ
             </div>
             <h1 className="hero-title">
-              Chinh phục điểm số <span className="highlight">TOEIC 850+</span> dễ dàng hơn bao giờ hết
+              Chinh phục điểm số <span className="highlight">TOEIC 850+</span> cùng ToeicElearning
             </h1>
             <p className="hero-description">
-              Hệ thống hóa toàn bộ kiến thức 7 phần thi TOEIC Listening & Reading. Ngân hàng đề bám sát đề thi thật ETS với lời giải chi tiết và phương pháp phản xạ độc quyền.
+              Hệ thống học và thi trực tuyến ToeicElearning phát triển tại Trường Đại Học Cần Thơ. Ngân hàng đề bám sát đề thi thật ETS với lời giải chi tiết và phương pháp phản xạ độc quyền.
             </p>
+
 
             <div className="hero-actions">
               <Link to={isAuthenticated ? '/practice' : '/register'} className="btn btn-primary btn-lg">

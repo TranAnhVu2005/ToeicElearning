@@ -23,6 +23,8 @@ import UserManagementPage from './pages/admin/UserManagementPage';
 import TestManagementPage from './pages/admin/TestManagementPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+import ErrorBoundary from './components/common/ErrorBoundary';
+
 function App() {
   return (
     <BrowserRouter>
@@ -30,7 +32,8 @@ function App() {
         <div className="app-container">
           <Navbar />
           <main className="main-content">
-            <Routes>
+            <ErrorBoundary>
+              <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
@@ -52,7 +55,7 @@ function App() {
                 }
               />
 
-              {/* Admin Routes */}
+              {/* Admin & Teacher Management Routes */}
               <Route
                 path="/admin/users"
                 element={
@@ -64,17 +67,19 @@ function App() {
               <Route
                 path="/admin/tests"
                 element={
-                  <ProtectedRoute requireAdmin={true}>
+                  <ProtectedRoute requireStaff={true}>
                     <TestManagementPage />
                   </ProtectedRoute>
                 }
               />
 
+
               {/* 404 Route */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-          </main>
-          <Footer />
+          </ErrorBoundary>
+        </main>
+        <Footer />
         </div>
       </AuthProvider>
     </BrowserRouter>

@@ -86,6 +86,13 @@ export const AuthProvider = ({ children }) => {
     user?.roleName === 'ROLE_ADMIN' ||
     user?.role?.roleName === 'ROLE_ADMIN';
 
+  const isTeacher =
+    user?.role === 'ROLE_TEACHER' ||
+    user?.roleName === 'ROLE_TEACHER' ||
+    user?.role?.roleName === 'ROLE_TEACHER';
+
+  const canManageTests = Boolean(isAdmin || isTeacher);
+
   return (
     <AuthContext.Provider
       value={{
@@ -97,12 +104,15 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         isAdmin,
+        isTeacher,
+        canManageTests,
         isAuthenticated: !!token && !!user,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+
 };
 
 export const useAuth = () => {

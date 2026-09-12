@@ -45,12 +45,16 @@ const LoginPage = () => {
       setIsLoading(true);
       setErrorMsg('');
       const loggedUser = await login(formData);
-      // Navigate to admin panel if user is admin, else previous or home page
-      if (loggedUser.role === 'ROLE_ADMIN' || loggedUser.role?.roleName === 'ROLE_ADMIN') {
+      // Navigate to appropriate panel based on role
+      const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
+      if (roleStr === 'ROLE_ADMIN') {
         navigate('/admin/users');
+      } else if (roleStr === 'ROLE_TEACHER') {
+        navigate('/admin/tests');
       } else {
         navigate(redirectPath);
       }
+
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại!';
       setErrorMsg(msg);
@@ -71,9 +75,10 @@ const LoginPage = () => {
                   <BookOpen size={24} color="#ffffff" />
                 </div>
                 <div className="logo-text">
-                  <span className="logo-title" style={{ color: '#fff' }}>TOEIC<span>PRO</span></span>
+                  <span className="logo-title" style={{ color: '#fff' }}>Toeic<span>Elearning</span></span>
                 </div>
               </div>
+
               <h2 className="auth-visual-title">Học Tiếng Anh Thông Minh, Đạt Điểm Cao Dễ Dàng</h2>
               <p className="auth-visual-desc">
                 Đăng nhập để tiếp tục lộ trình học tập được cá nhân hóa và theo dõi tiến độ thi thử hàng tuần.

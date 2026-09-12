@@ -77,3 +77,19 @@ export const uploadAvatar = async (file, oldAvatarUrl = null) => {
 
   throw new Error(response.data?.message || 'Không thể tải ảnh đại diện lên máy chủ.');
 };
+
+/**
+ * Xóa file media (audio, ảnh) trên Cloudinary thông qua backend API
+ * Endpoint: DELETE /api/media/delete?url=...
+ * 
+ * @param {string} url - URL của media Cloudinary cần xóa
+ * @returns {Promise<any>}
+ */
+export const deleteMedia = async (url) => {
+  if (!url || typeof url !== 'string') return;
+  const response = await apiClient.delete('/media/delete', {
+    params: { url: url.trim() },
+  });
+  return response.data;
+};
+

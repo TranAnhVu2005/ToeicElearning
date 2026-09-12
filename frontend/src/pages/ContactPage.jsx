@@ -40,12 +40,13 @@ const ContactPage = () => {
       <div className="page-header-banner">
         <div className="container">
           <span className="badge badge-primary" style={{ marginBottom: 8 }}>Liên hệ & Hỗ trợ</span>
-          <h1 className="page-title">Kết Nối Với Học Viện TOEIC PRO</h1>
+          <h1 className="page-title">Kết Nối Với Hệ Thống ToeicElearning</h1>
           <p className="page-subtitle">
-            Mọi thắc mắc về khóa học, đề thi thử hoặc góp ý phát triển hệ thống xin vui lòng liên hệ với chúng tôi.
+            Dự án học tập và luyện thi TOEIC trực tuyến - Sinh viên Trần Anh Vũ, Trường Đại Học Cần Thơ.
           </p>
         </div>
       </div>
+
 
       <div className="container section-padding">
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)', gap: 36, alignItems: 'start' }}>
@@ -193,7 +194,7 @@ const ContactPage = () => {
                   <div>
                     <h5 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Trụ sở học thuật</h5>
                     <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b', lineHeight: 1.5 }}>
-                      Khoa Công nghệ Thông tin - Trường CNTT&TT, Đại học Cần Thơ, Khu II, Đường 3/2, Q. Ninh Kiều, TP. Cần Thơ
+                      Trường Đại Học Cần Thơ, Khoa Công nghệ Thông tin - Trường CNTT&TT, Khu II, Đường 3/2, Q. Ninh Kiều, TP. Cần Thơ
                     </p>
                   </div>
                 </div>
@@ -205,7 +206,7 @@ const ContactPage = () => {
                   <div>
                     <h5 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Đường dây nóng</h5>
                     <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
-                      +84 (0) 292 3832 663 / +84 912 345 678
+                      0359906510
                     </p>
                   </div>
                 </div>
@@ -217,10 +218,11 @@ const ContactPage = () => {
                   <div>
                     <h5 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Hộp thư điện tử</h5>
                     <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
-                      contact@toeiclearning.edu.vn
+                      trananhvu314159@gmail.com
                     </p>
                   </div>
                 </div>
+
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

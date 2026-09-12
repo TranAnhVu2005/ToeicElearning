@@ -96,9 +96,10 @@ const CoursesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await examService.getTests(page, pageSize, search, sort, dir);
+      const res = await examService.getTests(page, pageSize, search, sort, dir, 'PUBLISHED');
       if (res.code === 1000 && res.data) {
         setTests(res.data.content || []);
+
         setCurrentPage(res.data.pageNumber || 1);
         setTotalPages(res.data.totalPages || 1);
         setTotalElements(res.data.totalElements || 0);
@@ -146,13 +147,20 @@ const CoursesPage = () => {
       {/* Page Header Banner (Academica Page Title) */}
       <div className="page-header-banner">
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
-          <div style={{ maxWidth: 700 }}>
-            <span className="badge badge-primary" style={{ marginBottom: 8 }}>
-              HỌC VIỆN TIẾNG ANH CTU
-            </span>
-            <h1 className="page-title">Khóa Học & Ngân Hàng Đề Thi TOEIC</h1>
-            <p className="page-subtitle" style={{ margin: 0 }}>
-              Danh sách tất cả các bộ đề thi thử trực tuyến chuẩn format ETS mới nhất. Luyện tập có chấm điểm, phân tích và xem lại chi tiết.
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="badge badge-primary text-xs tracking-wider">
+                TRƯỜNG ĐẠI HỌC CẦN THƠ
+              </span>
+              <span className="badge badge-neutral text-xs">
+                ToeicElearning 2026
+              </span>
+            </div>
+            <h1 className="text-3xl font-black text-slate-900 mb-2">
+              Kho Khóa Học & Bộ Đề Thi ToeicElearning
+            </h1>
+            <p className="text-slate-500 text-sm max-w-2xl">
+              Hệ thống luyện thi ToeicElearning trực tuyến chuẩn cấu trúc 7 phần của Trường Đại Học Cần Thơ, có giải thích đáp án chi tiết và tính điểm tự động.
             </p>
           </div>
           {isAdmin && (

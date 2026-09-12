@@ -39,8 +39,9 @@ const FeaturesSection = () => {
     <section className="section-padding features-section bg-gray-50">
       <div className="container">
         <div className="section-header">
-          <span className="section-subtitle">TẠI SAO CHỌN TOEIC PRO?</span>
+          <span className="section-subtitle">TẠI SAO CHỌN TOEICELEARNING?</span>
           <h2 className="section-title">Giải Pháp Luyện Thi Toàn Diện Cho Bạn</h2>
+
           <p className="section-desc">
             Được thiết kế dựa trên phương pháp học tập khoa học, giúp bạn tiết kiệm 50% thời gian ôn luyện mà vẫn đạt hiệu quả tối đa.
           </p>

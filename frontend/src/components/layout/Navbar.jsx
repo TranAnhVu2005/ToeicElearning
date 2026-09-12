@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isTeacher, canManageTests, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -47,17 +47,17 @@ const Navbar = () => {
         <div className="container topbar-container">
           <div className="topbar-left">
             <span>
-              <Mail size={14} /> contact@toeiclearning.edu.vn
+              <Mail size={14} /> trananhvu314159@gmail.com
             </span>
             <span>
-              <Phone size={14} /> +84 (0) 292 3832 663
+              <Phone size={14} /> 0359906510
             </span>
             <span className="hidden-mobile">
-              <MapPin size={14} /> Đại học Cần Thơ (CTU)
+              <MapPin size={14} /> Trường Đại Học Cần Thơ (CTU)
             </span>
           </div>
           <div className="topbar-right">
-            <span>Nền tảng luyện thi TOEIC trực tuyến chuẩn format mới</span>
+            <span>Hệ thống học và luyện thi ToeicElearning chuẩn format mới</span>
           </div>
         </div>
       </div>
@@ -71,10 +71,11 @@ const Navbar = () => {
               <BookOpen size={24} color="#ffffff" />
             </div>
             <div className="logo-text">
-              <span className="logo-title">TOEIC<span>PRO</span></span>
-              <span className="logo-subtitle">Học viện Tiếng Anh CTU</span>
+              <span className="logo-title">Toeic<span>Elearning</span></span>
+              <span className="logo-subtitle">Trường Đại Học Cần Thơ</span>
             </div>
           </Link>
+
 
           {/* Desktop Nav Links */}
           <div className="nav-links">
@@ -93,7 +94,7 @@ const Navbar = () => {
             <NavLink to="/contact" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Liên hệ
             </NavLink>
-            {isAdmin && (
+            {canManageTests && (
               <NavLink to="/admin/tests" className={() => `nav-link ${isAdminActive ? 'active' : ''}`}>
                 Quản trị
               </NavLink>
@@ -127,8 +128,8 @@ const Navbar = () => {
                     <div className="dropdown-user-info">
                       <p className="dropdown-user-name">{user.userName || 'Học viên'}</p>
                       <p className="dropdown-user-email">{user.userEmail}</p>
-                      <span className={`badge ${isAdmin ? 'badge-primary' : 'badge-neutral'}`} style={{ marginTop: 4 }}>
-                        {isAdmin ? 'Quản trị viên' : 'Học viên'}
+                      <span className={`badge ${isAdmin ? 'badge-primary' : isTeacher ? 'badge-secondary' : 'badge-neutral'}`} style={{ marginTop: 4 }}>
+                        {isAdmin ? 'Quản trị viên' : isTeacher ? 'Giảng viên' : 'Học viên'}
                       </span>
                     </div>
 
@@ -142,26 +143,28 @@ const Navbar = () => {
                       <User size={16} /> Hồ sơ cá nhân
                     </Link>
 
+                    {canManageTests && (
+                      <Link
+                        to="/admin/tests"
+                        className="dropdown-item"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <BookOpen size={16} /> Quản lý đề thi
+                      </Link>
+                    )}
+
                     {isAdmin && (
-                      <>
-                        <Link
-                          to="/admin/tests"
-                          className="dropdown-item"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          <BookOpen size={16} /> Quản lý đề thi
-                        </Link>
-                        <Link
-                          to="/admin/users"
-                          className="dropdown-item"
-                          onClick={() => setDropdownOpen(false)}
-                        >
-                          <ShieldCheck size={16} /> Quản lý người dùng
-                        </Link>
-                      </>
+                      <Link
+                        to="/admin/users"
+                        className="dropdown-item"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <ShieldCheck size={16} /> Quản lý người dùng
+                      </Link>
                     )}
 
                     <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', margin: '6px 0' }} />
+
 
                     <button
                       className="dropdown-item dropdown-logout-btn"
@@ -233,7 +236,7 @@ const Navbar = () => {
             >
               Liên hệ
             </NavLink>
-            {isAdmin && (
+            {canManageTests && (
               <NavLink
                 to="/admin/tests"
                 className={`mobile-nav-link ${isAdminActive ? 'active' : ''}`}
@@ -242,6 +245,7 @@ const Navbar = () => {
                 <ShieldCheck size={16} style={{ marginRight: 8 }} /> Quản trị hệ thống
               </NavLink>
             )}
+
 
             {isAuthenticated ? (
               <div className="mobile-auth-section">

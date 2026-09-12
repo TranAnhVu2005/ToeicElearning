@@ -14,18 +14,19 @@ const Footer = () => {
                 <BookOpen size={20} color="#ffffff" />
               </div>
               <span className="logo-title" style={{ color: '#ffffff', fontSize: '1.4rem' }}>
-                TOEIC<span style={{ color: '#48bb78' }}>PRO</span>
+                Toeic<span style={{ color: '#48bb78' }}>Elearning</span>
               </span>
             </div>
             <p className="footer-desc">
-              Hệ thống luyện thi TOEIC trực tuyến chuẩn format quốc tế. Cung cấp bài tập phân loại theo từng Part từ 1 đến 7, giúp học viên nâng cao điểm số vững chắc.
+              ToeicElearning - Hệ thống luyện thi TOEIC trực tuyến của sinh viên Trường Đại Học Cần Thơ. Cung cấp bài tập phân loại theo từng Part từ 1 đến 7, giúp học viên nâng cao điểm số vững chắc.
             </p>
             <div className="footer-contact-info">
-              <p><MapPin size={16} /> Khu 2, Đ. 3/2, P. Xuân Khánh, Q. Ninh Kiều, TP. Cần Thơ</p>
-              <p><Phone size={16} /> +84 (0) 292 3832 663</p>
-              <p><Mail size={16} /> toeic.learning@ctu.edu.vn</p>
+              <p><MapPin size={16} /> Trường Đại Học Cần Thơ, Khu II, Đ. 3/2, P. Xuân Khánh, Q. Ninh Kiều, TP. Cần Thơ</p>
+              <p><Phone size={16} /> 0359906510</p>
+              <p><Mail size={16} /> trananhvu314159@gmail.com</p>
             </div>
           </div>
+
 
           {/* Col 2: Quick Links */}
           <div className="footer-col">
@@ -77,12 +78,13 @@ const Footer = () => {
         {/* Bottom copyright */}
         <div className="footer-bottom">
           <p>
-            © {new Date().getFullYear()} TOEIC Learning Platform. Phát triển phục vụ Niên luận ngành Công nghệ Thông tin - CTU.
+            © {new Date().getFullYear()} ToeicElearning - Trường Đại Học Cần Thơ. Phát triển bởi Trần Anh Vũ (Email: trananhvu314159@gmail.com - SĐT: 0359906510).
           </p>
         </div>
       </div>
     </footer>
   );
 };
+
 
 export default Footer;

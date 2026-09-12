@@ -81,9 +81,10 @@ const RegisterPage = () => {
                   <BookOpen size={24} color="#ffffff" />
                 </div>
                 <div className="logo-text">
-                  <span className="logo-title" style={{ color: '#fff' }}>TOEIC<span>PRO</span></span>
+                  <span className="logo-title" style={{ color: '#fff' }}>Toeic<span>Elearning</span></span>
                 </div>
               </div>
+
               <h2 className="auth-visual-title">Bắt Đầu Hành Trình Chinh Phục TOEIC Hôm Nay</h2>
               <p className="auth-visual-desc">
                 Tạo tài khoản miễn phí để truy cập trọn bộ đề thi thử, lời giải chi tiết và tính năng phân tích điểm số tự động.
@@ -109,8 +110,9 @@ const RegisterPage = () => {
           {/* Right Form Side */}
           <div className="auth-form-side">
             <div className="auth-header">
-              <h2 className="auth-title">Đăng ký tài khoản</h2>
-              <p className="auth-subtitle">Trở thành thành viên TOEIC PRO chỉ trong 1 phút</p>
+              <h1 className="auth-title">Đăng Ký Tài Khoản</h1>
+              <p className="auth-subtitle">Trở thành thành viên ToeicElearning chỉ trong 1 phút</p>
+
             </div>
 
             {errorMsg && (

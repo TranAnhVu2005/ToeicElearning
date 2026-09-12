@@ -8,9 +8,9 @@ const AboutPage = () => {
       <div className="page-header-banner">
         <div className="container">
           <span className="badge badge-primary" style={{ marginBottom: 8 }}>Về chúng tôi</span>
-          <h1 className="page-title">Hệ Thống Luyện Thi TOEIC Trực Tuyến TOEIC PRO</h1>
+          <h1 className="page-title">Hệ Thống Luyện Thi TOEIC Trực Tuyến ToeicElearning</h1>
           <p className="page-subtitle">
-            Dự án nghiên cứu và phát triển thuộc Niên luận ngành Công nghệ Thông tin - Trường Công nghệ Thông tin & Truyền thông, Đại học Cần Thơ.
+            Dự án phát triển bởi sinh viên Trần Anh Vũ (Email: trananhvu314159@gmail.com | SĐT: 0359906510) - Trường Đại Học Cần Thơ.
           </p>
         </div>
       </div>
@@ -24,8 +24,9 @@ const AboutPage = () => {
               Tiếng Anh TOEIC là chuẩn đầu ra thiết yếu đối với sinh viên các trường đại học và là tấm vé thông hành quan trọng khi gia nhập thị trường lao động công nghệ.
             </p>
             <p className="text-muted" style={{ lineHeight: 1.8, marginBottom: 24 }}>
-              Hệ thống TOEIC PRO được xây dựng nhằm cung cấp giải pháp tự học, tự ôn luyện toàn diện, trực quan và dễ tiếp cận nhất. Chúng tôi số hóa các bài tập, phân tích cấu trúc 7 phần thi TOEIC, cung cấp môi trường luyện đề chuẩn xác giúp học viên phát triển toàn diện cả hai kỹ năng Listening và Reading.
+              Hệ thống ToeicElearning được xây dựng nhằm cung cấp giải pháp tự học, tự ôn luyện toàn diện, trực quan và dễ tiếp cận nhất. Chúng tôi số hóa các bài tập, phân tích cấu trúc 7 phần thi TOEIC, cung cấp môi trường luyện đề chuẩn xác giúp học viên phát triển toàn diện cả hai kỹ năng Listening và Reading.
             </p>
+
 
             <div className="about-highlights">
               <div className="highlight-item">

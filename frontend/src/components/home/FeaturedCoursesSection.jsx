@@ -25,10 +25,11 @@ const FeaturedCoursesSection = () => {
   useEffect(() => {
     const fetchFeaturedTests = async () => {
       try {
-        const res = await examService.getTests(1, 3, '', 'createdAt', 'DESC');
+        const res = await examService.getTests(1, 3, '', 'createdAt', 'DESC', 'PUBLISHED');
         if (res.code === 1000 && res.data) {
           setTests(res.data.content || []);
         }
+
       } catch (err) {
         console.error('Error fetching featured tests:', err);
       } finally {

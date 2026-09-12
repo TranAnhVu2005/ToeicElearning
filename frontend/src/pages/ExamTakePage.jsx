@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Flag,
   HelpCircle,
   Award,
@@ -21,11 +23,16 @@ import {
   FileText,
   Layers,
   ArrowLeft,
-  Eye,
   Send,
   Sparkles,
+  Info,
 } from 'lucide-react';
 import { examService } from '../services/examService';
+import {
+  ETS_PART_DIRECTIONS,
+  ETS_GENERAL_DIRECTIONS,
+} from '../constants/etsDirections';
+
 
 // Default mock questions generator if contextQuestions don't have questions array yet (backend gotcha)
 const generateFallbackQuestions = (cq, baseNum) => {
@@ -72,9 +79,9 @@ const generateFallbackQuestions = (cq, baseNum) => {
 
 const ExamTakePage = () => {
   const { testId } = useParams();
-  const navigate = useNavigate();
 
   // Test data & Loading state
+
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -95,6 +102,7 @@ const ExamTakePage = () => {
   const [paletteDrawerOpen, setPaletteDrawerOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showDirections, setShowDirections] = useState(true);
 
   // Audio Player State
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -204,20 +212,9 @@ const ExamTakePage = () => {
       .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Audio Play/Pause helper
-  const handleToggleAudio = () => {
-    if (!audioRef.current) return;
-    if (isPlayingAudio) {
-      audioRef.current.pause();
-      setIsPlayingAudio(false);
-    } else {
-      audioRef.current.play();
-      setIsPlayingAudio(true);
-    }
-  };
-
   // Switch context reset audio
   useEffect(() => {
+
     setIsPlayingAudio(false);
     if (audioRef.current) {
       audioRef.current.pause();
@@ -283,13 +280,13 @@ const ExamTakePage = () => {
       }
     });
 
-    // Approximate ETS Conversion: Scale to 495 each
-    const estimatedListening = listeningTotal > 0
-      ? Math.min(495, Math.round((listeningCorrect / listeningTotal) * 495))
-      : 250;
-    const estimatedReading = readingTotal > 0
-      ? Math.min(495, Math.round((readingCorrect / readingTotal) * 495))
-      : 250;
+    // ETS Standard Score Conversion: 5 to 495 for each section (step of 5), Total 10 to 990
+    const rawL = listeningTotal > 0 ? (listeningCorrect / listeningTotal) * 490 + 5 : 5;
+    const estimatedListening = Math.max(5, Math.min(495, Math.round(rawL / 5) * 5));
+
+    const rawR = readingTotal > 0 ? (readingCorrect / readingTotal) * 490 + 5 : 5;
+    const estimatedReading = Math.max(5, Math.min(495, Math.round(rawR / 5) * 5));
+
     const estimatedTotal = estimatedListening + estimatedReading;
     const accuracy = Math.round((correctCount / flatQuestions.length) * 100);
 
@@ -626,6 +623,119 @@ const ExamTakePage = () => {
               </span>
             </div>
 
+            {/* OFFICIAL ETS DIRECTIONS BOX */}
+            {ETS_PART_DIRECTIONS[currentContext.partNumber] && (
+              <div
+                style={{
+                  backgroundColor: '#0f172a',
+                  color: '#f8fafc',
+                  borderRadius: 12,
+                  padding: 14,
+                  marginBottom: 18,
+                  border: '1px solid #1e293b',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowDirections(!showDirections)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span
+                      style={{
+                        backgroundColor: '#10b981',
+                        color: '#022c22',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      ETS DIRECTIONS
+                    </span>
+                    <strong style={{ fontSize: '0.84rem', color: '#6ee7b7' }}>
+                      PART {currentContext.partNumber} • Hướng dẫn làm bài
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#94a3b8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span>{showDirections ? 'Thu gọn' : 'Xem hướng dẫn'}</span>
+                    {showDirections ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                </div>
+
+                {showDirections && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #334155', fontSize: '0.82rem', lineHeight: 1.6, color: '#cbd5e1' }}>
+                    {/* General Directions for First Question of Section */}
+                    {currentContext.partNumber === 1 && currentContextIndex === 0 && (
+                      <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px dashed #475569', color: '#93c5fd' }}>
+                        <strong style={{ display: 'block', color: '#bfdbfe', marginBottom: 4 }}>
+                          {ETS_GENERAL_DIRECTIONS.listening.title} (45 minutes • 100 questions):
+                        </strong>
+                        <p style={{ margin: 0, fontStyle: 'italic' }}>
+                          "{ETS_GENERAL_DIRECTIONS.listening.directions}"
+                        </p>
+                      </div>
+                    )}
+
+                    {currentContext.partNumber === 5 && currentContextIndex === contexts.findIndex(c => c.partNumber >= 5) && (
+                      <div style={{ marginBottom: 10, paddingBottom: 10, borderBottom: '1px dashed #475569', color: '#93c5fd' }}>
+                        <strong style={{ display: 'block', color: '#bfdbfe', marginBottom: 4 }}>
+                          {ETS_GENERAL_DIRECTIONS.reading.title} (75 minutes • 100 questions):
+                        </strong>
+                        <p style={{ margin: 0, fontStyle: 'italic' }}>
+                          "{ETS_GENERAL_DIRECTIONS.reading.directions}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Part Directions */}
+                    <p style={{ margin: 0, fontStyle: 'italic', color: '#e2e8f0', fontFamily: 'Georgia, serif' }}>
+                      "{ETS_PART_DIRECTIONS[currentContext.partNumber].directions}"
+                    </p>
+
+                    {/* Part 1 Sample Statement */}
+                    {currentContext.partNumber === 1 && ETS_PART_DIRECTIONS[1].sampleStatement && (
+                      <div style={{ marginTop: 8, padding: '8px 12px', borderRadius: 6, backgroundColor: '#1e293b', border: '1px solid #334155', fontSize: '0.78rem' }}>
+                        <span style={{ color: '#fcd34d', fontWeight: 700, display: 'block', marginBottom: 2 }}>
+                          💡 Ví dụ câu mẫu chuẩn đề ETS (Sample Question):
+                        </span>
+                        <span style={{ color: '#cbd5e1', fontStyle: 'italic' }}>
+                          {ETS_PART_DIRECTIONS[1].sampleStatement}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Part 2 Note */}
+                    {currentContext.partNumber === 2 && (
+                      <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6, backgroundColor: '#0369a1', color: '#e0f2fe', fontSize: '0.75rem', fontWeight: 600 }}>
+                        ⚠️ Lưu ý: Part 2 chỉ có 3 phương án A, B hoặc C. Chọn câu phản hồi logic nhất.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* AUDIO PLAYER (For Listening Parts) */}
             {currentContext.audioUrl && (
               <div
@@ -792,7 +902,9 @@ const ExamTakePage = () => {
                         {q.questionNumber}
                       </span>
                       <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1e293b', lineHeight: 1.5 }}>
-                        {q.questionContent}
+                        {currentContext.partNumber === 1
+                          ? 'Mô tả hình ảnh (Lắng nghe 4 câu mô tả A, B, C, D qua audio)'
+                          : q.questionContent}
                       </h4>
                     </div>
 
@@ -822,11 +934,11 @@ const ExamTakePage = () => {
                   {/* Options List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {['A', 'B', 'C', 'D'].map((optKey) => {
-                      const optText = q[`option${optKey}`];
-                      if (!optText && optKey === 'D' && currentContext.partNumber === 2) {
-                        // Part 2 only has A, B, C
+                      if (currentContext.partNumber === 2 && optKey === 'D') {
+                        // Theo chuẩn ETS: Part 2 luôn luôn chỉ có 3 lựa chọn A, B, C!
                         return null;
                       }
+                      const optText = q[`option${optKey}`];
 
                       const isSelected = selectedOption === optKey;
                       const isOptionCorrect = q.correctAnswer === optKey;
@@ -886,7 +998,7 @@ const ExamTakePage = () => {
                             {isSelected ? optKey : optKey}
                           </div>
                           <span style={{ fontSize: '0.93rem', color: optTextColor, fontWeight: isSelected ? 600 : 500, flex: 1 }}>
-                            {optText}
+                            {currentContext.partNumber === 1 ? `(${optKey})` : optText}
                           </span>
                           {isSubmitted && isOptionCorrect && <Check size={18} color="#16a34a" />}
                           {isSubmitted && isSelected && !isOptionCorrect && <X size={18} color="#dc2626" />}
