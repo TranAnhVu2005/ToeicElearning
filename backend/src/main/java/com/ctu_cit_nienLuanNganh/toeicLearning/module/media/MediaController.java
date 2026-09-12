@@ -14,8 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/media")
-//Comment để test api dễ hơn, nhớ gỡ ra
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
 @RequiredArgsConstructor
 public class MediaController {
     private final CloudinaryService cloudinaryService;

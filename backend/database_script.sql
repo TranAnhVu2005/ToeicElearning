@@ -38,6 +38,7 @@ select * from part;
 CREATE TABLE test (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title_test VARCHAR(255) NOT NULL,
+    status VARCHAR(20) DEFAULT 'DRAFT', -- DRAFT (bản nháp), PUBLISHED (đã xuất bản)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -63,6 +64,21 @@ CREATE TABLE `user` (
     
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES role(id)
 );
+
+-- DỮ LIỆU MẪU NGƯỜI DÙNG (MẬT KHẨU TẤT CẢ LÀ: 123456)
+-- Mã hash BCrypt của 123456: $2a$10$7EqJtq98hPqEX7fNZaFWoOhiM58d2m0N/lJ4MfsVvIqFf4Yt1y9tC
+INSERT INTO `user` (user_name, user_email, user_numberphone, user_password, user_avatar, is_locked, role_id) VALUES
+-- 1. Tài khoản Quản trị viên
+('Quản Trị Viên', 'admin@toeic.com', '0901234567', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiM58d2m0N/lJ4MfsVvIqFf4Yt1y9tC', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300', FALSE, (SELECT id FROM role WHERE role_name = 'ROLE_ADMIN' LIMIT 1)),
+
+-- 2. Tài khoản Giáo viên
+('Giáo Viên TOEIC', 'teacher@toeic.com', '0902345678', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiM58d2m0N/lJ4MfsVvIqFf4Yt1y9tC', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300', FALSE, (SELECT id FROM role WHERE role_name = 'ROLE_TEACHER' LIMIT 1)),
+
+-- 3. Tài khoản Học viên (Người dùng thông thường)
+('Trần Anh Vũ', 'student@toeic.com', '0903456789', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiM58d2m0N/lJ4MfsVvIqFf4Yt1y9tC', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300', FALSE, (SELECT id FROM role WHERE role_name = 'ROLE_USER' LIMIT 1)),
+
+-- 4. Tài khoản Học viên bị khóa (Dùng test tính năng khóa/mở khóa)
+('Tài Khoản Bị Khóa', 'locked@toeic.com', '0904567890', '$2a$10$7EqJtq98hPqEX7fNZaFWoOhiM58d2m0N/lJ4MfsVvIqFf4Yt1y9tC', 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=300', TRUE, (SELECT id FROM role WHERE role_name = 'ROLE_USER' LIMIT 1));
 
 -- ==============================================================================
 -- 3. NHÓM LỚP HỌC & BÀI TẬP VỀ NHÀ (Dành cho Giáo viên & Học sinh)
@@ -144,7 +160,7 @@ CREATE TABLE question (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_question_cq FOREIGN KEY (context_question_id) REFERENCES context_question(id)
+    CONSTRAINT fk_question_cq FOREIGN KEY (context_question_id) REFERENCES context_question(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================
