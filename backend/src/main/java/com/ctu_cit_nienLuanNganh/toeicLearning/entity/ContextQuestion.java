@@ -3,10 +3,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
@@ -38,8 +35,14 @@ public class ContextQuestion extends BaseCreatedUpdatedEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "part_id")
+    @JsonIgnore
     private Part part;
 
+    @Column(name = "order_index")
+    @Builder.Default
+    private Integer orderIndex = 0;
+
     @OneToMany(mappedBy = "contextQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("questionNumber ASC") //Lấy câu hỏi theo số thứ tự tăng dần
     private List<Question> questions;
 }

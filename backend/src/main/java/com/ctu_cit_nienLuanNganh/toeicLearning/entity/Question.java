@@ -3,10 +3,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
@@ -37,6 +34,10 @@ public class Question extends BaseCreatedUpdatedEntity {
 
     @Column(name = "explanation", columnDefinition = "TEXT")
     private String explanation;
+
+    @Column(name = "question_number")
+    @Builder.Default
+    private Integer questionNumber = 0;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "context_question_id")

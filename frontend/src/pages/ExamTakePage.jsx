@@ -119,28 +119,104 @@ const ExamTakePage = () => {
           const testData = res.data;
           setTest(testData);
 
-          // Process contextQuestions
+          // Process contextQuestions: Sắp xếp chuẩn xác theo PartNumber và Sequence Index
           const rawCqs = testData.contextQuestions || [];
+          
+          // Trích xuất partNum và seqIndex cho từng context
+          const indexedCqs = rawCqs.map((cq, rawIdx) => {
+            let seqIndex = null;
+            let parsedPartNumber = null;
+
+            // Ưu tiên 1: Trực tiếp lấy orderIndex từ database (1..6, 7..31, 32, 35, 38...)
+            if (cq.orderIndex !== undefined && cq.orderIndex !== null && cq.orderIndex > 0) {
+              seqIndex = cq.orderIndex;
+            }
+
+            const tagMatch = cq.paragraph?.match(/<!--CQ_SEQ:(?:P(\d+):I)?(\d+)-->/);
+            if (tagMatch) {
+              if (tagMatch[1]) parsedPartNumber = parseInt(tagMatch[1], 10);
+              if (seqIndex === null) seqIndex = parseInt(tagMatch[2], 10);
+            }
+
+            let partNum = parsedPartNumber;
+            if (!partNum && cq.part?.namePart) {
+              partNum = parseInt(cq.part.namePart.replace(/\D/g, ''), 10) || null;
+            }
+            if (!partNum) {
+              const q0 = cq.questions?.[0];
+              if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && cq.questions?.length === 1) {
+                partNum = 1;
+              } else if (cq.questions?.length === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
+                partNum = 2;
+              } else if (cq.questions?.length === 3 && cq.audioUrl) {
+                partNum = cq.transcript?.toLowerCase().includes('talk') || cq.transcript?.toLowerCase().includes('announcement') ? 4 : 3;
+              } else if (cq.questions?.length === 4 && cq.paragraph) {
+                partNum = 6;
+              } else if (cq.paragraph && !cq.audioUrl) {
+                partNum = 7;
+              } else {
+                partNum = 5;
+              }
+            }
+
+            if (seqIndex === null) {
+              // Phục hồi thứ tự cho đề thi cũ chưa có tag:
+              if (partNum === 1) {
+                if (cq.imageUrl?.includes('jr8avpv1t07h5onbd1lg') || cq.transcript?.includes('tray of food') || cq.transcript?.includes('wearing a jacket')) seqIndex = 0;
+                else if (cq.imageUrl?.includes('ni7cfw4nrybfiyw7jbno') || cq.transcript?.includes('filing cabinet') || cq.transcript?.includes('looking at a book')) seqIndex = 1;
+                else if (cq.imageUrl?.includes('punzfz0kyesbdmqcmeyp') || cq.transcript?.includes('phone up to her ear') || cq.transcript?.includes('pouring a beverage')) seqIndex = 2;
+                else if (cq.imageUrl?.includes('dzrumhmqeboueoetml2a') || cq.transcript?.includes('wooden crate') || cq.transcript?.includes('vegetables')) seqIndex = 3;
+                else if (cq.imageUrl?.includes('k8za9txlmfok3pxwlfe6') || cq.transcript?.includes('Painting supplies') || cq.transcript?.includes('can of paint')) seqIndex = 4;
+                else if (cq.imageUrl?.includes('rnfufvsgmvyoy7lk1qz7') || cq.transcript?.includes('fallen branches') || cq.transcript?.includes('pooled on a path')) seqIndex = 5;
+              } else if (partNum === 2) {
+                const qMatch = cq.transcript?.match(/Question #(\d+)/i);
+                if (qMatch) seqIndex = parseInt(qMatch[1], 10) - 7;
+              } else if (partNum === 3) {
+                const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
+                if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 32) / 3);
+              } else if (partNum === 4) {
+                const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
+                if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 71) / 3);
+              }
+              if (seqIndex === null || isNaN(seqIndex)) seqIndex = rawIdx;
+            }
+
+            return {
+              ...cq,
+              _partNum: partNum,
+              _seqIndex: seqIndex,
+              paragraph: (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, ''),
+            };
+          });
+
+          // Sắp xếp: Part 1 -> Part 7, và trong từng Part theo đúng thứ tự câu (_seqIndex)
+          indexedCqs.sort((a, b) => {
+            if (a._partNum !== b._partNum) return a._partNum - b._partNum;
+            return (a._seqIndex ?? 0) - (b._seqIndex ?? 0);
+          });
+
           let qCounter = 1;
-          const processedContexts = rawCqs.map((cq, cqIdx) => {
-            const partNum = cq.part?.namePart
-              ? parseInt(cq.part.namePart.replace(/\D/g, ''), 10) || 1
-              : cq.part?.partNumber || (cqIdx < 4 ? cqIdx + 1 : 5);
+          const processedContexts = indexedCqs.map((cq, cqIdx) => {
+            const partNum = cq._partNum;
             
             // Check if backend already has questions
             let questions = [];
             if (cq.questions && Array.isArray(cq.questions) && cq.questions.length > 0) {
-              questions = cq.questions.map((q, qIdx) => ({
-                id: q.id || q.questionID || `q-${cqIdx}-${qIdx}`,
-                questionNumber: qCounter++,
-                questionContent: q.questionContent || `Câu hỏi số ${qCounter - 1}`,
-                optionA: q.optionA || 'A',
-                optionB: q.optionB || 'B',
-                optionC: q.optionC || 'C',
-                optionD: q.optionD || 'D',
-                correctAnswer: q.correctAnswer || 'A',
-                explanation: q.explanation || 'Chưa có lời giải chi tiết cho câu hỏi này.',
-              }));
+              questions = cq.questions.map((q, qIdx) => {
+                const assignedQNum = q.questionNumber && q.questionNumber > 0 ? q.questionNumber : qCounter;
+                qCounter = assignedQNum + 1;
+                return {
+                  id: q.id || q.questionID || `q-${cqIdx}-${qIdx}`,
+                  questionNumber: assignedQNum,
+                  questionContent: q.questionContent || `Câu hỏi số ${assignedQNum}`,
+                  optionA: q.optionA || 'A',
+                  optionB: q.optionB || 'B',
+                  optionC: q.optionC || 'C',
+                  optionD: q.optionD || 'D',
+                  correctAnswer: q.correctAnswer || 'A',
+                  explanation: q.explanation || 'Chưa có lời giải chi tiết cho câu hỏi này.',
+                };
+              });
             } else {
               // Graceful fallback questions to allow taking test seamlessly
               const generated = generateFallbackQuestions(cq, qCounter);
@@ -766,7 +842,7 @@ const ExamTakePage = () => {
             )}
 
             {/* IMAGE VIEWER (e.g. Part 1 Photographs or Diagram Questions) */}
-            {currentContext.imageUrl && (
+            {currentContext.imageUrl && currentContext.partNumber !== 2 && (
               <div
                 style={{
                   marginBottom: 20,
@@ -904,6 +980,8 @@ const ExamTakePage = () => {
                       <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1e293b', lineHeight: 1.5 }}>
                         {currentContext.partNumber === 1
                           ? 'Mô tả hình ảnh (Lắng nghe 4 câu mô tả A, B, C, D qua audio)'
+                          : currentContext.partNumber === 2
+                          ? 'Mark your answer on your answer sheet.'
                           : q.questionContent}
                       </h4>
                     </div>
@@ -998,7 +1076,7 @@ const ExamTakePage = () => {
                             {isSelected ? optKey : optKey}
                           </div>
                           <span style={{ fontSize: '0.93rem', color: optTextColor, fontWeight: isSelected ? 600 : 500, flex: 1 }}>
-                            {currentContext.partNumber === 1 ? `(${optKey})` : optText}
+                            {currentContext.partNumber <= 2 ? `(${optKey})` : optText}
                           </span>
                           {isSubmitted && isOptionCorrect && <Check size={18} color="#16a34a" />}
                           {isSubmitted && isSelected && !isOptionCorrect && <X size={18} color="#dc2626" />}

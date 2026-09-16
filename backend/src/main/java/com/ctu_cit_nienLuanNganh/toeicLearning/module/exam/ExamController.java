@@ -5,6 +5,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageParams;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TestStatus;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.service.ExamService;
 import jakarta.validation.Valid;
@@ -13,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/exam")
@@ -37,8 +36,14 @@ public class ExamController {
                 .ok(ApiResponse.success("Xem chi tiết test",test));
     }
 
-    
-
+    @GetMapping("/{testID}/parts/{partID}") // Định nghĩa rõ ràng đường dẫn lấy part của test
+    public ResponseEntity<ApiResponse<PartForUserResponseDTO>> getPart(
+            @PathVariable String testID,
+            @PathVariable String partID
+    ){
+        PartForUserResponseDTO result = examService.getPart(testID, partID);
+        return ResponseEntity.ok(ApiResponse.success("Lấy part thành công", result));
+    }
     @PostMapping("/create")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseEntity<ApiResponse<Void>> createFullTest(@Valid @RequestBody CreateTestRequest request){

@@ -30,5 +30,6 @@ public class Test extends BaseCreatedUpdatedEntity {
 
     // Sau khi xóa test thì các contextquestion của nó cũng mất đi
     @OneToMany(mappedBy = "test", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orderIndex ASC")
     private List<ContextQuestion> contextQuestions;
 }

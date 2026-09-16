@@ -178,74 +178,32 @@ const PART_DEFINITIONS = Object.fromEntries(
 const createFreshQuestion = (qNum = 1, partNumber = 1) => {
   const isPart2 = partNumber === 2;
 
-  let defaultContent = `Câu hỏi trắc nghiệm số ${qNum}...`;
-  let defaultOptA = 'Lựa chọn A';
-  let defaultOptB = 'Lựa chọn B';
-  let defaultOptC = 'Lựa chọn C';
-  let defaultOptD = 'Lựa chọn D';
+  let defaultContent = '';
+  let defaultOptA = '';
+  let defaultOptB = '';
+  let defaultOptC = '';
+  let defaultOptD = '';
   let defaultCorrectAnswer = 'A';
-  let defaultExplanation = 'Giải thích chi tiết vì sao đáp án này chính xác theo ngữ cảnh...';
+  let defaultExplanation = '';
 
   if (partNumber === 1) {
+    // Theo chuẩn ETS: Đề thi không in câu hỏi chữ và 4 lựa chọn cho Part 1
     defaultContent = 'Select the statement that best describes what you see in the picture.';
     defaultOptA = '(A)';
     defaultOptB = '(B)';
     defaultOptC = '(C)';
     defaultOptD = '(D)';
-    defaultCorrectAnswer = 'C';
-    defaultExplanation = 'Đáp án đúng là (C). Thí sinh lắng nghe 4 câu mô tả trong audio để chọn câu mô tả chính xác nhất.';
+    defaultCorrectAnswer = 'A';
+    defaultExplanation = '';
   } else if (isPart2) {
+    // Theo chuẩn ETS: Đề thi không in câu hỏi chữ cho Part 2, chỉ có 3 phương án A, B, C
     defaultContent = 'Mark your answer on your answer sheet.';
     defaultOptA = '(A)';
     defaultOptB = '(B)';
     defaultOptC = '(C)';
-    defaultOptD = ''; // Part 2 ETS KHÔNG CÓ LỰA CHỌN D!
-    defaultCorrectAnswer = 'B';
-    defaultExplanation = 'Đáp án đúng là (B). Phản hồi logic và phù hợp nhất với câu hỏi trong đoạn ghi âm.';
-  } else if (partNumber === 3) {
-    defaultContent = qNum === 1
-      ? 'Where does the conversation most likely take place?'
-      : qNum === 2
-      ? 'What problem does the woman mention?'
-      : 'What will the man probably do next?';
-    defaultOptA = 'At a dental clinic';
-    defaultOptB = 'In an electronics store';
-    defaultOptC = 'At an airport check-in counter';
-    defaultOptD = 'In a hotel lobby';
-  } else if (partNumber === 4) {
-    defaultContent = qNum === 1
-      ? 'Who is most likely giving this announcement?'
-      : qNum === 2
-      ? 'What is scheduled to happen at 3:00 P.M.?'
-      : 'How can listeners get more information?';
-    defaultOptA = 'A tour guide';
-    defaultOptB = 'A factory manager';
-    defaultOptC = 'A museum director';
-    defaultOptD = 'An airline flight attendant';
-  } else if (partNumber === 5) {
-    defaultContent = 'All team members must submit their evaluation reports _______ Friday afternoon.';
-    defaultOptA = 'before';
-    defaultOptB = 'prior';
-    defaultOptC = 'ahead';
-    defaultOptD = 'advance';
-  } else if (partNumber === 6) {
-    defaultContent = `Điền từ/câu thích hợp nhất vào chỗ trống số [${qNum}] trong đoạn văn.`;
-    defaultOptA = 'promptly';
-    defaultOptB = 'prompt';
-    defaultOptC = 'promptness';
-    defaultOptD = 'prompter';
-  } else if (partNumber === 7) {
-    defaultContent = qNum === 1
-      ? 'What is the main purpose of the notice?'
-      : qNum === 2
-      ? 'What requirement is stated in the second paragraph?'
-      : qNum === 3
-      ? 'According to the passage, when should candidates apply?'
-      : 'What is indicated about the newly opened branch?';
-    defaultOptA = 'To announce a new employee promotion';
-    defaultOptB = 'To inform staff about upcoming office renovations';
-    defaultOptC = 'To advertise a seasonal discount program';
-    defaultOptD = 'To introduce changes to the travel policy';
+    defaultOptD = '';
+    defaultCorrectAnswer = 'A';
+    defaultExplanation = '';
   }
 
   return {
@@ -268,22 +226,10 @@ const createFreshContextQuestion = (partNumber = 1) => {
   );
 
   return {
-    audioUrl:
-      partNumber <= 4
-        ? 'https://res.cloudinary.com/demo/video/upload/v1/toeic/audio/part1_q1.mp3'
-        : '',
-    imageUrl:
-      partNumber === 1
-        ? 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&auto=format&fit=crop&q=80'
-        : '',
-    paragraph:
-      partNumber >= 6
-        ? 'MEMORANDUM\nTo: All Department Staff\nFrom: Executive Office\nDate: October 15\nSubject: Office Renovation Schedule\n\nPlease be advised that renovations on the 3rd floor will commence next Monday. All employees are requested to relocate their workspace temporarily...'
-        : '',
-    transcript:
-      partNumber <= 4
-        ? 'A woman is standing near the office desk reviewing documents with her colleague.'
-        : '',
+    audioUrl: '',
+    imageUrl: '',
+    paragraph: '',
+    transcript: '',
     questions,
   };
 };
@@ -310,10 +256,81 @@ export const createFreshPart1Blank = () => ({
   })),
 });
 
+// Khởi tạo Part 2 có sẵn đúng 25 câu trống chuẩn ETS (Câu 7 -> 31, mỗi câu 1 Audio lẻ, KHÔNG ẢNH, 3 đáp án cố định A, B, C)
+export const createFreshPart2Blank = () => ({
+  partNumber: 2,
+  contextQuestions: Array.from({ length: 25 }, (_, i) => ({
+    audioUrl: '',
+    imageUrl: '',
+    paragraph: '',
+    transcript: '',
+    questions: [
+      {
+        questionContent: 'Mark your answer on your answer sheet.',
+        optionA: '(A)',
+        optionB: '(B)',
+        optionC: '(C)',
+        optionD: '',
+        correctAnswer: 'A',
+        explanation: '',
+      },
+    ],
+  })),
+});
+
+// Khởi tạo Part 3 có sẵn đúng 13 bài nghe (Câu 32 -> 70, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
+export const createFreshPart3Blank = () => ({
+  partNumber: 3,
+  contextQuestions: Array.from({ length: 13 }, (_, i) => ({
+    audioUrl: '',
+    imageUrl: '', // Ảnh biểu đồ/lịch trình tùy chọn
+    paragraph: '',
+    transcript: '',
+    questions: Array.from({ length: 3 }, (_, qIdx) => ({
+      questionContent: '',
+      optionA: '',
+      optionB: '',
+      optionC: '',
+      optionD: '',
+      correctAnswer: 'A',
+      explanation: '',
+    })),
+  })),
+});
+
+// Khởi tạo Part 4 có sẵn đúng 10 bài nghe (Câu 71 -> 100, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
+export const createFreshPart4Blank = () => ({
+  partNumber: 4,
+  contextQuestions: Array.from({ length: 10 }, (_, i) => ({
+    audioUrl: '',
+    imageUrl: '', // Ảnh minh họa/bảng biểu tùy chọn
+    paragraph: '',
+    transcript: '',
+    questions: Array.from({ length: 3 }, (_, qIdx) => ({
+      questionContent: '',
+      optionA: '',
+      optionB: '',
+      optionC: '',
+      optionD: '',
+      correctAnswer: 'A',
+      explanation: '',
+    })),
+  })),
+});
+
+// Khởi tạo trọn bộ 100 câu Listening (Part 1 -> Part 4) trống chuẩn ETS
+export const createFreshListening100Blank = () => [
+  createFreshPart1Blank(),
+  createFreshPart2Blank(),
+  createFreshPart3Blank(),
+  createFreshPart4Blank(),
+];
+
 const createFreshPart = (partNumber = 1) => {
-  if (partNumber === 1) {
-    return createFreshPart1Blank();
-  }
+  if (partNumber === 1) return createFreshPart1Blank();
+  if (partNumber === 2) return createFreshPart2Blank();
+  if (partNumber === 3) return createFreshPart3Blank();
+  if (partNumber === 4) return createFreshPart4Blank();
   return {
     partNumber,
     contextQuestions: [createFreshContextQuestion(partNumber)],
@@ -330,45 +347,13 @@ export const createFullETSPart = (partNumber = 1) => {
     return createFreshPart1Blank();
   } else if (partNumber === 2) {
     // 25 câu hỏi x 1 câu = 25 câu (3 lựa chọn A, B, C)
-    for (let i = 1; i <= 25; i++) {
-      contexts.push({
-        audioUrl: 'https://res.cloudinary.com/demo/video/upload/v1/toeic/audio/part1_q1.mp3',
-        imageUrl: '',
-        paragraph: '',
-        transcript: `Question #${i + 6}: Where did you leave the contract? - (A) On page 3. (B) On Mr. David's desk. (C) Tomorrow morning.`,
-        questions: [createFreshQuestion(i + 6, 2)],
-      });
-    }
+    return createFreshPart2Blank();
   } else if (partNumber === 3) {
     // 13 đoạn hội thoại x 3 câu = 39 câu
-    for (let i = 1; i <= 13; i++) {
-      contexts.push({
-        audioUrl: 'https://res.cloudinary.com/demo/video/upload/v1/toeic/audio/part1_q1.mp3',
-        imageUrl: '',
-        paragraph: '',
-        transcript: `Conversation #${i} (Questions ${31 + (i - 1) * 3 + 1} - ${31 + i * 3}): Man and Woman discussing project deadline...`,
-        questions: [
-          createFreshQuestion(1, 3),
-          createFreshQuestion(2, 3),
-          createFreshQuestion(3, 3),
-        ],
-      });
-    }
+    return createFreshPart3Blank();
   } else if (partNumber === 4) {
     // 10 bài độc thoại x 3 câu = 30 câu
-    for (let i = 1; i <= 10; i++) {
-      contexts.push({
-        audioUrl: 'https://res.cloudinary.com/demo/video/upload/v1/toeic/audio/part1_q1.mp3',
-        imageUrl: '',
-        paragraph: '',
-        transcript: `Short Talk #${i} (Questions ${70 + (i - 1) * 3 + 1} - ${70 + i * 3}): Airport announcement regarding flight boarding...`,
-        questions: [
-          createFreshQuestion(1, 4),
-          createFreshQuestion(2, 4),
-          createFreshQuestion(3, 4),
-        ],
-      });
-    }
+    return createFreshPart4Blank();
   } else if (partNumber === 5) {
     // 30 câu độc lập = 30 câu
     for (let i = 1; i <= 30; i++) {
@@ -386,7 +371,7 @@ export const createFullETSPart = (partNumber = 1) => {
       contexts.push({
         audioUrl: '',
         imageUrl: '',
-        paragraph: `TEXT PASSAGE #${i} (Questions ${130 + (i - 1) * 4 + 1} - ${130 + i * 4})\nDear Valued Customer,\nThank you for choosing our logistics services. We are pleased to announce [1] that our delivery speed has improved significantly...`,
+        paragraph: '',
         transcript: '',
         questions: [
           createFreshQuestion(1, 6),
@@ -398,17 +383,12 @@ export const createFullETSPart = (partNumber = 1) => {
     }
   } else if (partNumber === 7) {
     // 54 câu: 10 bài đơn (29 câu) + 5 bài đôi/ba (25 câu)
-    // 10 bài đọc đơn:
-    // 2 bài 2 câu = 4 câu
-    // 3 bài 3 câu = 9 câu
-    // 5 bài 4 câu = 20 câu -> Tổng 33 hoặc phân bổ 10 bài x ~2.9 câu = 29 câu
-    // Chuẩn ETS 2026: Single Passages: 10 bài (29 câu), Multiple Passages: 5 bài x 5 câu (25 câu).
     const singlePassageQCounts = [2, 2, 3, 3, 3, 3, 3, 3, 3, 4]; // 29 câu
-    singlePassageQCounts.forEach((qCount, idx) => {
+    singlePassageQCounts.forEach((qCount) => {
       contexts.push({
         audioUrl: '',
         imageUrl: '',
-        paragraph: `SINGLE PASSAGE #${idx + 1} (${qCount} câu hỏi)\nNOTICE / EMAIL\nTo: All Employees\nSubject: Quarterly Performance Review Schedule...`,
+        paragraph: '',
         transcript: '',
         questions: Array.from({ length: qCount }, (_, qIdx) => createFreshQuestion(qIdx + 1, 7)),
       });
@@ -416,11 +396,10 @@ export const createFullETSPart = (partNumber = 1) => {
 
     // 5 bài đọc đa đoạn (2 bài đoạn đôi + 3 bài đoạn ba): mỗi bài đúng 5 câu = 25 câu
     for (let i = 1; i <= 5; i++) {
-      const isTriple = i > 2;
       contexts.push({
         audioUrl: '',
         imageUrl: '',
-        paragraph: `${isTriple ? 'TRIPLE PASSAGES (3 ĐOẠN VĂN)' : 'DOUBLE PASSAGES (2 ĐOẠN VĂN)'} #${i} (5 câu hỏi)\nĐoạn 1: Thư chào giá (Quotation)\nĐoạn 2: Email phản hồi (Confirmation Email)\n${isTriple ? 'Đoạn 3: Biên lai thanh toán (Payment Receipt)\n' : ''}...`,
+        paragraph: '',
         transcript: '',
         questions: Array.from({ length: 5 }, (_, qIdx) => createFreshQuestion(qIdx + 1, 7)),
       });
@@ -438,41 +417,40 @@ export const createFull200QuestionETSTest = () => {
   return [1, 2, 3, 4, 5, 6, 7].map((pNum) => createFullETSPart(pNum));
 };
 
-// Hàm khởi tạo Mini Test rút gọn 50 câu theo đúng tỷ lệ chuẩn ETS
+// Hàm khởi tạo Mini Test rút gọn 50 câu theo đúng tỷ lệ chuẩn ETS (hoàn toàn trống sẵn sàng nhập)
 export const createMiniETSTest50Questions = () => {
-  // Part 1: 3 câu, Part 2: 7 câu, Part 3: 9 câu (3 bài x 3), Part 4: 6 câu (2 bài x 3), Part 5: 8 câu, Part 6: 4 câu (1 bài x 4), Part 7: 13 câu (2 bài đơn x 3, 1 bài đơn x 2, 1 bài kép x 5)
   return [
     {
       partNumber: 1,
-      contextQuestions: Array.from({ length: 3 }, (_, i) => ({
+      contextQuestions: Array.from({ length: 3 }, () => ({
         ...createFreshContextQuestion(1),
-        transcript: `Mini Test Part 1 - Question #${i + 1}`,
+        transcript: '',
       })),
     },
     {
       partNumber: 2,
-      contextQuestions: Array.from({ length: 7 }, (_, i) => ({
+      contextQuestions: Array.from({ length: 7 }, () => ({
         ...createFreshContextQuestion(2),
-        transcript: `Mini Test Part 2 - Question #${i + 4}`,
+        transcript: '',
       })),
     },
     {
       partNumber: 3,
-      contextQuestions: Array.from({ length: 3 }, (_, i) => ({
+      contextQuestions: Array.from({ length: 3 }, () => ({
         ...createFreshContextQuestion(3),
-        transcript: `Mini Test Part 3 - Conversation #${i + 1}`,
+        transcript: '',
       })),
     },
     {
       partNumber: 4,
-      contextQuestions: Array.from({ length: 2 }, (_, i) => ({
+      contextQuestions: Array.from({ length: 2 }, () => ({
         ...createFreshContextQuestion(4),
-        transcript: `Mini Test Part 4 - Short Talk #${i + 1}`,
+        transcript: '',
       })),
     },
     {
       partNumber: 5,
-      contextQuestions: Array.from({ length: 8 }, (_, i) => ({
+      contextQuestions: Array.from({ length: 8 }, () => ({
         ...createFreshContextQuestion(5),
       })),
     },
@@ -485,22 +463,22 @@ export const createMiniETSTest50Questions = () => {
       contextQuestions: [
         {
           ...createFreshContextQuestion(7),
-          paragraph: 'MINI TEST - SINGLE PASSAGE 1 (3 câu hỏi)\nMEMORANDUM: Staff Workshop Details...',
+          paragraph: '',
           questions: [createFreshQuestion(1, 7), createFreshQuestion(2, 7), createFreshQuestion(3, 7)],
         },
         {
           ...createFreshContextQuestion(7),
-          paragraph: 'MINI TEST - SINGLE PASSAGE 2 (3 câu hỏi)\nJOB ANNOUNCEMENT: Marketing Manager Needed...',
+          paragraph: '',
           questions: [createFreshQuestion(1, 7), createFreshQuestion(2, 7), createFreshQuestion(3, 7)],
         },
         {
           ...createFreshContextQuestion(7),
-          paragraph: 'MINI TEST - SINGLE PASSAGE 3 (2 câu hỏi)\nINVOICE & RECEIPT...',
+          paragraph: '',
           questions: [createFreshQuestion(1, 7), createFreshQuestion(2, 7)],
         },
         {
           ...createFreshContextQuestion(7),
-          paragraph: 'MINI TEST - DOUBLE PASSAGES (5 câu hỏi)\nPassage 1: Conference Program\nPassage 2: Registration Confirmation...',
+          paragraph: '',
           questions: Array.from({ length: 5 }, (_, idx) => createFreshQuestion(idx + 1, 7)),
         },
       ],
@@ -651,6 +629,70 @@ const TestManagementPage = () => {
     });
   };
 
+  // Khởi tạo lại 25 câu trống chuẩn Part 2
+  const handleResetPart2To25 = () => {
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        return createFreshPart2Blank();
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã thiết lập Part 2 với đúng 25 câu hỏi phản hồi (Câu 7 -> 31, 1 Audio/câu, 3 lựa chọn A-B-C)!',
+    });
+  };
+
+  // Khởi tạo lại 13 đoạn hội thoại chuẩn Part 3 (39 câu)
+  const handleResetPart3To13 = () => {
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        return createFreshPart3Blank();
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã thiết lập Part 3 với đúng 13 đoạn hội thoại (Câu 32 -> 70, 1 Audio/bài, 3 câu hỏi/bài)!',
+    });
+  };
+
+  // Khởi tạo lại 10 bài nói ngắn chuẩn Part 4 (30 câu)
+  const handleResetPart4To10 = () => {
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        return createFreshPart4Blank();
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã thiết lập Part 4 với đúng 10 bài nói ngắn (Câu 71 -> 100, 1 Audio/bài, 3 câu hỏi/bài)!',
+    });
+  };
+
+  // Chuẩn hóa Part đang chọn về đúng cấu trúc chuẩn ETS
+  const handleResetActivePartToBlank = () => {
+    const activeP = formParts[activePartIndex];
+    if (!activeP) return;
+    const pNum = activeP.partNumber;
+    if (pNum === 1) handleResetPart1To6();
+    else if (pNum === 2) handleResetPart2To25();
+    else if (pNum === 3) handleResetPart3To13();
+    else if (pNum === 4) handleResetPart4To10();
+    else handleAddFullETSPart(pNum);
+  };
+
+  // Khởi tạo trọn bộ 100 câu Listening (Part 1 -> Part 4) trống
+  const handleResetToListening100Blank = () => {
+    setFormParts(createFreshListening100Blank());
+    setActivePartIndex(0);
+    setToast({
+      type: 'success',
+      message: 'Đã khởi tạo trọn bộ 100 câu Listening TOEIC (Part 1, 2, 3, 4) sẵn sàng tải Audio, Ảnh và nhập đáp án!',
+    });
+  };
+
   // Auto-dismiss toast
   useEffect(() => {
     if (toast) {
@@ -736,10 +778,43 @@ const TestManagementPage = () => {
 
         // Group contextQuestions by partNumber
         const partMap = {};
-        (fullTest.contextQuestions || []).forEach((cq) => {
-          const pNum = cq.part?.namePart
-            ? parseInt(cq.part.namePart.replace(/\D/g, '')) || 1
-            : 1;
+        (fullTest.contextQuestions || []).forEach((cq, rawIdx) => {
+          // Trích xuất Part Number và Thứ tự câu hỏi (Sequence Index / orderIndex)
+          let seqIndex = null;
+          let parsedPartNumber = null;
+
+          // Ưu tiên 1: Trực tiếp lấy orderIndex đã lưu trong database
+          if (cq.orderIndex !== undefined && cq.orderIndex !== null && cq.orderIndex > 0) {
+            seqIndex = cq.orderIndex;
+          }
+
+          const tagMatch = cq.paragraph?.match(/<!--CQ_SEQ:(?:P(\d+):I)?(\d+)-->/);
+          if (tagMatch) {
+            if (tagMatch[1]) parsedPartNumber = parseInt(tagMatch[1], 10);
+            if (seqIndex === null) seqIndex = parseInt(tagMatch[2], 10);
+          }
+
+          let pNum = parsedPartNumber;
+          if (!pNum && cq.part?.namePart) {
+            pNum = parseInt(cq.part.namePart.replace(/\D/g, '')) || null;
+          }
+          if (!pNum) {
+            // Heuristic phát hiện Part tự động siêu thông minh nếu database cũ không lưu part_id
+            const q0 = cq.questions?.[0];
+            if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && cq.questions?.length === 1) {
+              pNum = 1;
+            } else if (cq.questions?.length === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
+              pNum = 2;
+            } else if (cq.questions?.length === 3 && cq.audioUrl) {
+              pNum = cq.transcript?.toLowerCase().includes('talk') || cq.transcript?.toLowerCase().includes('announcement') ? 4 : 3;
+            } else if (cq.questions?.length === 4 && cq.paragraph) {
+              pNum = 6;
+            } else if (cq.paragraph && !cq.audioUrl) {
+              pNum = 7;
+            } else {
+              pNum = 5;
+            }
+          }
 
           if (!partMap[pNum]) {
             partMap[pNum] = {
@@ -748,10 +823,45 @@ const TestManagementPage = () => {
             };
           }
 
+          if (seqIndex === null) {
+            // Phục hồi thứ tự thông minh cho các câu hỏi đã lưu trước đây:
+            if (pNum === 1) {
+              // Phục hồi thứ tự Part 1 đề ETS 2026 Test 1 qua ảnh hoặc transcript:
+              if (cq.imageUrl?.includes('jr8avpv1t07h5onbd1lg') || cq.transcript?.includes('tray of food') || cq.transcript?.includes('wearing a jacket')) {
+                seqIndex = 0; // Câu 1
+              } else if (cq.imageUrl?.includes('ni7cfw4nrybfiyw7jbno') || cq.transcript?.includes('filing cabinet') || cq.transcript?.includes('looking at a book')) {
+                seqIndex = 1; // Câu 2
+              } else if (cq.imageUrl?.includes('punzfz0kyesbdmqcmeyp') || cq.transcript?.includes('phone up to her ear') || cq.transcript?.includes('pouring a beverage')) {
+                seqIndex = 2; // Câu 3
+              } else if (cq.imageUrl?.includes('dzrumhmqeboueoetml2a') || cq.transcript?.includes('wooden crate') || cq.transcript?.includes('vegetables')) {
+                seqIndex = 3; // Câu 4
+              } else if (cq.imageUrl?.includes('k8za9txlmfok3pxwlfe6') || cq.transcript?.includes('Painting supplies') || cq.transcript?.includes('can of paint')) {
+                seqIndex = 4; // Câu 5
+              } else if (cq.imageUrl?.includes('rnfufvsgmvyoy7lk1qz7') || cq.transcript?.includes('fallen branches') || cq.transcript?.includes('pooled on a path')) {
+                seqIndex = 5; // Câu 6
+              }
+            } else if (pNum === 2) {
+              const qMatch = cq.transcript?.match(/Question #(\d+)/i);
+              if (qMatch) seqIndex = parseInt(qMatch[1], 10) - 7;
+            } else if (pNum === 3) {
+              const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
+              if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 32) / 3);
+            } else if (pNum === 4) {
+              const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
+              if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 71) / 3);
+            }
+            if (seqIndex === null || isNaN(seqIndex)) {
+              seqIndex = rawIdx;
+            }
+          }
+
+          const cleanParagraph = (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '');
+
           partMap[pNum].contextQuestions.push({
+            _seqIndex: seqIndex,
             audioUrl: cq.audioUrl || '',
             imageUrl: cq.imageUrl || '',
-            paragraph: cq.paragraph || '',
+            paragraph: cleanParagraph,
             transcript: cq.transcript || '',
             questions:
               cq.questions && cq.questions.length > 0
@@ -778,6 +888,10 @@ const TestManagementPage = () => {
         if (partsArr.length > 0) {
           // Sort parts in ascending order (Part 1, Part 2, ... Part 7)
           partsArr.sort((a, b) => a.partNumber - b.partNumber);
+          // Sắp xếp contextQuestions trong từng Part theo đúng thứ tự câu (_seqIndex)
+          partsArr.forEach((p) => {
+            p.contextQuestions.sort((a, b) => (a._seqIndex ?? 0) - (b._seqIndex ?? 0));
+          });
           setFormParts(partsArr);
         } else {
           setFormParts([createFreshPart(1), createFreshPart(5)]);
@@ -880,7 +994,20 @@ const TestManagementPage = () => {
             q.optionB = '(B)';
             q.optionC = '(C)';
             q.optionD = '(D)';
+          } else if (part.partNumber === 2) {
+            // Part 2 theo chuẩn ETS: Câu hỏi và 3 câu đáp án nằm hoàn toàn trong audio
+            if (!q.questionContent?.trim()) {
+              q.questionContent = 'Mark your answer on your answer sheet.';
+            }
+            q.optionA = '(A)';
+            q.optionB = '(B)';
+            q.optionC = '(C)';
+            q.optionD = ''; // Part 2 ETS tuyệt đối KHÔNG có lựa chọn D!
+            if (q.correctAnswer === 'D') {
+              q.correctAnswer = 'A';
+            }
           } else {
+            // Part 3, 4, 5, 6, 7: Các câu hỏi đều có nội dung chữ và các đáp án A, B, C, D
             if (!q.questionContent?.trim()) {
               setToast({
                 type: 'error',
@@ -888,27 +1015,19 @@ const TestManagementPage = () => {
               });
               return;
             }
-            if (!q.optionA?.trim() || !q.optionB?.trim()) {
+            if (!q.optionA?.trim() || !q.optionB?.trim() || !q.optionC?.trim()) {
               setToast({
                 type: 'error',
-                message: `Các câu hỏi trong Part ${part.partNumber} phải có tối thiểu đáp án A và B!`,
+                message: `Các câu hỏi trong Part ${part.partNumber} phải có tối thiểu các đáp án A, B và C!`,
               });
               return;
             }
-          }
-          if (isPart2) {
-            // Part 2 theo chuẩn ETS: Phải có đủ A, B, C, không có D
-            if (!q.optionC?.trim()) {
+            if (part.partNumber !== 2 && !q.optionD?.trim()) {
               setToast({
                 type: 'error',
-                message: `Part 2 chuẩn ETS yêu cầu phải có đủ 3 lựa chọn A, B và C!`,
+                message: `Các câu hỏi trong Part ${part.partNumber} yêu cầu phải có đủ 4 lựa chọn A, B, C, D!`,
               });
               return;
-            }
-            // Đảm bảo optionD rỗng và đáp án chỉ thuộc A, B, C
-            q.optionD = '';
-            if (q.correctAnswer === 'D') {
-              q.correctAnswer = 'A';
             }
           }
         }
@@ -918,18 +1037,52 @@ const TestManagementPage = () => {
     try {
       setActionLoading(true);
       // Clean payload: Đảm bảo Part 2 không mang theo dữ liệu thừa của Option D
-      const cleanedParts = formParts.map((part) => ({
-        ...part,
-        contextQuestions: (part.contextQuestions || []).map((cq) => ({
-          ...cq,
-          questions: (cq.questions || []).map((q) => ({
-            ...q,
-            optionD: part.partNumber === 2 ? '' : q.optionD || '',
-            correctAnswer:
-              part.partNumber === 2 && q.correctAnswer === 'D' ? 'A' : q.correctAnswer || 'A',
-          })),
-        })),
-      }));
+      // Đồng thời gắn orderIndex (số câu bắt đầu của cụm: 1..6, 7..31, 32, 35, 38...) và questionNumber (1..200)
+      const getPartStartNumber = (pNum) => {
+        switch (pNum) {
+          case 1: return 1;
+          case 2: return 7;
+          case 3: return 32;
+          case 4: return 71;
+          case 5: return 101;
+          case 6: return 131;
+          case 7: return 147;
+          default: return 1;
+        }
+      };
+
+      const cleanedParts = formParts.map((part) => {
+        let runningQNum = getPartStartNumber(part.partNumber);
+
+        const processedContextQuestions = (part.contextQuestions || []).map((cq) => {
+          const rawParagraph = (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '').trim();
+          const startQOfContext = runningQNum;
+          const taggedParagraph = `<!--CQ_SEQ:P${part.partNumber}:I${startQOfContext}-->${rawParagraph ? '\n' + rawParagraph : ''}`;
+
+          const questionsWithNumbers = (cq.questions || []).map((q) => {
+            const currentQNum = runningQNum++;
+            return {
+              ...q,
+              questionNumber: currentQNum,
+              optionD: part.partNumber === 2 ? '' : q.optionD || '',
+              correctAnswer:
+                part.partNumber === 2 && q.correctAnswer === 'D' ? 'A' : q.correctAnswer || 'A',
+            };
+          });
+
+          return {
+            ...cq,
+            orderIndex: startQOfContext,
+            paragraph: taggedParagraph,
+            questions: questionsWithNumbers,
+          };
+        });
+
+        return {
+          ...part,
+          contextQuestions: processedContextQuestions,
+        };
+      });
 
       const payload = {
         titleTest: formTitle.trim(),
@@ -1699,6 +1852,1458 @@ const TestManagementPage = () => {
     );
   };
 
+  // ==============================================================================
+  // GIAO DIỆN CHUYÊN BIỆT CHO PART 2: 25 CÂU HỎI PHẢN HỒI (CÂU 7 - 31) CHUẨN ETS
+  // ==============================================================================
+  const renderPart2QuestionsBuilder = () => {
+    return (
+      <div className="space-y-6">
+        {/* Quick Question Navigation Bar & Studio Overview */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-black text-sm border border-sky-500/30">
+                P2
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2">
+                  <span>Part 2: Question - Response Studio</span>
+                  <span className="text-[11px] font-semibold text-sky-400 bg-sky-950/80 px-2 py-0.5 rounded-full border border-sky-500/30">
+                    25 Câu hỏi phản hồi ngắn (Câu 07 - 31) • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-0.5">
+                  Mỗi câu gồm 1 File MP3 riêng lẻ. Thí sinh nghe 1 câu hỏi và 3 phương án phản hồi (A, B, C). Không có đáp án D, không có hình ảnh.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart2To25}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+              title="Khởi tạo lại đủ 25 câu hỏi phản hồi chuẩn Part 2"
+            >
+              <RotateCcw size={13} className="text-sky-400" /> Chuẩn hóa 25 câu Part 2
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Câu 7 đến Câu 31) */}
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-semibold text-slate-400">Chuyển nhanh đến câu:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePart.contextQuestions.map((cq, idx) => {
+                const q = cq.questions?.[0];
+                const qNum = idx + 7;
+                const isComplete = Boolean(cq.audioUrl && q?.correctAnswer);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p2-card-${idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border ${
+                      isComplete
+                        ? 'bg-sky-950/80 text-sky-300 border-sky-500/40 hover:bg-sky-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isComplete ? 'bg-sky-400 ring-2 ring-sky-400/30' : 'bg-amber-400'
+                      }`}
+                    />
+                    <span>#{qNum}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Danh sách 25 Cards Câu Hỏi Part 2 Tinh Gọn */}
+        <div className="space-y-4">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            const q = cq.questions?.[0] || {
+              questionContent: 'Mark your answer on your answer sheet.',
+              optionA: '(A)',
+              optionB: '(B)',
+              optionC: '(C)',
+              optionD: '',
+              correctAnswer: 'A',
+              explanation: '',
+            };
+
+            const qNum = cqIdx + 7;
+            const hasAudio = Boolean(cq.audioUrl);
+            const hasTranscript = Boolean(cq.transcript?.trim());
+            const hasExplanation = Boolean(q.explanation?.trim());
+
+            const audioKey = `p2-${cqIdx}-audio`;
+            const showAudioInput = showUrlInputs[audioKey];
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p2-card-${cqIdx}`}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition-all duration-200 p-5 space-y-4 relative border-l-4 border-l-sky-500"
+              >
+                {/* Header Card */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="bg-slate-900 text-sky-400 font-black text-xs px-3 py-1 rounded-lg tracking-wider flex items-center gap-1 shadow-2xs">
+                      <span>CÂU #{String(qNum).padStart(2, '0')}</span>
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">
+                        Question - Response #{qNum}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        1 Audio MP3 riêng lẻ • 3 Lựa chọn (A, B, C)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasAudio
+                          ? 'bg-sky-50 text-sky-700 border-sky-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasAudio ? '✓ Đã có audio' : 'Chưa có audio'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasTranscript
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasTranscript ? '✓ Transcript' : 'Chưa transcript'}
+                    </span>
+                    <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-sky-100/80 text-sky-800 border border-sky-200">
+                      Đáp án: <strong>({q.correctAnswer || 'A'})</strong>
+                    </span>
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-all ml-1"
+                        title="Xóa câu hỏi này"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hàng 1: Audio & Bộ Chọn Đáp Án Đúng (A, B, C) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center bg-slate-50/70 p-4 rounded-xl border border-slate-200/70">
+                  {/* Cột Trái: Trình Tải & Phát Audio (7/12) */}
+                  <div className="lg:col-span-7 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                        <Volume2 size={14} className="text-sky-600" />
+                        <span>File Audio Câu #{qNum} (MP3 riêng lẻ)</span>
+                        <span className="text-[10px] text-sky-600 font-semibold bg-sky-50 px-1.5 py-0.5 rounded">
+                          Bắt buộc
+                        </span>
+                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleShowUrl(audioKey)}
+                          className="text-[11px] font-semibold text-slate-500 hover:text-sky-600 inline-flex items-center gap-1"
+                        >
+                          <Link2 size={12} />
+                          {showAudioInput ? 'Ẩn URL' : 'Dán URL MP3'}
+                        </button>
+
+                        <label
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border ${
+                            uploadingKey === `${activePartIndex}-${cqIdx}-audio`
+                              ? 'bg-slate-200 text-slate-400 border-slate-300'
+                              : 'bg-sky-600 hover:bg-sky-700 text-white border-sky-700 shadow-2xs'
+                          }`}
+                        >
+                          <UploadCloud size={13} />
+                          <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
+                          <input
+                            type="file"
+                            accept="audio/*,.mp3,.wav,.m4a"
+                            className="hidden"
+                            disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
+                            onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {showAudioInput && (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="https://... dán link mp3 trực tiếp vào đây..."
+                          value={cq.audioUrl || ''}
+                          onChange={(e) =>
+                            handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', e.target.value)
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg border border-sky-300 text-xs bg-sky-50/30 outline-none focus:border-sky-500 text-slate-800 font-mono"
+                        />
+                      </div>
+                    )}
+
+                    {cq.audioUrl ? (
+                      <div className="flex items-center gap-2 pt-1">
+                        <audio src={cq.audioUrl} controls className="w-full h-8 rounded-md" />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', '')}
+                          className="text-slate-400 hover:text-red-500 p-1"
+                          title="Xóa audio"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-amber-600 block italic">
+                        ⚠️ Chưa có file nghe MP3 cho câu #{qNum}. Hãy tải file hoặc dán URL.
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Cột Phải: Bộ Chọn Đáp Án Đúng Chuẩn 3 Lựa Chọn (5/12) */}
+                  <div className="lg:col-span-5 flex flex-col justify-center items-start lg:items-end border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-3 lg:pt-0 lg:pl-5 space-y-1.5">
+                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                      <CheckCircle2 size={14} className="text-sky-600" />
+                      <span>Đáp án đúng (Key):</span>
+                    </label>
+                    <span className="text-[11px] text-slate-400 block mb-1">
+                      Part 2 chỉ có 3 phương án (A, B, C)
+                    </span>
+
+                    {/* 3 Nút A, B, C Inline Nhỏ Gọn */}
+                    <div className="inline-flex p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 gap-1.5 shadow-inner">
+                      {['A', 'B', 'C'].map((opt) => {
+                        const isSelected = (q.correctAnswer || 'A') === opt;
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'correctAnswer', opt);
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionA', '(A)');
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionB', '(B)');
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionC', '(C)');
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionD', '');
+                            }}
+                            className={`w-11 h-8 rounded-lg font-black text-xs transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                              isSelected
+                                ? 'bg-sky-600 text-white shadow-xs ring-1 ring-sky-700 scale-105'
+                                : 'bg-white/80 text-slate-700 hover:bg-white hover:text-slate-900 border border-transparent'
+                            }`}
+                            title={`Chọn (${opt}) làm đáp án đúng cho câu #${qNum}`}
+                          >
+                            <span>{opt}</span>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hàng 2: Transcript Âm Thanh & Giải Thích Chi Tiết (2 Cột) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
+                  {/* Transcript Âm Thanh (6/12) */}
+                  <div className="lg:col-span-6 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                        <FileText size={13} className="text-indigo-600" />
+                        <span>Lời thoại âm thanh (Transcript)</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = `Question: Where is the meeting room located?\n(A) At 10:00 A.M.\n(B) On the second floor, down the hall.\n(C) Yes, I attended it yesterday.`;
+                          handleUpdateContextField(
+                            activePartIndex,
+                            cqIdx,
+                            'transcript',
+                            cq.transcript ? `${cq.transcript}\n${template}` : template
+                          );
+                        }}
+                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition-all inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} /> + Mẫu thoại (Q - A - B - C)
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={3}
+                      placeholder="Dán nội dung câu hỏi và các lựa chọn phản hồi trong audio (tùy chọn)..."
+                      value={cq.transcript || ''}
+                      onChange={(e) =>
+                        handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
+                      }
+                      className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Giải Thích & Dịch Nghĩa (6/12) */}
+                  <div className="lg:col-span-6 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                        <BookOpen size={13} className="text-sky-600" />
+                        <span>Giải thích chi tiết & Bẫy cần tránh</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = `Dịch nghĩa: \n-> Phân tích: Đáp án đúng là (${q.correctAnswer || 'A'}) vì...\n-> Bẫy: `;
+                          handleUpdateQuestionField(
+                            activePartIndex,
+                            cqIdx,
+                            0,
+                            'explanation',
+                            q.explanation ? `${q.explanation}\n${template}` : template
+                          );
+                        }}
+                        className="text-[11px] font-bold text-sky-700 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-2 py-0.5 rounded-md border border-sky-200 transition-all inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} /> + Mẫu giải thích
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={3}
+                      placeholder="Dịch nghĩa câu hỏi, phân tích vì sao chọn đáp án này, giải thích bẫy đồng âm / lặp từ / trả lời Yes-No cho câu hỏi Wh-..."
+                      value={q.explanation || ''}
+                      onChange={(e) =>
+                        handleUpdateQuestionField(
+                          activePartIndex,
+                          cqIdx,
+                          0,
+                          'explanation',
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Nút thêm câu nếu chưa đủ 25 câu */}
+        {activePart.contextQuestions.length < 25 && (
+          <div className="p-5 rounded-2xl border border-dashed border-sky-300 bg-sky-50/50 text-center space-y-2.5">
+            <span className="text-xs font-bold text-sky-900 block">
+              Hiện tại Part 2 đang có {activePart.contextQuestions.length} / 25 câu hỏi phản hồi chuẩn ETS.
+            </span>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> + Thêm Câu Hỏi Lẻ (Câu #{activePart.contextQuestions.length + 7})
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart2To25}
+                className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Khởi tạo lại đủ 25 câu trống chuẩn Part 2
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ==============================================================================
+  // GIAO DIỆN CHUYÊN BIỆT CHO PART 3: 13 ĐOẠN HỘI THOẠI (CÂU 32 - 70) CHUẨN ETS
+  // ==============================================================================
+  const renderPart3QuestionsBuilder = () => {
+    return (
+      <div className="space-y-6">
+        {/* Quick Question Navigation Bar & Studio Overview */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-black text-sm border border-indigo-500/30">
+                P3
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2">
+                  <span>Part 3: Short Conversations Studio</span>
+                  <span className="text-[11px] font-semibold text-indigo-400 bg-indigo-950/80 px-2 py-0.5 rounded-full border border-indigo-500/30">
+                    13 Đoạn hội thoại ngắn (Câu 32 - 70) • 39 Câu hỏi • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-0.5">
+                  Mỗi đoạn hội thoại gồm 1 File MP3 phát chung cho cụm đúng 3 câu hỏi trắc nghiệm (A, B, C, D). Có thể đính kèm ảnh biểu đồ/lịch trình (Graphic).
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart3To13}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+              title="Khởi tạo lại đủ 13 đoạn hội thoại chuẩn Part 3"
+            >
+              <RotateCcw size={13} className="text-indigo-400" /> Chuẩn hóa 13 đoạn Part 3
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Đoạn 1 đến Đoạn 13) */}
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-semibold text-slate-400">Chuyển nhanh đến bài nghe:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePart.contextQuestions.map((cq, idx) => {
+                const startQ = 32 + idx * 3;
+                const endQ = startQ + 2;
+                const isComplete = Boolean(cq.audioUrl && cq.questions?.length >= 3 && cq.questions.every((q) => q.questionContent && q.correctAnswer));
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p3-card-${idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border ${
+                      isComplete
+                        ? 'bg-indigo-950/80 text-indigo-300 border-indigo-500/40 hover:bg-indigo-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isComplete ? 'bg-indigo-400 ring-2 ring-indigo-400/30' : 'bg-amber-400'
+                      }`}
+                    />
+                    <span>Đoạn {idx + 1} ({startQ}-{endQ})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Danh sách 13 Đoạn Hội Thoại Part 3 */}
+        <div className="space-y-6">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            const startQ = 32 + cqIdx * 3;
+            const endQ = startQ + 2;
+            const hasAudio = Boolean(cq.audioUrl);
+            const hasImage = Boolean(cq.imageUrl);
+            const hasTranscript = Boolean(cq.transcript?.trim());
+
+            const audioKey = `p3-${cqIdx}-audio`;
+            const imageKey = `p3-${cqIdx}-image`;
+            const showAudioInput = showUrlInputs[audioKey];
+            const showImageInput = showUrlInputs[imageKey];
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p3-card-${cqIdx}`}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-6 space-y-6 relative border-l-4 border-l-indigo-500"
+              >
+                {/* Header Đoạn Hội Thoại */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 text-indigo-400 font-black text-xs px-3 py-1.5 rounded-lg tracking-wider flex items-center gap-1.5 shadow-2xs">
+                      <span>ĐOẠN #{String(cqIdx + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-slate-900 block">
+                        Đoạn hội thoại ngắn #{cqIdx + 1} • Câu {startQ} - {endQ}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        1 File Audio chung cho cả 3 câu • Có thể đính kèm ảnh biểu đồ/lịch trình
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasAudio
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasAudio ? '✓ Đã có Audio' : 'Chưa có Audio'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasImage
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-slate-50 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasImage ? '✓ Có ảnh Graphic' : 'Không có ảnh'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasTranscript
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasTranscript ? '✓ Transcript' : 'Chưa transcript'}
+                    </span>
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all ml-1"
+                        title="Xóa bài nghe này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* KHỐI 1: NGỮ CẢNH BÀI NGHE (AUDIO + ẢNH GRAPHIC TÙY CHỌN + TRANSCRIPT) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                  {/* Media (Audio & Graphic Image) (6/12) */}
+                  <div className="lg:col-span-6 space-y-4">
+                    {/* File Audio Chung */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <Volume2 size={14} className="text-indigo-600" />
+                          <span>Audio phát chung cho 3 câu ({startQ} - {endQ})</span>
+                          <span className="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-1.5 py-0.5 rounded">
+                            Bắt buộc
+                          </span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleShowUrl(audioKey)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-indigo-600 inline-flex items-center gap-1"
+                          >
+                            <Link2 size={12} />
+                            {showAudioInput ? 'Ẩn URL' : 'Dán URL MP3'}
+                          </button>
+
+                          <label
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border ${
+                              uploadingKey === `${activePartIndex}-${cqIdx}-audio`
+                                ? 'bg-slate-200 text-slate-400 border-slate-300'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-700 shadow-2xs'
+                            }`}
+                          >
+                            <UploadCloud size={13} />
+                            <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
+                            <input
+                              type="file"
+                              accept="audio/*,.mp3,.wav,.m4a"
+                              className="hidden"
+                              disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
+                              onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {showAudioInput && (
+                        <input
+                          type="text"
+                          placeholder="https://... dán link mp3 của đoạn hội thoại vào đây..."
+                          value={cq.audioUrl || ''}
+                          onChange={(e) =>
+                            handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', e.target.value)
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg border border-indigo-300 text-xs bg-indigo-50/30 outline-none focus:border-indigo-500 font-mono"
+                        />
+                      )}
+
+                      {cq.audioUrl ? (
+                        <div className="flex items-center gap-2">
+                          <audio src={cq.audioUrl} controls className="w-full h-8 rounded-md" />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', '')}
+                            className="text-slate-400 hover:text-red-500 p-1"
+                            title="Xóa audio"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-amber-600 block italic">
+                          ⚠️ Chưa có audio. Cụm 3 câu hỏi này dùng chung 1 file audio hội thoại.
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Hình Ảnh Graphic (Tùy Chọn) */}
+                    <div className="space-y-2 pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <ImageIcon size={14} className="text-blue-600" />
+                          <span>Hình ảnh biểu đồ / Lịch trình (Graphic - Tùy chọn)</span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleShowUrl(imageKey)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
+                          >
+                            <Link2 size={12} />
+                            {showImageInput ? 'Ẩn URL' : 'Dán URL ảnh'}
+                          </button>
+
+                          <label
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border ${
+                              uploadingKey === `${activePartIndex}-${cqIdx}-image`
+                                ? 'bg-slate-200 text-slate-400 border-slate-300'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-2xs'
+                            }`}
+                          >
+                            <UploadCloud size={13} />
+                            <span>{uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải...' : 'Tải ảnh graphic'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
+                              onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {showImageInput && (
+                        <input
+                          type="text"
+                          placeholder="https://... dán link ảnh graphic nếu có..."
+                          value={cq.imageUrl || ''}
+                          onChange={(e) =>
+                            handleUpdateContextField(activePartIndex, cqIdx, 'imageUrl', e.target.value)
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg border border-blue-300 text-xs bg-blue-50/30 outline-none focus:border-blue-500 font-mono"
+                        />
+                      )}
+
+                      {cq.imageUrl ? (
+                        <div className="relative rounded-xl border border-slate-200 bg-white p-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={cq.imageUrl}
+                              alt="Graphic"
+                              className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-slate-50 cursor-pointer"
+                              onClick={() => setPreviewImageModalUrl(cq.imageUrl)}
+                            />
+                            <div>
+                              <span className="text-xs font-bold text-slate-800 block">
+                                Đã đính kèm ảnh Graphic
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImageModalUrl(cq.imageUrl)}
+                                className="text-[11px] text-blue-600 hover:underline inline-flex items-center gap-1 font-semibold mt-0.5"
+                              >
+                                <ZoomIn size={12} /> Xem phóng to ảnh gốc
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateContextField(activePartIndex, cqIdx, 'imageUrl', '')}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            title="Xóa ảnh này (nếu đoạn thoại không có biểu đồ)"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 block italic">
+                          ℹ️ Đoạn thoại này không có ảnh biểu đồ. (Nếu đề bài có hình minh họa "Look at the graphic", hãy bấm nút tải ảnh).
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Transcript Âm Thanh Của Toàn Bộ Đoạn Hội Thoại (6/12) */}
+                  <div className="lg:col-span-6 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                        <FileText size={14} className="text-indigo-600" />
+                        <span>Lời thoại đoạn hội thoại (Audio Transcript)</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = `Man: Good morning, Sarah. Did you get a chance to look at the budget proposal for next quarter?\nWoman: Yes, Mark. I reviewed it, but I noticed that travel expenses are much higher than usual.\nMan: That's because our sales team needs to visit clients in Europe next month.\nWoman: I see. In that case, let's schedule a meeting with the department director to approve it.`;
+                          handleUpdateContextField(
+                            activePartIndex,
+                            cqIdx,
+                            'transcript',
+                            cq.transcript ? `${cq.transcript}\n\n${template}` : template
+                          );
+                        }}
+                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition-all inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} /> + Mẫu đối thoại (Man/Woman)
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={4}
+                      placeholder="Dán toàn bộ lời thoại đối thoại trong audio này (tùy chọn)..."
+                      value={cq.transcript || ''}
+                      onChange={(e) =>
+                        handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
+                      }
+                      className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                {/* KHỐI 2: CỤM ĐÚNG 3 CÂU HỎI TRẮC NGHIỆM */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={14} className="text-indigo-600" />
+                      <span>3 Câu hỏi trắc nghiệm của Đoạn #{cqIdx + 1} (Câu {startQ} - {endQ})</span>
+                    </span>
+
+                    {cq.questions.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1"
+                      >
+                        <Plus size={13} /> Thêm câu hỏi
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {cq.questions.map((q, qIdx) => {
+                      const itemQNum = startQ + qIdx;
+                      return (
+                        <div
+                          key={qIdx}
+                          className="bg-slate-50/80 rounded-xl border border-slate-200/90 p-4 space-y-3 shadow-2xs"
+                        >
+                          {/* Dòng 1: Tiêu đề câu hỏi & Nội dung câu hỏi */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-indigo-950 bg-indigo-100/90 px-2.5 py-0.5 rounded-md border border-indigo-200">
+                                CÂU #{itemQNum}
+                              </span>
+
+                              {cq.questions.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveQuestion(activePartIndex, cqIdx, qIdx)}
+                                  className="text-xs text-red-500 hover:text-red-700"
+                                  title="Xóa câu này"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+
+                            <input
+                              type="text"
+                              required
+                              placeholder={`Nhập nội dung câu hỏi #${itemQNum} (ví dụ: Where does the conversation take place?)...`}
+                              value={q.questionContent || ''}
+                              onChange={(e) =>
+                                handleUpdateQuestionField(
+                                  activePartIndex,
+                                  cqIdx,
+                                  qIdx,
+                                  'questionContent',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            />
+                          </div>
+
+                          {/* Dòng 2: 4 Đáp án A, B, C, D (Grid 2 cột) */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                            {['A', 'B', 'C', 'D'].map((optKey) => (
+                              <div key={optKey} className="flex items-center gap-2">
+                                <span className="w-5 font-black text-slate-600 text-center">
+                                  ({optKey})
+                                </span>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder={`Nội dung lựa chọn (${optKey})`}
+                                  value={q[`option${optKey}`] || ''}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activePartIndex,
+                                      cqIdx,
+                                      qIdx,
+                                      `option${optKey}`,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs outline-none focus:border-indigo-500"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Dòng 3: Chọn Đáp Án Đúng & Giải Thích Cho Câu Này */}
+                          <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-200">
+                            {/* Bộ Chọn Đáp Án Đúng (Segmented Button Mini) */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-700">Đáp án đúng:</span>
+                              <div className="inline-flex p-0.5 rounded-lg bg-slate-200/80 border border-slate-300 gap-1">
+                                {['A', 'B', 'C', 'D'].map((opt) => {
+                                  const isSelected = (q.correctAnswer || 'A') === opt;
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() =>
+                                        handleUpdateQuestionField(
+                                          activePartIndex,
+                                          cqIdx,
+                                          qIdx,
+                                          'correctAnswer',
+                                          opt
+                                        )
+                                      }
+                                      className={`w-8 h-7 rounded-md font-black text-xs transition-all flex items-center justify-center cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-indigo-600 text-white shadow-2xs font-black scale-105'
+                                          : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Ô Lời Giải Thích / Dịch Nghĩa */}
+                            <div className="flex-1 min-w-[260px]">
+                              <input
+                                type="text"
+                                placeholder={`Giải thích / Dịch nghĩa vì sao chọn (${q.correctAnswer || 'A'})...`}
+                                value={q.explanation || ''}
+                                onChange={(e) =>
+                                  handleUpdateQuestionField(
+                                    activePartIndex,
+                                    cqIdx,
+                                    qIdx,
+                                    'explanation',
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Nút thêm bài nghe nếu chưa đủ 13 bài */}
+        {activePart.contextQuestions.length < 13 && (
+          <div className="p-5 rounded-2xl border border-dashed border-indigo-300 bg-indigo-50/50 text-center space-y-2.5">
+            <span className="text-xs font-bold text-indigo-900 block">
+              Hiện tại Part 3 đang có {activePart.contextQuestions.length} / 13 bài nghe (Chuẩn ETS: 13 đoạn hội thoại x 3 câu = 39 câu).
+            </span>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> + Thêm Đoạn Hội Thoại (Đoạn #{activePart.contextQuestions.length + 1})
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart3To13}
+                className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Khởi tạo lại đủ 13 đoạn trống chuẩn Part 3
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ==============================================================================
+  // GIAO DIỆN CHUYÊN BIỆT CHO PART 4: 10 BÀI NÓI CHUYỆN (CÂU 71 - 100) CHUẨN ETS
+  // ==============================================================================
+  const renderPart4QuestionsBuilder = () => {
+    return (
+      <div className="space-y-6">
+        {/* Quick Question Navigation Bar & Studio Overview */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm border border-amber-500/30">
+                P4
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2">
+                  <span>Part 4: Short Talks Studio</span>
+                  <span className="text-[11px] font-semibold text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-500/30">
+                    10 Bài nói chuyện ngắn (Câu 71 - 100) • 30 Câu hỏi • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-0.5">
+                  Mỗi bài nói gồm 1 File MP3 độc thoại phát chung cho cụm đúng 3 câu hỏi trắc nghiệm (A, B, C, D). Có thể đính kèm ảnh sơ đồ/hóa đơn/lịch trình (Graphic).
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart4To10}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+              title="Khởi tạo lại đủ 10 bài nói ngắn chuẩn Part 4"
+            >
+              <RotateCcw size={13} className="text-amber-400" /> Chuẩn hóa 10 bài Part 4
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Bài 1 đến Bài 10) */}
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-semibold text-slate-400">Chuyển nhanh đến bài nói:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePart.contextQuestions.map((cq, idx) => {
+                const startQ = 71 + idx * 3;
+                const endQ = startQ + 2;
+                const isComplete = Boolean(cq.audioUrl && cq.questions?.length >= 3 && cq.questions.every((q) => q.questionContent && q.correctAnswer));
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p4-card-${idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border ${
+                      isComplete
+                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isComplete ? 'bg-amber-400 ring-2 ring-amber-400/30' : 'bg-slate-500'
+                      }`}
+                    />
+                    <span>Bài {idx + 1} ({startQ}-{endQ})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Danh sách 10 Bài Nói Chuyện Part 4 */}
+        <div className="space-y-6">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            const startQ = 71 + cqIdx * 3;
+            const endQ = startQ + 2;
+            const hasAudio = Boolean(cq.audioUrl);
+            const hasImage = Boolean(cq.imageUrl);
+            const hasTranscript = Boolean(cq.transcript?.trim());
+
+            const audioKey = `p4-${cqIdx}-audio`;
+            const imageKey = `p4-${cqIdx}-image`;
+            const showAudioInput = showUrlInputs[audioKey];
+            const showImageInput = showUrlInputs[imageKey];
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p4-card-${cqIdx}`}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-6 space-y-6 relative border-l-4 border-l-amber-500"
+              >
+                {/* Header Bài Nói Chuyện */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 text-amber-400 font-black text-xs px-3 py-1.5 rounded-lg tracking-wider flex items-center gap-1.5 shadow-2xs">
+                      <span>BÀI #{String(cqIdx + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-slate-900 block">
+                        Bài nói chuyện ngắn #{cqIdx + 1} • Câu {startQ} - {endQ}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        1 File Audio độc thoại chung cho cả 3 câu • Có thể đính kèm ảnh sơ đồ/hóa đơn
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasAudio
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasAudio ? '✓ Đã có Audio' : 'Chưa có Audio'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasImage
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-slate-50 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasImage ? '✓ Có ảnh Graphic' : 'Không có ảnh'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasTranscript
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasTranscript ? '✓ Transcript' : 'Chưa transcript'}
+                    </span>
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all ml-1"
+                        title="Xóa bài nói này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* KHỐI 1: NGỮ CẢNH BÀI NÓI (AUDIO + ẢNH GRAPHIC TÙY CHỌN + TRANSCRIPT) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                  {/* Media (Audio & Graphic Image) (6/12) */}
+                  <div className="lg:col-span-6 space-y-4">
+                    {/* File Audio Chung */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <Volume2 size={14} className="text-amber-600" />
+                          <span>Audio độc thoại cho 3 câu ({startQ} - {endQ})</span>
+                          <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 px-1.5 py-0.5 rounded">
+                            Bắt buộc
+                          </span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleShowUrl(audioKey)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-amber-600 inline-flex items-center gap-1"
+                          >
+                            <Link2 size={12} />
+                            {showAudioInput ? 'Ẩn URL' : 'Dán URL MP3'}
+                          </button>
+
+                          <label
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border ${
+                              uploadingKey === `${activePartIndex}-${cqIdx}-audio`
+                                ? 'bg-slate-200 text-slate-400 border-slate-300'
+                                : 'bg-amber-600 hover:bg-amber-700 text-white border-amber-700 shadow-2xs'
+                            }`}
+                          >
+                            <UploadCloud size={13} />
+                            <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
+                            <input
+                              type="file"
+                              accept="audio/*,.mp3,.wav,.m4a"
+                              className="hidden"
+                              disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
+                              onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {showAudioInput && (
+                        <input
+                          type="text"
+                          placeholder="https://... dán link mp3 của bài nói chuyện vào đây..."
+                          value={cq.audioUrl || ''}
+                          onChange={(e) =>
+                            handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', e.target.value)
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg border border-amber-300 text-xs bg-amber-50/30 outline-none focus:border-amber-500 font-mono"
+                        />
+                      )}
+
+                      {cq.audioUrl ? (
+                        <div className="flex items-center gap-2">
+                          <audio src={cq.audioUrl} controls className="w-full h-8 rounded-md" />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateContextField(activePartIndex, cqIdx, 'audioUrl', '')}
+                            className="text-slate-400 hover:text-red-500 p-1"
+                            title="Xóa audio"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-amber-600 block italic">
+                          ⚠️ Chưa có audio. Cụm 3 câu hỏi này dùng chung 1 file audio bài nói.
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Hình Ảnh Graphic (Tùy Chọn) */}
+                    <div className="space-y-2 pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <ImageIcon size={14} className="text-blue-600" />
+                          <span>Hình ảnh sơ đồ / Hóa đơn (Graphic - Tùy chọn)</span>
+                        </label>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleShowUrl(imageKey)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-blue-600 inline-flex items-center gap-1"
+                          >
+                            <Link2 size={12} />
+                            {showImageInput ? 'Ẩn URL' : 'Dán URL ảnh'}
+                          </button>
+
+                          <label
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all border ${
+                              uploadingKey === `${activePartIndex}-${cqIdx}-image`
+                                ? 'bg-slate-200 text-slate-400 border-slate-300'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-700 shadow-2xs'
+                            }`}
+                          >
+                            <UploadCloud size={13} />
+                            <span>{uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải...' : 'Tải ảnh graphic'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
+                              onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      {showImageInput && (
+                        <input
+                          type="text"
+                          placeholder="https://... dán link ảnh graphic nếu có..."
+                          value={cq.imageUrl || ''}
+                          onChange={(e) =>
+                            handleUpdateContextField(activePartIndex, cqIdx, 'imageUrl', e.target.value)
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg border border-blue-300 text-xs bg-blue-50/30 outline-none focus:border-blue-500 font-mono"
+                        />
+                      )}
+
+                      {cq.imageUrl ? (
+                        <div className="relative rounded-xl border border-slate-200 bg-white p-2 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={cq.imageUrl}
+                              alt="Graphic"
+                              className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-slate-50 cursor-pointer"
+                              onClick={() => setPreviewImageModalUrl(cq.imageUrl)}
+                            />
+                            <div>
+                              <span className="text-xs font-bold text-slate-800 block">
+                                Đã đính kèm ảnh Graphic
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewImageModalUrl(cq.imageUrl)}
+                                className="text-[11px] text-blue-600 hover:underline inline-flex items-center gap-1 font-semibold mt-0.5"
+                              >
+                                <ZoomIn size={12} /> Xem phóng to ảnh gốc
+                              </button>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateContextField(activePartIndex, cqIdx, 'imageUrl', '')}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50"
+                            title="Xóa ảnh này"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 block italic">
+                          ℹ️ Bài nói này không có ảnh bảng biểu. (Nếu đề bài có hình minh họa "Look at the graphic", hãy bấm nút tải ảnh).
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Transcript Âm Thanh Của Toàn Bộ Bài Nói (6/12) */}
+                  <div className="lg:col-span-6 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                        <FileText size={14} className="text-amber-600" />
+                        <span>Lời thoại bài nói chuyện (Audio Transcript)</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const template = `Attention, all airline passengers on Flight 402 to Chicago. Due to severe thunderstorms in the Midwest, our departure has been delayed by approximately 45 minutes. We will begin boarding at Gate B12 as soon as the weather clears. Please check the monitor screens for further gate updates.`;
+                          handleUpdateContextField(
+                            activePartIndex,
+                            cqIdx,
+                            'transcript',
+                            cq.transcript ? `${cq.transcript}\n\n${template}` : template
+                          );
+                        }}
+                        className="text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition-all inline-flex items-center gap-1"
+                      >
+                        <Sparkles size={11} /> + Mẫu bài nói / Thông báo
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={4}
+                      placeholder="Dán toàn bộ lời phát thanh, bài phát biểu hoặc tin nhắn thoại trong audio này (tùy chọn)..."
+                      value={cq.transcript || ''}
+                      onChange={(e) =>
+                        handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
+                      }
+                      className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                {/* KHỐI 2: CỤM ĐÚNG 3 CÂU HỎI TRẮC NGHIỆM */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={14} className="text-amber-600" />
+                      <span>3 Câu hỏi trắc nghiệm của Bài nói #{cqIdx + 1} (Câu {startQ} - {endQ})</span>
+                    </span>
+
+                    {cq.questions.length < 3 && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                        className="text-xs font-bold text-amber-600 hover:text-amber-700 inline-flex items-center gap-1"
+                      >
+                        <Plus size={13} /> Thêm câu hỏi
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {cq.questions.map((q, qIdx) => {
+                      const itemQNum = startQ + qIdx;
+                      return (
+                        <div
+                          key={qIdx}
+                          className="bg-slate-50/80 rounded-xl border border-slate-200/90 p-4 space-y-3 shadow-2xs"
+                        >
+                          {/* Dòng 1: Tiêu đề câu hỏi & Nội dung câu hỏi */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black text-amber-950 bg-amber-100/90 px-2.5 py-0.5 rounded-md border border-amber-200">
+                                CÂU #{itemQNum}
+                              </span>
+
+                              {cq.questions.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveQuestion(activePartIndex, cqIdx, qIdx)}
+                                  className="text-xs text-red-500 hover:text-red-700"
+                                  title="Xóa câu này"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+
+                            <input
+                              type="text"
+                              required
+                              placeholder={`Nhập nội dung câu hỏi #${itemQNum} (ví dụ: Who most likely is the speaker?)...`}
+                              value={q.questionContent || ''}
+                              onChange={(e) =>
+                                handleUpdateQuestionField(
+                                  activePartIndex,
+                                  cqIdx,
+                                  qIdx,
+                                  'questionContent',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                            />
+                          </div>
+
+                          {/* Dòng 2: 4 Đáp án A, B, C, D (Grid 2 cột) */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+                            {['A', 'B', 'C', 'D'].map((optKey) => (
+                              <div key={optKey} className="flex items-center gap-2">
+                                <span className="w-5 font-black text-slate-600 text-center">
+                                  ({optKey})
+                                </span>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder={`Nội dung lựa chọn (${optKey})`}
+                                  value={q[`option${optKey}`] || ''}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activePartIndex,
+                                      cqIdx,
+                                      qIdx,
+                                      `option${optKey}`,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs outline-none focus:border-amber-500"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Dòng 3: Chọn Đáp Án Đúng & Giải Thích Cho Câu Này */}
+                          <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-slate-200">
+                            {/* Bộ Chọn Đáp Án Đúng (Segmented Button Mini) */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-700">Đáp án đúng:</span>
+                              <div className="inline-flex p-0.5 rounded-lg bg-slate-200/80 border border-slate-300 gap-1">
+                                {['A', 'B', 'C', 'D'].map((opt) => {
+                                  const isSelected = (q.correctAnswer || 'A') === opt;
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() =>
+                                        handleUpdateQuestionField(
+                                          activePartIndex,
+                                          cqIdx,
+                                          qIdx,
+                                          'correctAnswer',
+                                          opt
+                                        )
+                                      }
+                                      className={`w-8 h-7 rounded-md font-black text-xs transition-all flex items-center justify-center cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-amber-600 text-white shadow-2xs font-black scale-105'
+                                          : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Ô Lời Giải Thích / Dịch Nghĩa */}
+                            <div className="flex-1 min-w-[260px]">
+                              <input
+                                type="text"
+                                placeholder={`Giải thích / Dịch nghĩa vì sao chọn (${q.correctAnswer || 'A'})...`}
+                                value={q.explanation || ''}
+                                onChange={(e) =>
+                                  handleUpdateQuestionField(
+                                    activePartIndex,
+                                    cqIdx,
+                                    qIdx,
+                                    'explanation',
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-amber-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Nút thêm bài nói nếu chưa đủ 10 bài */}
+        {activePart.contextQuestions.length < 10 && (
+          <div className="p-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 text-center space-y-2.5">
+            <span className="text-xs font-bold text-amber-900 block">
+              Hiện tại Part 4 đang có {activePart.contextQuestions.length} / 10 bài nói chuyện (Chuẩn ETS: 10 bài x 3 câu = 30 câu).
+            </span>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> + Thêm Bài Nói Chuyện (Bài #{activePart.contextQuestions.length + 1})
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart4To10}
+                className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Khởi tạo lại đủ 10 bài trống chuẩn Part 4
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="admin-page py-8 min-h-screen bg-gray-50">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -2186,9 +3791,19 @@ const TestManagementPage = () => {
           {/* Part Selection & Tabs Bar */}
           <div>
             <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                Các phần thi trong đề ({formParts.length} phần):
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                  Các phần thi trong đề ({formParts.length} phần):
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetToListening100Blank}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Khởi tạo sẵn khung đề 100 câu Listening chuẩn ETS (Part 1: 6 câu, Part 2: 25 câu, Part 3: 13 đoạn, Part 4: 10 bài)"
+                >
+                  <Headphones size={13} /> Khởi tạo chuẩn 100 câu Listening (P1 - P4)
+                </button>
+              </div>
 
               {/* Add Part Dropdown / Button */}
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -2276,6 +3891,16 @@ const TestManagementPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={handleResetActivePartToBlank}
+                    className="btn btn-outline btn-sm text-xs font-bold text-slate-700 inline-flex items-center gap-1.5 hover:bg-slate-100"
+                    title={`Khởi tạo lại Part ${activePart.partNumber} với số câu chuẩn ETS`}
+                  >
+                    <RotateCcw size={13} className="text-emerald-600" />
+                    Chuẩn hóa Part {activePart.partNumber}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setShowPartDirections(!showPartDirections)}
                     className="btn btn-outline btn-sm text-xs font-semibold text-slate-600 inline-flex items-center gap-1.5"
                   >
@@ -2352,6 +3977,12 @@ const TestManagementPage = () => {
               {/* Context Questions List */}
               {activePart.partNumber === 1 ? (
                 renderPart1QuestionsBuilder()
+              ) : activePart.partNumber === 2 ? (
+                renderPart2QuestionsBuilder()
+              ) : activePart.partNumber === 3 ? (
+                renderPart3QuestionsBuilder()
+              ) : activePart.partNumber === 4 ? (
+                renderPart4QuestionsBuilder()
               ) : (
                 <div className="space-y-6">
                   {activePart.contextQuestions.map((cq, cqIdx) => (

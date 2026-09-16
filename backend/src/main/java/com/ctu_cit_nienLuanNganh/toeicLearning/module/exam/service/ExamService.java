@@ -10,10 +10,9 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.ContextQuestion;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Part;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Question;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.ContextQuestionRequest;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.QuestionRequest;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.TestPartRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.mapper.PartForUserMapper;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.*;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ContextQuestionRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.PartRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.QuestionRepository;
@@ -34,7 +33,11 @@ public class ExamService {
     private final PartRepository partRepository;
     private final ContextQuestionRepository contextQuestionRepository;
     private final QuestionRepository questionRepository;
+
     private final CloudinaryService cloudinaryService;
+
+    private final PartForUserMapper partForUserMapper;
+
 
     public PageResponse<Test> getFullTest(PageParams pageParams, TestStatus status){
         // Mặc định nếu không truyền status thì chỉ lấy các đề thi đã PUBLISHED, học viên không truy cập các bản nháp được
@@ -55,6 +58,15 @@ public class ExamService {
 
     public Test getTestDetail(String testID){
         return testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+    }
+
+    public PartForUserResponseDTO getPart(String testId, String partId){
+        Test selectedTest = testRepository.findById(testId)
+                .orElseThrow(() -> new AppException(ErrorCode.TEST_NOT_FOUND));
+        Part selectedPart = partRepository.findById(partId)
+                .orElseThrow(() -> new AppException(ErrorCode.PART_NOT_FOUND));
+        List<ContextQuestion> contextQuestionList = contextQuestionRepository.findByTestIdAndPartIdOrderByOrderIndexAsc(testId, partId);
+        return partForUserMapper.toDTO(selectedTest, selectedPart, contextQuestionList );
     }
 
 
@@ -150,16 +162,22 @@ public class ExamService {
 
     public void saveTestDetail(Test savedTest, CreateTestRequest request)
     {
+        int globalQuestionCounter = 1;
         if(request.getParts()!=null){
             for(TestPartRequest partRequest: request.getParts())
             {
                 String partName = "Part " + partRequest.getPartNumber();
                 Part part = partRepository.findByNamePart(partName)
                         .orElseThrow(() -> new AppException(ErrorCode.PART_NOT_FOUND));
+
+
+                int questionCounter = getStartingQuestionNumber(partRequest.getPartNumber(), globalQuestionCounter);
                 if(partRequest.getContextQuestions()!=null)
                 {
                     for(ContextQuestionRequest contextQuestionRequest: partRequest.getContextQuestions())
                     {
+                        int startQuestionNumberOfContext = questionCounter;
+                        int finalOrderIndex = (contextQuestionRequest.getOrderIndex()!=null && contextQuestionRequest.getOrderIndex() > 0) ? contextQuestionRequest.getOrderIndex(): startQuestionNumberOfContext;
                         ContextQuestion contextQuestion = ContextQuestion.builder()
                                 .audioUrl(contextQuestionRequest.getAudioUrl())
                                 .imageUrl(contextQuestionRequest.getImageUrl())
@@ -167,11 +185,14 @@ public class ExamService {
                                 .transcript(contextQuestionRequest.getTranscript())
                                 .test(savedTest)
                                 .part(part)
+                                .orderIndex(finalOrderIndex)
                                 .build();
                         ContextQuestion savedContextQuestion = contextQuestionRepository.save(contextQuestion);
                         for(QuestionRequest questionRequest: contextQuestionRequest.getQuestions())
                         {
                             char correctAns = 'A';
+                            int questionNumber = (questionRequest.getQuestionNumber()!=null && questionRequest.getQuestionNumber() >0) ?
+                                    questionRequest.getQuestionNumber(): questionCounter;
                             if(questionRequest.getCorrectAnswer()!=null && !questionRequest.getCorrectAnswer().isEmpty())
                             {
                                 correctAns = questionRequest.getCorrectAnswer().toUpperCase().charAt(0);
@@ -185,12 +206,29 @@ public class ExamService {
                                     .correctAnswer(correctAns)
                                     .explanation(questionRequest.getExplanation())
                                     .contextQuestion(savedContextQuestion)
+                                    .questionNumber(questionNumber)
                                     .build();
                             questionRepository.save(question);
+                            questionCounter++;
+                            globalQuestionCounter++;
                         }
                     }
                 }
             }
+        }
+    }
+
+
+    private int getStartingQuestionNumber(int part, int globalQuestionCounter){
+        switch (part){
+            case 1: return 1;
+            case 2: return 7;
+            case 3: return 32;
+            case 4: return 71;
+            case 5: return 101;
+            case 6: return 131;
+            case 7: return 147;
+            default: return globalQuestionCounter;
         }
     }
 }
