@@ -165,6 +165,33 @@ export const ETS_STRUCTURE_SPECS = {
   },
 };
 
+// CẤU TRÚC CHI TIẾT 15 BÀI ĐỌC PART 7 CHUẨN ETS (54 CÂU: CÂU 147 -> 200)
+// - 10 Bài đọc đơn (Single Passages: Câu 147 - 175 = 29 câu)
+// - 2 Bài đọc kép (Double Passages: Câu 176 - 185 = 10 câu)
+// - 3 Bài đọc ba (Triple Passages: Câu 186 - 200 = 15 câu)
+export const ETS_PART7_STRUCTURE = [
+  // 10 BÀI ĐỌC ĐƠN (SINGLE PASSAGES: 29 CÂU)
+  { index: 0, startQ: 147, endQ: 148, qCount: 2, passageCount: 1, label: '147-148', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 1, startQ: 149, endQ: 150, qCount: 2, passageCount: 1, label: '149-150', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 2, startQ: 151, endQ: 152, qCount: 2, passageCount: 1, label: '151-152', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 3, startQ: 153, endQ: 155, qCount: 3, passageCount: 1, label: '153-155', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 4, startQ: 156, endQ: 157, qCount: 2, passageCount: 1, label: '156-157', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 5, startQ: 158, endQ: 160, qCount: 3, passageCount: 1, label: '158-160', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 6, startQ: 161, endQ: 163, qCount: 3, passageCount: 1, label: '161-163', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 7, startQ: 164, endQ: 167, qCount: 4, passageCount: 1, label: '164-167', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 8, startQ: 168, endQ: 171, qCount: 4, passageCount: 1, label: '168-171', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+  { index: 9, startQ: 172, endQ: 175, qCount: 4, passageCount: 1, label: '172-175', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
+
+  // 2 BÀI ĐỌC KÉP (DOUBLE PASSAGES: 10 CÂU)
+  { index: 10, startQ: 176, endQ: 180, qCount: 5, passageCount: 2, label: '176-180', typeName: '2 bài đọc (Đoạn kép - Double)', theme: 'purple' },
+  { index: 11, startQ: 181, endQ: 185, qCount: 5, passageCount: 2, label: '181-185', typeName: '2 bài đọc (Đoạn kép - Double)', theme: 'purple' },
+
+  // 3 BÀI ĐỌC BA (TRIPLE PASSAGES: 15 CÂU)
+  { index: 12, startQ: 186, endQ: 190, qCount: 5, passageCount: 3, label: '186-190', typeName: '3 bài đọc (Đoạn ba - Triple)', theme: 'amber' },
+  { index: 13, startQ: 191, endQ: 195, qCount: 5, passageCount: 3, label: '191-195', typeName: '3 bài đọc (Đoạn ba - Triple)', theme: 'amber' },
+  { index: 14, startQ: 196, endQ: 200, qCount: 5, passageCount: 3, label: '196-200', typeName: '3 bài đọc (Đoạn ba - Triple)', theme: 'amber' },
+];
+
 const PART_DEFINITIONS = Object.fromEntries(
   Object.entries(ETS_STRUCTURE_SPECS).map(([num, spec]) => [
     num,
@@ -324,6 +351,73 @@ export const createFreshPart4Blank = () => ({
   })),
 });
 
+// Khởi tạo Part 5 có sẵn đúng 30 câu hỏi độc lập chuẩn ETS (Câu 101 -> 130)
+export const createFreshPart5Blank = () => ({
+  partNumber: 5,
+  contextQuestions: Array.from({ length: 30 }, (_, i) => ({
+    audioUrl: '',
+    imageUrl: '',
+    paragraph: '',
+    transcript: '',
+    translation: '',
+    questions: [
+      {
+        questionContent: '',
+        optionA: '',
+        optionB: '',
+        optionC: '',
+        optionD: '',
+        correctAnswer: 'A',
+        explanation: '',
+      },
+    ],
+  })),
+});
+
+// Khởi tạo Part 6 có sẵn đúng 4 bài đọc điền khuyết chuẩn ETS (Câu 131 -> 146, 4 đoạn x 4 câu)
+export const createFreshPart6Blank = () => ({
+  partNumber: 6,
+  contextQuestions: Array.from({ length: 4 }, (_, i) => ({
+    audioUrl: '',
+    imageUrl: '',
+    paragraph: '',
+    transcript: '',
+    translation: '',
+    questions: Array.from({ length: 4 }, () => ({
+      questionContent: '',
+      optionA: '',
+      optionB: '',
+      optionC: '',
+      optionD: '',
+      correctAnswer: 'A',
+      explanation: '',
+    })),
+  })),
+});
+
+// Khởi tạo Part 7 có sẵn đúng 15 bài đọc hiểu chuẩn ETS 2026 (Câu 147 -> 200: 10 bài đơn + 2 bài kép + 3 bài ba = 54 câu)
+export const createFreshPart7Blank = () => {
+  return {
+    partNumber: 7,
+    contextQuestions: ETS_PART7_STRUCTURE.map((spec) => ({
+      audioUrl: '',
+      imageUrl: '',
+      paragraph: '',
+      transcript: '',
+      translation: '',
+      questions: Array.from({ length: spec.qCount }, () => ({
+        questionContent: '',
+        optionA: '',
+        optionB: '',
+        optionC: '',
+        optionD: '',
+        correctAnswer: 'A',
+        explanation: '',
+      })),
+    })),
+  };
+};
+
 // Khởi tạo trọn bộ 100 câu Listening (Part 1 -> Part 4) trống chuẩn ETS
 export const createFreshListening100Blank = () => [
   createFreshPart1Blank(),
@@ -332,11 +426,32 @@ export const createFreshListening100Blank = () => [
   createFreshPart4Blank(),
 ];
 
+// Khởi tạo trọn bộ 100 câu Reading (Part 5 -> Part 7) trống chuẩn ETS (Câu 101 -> 200)
+export const createFreshReading100Blank = () => [
+  createFreshPart5Blank(),
+  createFreshPart6Blank(),
+  createFreshPart7Blank(),
+];
+
+// Khởi tạo trọn bộ Full Test 200 câu (Part 1 -> Part 7) trống chuẩn ETS
+export const createFreshFull200Blank = () => [
+  createFreshPart1Blank(),
+  createFreshPart2Blank(),
+  createFreshPart3Blank(),
+  createFreshPart4Blank(),
+  createFreshPart5Blank(),
+  createFreshPart6Blank(),
+  createFreshPart7Blank(),
+];
+
 const createFreshPart = (partNumber = 1) => {
   if (partNumber === 1) return createFreshPart1Blank();
   if (partNumber === 2) return createFreshPart2Blank();
   if (partNumber === 3) return createFreshPart3Blank();
   if (partNumber === 4) return createFreshPart4Blank();
+  if (partNumber === 5) return createFreshPart5Blank();
+  if (partNumber === 6) return createFreshPart6Blank();
+  if (partNumber === 7) return createFreshPart7Blank();
   return {
     partNumber,
     contextQuestions: [createFreshContextQuestion(partNumber)],
@@ -345,82 +460,19 @@ const createFreshPart = (partNumber = 1) => {
 
 // Hàm tạo trọn bộ 1 Part theo số lượng câu chuẩn ETS
 export const createFullETSPart = (partNumber = 1) => {
-  const spec = ETS_STRUCTURE_SPECS[partNumber] || ETS_STRUCTURE_SPECS[1];
-  const contexts = [];
-
-  if (partNumber === 1) {
-    // 6 ảnh x 1 câu = 6 câu có sẵn chỗ trống chuẩn bị up 6 audio và 6 ảnh
-    return createFreshPart1Blank();
-  } else if (partNumber === 2) {
-    // 25 câu hỏi x 1 câu = 25 câu (3 lựa chọn A, B, C)
-    return createFreshPart2Blank();
-  } else if (partNumber === 3) {
-    // 13 đoạn hội thoại x 3 câu = 39 câu
-    return createFreshPart3Blank();
-  } else if (partNumber === 4) {
-    // 10 bài độc thoại x 3 câu = 30 câu
-    return createFreshPart4Blank();
-  } else if (partNumber === 5) {
-    // 30 câu độc lập = 30 câu
-    for (let i = 1; i <= 30; i++) {
-      contexts.push({
-        audioUrl: '',
-        imageUrl: '',
-        paragraph: '',
-        transcript: '',
-        questions: [createFreshQuestion(i + 100, 5)],
-      });
-    }
-  } else if (partNumber === 6) {
-    // 4 đoạn văn x 4 câu = 16 câu
-    for (let i = 1; i <= 4; i++) {
-      contexts.push({
-        audioUrl: '',
-        imageUrl: '',
-        paragraph: '',
-        transcript: '',
-        questions: [
-          createFreshQuestion(1, 6),
-          createFreshQuestion(2, 6),
-          createFreshQuestion(3, 6),
-          createFreshQuestion(4, 6),
-        ],
-      });
-    }
-  } else if (partNumber === 7) {
-    // 54 câu: 10 bài đơn (29 câu) + 5 bài đôi/ba (25 câu)
-    const singlePassageQCounts = [2, 2, 3, 3, 3, 3, 3, 3, 3, 4]; // 29 câu
-    singlePassageQCounts.forEach((qCount) => {
-      contexts.push({
-        audioUrl: '',
-        imageUrl: '',
-        paragraph: '',
-        transcript: '',
-        questions: Array.from({ length: qCount }, (_, qIdx) => createFreshQuestion(qIdx + 1, 7)),
-      });
-    });
-
-    // 5 bài đọc đa đoạn (2 bài đoạn đôi + 3 bài đoạn ba): mỗi bài đúng 5 câu = 25 câu
-    for (let i = 1; i <= 5; i++) {
-      contexts.push({
-        audioUrl: '',
-        imageUrl: '',
-        paragraph: '',
-        transcript: '',
-        questions: Array.from({ length: 5 }, (_, qIdx) => createFreshQuestion(qIdx + 1, 7)),
-      });
-    }
-  }
-
-  return {
-    partNumber,
-    contextQuestions: contexts,
-  };
+  if (partNumber === 1) return createFreshPart1Blank();
+  if (partNumber === 2) return createFreshPart2Blank();
+  if (partNumber === 3) return createFreshPart3Blank();
+  if (partNumber === 4) return createFreshPart4Blank();
+  if (partNumber === 5) return createFreshPart5Blank();
+  if (partNumber === 6) return createFreshPart6Blank();
+  if (partNumber === 7) return createFreshPart7Blank();
+  return createFreshPart(partNumber);
 };
 
 // Hàm khởi tạo toàn bộ Full Test 200 câu chuẩn ETS mới nhất 100%
 export const createFull200QuestionETSTest = () => {
-  return [1, 2, 3, 4, 5, 6, 7].map((pNum) => createFullETSPart(pNum));
+  return createFreshFull200Blank();
 };
 
 // Hàm khởi tạo Mini Test rút gọn 50 câu theo đúng tỷ lệ chuẩn ETS (hoàn toàn trống sẵn sàng nhập)
@@ -534,10 +586,15 @@ const TestManagementPage = () => {
   // Modal phóng to xem ảnh sắc nét
   const [previewImageModalUrl, setPreviewImageModalUrl] = useState(null);
 
-  // Toggle ẩn/hiện ô dán link URL thủ công
   const [showUrlInputs, setShowUrlInputs] = useState({});
   const toggleShowUrl = (key) => {
     setShowUrlInputs((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Toggle chế độ nhập liệu phân tách từng bài đọc vs gộp chung 1 ô cho Part 7
+  const [p7RawMode, setP7RawMode] = useState({});
+  const toggleP7RawMode = (cqIdx) => {
+    setP7RawMode((prev) => ({ ...prev, [cqIdx]: !prev[cqIdx] }));
   };
 
   const [actionLoading, setActionLoading] = useState(false);
@@ -750,6 +807,101 @@ const TestManagementPage = () => {
     });
   };
 
+  // Khởi tạo lại 30 câu hỏi độc lập chuẩn Part 5 (Câu 101 -> 130) (bảo toàn các câu đã có)
+  const handleResetPart5To30 = () => {
+    markDirty();
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        const existing = p.contextQuestions || [];
+        if (existing.length >= 30) return p;
+        const remainingCount = 30 - existing.length;
+        const newContexts = Array.from({ length: remainingCount }, () => createFreshContextQuestion(5));
+        return {
+          ...p,
+          contextQuestions: [...existing, ...newContexts],
+        };
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã bổ sung đủ 30 câu hỏi điền từ chuẩn Part 5 (Câu 101 - 130)!',
+    });
+  };
+
+  // Khởi tạo lại 4 bài đọc điền khuyết chuẩn Part 6 (Câu 131 -> 146) (bảo toàn các bài đã có)
+  const handleResetPart6To4 = () => {
+    markDirty();
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        const existing = p.contextQuestions || [];
+        if (existing.length >= 4) return p;
+        const remainingCount = 4 - existing.length;
+        const newContexts = Array.from({ length: remainingCount }, () => createFreshContextQuestion(6));
+        return {
+          ...p,
+          contextQuestions: [...existing, ...newContexts],
+        };
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã bổ sung đủ 4 bài đọc điền khuyết chuẩn Part 6 (Câu 131 - 146, 16 câu)!',
+    });
+  };
+
+  // Khởi tạo lại 15 bài đọc hiểu chuẩn Part 7 (Câu 147 -> 200, 54 câu) (bảo toàn các bài và câu đã có)
+  const handleResetPart7To54 = () => {
+    markDirty();
+    setFormParts((prev) =>
+      prev.map((p, pIdx) => {
+        if (pIdx !== activePartIndex) return p;
+        const freshPart7 = createFreshPart7Blank();
+        const existing = p.contextQuestions || [];
+
+        // Hợp nhất dữ liệu: Đảm bảo đủ 15 bài và mỗi bài có đúng số lượng câu hỏi chuẩn ETS
+        const mergedContexts = freshPart7.contextQuestions.map((freshCq, idx) => {
+          const currentCq = existing[idx];
+          if (!currentCq) return freshCq;
+          const targetQCount = ETS_PART7_STRUCTURE[idx]?.qCount || freshCq.questions.length;
+          let questions = [...(currentCq.questions || [])];
+          if (questions.length < targetQCount) {
+            const needed = targetQCount - questions.length;
+            const extra = Array.from({ length: needed }, () => ({
+              questionContent: '',
+              optionA: '',
+              optionB: '',
+              optionC: '',
+              optionD: '',
+              correctAnswer: 'A',
+              explanation: '',
+            }));
+            questions = [...questions, ...extra];
+          }
+          return {
+            ...currentCq,
+            questions,
+          };
+        });
+
+        // Nếu người dùng đã tự thêm bài thứ 16 trở đi thì vẫn bảo toàn
+        if (existing.length > freshPart7.contextQuestions.length) {
+          mergedContexts.push(...existing.slice(freshPart7.contextQuestions.length));
+        }
+
+        return {
+          ...p,
+          contextQuestions: mergedContexts,
+        };
+      })
+    );
+    setToast({
+      type: 'info',
+      message: 'Đã chuẩn hóa đủ 15 bài đọc hiểu Part 7 (Câu 147 - 200, 54 câu chuẩn ETS 2026)!',
+    });
+  };
+
   // Chuẩn hóa Part đang chọn về đúng cấu trúc chuẩn ETS
   const handleResetActivePartToBlank = () => {
     const activeP = formParts[activePartIndex];
@@ -759,6 +911,9 @@ const TestManagementPage = () => {
     else if (pNum === 2) handleResetPart2To25();
     else if (pNum === 3) handleResetPart3To13();
     else if (pNum === 4) handleResetPart4To10();
+    else if (pNum === 5) handleResetPart5To30();
+    else if (pNum === 6) handleResetPart6To4();
+    else if (pNum === 7) handleResetPart7To54();
     else handleAddFullETSPart(pNum);
   };
 
@@ -770,6 +925,28 @@ const TestManagementPage = () => {
     setToast({
       type: 'success',
       message: 'Đã khởi tạo trọn bộ 100 câu Listening TOEIC (Part 1, 2, 3, 4) sẵn sàng tải Audio, Ảnh và nhập đáp án!',
+    });
+  };
+
+  // Khởi tạo trọn bộ 100 câu Reading (Part 5 -> Part 7) trống
+  const handleResetToReading100Blank = () => {
+    markDirty();
+    setFormParts(createFreshReading100Blank());
+    setActivePartIndex(0);
+    setToast({
+      type: 'success',
+      message: 'Đã khởi tạo trọn bộ 100 câu Reading TOEIC (Part 5: 30 câu, Part 6: 4 bài, Part 7: 15 bài) sẵn sàng nhập nội dung!',
+    });
+  };
+
+  // Khởi tạo trọn bộ Full Test 200 câu (Part 1 -> Part 7) trống
+  const handleResetToFull200Blank = () => {
+    markDirty();
+    setFormParts(createFreshFull200Blank());
+    setActivePartIndex(0);
+    setToast({
+      type: 'success',
+      message: 'Đã khởi tạo trọn bộ Full Test 200 câu chuẩn ETS (Part 1 -> Part 7) sẵn sàng soạn thảo!',
     });
   };
 
@@ -990,6 +1167,9 @@ const TestManagementPage = () => {
             } else if (pNum === 4) {
               const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
               if (qMatch) seqIndex = parseInt(qMatch[1], 10);
+            }
+            if (seqIndex === null && cq.questions?.[0]?.questionNumber > 0) {
+              seqIndex = cq.questions[0].questionNumber;
             }
             if (seqIndex === null || isNaN(seqIndex)) {
               seqIndex = rawIdx;
@@ -3751,6 +3931,1408 @@ const TestManagementPage = () => {
     );
   };
 
+  // =========================================================================
+  // STUDIO BUILDER DÀNH RIÊNG CHO PART 5: HOÀN CHỈNH CÂU (INCOMPLETE SENTENCES)
+  // Quy chuẩn ETS: 30 câu độc lập (Câu 101 -> 130), mỗi câu 4 lựa chọn A, B, C, D
+  // =========================================================================
+  const renderPart5QuestionsBuilder = () => {
+    return (
+      <div className="space-y-6">
+        {/* Thanh Điều Hướng Nhanh & Tổng Quan Part 5 Studio */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-sm border border-emerald-500/30">
+                P5
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2">
+                  <span>Part 5: Incomplete Sentences Studio</span>
+                  <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    30 Câu hỏi độc lập (Câu 101 - 130) • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-0.5">
+                  Đánh giá ngữ pháp, từ loại, dạng thức câu và từ vựng môi trường doanh nghiệp. Mỗi câu gồm 4 phương án A, B, C, D.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart5To30}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+              title="Khởi tạo lại đủ 30 câu chuẩn Part 5"
+            >
+              <RotateCcw size={13} className="text-emerald-400" /> Chuẩn hóa 30 câu Part 5
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Câu 101 đến Câu 130) */}
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-semibold text-slate-400">Chuyển nhanh đến câu hỏi:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePart.contextQuestions.map((cq, idx) => {
+                const qNum = 101 + idx;
+                const q = cq.questions?.[0] || {};
+                const isFilled = Boolean(q.questionContent?.trim() && q.optionA?.trim() && q.optionB?.trim());
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p5-card-${idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border ${
+                      isFilled
+                        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isFilled ? 'bg-emerald-400 ring-2 ring-emerald-400/30' : 'bg-slate-500'
+                      }`}
+                    />
+                    <span>Câu {qNum}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Danh sách 30 câu hỏi Part 5 */}
+        <div className="space-y-4">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            const qNum = 101 + cqIdx;
+            const q = cq.questions?.[0] || {};
+            const isFilled = Boolean(q.questionContent?.trim() && q.optionA?.trim());
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p5-card-${cqIdx}`}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-5 space-y-4 relative border-l-4 border-l-emerald-600"
+              >
+                {/* Header Câu Hỏi */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="bg-slate-900 text-emerald-400 font-black text-xs px-3 py-1.5 rounded-lg tracking-wider shadow-2xs">
+                      <span>CÂU #{qNum}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-slate-900 block">
+                        Câu hỏi điền từ độc lập #{qNum}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Ngữ pháp & Từ vựng độc lập • 4 lựa chọn A, B, C, D
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        isFilled
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {isFilled ? '✓ Đã nhập câu hỏi' : 'Chưa nhập nội dung'}
+                    </span>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      Đáp án đúng: <strong>{q.correctAnswer || 'A'}</strong>
+                    </span>
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all ml-1"
+                        title="Xóa câu hỏi này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Câu hỏi có chỗ trống */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Nội dung câu hỏi (chứa chỗ trống _______):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={`Ví dụ: Ms. Tanaka will _______ the keynote presentation at the annual conference.`}
+                    value={q.questionContent || ''}
+                    onChange={(e) =>
+                      handleUpdateQuestionField(
+                        activePartIndex,
+                        cqIdx,
+                        0,
+                        'questionContent',
+                        e.target.value
+                      )
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  />
+                </div>
+
+                {/* 4 Lựa chọn A, B, C, D */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    4 Lựa chọn trắc nghiệm:
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    {[
+                      { key: 'optionA', label: 'A', val: q.optionA || '', placeholder: 'Nội dung lựa chọn (A)' },
+                      { key: 'optionB', label: 'B', val: q.optionB || '', placeholder: 'Nội dung lựa chọn (B)' },
+                      { key: 'optionC', label: 'C', val: q.optionC || '', placeholder: 'Nội dung lựa chọn (C)' },
+                      { key: 'optionD', label: 'D', val: q.optionD || '', placeholder: 'Nội dung lựa chọn (D)' },
+                    ].map((opt) => (
+                      <div
+                        key={opt.key}
+                        className="flex items-center gap-2 bg-slate-50/80 p-1.5 rounded-xl border border-slate-200 focus-within:border-emerald-500 focus-within:bg-white transition-all"
+                      >
+                        <span
+                          className={`w-6 h-6 rounded-md font-black text-xs flex items-center justify-center shrink-0 ${
+                            q.correctAnswer === opt.label
+                              ? 'bg-emerald-600 text-white shadow-2xs'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          {opt.label}.
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          placeholder={opt.placeholder}
+                          value={opt.val}
+                          onChange={(e) =>
+                            handleUpdateQuestionField(
+                              activePartIndex,
+                              cqIdx,
+                              0,
+                              opt.key,
+                              e.target.value
+                            )
+                          }
+                          className="flex-1 px-2 py-1 bg-transparent text-xs text-slate-900 outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Chọn Đáp Án Đúng & Lời Giải Thích */}
+                <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-700">Chọn đáp án đúng:</span>
+                    <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                      {['A', 'B', 'C', 'D'].map((opt) => {
+                        const isSelected = (q.correctAnswer || 'A') === opt;
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() =>
+                              handleUpdateQuestionField(
+                                activePartIndex,
+                                cqIdx,
+                                0,
+                                'correctAnswer',
+                                opt
+                              )
+                            }
+                            className={`w-8 h-7 rounded-md font-black text-xs transition-all flex items-center justify-center cursor-pointer ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white shadow-2xs scale-105'
+                                : 'bg-transparent text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-[260px]">
+                    <input
+                      type="text"
+                      placeholder={`Giải thích ngữ pháp / từ vựng cho câu #${qNum}...`}
+                      value={q.explanation || ''}
+                      onChange={(e) =>
+                        handleUpdateQuestionField(
+                          activePartIndex,
+                          cqIdx,
+                          0,
+                          'explanation',
+                          e.target.value
+                        )
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-xs outline-none focus:border-emerald-500 focus:bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Thanh công cụ dưới cùng Part 5 */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-3">
+          <span className="text-xs font-bold text-slate-700">
+            Hiện có {activePart.contextQuestions.length} câu hỏi Part 5 (Chuẩn ETS: 30 câu hỏi từ Câu 101 đến Câu 130).
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleAddContextQuestion(activePartIndex)}
+              className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <Plus size={14} /> + Thêm Câu Hỏi Điền Từ (Câu #{101 + activePart.contextQuestions.length})
+            </button>
+            <button
+              type="button"
+              onClick={handleResetPart5To30}
+              className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <RotateCcw size={14} /> Khởi tạo lại đủ 30 câu chuẩn Part 5
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // STUDIO BUILDER DÀNH RIÊNG CHO PART 6: HOÀN CHỈNH ĐOẠN VĂN (TEXT COMPLETION)
+  // Quy chuẩn ETS: 4 bài đọc (Câu 131 -> 146), mỗi bài gồm 1 đoạn văn có 4 chỗ trống x 4 câu hỏi
+  // =========================================================================
+  const renderPart6QuestionsBuilder = () => {
+    return (
+      <div className="space-y-6">
+        {/* Thanh Điều Hướng Nhanh & Tổng Quan Part 6 Studio */}
+        <div className="bg-slate-900 text-white rounded-2xl p-4 shadow-sm border border-slate-800 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-lg bg-teal-500/20 text-teal-400 flex items-center justify-center font-black text-sm border border-teal-500/30">
+                P6
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2">
+                  <span>Part 6: Text Completion Studio</span>
+                  <span className="text-[11px] font-semibold text-teal-400 bg-teal-950/80 px-2 py-0.5 rounded-full border border-teal-500/30">
+                    4 Bài đọc điền khuyết (Câu 131 - 146) • 16 Câu hỏi • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-0.5">
+                  Mỗi bài đọc gồm 1 đoạn văn (email, thư báo, thông báo...) chứa 4 vị trí cần điền khuyết tương ứng với đúng 4 câu hỏi trắc nghiệm A, B, C, D.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart6To4}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+              title="Khởi tạo lại đủ 4 bài chuẩn Part 6"
+            >
+              <RotateCcw size={13} className="text-teal-400" /> Chuẩn hóa 4 bài Part 6
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Đoạn 1 đến Đoạn 4) */}
+          <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-semibold text-slate-400">Chuyển nhanh đến bài đọc:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {activePart.contextQuestions.map((cq, idx) => {
+                let startQ = 131;
+                for (let i = 0; i < idx; i++) {
+                  startQ += (activePart.contextQuestions[i]?.questions?.length || 4);
+                }
+                const qCount = cq.questions?.length || 4;
+                const endQ = startQ + qCount - 1;
+                const isComplete = Boolean(cq.paragraph?.trim() && qCount >= 4);
+
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p6-card-${idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border ${
+                      isComplete
+                        ? 'bg-teal-950/80 text-teal-300 border-teal-500/40 hover:bg-teal-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        isComplete ? 'bg-teal-400 ring-2 ring-teal-400/30' : 'bg-amber-400'
+                      }`}
+                    />
+                    <span>Đoạn {idx + 1} ({startQ}-{endQ})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Danh sách 4 Bài Đọc Part 6 */}
+        <div className="space-y-6">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            let startQ = 131;
+            for (let i = 0; i < cqIdx; i++) {
+              startQ += (activePart.contextQuestions[i]?.questions?.length || 4);
+            }
+            const qCount = cq.questions?.length || 4;
+            const endQ = startQ + qCount - 1;
+            const hasParagraph = Boolean(cq.paragraph?.trim());
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p6-card-${cqIdx}`}
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-6 space-y-6 relative border-l-4 border-l-teal-600"
+              >
+                {/* Header Bài Đọc */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 text-teal-400 font-black text-xs px-3 py-1.5 rounded-lg tracking-wider shadow-2xs">
+                      <span>ĐOẠN #{String(cqIdx + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-slate-900 block">
+                        Bài đọc điền khuyết #{cqIdx + 1} • Câu {startQ} - {endQ}
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Đoạn văn đọc hiểu gồm {qCount} chỗ trống (Chuẩn ETS: đúng 4 câu hỏi)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasParagraph
+                          ? 'bg-teal-50 text-teal-700 border-teal-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasParagraph ? '✓ Đã có đoạn văn' : 'Chưa có đoạn văn'}
+                    </span>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                      {qCount} câu hỏi con
+                    </span>
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all ml-1"
+                        title="Xóa bài đọc này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Đoạn văn đọc hiểu (Paragraph) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Nội dung đoạn văn hoàn chỉnh (Đánh dấu 4 vị trí điền khuyết [{startQ}], [{startQ + 1}], [{startQ + 2}], [{startQ + 3}]):
+                    </label>
+                  </div>
+                  <textarea
+                    rows={6}
+                    placeholder={`Nhập nội dung email, thông báo, thư tín... Chèn các ký hiệu [${startQ}], [${startQ + 1}], [${startQ + 2}], [${startQ + 3}] vào các vị trí cần điền từ...`}
+                    value={cq.paragraph || ''}
+                    onChange={(e) =>
+                      handleUpdateContextField(
+                        activePartIndex,
+                        cqIdx,
+                        'paragraph',
+                        e.target.value
+                      )
+                    }
+                    className="w-full p-4 rounded-xl border border-slate-300 font-sans text-xs leading-relaxed outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                  />
+                </div>
+
+                {/* Danh sách các câu hỏi con của bài đọc này */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={14} className="text-teal-600" />
+                      <span>{qCount} Câu hỏi trắc nghiệm của Đoạn #{cqIdx + 1} (Câu {startQ} - {endQ})</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                      className="text-xs font-bold text-teal-600 hover:text-teal-700 inline-flex items-center gap-1"
+                    >
+                      <Plus size={13} /> Thêm câu hỏi
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(cq.questions || []).map((q, qIdx) => {
+                      const itemQNum = startQ + qIdx;
+                      return (
+                        <div
+                          key={qIdx}
+                          className="bg-slate-50/80 rounded-xl border border-slate-200/90 p-4 space-y-3 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-teal-950 bg-teal-100/90 px-2.5 py-0.5 rounded-md border border-teal-200">
+                                CÂU #{itemQNum}
+                              </span>
+                              <span className="text-xs text-slate-500 font-semibold">
+                                Vị trí điền khuyết [{itemQNum}]
+                              </span>
+                            </div>
+
+                            {cq.questions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveQuestion(activePartIndex, cqIdx, qIdx)}
+                                className="text-xs text-red-500 hover:text-red-700"
+                                title="Xóa câu này"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Nội dung câu hỏi (nếu có, hoặc gợi ý điền từ) */}
+                          <input
+                            type="text"
+                            placeholder={`Nội dung câu hỏi #${itemQNum} (hoặc để trống nếu câu chỉ chọn từ điền vào vị trí [${itemQNum}])...`}
+                            value={q.questionContent || ''}
+                            onChange={(e) =>
+                              handleUpdateQuestionField(
+                                activePartIndex,
+                                cqIdx,
+                                qIdx,
+                                'questionContent',
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-900 outline-none focus:border-teal-500"
+                          />
+
+                          {/* 4 Lựa chọn A, B, C, D */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {[
+                              { key: 'optionA', label: 'A', val: q.optionA || '', placeholder: 'Lựa chọn A' },
+                              { key: 'optionB', label: 'B', val: q.optionB || '', placeholder: 'Lựa chọn B' },
+                              { key: 'optionC', label: 'C', val: q.optionC || '', placeholder: 'Lựa chọn C' },
+                              { key: 'optionD', label: 'D', val: q.optionD || '', placeholder: 'Lựa chọn D' },
+                            ].map((opt) => (
+                              <div
+                                key={opt.key}
+                                className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 focus-within:border-teal-500"
+                              >
+                                <span
+                                  className={`w-5 h-5 rounded-sm font-black text-[11px] flex items-center justify-center shrink-0 ${
+                                    q.correctAnswer === opt.label
+                                      ? 'bg-teal-600 text-white'
+                                      : 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {opt.label}.
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder={opt.placeholder}
+                                  value={opt.val}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activePartIndex,
+                                      cqIdx,
+                                      qIdx,
+                                      opt.key,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 bg-transparent text-xs text-slate-900 outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Đáp án đúng & Lời giải thích */}
+                          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-200/60">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-700">Đáp án đúng:</span>
+                              <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200">
+                                {['A', 'B', 'C', 'D'].map((opt) => {
+                                  const isSelected = (q.correctAnswer || 'A') === opt;
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() =>
+                                        handleUpdateQuestionField(
+                                          activePartIndex,
+                                          cqIdx,
+                                          qIdx,
+                                          'correctAnswer',
+                                          opt
+                                        )
+                                      }
+                                      className={`w-7 h-6 rounded font-black text-xs transition-all flex items-center justify-center cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-teal-600 text-white shadow-2xs font-bold'
+                                          : 'text-slate-600 hover:text-slate-900'
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-[240px]">
+                              <input
+                                type="text"
+                                placeholder={`Giải thích câu #${itemQNum}...`}
+                                value={q.explanation || ''}
+                                onChange={(e) =>
+                                  handleUpdateQuestionField(
+                                    activePartIndex,
+                                    cqIdx,
+                                    qIdx,
+                                    'explanation',
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-teal-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Thanh công cụ dưới cùng Part 6 */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-3">
+          <span className="text-xs font-bold text-slate-700">
+            Hiện có {activePart.contextQuestions.length} bài đọc Part 6 (Chuẩn ETS: 4 đoạn văn x 4 câu = 16 câu hỏi từ Câu 131 đến Câu 146).
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleAddContextQuestion(activePartIndex)}
+              className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <Plus size={14} /> + Thêm Bài Đọc Điền Khuyết (Đoạn #{activePart.contextQuestions.length + 1})
+            </button>
+            <button
+              type="button"
+              onClick={handleResetPart6To4}
+              className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <RotateCcw size={14} /> Khởi tạo lại đủ 4 bài chuẩn Part 6
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // STUDIO BUILDER DÀNH RIÊNG CHO PART 7: ĐỌC HIỂU VĂN BẢN (READING COMPREHENSION)
+  // Quy chuẩn ETS: 54 câu hỏi (Câu 147 -> 200) gồm 10 bài đơn (29 câu) & 5 bài đa đoạn (25 câu)
+  // =========================================================================
+  // =========================================================================
+  // STUDIO BUILDER DÀNH RIÊNG CHO PART 7: ĐỌC HIỂU VĂN BẢN (READING COMPREHENSION)
+  // Quy chuẩn ETS 2026: 54 câu hỏi (Câu 147 -> 200) gồm đúng 15 cụm bài đọc:
+  // - 10 Bài đọc đơn (Single Passages: Câu 147 - 175 = 29 câu)
+  // - 2 Bài đọc kép (Double Passages: Câu 176 - 185 = 10 câu, 2 bài đọc/cụm)
+  // - 3 Bài đọc ba (Triple Passages: Câu 186 - 200 = 15 câu, 3 bài đọc/cụm)
+  // =========================================================================
+  const renderPart7QuestionsBuilder = () => {
+    // Helper: Tách bài đọc kép thành 2 văn bản riêng biệt
+    const splitDoublePassage = (rawText = '') => {
+      const delimiter = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i;
+      if (delimiter.test(rawText)) {
+        const parts = rawText.split(delimiter);
+        return [parts[0] || '', parts.slice(1).join('\n\n--- BÀI ĐỌC 2 ---\n\n') || ''];
+      }
+      return [rawText, ''];
+    };
+
+    // Helper: Tách bài đọc ba thành 3 văn bản riêng biệt
+    const splitTriplePassage = (rawText = '') => {
+      const sep2 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i;
+      const sep3 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i;
+      if (sep2.test(rawText)) {
+        const part1 = rawText.split(sep2)[0] || '';
+        const rest = rawText.split(sep2).slice(1).join('\n\n--- BÀI ĐỌC 2 ---\n\n') || '';
+        if (sep3.test(rest)) {
+          const part2 = rest.split(sep3)[0] || '';
+          const part3 = rest.split(sep3).slice(1).join('\n\n--- BÀI ĐỌC 3 ---\n\n') || '';
+          return [part1, part2, part3];
+        }
+        return [part1, rest, ''];
+      }
+      return [rawText, '', ''];
+    };
+
+    // Cập nhật văn bản con trong bài đọc đôi
+    const handleUpdateDoublePart = (cqIdx, partIdx, newText) => {
+      const parts = splitDoublePassage(activePart.contextQuestions[cqIdx]?.paragraph || '');
+      parts[partIdx] = newText;
+      let combined = parts[0].trim();
+      if (parts[1].trim()) {
+        combined += `\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1].trim()}`;
+      }
+      handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', combined);
+    };
+
+    // Cập nhật văn bản con trong bài đọc ba
+    const handleUpdateTriplePart = (cqIdx, partIdx, newText) => {
+      const parts = splitTriplePassage(activePart.contextQuestions[cqIdx]?.paragraph || '');
+      parts[partIdx] = newText;
+      let combined = parts[0].trim();
+      if (parts[1].trim()) {
+        combined += `\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1].trim()}`;
+      }
+      if (parts[2].trim()) {
+        combined += `\n\n--- BÀI ĐỌC 3 ---\n\n${parts[2].trim()}`;
+      }
+      handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', combined);
+    };
+
+    // Tính toán thông số câu hỏi và loại đoạn cho từng cụm bài đọc
+    const p7ItemsMeta = activePart.contextQuestions.map((cq, idx) => {
+      let startQ = 147;
+      for (let i = 0; i < idx; i++) {
+        startQ += (activePart.contextQuestions[i]?.questions?.length || 0);
+      }
+      const qCount = cq.questions?.length || 0;
+      const endQ = startQ + Math.max(0, qCount - 1);
+      const spec = ETS_PART7_STRUCTURE[idx];
+      const passageCount = spec?.passageCount || (idx < 10 ? 1 : idx < 12 ? 2 : 3);
+      const isComplete = Boolean(cq.paragraph?.trim() && qCount > 0);
+      return {
+        idx,
+        startQ,
+        endQ,
+        qCount,
+        passageCount,
+        spec,
+        isComplete,
+        hasImage: Boolean(cq.imageUrl),
+      };
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* Thanh Điều Hướng Nhanh & Tổng Quan Part 7 Studio */}
+        <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm border border-slate-800 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-black text-sm border border-rose-500/30">
+                P7
+              </span>
+              <div>
+                <h4 className="m-0 text-sm font-bold text-white flex items-center gap-2 flex-wrap">
+                  <span>Part 7: Reading Comprehension Studio</span>
+                  <span className="text-[11px] font-bold text-rose-400 bg-rose-950/80 px-2.5 py-0.5 rounded-full border border-rose-500/30">
+                    54 Câu hỏi đọc hiểu (Câu 147 - 200) • 15 Cụm bài đọc • Chuẩn ETS 2026
+                  </span>
+                </h4>
+                <p className="m-0 text-xs text-slate-400 mt-1">
+                  10 Bài đọc đơn (147-175: 29 câu), 2 Bài đọc kép (176-185: 10 câu), 3 Bài đọc ba (186-200: 15 câu). Hỗ trợ soạn riêng từng văn bản hoặc tải ảnh hóa đơn, bảng biểu.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetPart7To54}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              title="Khởi tạo lại đủ 15 bài chuẩn Part 7 (54 câu chuẩn ETS 2026)"
+            >
+              <RotateCcw size={13} className="text-rose-400" /> Chuẩn hóa 54 câu Part 7
+            </button>
+          </div>
+
+          {/* Quick Nav Jump Pills (Phân nhóm 3 khu vực chuẩn ETS) */}
+          <div className="pt-3 border-t border-slate-800/80 space-y-2.5">
+            {/* Nhóm 1: 10 Bài đọc đơn (147 - 175) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-rose-300 bg-rose-950/70 px-2 py-0.5 rounded border border-rose-800/40 shrink-0">
+                📄 10 Bài Đọc Đơn (147 - 175)
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {p7ItemsMeta.slice(0, 10).map((item) => (
+                  <button
+                    key={item.idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p7-card-${item.idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border cursor-pointer ${
+                      item.isComplete
+                        ? 'bg-rose-950/80 text-rose-300 border-rose-500/40 hover:bg-rose-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        item.isComplete ? 'bg-rose-400 ring-2 ring-rose-400/30' : 'bg-slate-500'
+                      }`}
+                    />
+                    <span>Bài {item.idx + 1} ({item.startQ}-{item.endQ})</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Nhóm 2: 2 Bài đọc kép (176 - 185) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300 bg-purple-950/70 px-2 py-0.5 rounded border border-purple-800/40 shrink-0">
+                📑 2 Bài Đọc Kép (176 - 185)
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {p7ItemsMeta.slice(10, 12).map((item) => (
+                  <button
+                    key={item.idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p7-card-${item.idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border cursor-pointer ${
+                      item.isComplete
+                        ? 'bg-purple-950/80 text-purple-300 border-purple-500/40 hover:bg-purple-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        item.isComplete ? 'bg-purple-400 ring-2 ring-purple-400/30' : 'bg-slate-500'
+                      }`}
+                    />
+                    <span>Bài {item.idx + 1} ({item.startQ}-{item.endQ} • 2 bài đọc)</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Nhóm 3: 3 Bài đọc ba (186 - 200) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 bg-amber-950/70 px-2 py-0.5 rounded border border-amber-800/40 shrink-0">
+                📚 3 Bài Đọc Ba (186 - 200)
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {p7ItemsMeta.slice(12, 15).map((item) => (
+                  <button
+                    key={item.idx}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`p7-card-${item.idx}`);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 border cursor-pointer ${
+                      item.isComplete
+                        ? 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-900/60'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        item.isComplete ? 'bg-amber-400 ring-2 ring-amber-400/30' : 'bg-slate-500'
+                      }`}
+                    />
+                    <span>Bài {item.idx + 1} ({item.startQ}-{item.endQ} • 3 bài đọc)</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bài đọc tùy biến thêm nếu > 15 */}
+            {p7ItemsMeta.length > 15 && (
+              <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-800/50">
+                <span className="text-[11px] font-bold text-slate-400 shrink-0">Các bài đọc thêm:</span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {p7ItemsMeta.slice(15).map((item) => (
+                    <button
+                      key={item.idx}
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById(`p7-card-${item.idx}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                      className="px-2 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700"
+                    >
+                      <span>Bài {item.idx + 1} ({item.startQ}-{item.endQ})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Danh sách các Bài Đọc Part 7 */}
+        <div className="space-y-6">
+          {activePart.contextQuestions.map((cq, cqIdx) => {
+            const meta = p7ItemsMeta[cqIdx] || {
+              startQ: 147,
+              endQ: 147,
+              qCount: cq.questions?.length || 0,
+              passageCount: cqIdx < 10 ? 1 : cqIdx < 12 ? 2 : 3,
+              spec: null,
+            };
+
+            const { startQ, endQ, qCount, passageCount } = meta;
+            const hasParagraph = Boolean(cq.paragraph?.trim());
+            const hasImage = Boolean(cq.imageUrl);
+            const isRawMode = Boolean(p7RawMode[cqIdx]);
+
+            // Theme màu sắc theo loại bài đọc
+            const themeBorder =
+              passageCount === 1
+                ? 'border-l-rose-600'
+                : passageCount === 2
+                ? 'border-l-purple-600'
+                : 'border-l-amber-500';
+
+            const passageTypeBadge =
+              passageCount === 1 ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                  📄 1 BÀI ĐỌC (Đoạn đơn • Single Passage)
+                </span>
+              ) : passageCount === 2 ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  📑 2 BÀI ĐỌC (Đoạn kép • Double Passage)
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                  📚 3 BÀI ĐỌC (Đoạn ba • Triple Passage)
+                </span>
+              );
+
+            const imageKey = `p7-${cqIdx}-image`;
+            const showImageInput = showUrlInputs[imageKey];
+
+            // Tách các đoạn văn bản khi ở chế độ 2 hoặc 3 bài đọc
+            const doubleParts = passageCount === 2 ? splitDoublePassage(cq.paragraph) : ['', ''];
+            const tripleParts = passageCount === 3 ? splitTriplePassage(cq.paragraph) : ['', '', ''];
+
+            return (
+              <div
+                key={cqIdx}
+                id={`p7-card-${cqIdx}`}
+                className={`bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 p-6 space-y-6 relative border-l-4 ${themeBorder}`}
+              >
+                {/* Header Bài Đọc */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-900 text-white font-black text-xs px-3 py-1.5 rounded-lg tracking-wider shadow-2xs">
+                      <span>BÀI #{String(cqIdx + 1).padStart(2, '0')}</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-slate-900 block">
+                          Bài đọc hiểu #{cqIdx + 1} • Câu {startQ} - {endQ}
+                        </span>
+                        {passageTypeBadge}
+                      </div>
+                      <span className="text-[11px] text-slate-400">
+                        {qCount} câu hỏi trắc nghiệm đọc hiểu (Chuẩn ETS: {meta.spec?.qCount || qCount} câu • 4 lựa chọn A, B, C, D)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasParagraph
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasParagraph ? '✓ Đã có bài đọc' : 'Chưa có bài đọc'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasImage
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-slate-50 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasImage ? '✓ Có ảnh đính kèm' : 'Không ảnh'}
+                    </span>
+
+                    {passageCount > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleP7RawMode(cqIdx)}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+                        title="Chuyển đổi giữa chế độ soạn riêng từng bài đọc và 1 ô văn bản gộp"
+                      >
+                        {isRawMode ? '📑 Soạn riêng từng văn bản' : '👁️ Xem 1 ô gộp'}
+                      </button>
+                    )}
+
+                    {activePart.contextQuestions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                        className="text-slate-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-all ml-1 cursor-pointer"
+                        title="Xóa bài đọc này"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* KHU VỰC SOẠN THẢO VĂN BẢN ĐỌC HIỂU (PARAGRAPH EDITOR) */}
+                {passageCount === 1 || isRawMode ? (
+                  /* 1 BÀI ĐỌC ĐƠN HOẶC CHẾ ĐỘ XEM GỘP */
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-700">
+                        {isRawMode
+                          ? 'Toàn bộ nội dung văn bản (Phân tách bằng --- BÀI ĐỌC 2 --- và --- BÀI ĐỌC 3 ---):'
+                          : 'Nội dung văn bản đọc hiểu (Email, Memo, Article, Webpage, Notice, Text Message...):'}
+                      </label>
+                      {!hasParagraph && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sample = `MEMORANDUM\nTo: All Department Heads\nFrom: Executive Director\nDate: October 14\nSubject: Annual Budget Planning\n\nPlease submit your department's projected expenditure for the upcoming fiscal year by next Friday, October 24. Ensure that all proposed expenses for new equipment and staff training are clearly justified in the appendix.`;
+                            handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', sample);
+                          }}
+                          className="text-[11px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 transition-all inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Sparkles size={11} /> + Mẫu văn bản đơn
+                        </button>
+                      )}
+                    </div>
+                    <textarea
+                      rows={isRawMode ? 10 : 7}
+                      placeholder="Nhập nội dung bài đọc hiểu..."
+                      value={cq.paragraph || ''}
+                      onChange={(e) =>
+                        handleUpdateContextField(
+                          activePartIndex,
+                          cqIdx,
+                          'paragraph',
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-4 rounded-xl border border-slate-300 font-sans text-xs leading-relaxed outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-all bg-white"
+                    />
+                  </div>
+                ) : passageCount === 2 ? (
+                  /* 2 BÀI ĐỌC KÉP (DOUBLE PASSAGE - CÂU 176-180 & 181-185) */
+                  <div className="space-y-4">
+                    <div className="bg-purple-50/70 border border-purple-200 p-3 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs text-purple-900">
+                      <span className="font-bold flex items-center gap-1.5">
+                        <FileText size={15} className="text-purple-600" />
+                        Cụm 2 bài đọc kép (Double Passage): Soạn riêng Văn bản 1 và Văn bản 2 bên dưới.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const p1 = `ANNOUNCEMENT\nCitywide Green Tech Expo\nThe annual Green Tech Expo will take place at the Grand Convention Center from November 5 to 7. Industry leaders and entrepreneurs are invited to showcase innovative energy-saving technologies.\nRegistration deadline: October 20.`;
+                          const p2 = `EMAIL CONFIRMATION\nTo: expo-registration@greentech.org\nFrom: mark.taylor@innovatech.com\nDate: October 18\nSubject: Booth Reservation for Green Tech Expo\n\nDear Organizing Committee,\nI would like to confirm our reservation for a standard demonstration booth at the upcoming expo. We have processed the payment via bank transfer today. Please find the receipt attached.`;
+                          handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', `${p1}\n\n--- BÀI ĐỌC 2 ---\n\n${p2}`);
+                        }}
+                        className="text-[11px] font-bold text-purple-700 hover:text-purple-800 bg-white hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-300 transition-all inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles size={11} /> + Mẫu 2 bài đọc chuẩn ETS
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Văn bản 1 */}
+                      <div className="space-y-2 p-3.5 rounded-xl bg-purple-50/30 border border-purple-200">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-purple-900 flex items-center gap-1.5 uppercase">
+                            <span className="bg-purple-600 text-white px-1.5 py-0.5 rounded text-[10px]">1</span>
+                            <span>Văn bản 1 (Bài đọc đầu tiên)</span>
+                          </label>
+                          <span className="text-[10px] text-purple-600 font-semibold">Email, Thông báo, Bài báo...</span>
+                        </div>
+                        <textarea
+                          rows={6}
+                          placeholder="Nhập nội dung Văn bản 1 (ví dụ: Email thông báo, thư mời, bản tin sự kiện)..."
+                          value={doubleParts[0]}
+                          onChange={(e) => handleUpdateDoublePart(cqIdx, 0, e.target.value)}
+                          className="w-full p-3 rounded-lg border border-purple-200 font-sans text-xs leading-relaxed outline-none focus:border-purple-500 focus:bg-white transition-all bg-white"
+                        />
+                      </div>
+
+                      {/* Văn bản 2 */}
+                      <div className="space-y-2 p-3.5 rounded-xl bg-purple-50/30 border border-purple-200">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-purple-900 flex items-center gap-1.5 uppercase">
+                            <span className="bg-purple-600 text-white px-1.5 py-0.5 rounded text-[10px]">2</span>
+                            <span>Văn bản 2 (Bài đọc thứ hai)</span>
+                          </label>
+                          <span className="text-[10px] text-purple-600 font-semibold">Lịch trình, Thư phản hồi, Hóa đơn...</span>
+                        </div>
+                        <textarea
+                          rows={6}
+                          placeholder="Nhập nội dung Văn bản 2 (ví dụ: Thư phản hồi, lịch trình, bảng biểu, mẫu đăng ký)..."
+                          value={doubleParts[1]}
+                          onChange={(e) => handleUpdateDoublePart(cqIdx, 1, e.target.value)}
+                          className="w-full p-3 rounded-lg border border-purple-200 font-sans text-xs leading-relaxed outline-none focus:border-purple-500 focus:bg-white transition-all bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* 3 BÀI ĐỌC BA (TRIPLE PASSAGE - CÂU 186-190, 191-195 & 196-200) */
+                  <div className="space-y-4">
+                    <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-xl flex items-center justify-between flex-wrap gap-2 text-xs text-amber-900">
+                      <span className="font-bold flex items-center gap-1.5">
+                        <BookOpen size={15} className="text-amber-600" />
+                        Cụm 3 bài đọc ba (Triple Passage): Soạn riêng Văn bản 1, Văn bản 2 và Văn bản 3 bên dưới.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const p1 = `JOB ADVERTISEMENT\nPosition: Senior Project Architect\nCompany: Apex Design Studio\nLocation: Chicago, IL\nWe are looking for an experienced architect with at least 5 years of commercial design experience. Applicants must be proficient in AutoCAD and BIM software.\nApply by sending your resume to hr@apexdesign.com.`;
+                          const p2 = `COVER LETTER & EMAIL\nTo: hr@apexdesign.com\nFrom: sarah.jenkins@archimail.com\nDate: August 12\nSubject: Application for Senior Project Architect\n\nDear Hiring Manager,\nI am writing to express my strong interest in the Senior Project Architect role. With over 6 years leading commercial building projects in downtown Chicago, I am confident in my ability to contribute to Apex Design Studio.`;
+                          const p3 = `INTERVIEW INVITATION\nTo: sarah.jenkins@archimail.com\nFrom: hr@apexdesign.com\nDate: August 15\nSubject: Interview Schedule\n\nDear Ms. Jenkins,\nWe were very impressed by your portfolio. We would like to invite you for an interview on Friday, August 22 at 10:00 AM at our downtown office. Please let us know if this time works for you.`;
+                          handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', `${p1}\n\n--- BÀI ĐỌC 2 ---\n\n${p2}\n\n--- BÀI ĐỌC 3 ---\n\n${p3}`);
+                        }}
+                        className="text-[11px] font-bold text-amber-800 hover:text-amber-900 bg-white hover:bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 transition-all inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Sparkles size={11} /> + Mẫu 3 bài đọc chuẩn ETS
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                      {/* Văn bản 1 */}
+                      <div className="space-y-2 p-3 rounded-xl bg-amber-50/30 border border-amber-200">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-amber-900 flex items-center gap-1 uppercase">
+                            <span className="bg-amber-600 text-white px-1.5 py-0.5 rounded text-[10px]">1</span>
+                            <span>Văn bản 1</span>
+                          </label>
+                          <span className="text-[10px] text-amber-700 font-semibold">Quảng cáo / Bản tin</span>
+                        </div>
+                        <textarea
+                          rows={6}
+                          placeholder="Nội dung Văn bản 1 (Thông báo, Quảng cáo tuyển dụng, Quy định...)..."
+                          value={tripleParts[0]}
+                          onChange={(e) => handleUpdateTriplePart(cqIdx, 0, e.target.value)}
+                          className="w-full p-2.5 rounded-lg border border-amber-200 font-sans text-xs leading-relaxed outline-none focus:border-amber-500 focus:bg-white transition-all bg-white"
+                        />
+                      </div>
+
+                      {/* Văn bản 2 */}
+                      <div className="space-y-2 p-3 rounded-xl bg-amber-50/30 border border-amber-200">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-amber-900 flex items-center gap-1 uppercase">
+                            <span className="bg-amber-600 text-white px-1.5 py-0.5 rounded text-[10px]">2</span>
+                            <span>Văn bản 2</span>
+                          </label>
+                          <span className="text-[10px] text-amber-700 font-semibold">Email / Đơn từ</span>
+                        </div>
+                        <textarea
+                          rows={6}
+                          placeholder="Nội dung Văn bản 2 (Email gửi, đơn đăng ký, thư hỏi thăm...)..."
+                          value={tripleParts[1]}
+                          onChange={(e) => handleUpdateTriplePart(cqIdx, 1, e.target.value)}
+                          className="w-full p-2.5 rounded-lg border border-amber-200 font-sans text-xs leading-relaxed outline-none focus:border-amber-500 focus:bg-white transition-all bg-white"
+                        />
+                      </div>
+
+                      {/* Văn bản 3 */}
+                      <div className="space-y-2 p-3 rounded-xl bg-amber-50/30 border border-amber-200">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-black text-amber-900 flex items-center gap-1 uppercase">
+                            <span className="bg-amber-600 text-white px-1.5 py-0.5 rounded text-[10px]">3</span>
+                            <span>Văn bản 3</span>
+                          </label>
+                          <span className="text-[10px] text-amber-700 font-semibold">Lịch trình / Đánh giá</span>
+                        </div>
+                        <textarea
+                          rows={6}
+                          placeholder="Nội dung Văn bản 3 (Lịch trình, hóa đơn, nhận xét review...)..."
+                          value={tripleParts[2]}
+                          onChange={(e) => handleUpdateTriplePart(cqIdx, 2, e.target.value)}
+                          className="w-full p-2.5 rounded-lg border border-amber-200 font-sans text-xs leading-relaxed outline-none focus:border-amber-500 focus:bg-white transition-all bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hình ảnh đính kèm tùy chọn (Biểu mẫu, hóa đơn, coupon, bảng biểu) */}
+                <div className="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <ImageIcon size={14} className="text-rose-600" />
+                      Hình ảnh bài đọc (tùy chọn - nếu bài đọc là bảng biểu, hóa đơn, thông báo dạng ảnh):
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-white text-rose-700 hover:bg-rose-50 border border-rose-200 cursor-pointer transition-all shadow-2xs">
+                        <UploadCloud size={13} />
+                        {uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
+                        <input
+                          type="file"
+                          accept="image/*,.jpg,.jpeg,.png,.webp"
+                          className="hidden"
+                          disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
+                          onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleUrlInput(imageKey)}
+                        className="text-xs text-slate-500 hover:text-slate-800 p-1 font-semibold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Link2 size={13} /> {showImageInput ? 'Ẩn URL' : 'Nhập URL'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {showImageInput && (
+                    <input
+                      type="text"
+                      placeholder="https://res.cloudinary.com/.../image.png"
+                      value={cq.imageUrl || ''}
+                      onChange={(e) =>
+                        handleUpdateContextField(activePartIndex, cqIdx, 'imageUrl', e.target.value)
+                      }
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-rose-500"
+                    />
+                  )}
+
+                  {cq.imageUrl && (
+                    <div className="mt-2 relative inline-block">
+                      <img
+                        src={cq.imageUrl}
+                        alt={`Minh họa bài đọc #${cqIdx + 1}`}
+                        className="h-28 object-contain rounded-lg border border-slate-200 bg-white p-1"
+                        onError={(e) => (e.target.style.display = 'none')}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Danh sách các câu hỏi con của bài đọc này */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Layers size={14} className="text-rose-600" />
+                      <span>{qCount} Câu hỏi trắc nghiệm của Bài đọc #{cqIdx + 1} (Câu {startQ} - {endQ})</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus size={13} /> Thêm câu hỏi
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {(cq.questions || []).map((q, qIdx) => {
+                      const itemQNum = startQ + qIdx;
+                      return (
+                        <div
+                          key={qIdx}
+                          className="bg-slate-50/80 rounded-xl border border-slate-200/90 p-4 space-y-3 shadow-2xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-rose-950 bg-rose-100/90 px-2.5 py-0.5 rounded-md border border-rose-200">
+                              CÂU #{itemQNum}
+                            </span>
+
+                            {cq.questions.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveQuestion(activePartIndex, cqIdx, qIdx)}
+                                className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
+                                title="Xóa câu này"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Nội dung câu hỏi trắc nghiệm */}
+                          <input
+                            type="text"
+                            required
+                            placeholder={`Nội dung câu hỏi #${itemQNum} (ví dụ: What is the main purpose of the article?)...`}
+                            value={q.questionContent || ''}
+                            onChange={(e) =>
+                              handleUpdateQuestionField(
+                                activePartIndex,
+                                cqIdx,
+                                qIdx,
+                                'questionContent',
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-900 outline-none focus:border-rose-500"
+                          />
+
+                          {/* 4 Lựa chọn A, B, C, D */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {[
+                              { key: 'optionA', label: 'A', val: q.optionA || '', placeholder: 'Lựa chọn A' },
+                              { key: 'optionB', label: 'B', val: q.optionB || '', placeholder: 'Lựa chọn B' },
+                              { key: 'optionC', label: 'C', val: q.optionC || '', placeholder: 'Lựa chọn C' },
+                              { key: 'optionD', label: 'D', val: q.optionD || '', placeholder: 'Lựa chọn D' },
+                            ].map((opt) => (
+                              <div
+                                key={opt.key}
+                                className="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 focus-within:border-rose-500"
+                              >
+                                <span
+                                  className={`w-5 h-5 rounded-sm font-black text-[11px] flex items-center justify-center shrink-0 ${
+                                    q.correctAnswer === opt.label
+                                      ? 'bg-rose-600 text-white'
+                                      : 'bg-slate-100 text-slate-700'
+                                  }`}
+                                >
+                                  {opt.label}.
+                                </span>
+                                <input
+                                  type="text"
+                                  placeholder={opt.placeholder}
+                                  value={opt.val}
+                                  onChange={(e) =>
+                                    handleUpdateQuestionField(
+                                      activePartIndex,
+                                      cqIdx,
+                                      qIdx,
+                                      opt.key,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 bg-transparent text-xs text-slate-900 outline-none"
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Đáp án đúng & Lời giải thích */}
+                          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-200/60">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-700">Đáp án đúng:</span>
+                              <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200">
+                                {['A', 'B', 'C', 'D'].map((opt) => {
+                                  const isSelected = (q.correctAnswer || 'A') === opt;
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() =>
+                                        handleUpdateQuestionField(
+                                          activePartIndex,
+                                          cqIdx,
+                                          qIdx,
+                                          'correctAnswer',
+                                          opt
+                                        )
+                                      }
+                                      className={`w-7 h-6 rounded font-black text-xs transition-all flex items-center justify-center cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-rose-600 text-white shadow-2xs font-bold'
+                                          : 'text-slate-600 hover:text-slate-900'
+                                      }`}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="flex-1 min-w-[240px]">
+                              <input
+                                type="text"
+                                placeholder={`Giải thích câu #${itemQNum}...`}
+                                value={q.explanation || ''}
+                                onChange={(e) =>
+                                  handleUpdateQuestionField(
+                                    activePartIndex,
+                                    cqIdx,
+                                    qIdx,
+                                    'explanation',
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-xs outline-none focus:border-rose-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Thanh công cụ dưới cùng Part 7 */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between flex-wrap gap-3">
+          <span className="text-xs font-bold text-slate-700">
+            Hiện có {activePart.contextQuestions.length} bài đọc Part 7 (Chuẩn ETS 2026: 15 cụm bài gồm 10 bài đơn, 2 bài kép, 3 bài ba = 54 câu hỏi từ Câu 147 đến Câu 200).
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleAddContextQuestion(activePartIndex)}
+              className="btn btn-primary btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <Plus size={14} /> + Thêm Bài Đọc Hiểu (Bài #{activePart.contextQuestions.length + 1})
+            </button>
+            <button
+              type="button"
+              onClick={handleResetPart7To54}
+              className="btn btn-outline btn-sm text-xs font-bold inline-flex items-center gap-1.5"
+            >
+              <RotateCcw size={14} /> Khởi tạo lại đủ 54 câu chuẩn Part 7
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="admin-page py-8 min-h-screen bg-gray-50">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -4364,7 +5946,23 @@ const TestManagementPage = () => {
                   className="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all inline-flex items-center gap-1.5 shadow-2xs"
                   title="Khởi tạo sẵn khung đề 100 câu Listening chuẩn ETS (Part 1: 6 câu, Part 2: 25 câu, Part 3: 13 đoạn, Part 4: 10 bài)"
                 >
-                  <Headphones size={13} /> Khởi tạo chuẩn 100 câu Listening (P1 - P4)
+                  <Headphones size={13} /> 100 câu Listening (P1 - P4)
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetToReading100Blank}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Khởi tạo sẵn khung đề 100 câu Reading chuẩn ETS (Part 5: 30 câu, Part 6: 4 bài, Part 7: 15 bài - Câu 101 đến 200)"
+                >
+                  <FileText size={13} /> 100 câu Reading (P5 - P7)
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetToFull200Blank}
+                  className="px-2.5 py-1 rounded-lg text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-all inline-flex items-center gap-1.5 shadow-2xs"
+                  title="Khởi tạo trọn bộ Full Test 200 câu chuẩn ETS (Part 1 đến Part 7)"
+                >
+                  <Sparkles size={13} /> Full Test 200 câu (P1 - P7)
                 </button>
               </div>
 
@@ -4546,30 +6144,51 @@ const TestManagementPage = () => {
                 renderPart3QuestionsBuilder()
               ) : activePart.partNumber === 4 ? (
                 renderPart4QuestionsBuilder()
+              ) : activePart.partNumber === 5 ? (
+                renderPart5QuestionsBuilder()
+              ) : activePart.partNumber === 6 ? (
+                renderPart6QuestionsBuilder()
+              ) : activePart.partNumber === 7 ? (
+                renderPart7QuestionsBuilder()
               ) : (
                 <div className="space-y-6">
-                  {activePart.contextQuestions.map((cq, cqIdx) => (
-                  <div
-                    key={cqIdx}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 relative space-y-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                        <Layers size={14} className="text-emerald-600" />
-                        {activePart.partNumber === 1
-                          ? `Câu hỏi tranh #${cqIdx + 1} (File nghe & Ảnh riêng lẻ)`
-                          : activePart.partNumber === 2
-                          ? `Câu hỏi #${cqIdx + 7} (File nghe riêng lẻ • 3 options A, B, C)`
-                          : activePart.partNumber === 3
-                          ? `Đoạn hội thoại #${cqIdx + 1} (Câu ${31 + cqIdx * 3 + 1} - ${31 + (cqIdx + 1) * 3}) • 1 File Audio phát chung cho 3 câu hỏi`
-                          : activePart.partNumber === 4
-                          ? `Bài nói ngắn #${cqIdx + 1} (Câu ${70 + cqIdx * 3 + 1} - ${70 + (cqIdx + 1) * 3}) • 1 File Audio phát chung cho 3 câu hỏi`
-                          : activePart.partNumber === 5
-                          ? `Câu hỏi #${cqIdx + 101} (Ngữ pháp & Từ vựng độc lập)`
-                          : activePart.partNumber === 6
-                          ? `Bài đọc điền khuyết #${cqIdx + 1} (Câu ${130 + cqIdx * 4 + 1} - ${130 + (cqIdx + 1) * 4}) • 1 Đoạn văn có 4 chỗ trống`
-                          : `Bài đọc hiểu #${cqIdx + 1} (${cq.questions.length} câu hỏi)`}
-                      </span>
+                  {activePart.contextQuestions.map((cq, cqIdx) => {
+                    let countBefore = 0;
+                    for (let i = 0; i < cqIdx; i++) {
+                      countBefore += (activePart.contextQuestions[i]?.questions?.length || 0);
+                    }
+                    let startQ = 1;
+                    if (activePart.partNumber === 1) startQ = cqIdx + 1;
+                    else if (activePart.partNumber === 2) startQ = cqIdx + 7;
+                    else if (activePart.partNumber === 3) startQ = 32 + cqIdx * 3;
+                    else if (activePart.partNumber === 4) startQ = 71 + cqIdx * 3;
+                    else if (activePart.partNumber === 5) startQ = 101 + cqIdx;
+                    else if (activePart.partNumber === 6) startQ = 131 + countBefore;
+                    else if (activePart.partNumber === 7) startQ = 147 + countBefore;
+                    const endQ = startQ + Math.max(0, (cq.questions?.length || 1) - 1);
+
+                    return (
+                    <div
+                      key={cqIdx}
+                      className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 relative space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                          <Layers size={14} className="text-emerald-600" />
+                          {activePart.partNumber === 1
+                            ? `Câu hỏi tranh #${cqIdx + 1} (File nghe & Ảnh riêng lẻ)`
+                            : activePart.partNumber === 2
+                            ? `Câu hỏi #${cqIdx + 7} (File nghe riêng lẻ • 3 options A, B, C)`
+                            : activePart.partNumber === 3
+                            ? `Đoạn hội thoại #${cqIdx + 1} (Câu ${startQ} - ${endQ}) • 1 File Audio phát chung cho 3 câu hỏi`
+                            : activePart.partNumber === 4
+                            ? `Bài nói ngắn #${cqIdx + 1} (Câu ${startQ} - ${endQ}) • 1 File Audio phát chung cho 3 câu hỏi`
+                            : activePart.partNumber === 5
+                            ? `Câu hỏi #${startQ} (Ngữ pháp & Từ vựng độc lập)`
+                            : activePart.partNumber === 6
+                            ? `Bài đọc điền khuyết #${cqIdx + 1} (Câu ${startQ} - ${endQ}) • 1 Đoạn văn có ${cq.questions?.length || 4} chỗ trống`
+                            : `Bài đọc hiểu #${cqIdx + 1} (Câu ${startQ} - ${endQ}) • ${cq.questions?.length || 0} câu hỏi`}
+                        </span>
 
                       {activePart.contextQuestions.length > 1 && (
                         <button
@@ -4762,14 +6381,16 @@ const TestManagementPage = () => {
                         )}
                       </div>
 
-                      {cq.questions.map((q, qIdx) => (
+                      {cq.questions.map((q, qIdx) => {
+                        const itemQNum = startQ + qIdx;
+                        return (
                         <div
                           key={qIdx}
                           className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3"
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-xs text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md">
-                              Câu hỏi #{qIdx + 1}
+                              Câu hỏi #{itemQNum}
                             </span>
                             {cq.questions.length > 1 && (
                               <button
@@ -4948,10 +6569,12 @@ const TestManagementPage = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

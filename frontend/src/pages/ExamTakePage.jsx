@@ -884,24 +884,101 @@ const ExamTakePage = () => {
             )}
 
             {/* READING PASSAGE / PARAGRAPH (Part 6 & 7) */}
-            {currentContext.paragraph && (
-              <div
-                style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: 12,
-                  padding: 20,
-                  lineHeight: 1.8,
-                  fontSize: '0.98rem',
-                  color: '#1e293b',
-                  fontFamily: 'inherit',
-                  whiteSpace: 'pre-wrap',
-                  marginBottom: 20,
-                }}
-              >
-                {currentContext.paragraph}
-              </div>
-            )}
+            {currentContext.paragraph && (() => {
+              const rawP = currentContext.paragraph;
+              const hasSep2 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i.test(rawP);
+              const hasSep3 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i.test(rawP);
+
+              if (!hasSep2) {
+                return (
+                  <div
+                    style={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: 12,
+                      padding: 20,
+                      lineHeight: 1.8,
+                      fontSize: '0.98rem',
+                      color: '#1e293b',
+                      fontFamily: 'inherit',
+                      whiteSpace: 'pre-wrap',
+                      marginBottom: 20,
+                    }}
+                  >
+                    {rawP}
+                  </div>
+                );
+              }
+
+              // Render cụm bài đọc đa đoạn (Double & Triple Passages)
+              const sep2Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i;
+              const sep3Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i;
+              const p1 = rawP.split(sep2Regex)[0]?.trim() || '';
+              const rest = rawP.split(sep2Regex)[1] || '';
+              let p2 = rest.trim();
+              let p3 = '';
+              if (hasSep3 && sep3Regex.test(rest)) {
+                p2 = rest.split(sep3Regex)[0]?.trim() || '';
+                p3 = rest.split(sep3Regex)[1]?.trim() || '';
+              }
+
+              const passages = [
+                { label: 'VĂN BẢN 1 (Passage 1)', text: p1, color: '#4f46e5' },
+                { label: 'VĂN BẢN 2 (Passage 2)', text: p2, color: '#7c3aed' },
+              ];
+              if (p3) {
+                passages.push({ label: 'VĂN BẢN 3 (Passage 3)', text: p3, color: '#b45309' });
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', fontWeight: 700, color: '#64748b' }}>
+                    <Layers size={15} />
+                    <span>Cụm {passages.length} bài đọc liên quan (Đọc các văn bản bên dưới để trả lời câu hỏi):</span>
+                  </div>
+                  {passages.map((psg, pIdx) => (
+                    <div
+                      key={pIdx}
+                      style={{
+                        backgroundColor: '#ffffff',
+                        border: '1.5px solid #e2e8f0',
+                        borderRadius: 12,
+                        padding: 18,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        borderLeft: `4px solid ${psg.color}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'inline-block',
+                          backgroundColor: '#f1f5f9',
+                          color: psg.color,
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          padding: '3px 9px',
+                          borderRadius: 6,
+                          marginBottom: 10,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}
+                      >
+                        {psg.label}
+                      </div>
+                      <div
+                        style={{
+                          lineHeight: 1.8,
+                          fontSize: '0.96rem',
+                          color: '#1e293b',
+                          whiteSpace: 'pre-wrap',
+                        }}
+                      >
+                        {psg.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {/* REVIEW MODE: TRANSCRIPT & VIETNAMESE TRANSLATION */}
             {(isSubmitted || showExplanation) && (currentContext.transcript || currentContext.translation) && (() => {
