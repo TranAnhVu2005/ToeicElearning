@@ -28,6 +28,9 @@ public class ContextQuestion extends BaseCreatedUpdatedEntity {
     @Column(name = "transcript", columnDefinition = "TEXT")
     private String transcript;
 
+    @Column(name = "translation", columnDefinition = "TEXT")
+    private String translation;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_id")
     @JsonIgnore //Cắt đứt vòng lặp chạy về test

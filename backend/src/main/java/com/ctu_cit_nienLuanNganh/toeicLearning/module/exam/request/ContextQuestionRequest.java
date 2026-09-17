@@ -12,6 +12,7 @@ public class ContextQuestionRequest {
     private String imageUrl;
     private String paragraph;
     private String transcript;
+    private String translation;
     private Integer orderIndex;
     private List<QuestionRequest> questions; // Danh sách câu hỏi thuộc cụm này
 }

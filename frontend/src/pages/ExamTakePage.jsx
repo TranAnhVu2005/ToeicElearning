@@ -26,6 +26,7 @@ import {
   Send,
   Sparkles,
   Info,
+  Languages,
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import {
@@ -142,15 +143,32 @@ const ExamTakePage = () => {
             if (!partNum && cq.part?.namePart) {
               partNum = parseInt(cq.part.namePart.replace(/\D/g, ''), 10) || null;
             }
+
+            // Ưu tiên 2: Xác định Part chuẩn xác 100% qua orderIndex hoặc questionNumber (chuẩn ETS 2026)
+            if (!partNum) {
+              const firstQNum = cq.questions?.[0]?.questionNumber;
+              const refNum = (seqIndex && seqIndex > 0) ? seqIndex : (firstQNum && firstQNum > 0 ? firstQNum : null);
+              if (refNum && refNum > 0) {
+                if (refNum >= 1 && refNum <= 6) partNum = 1;
+                else if (refNum >= 7 && refNum <= 31) partNum = 2;
+                else if (refNum >= 32 && refNum <= 70) partNum = 3;
+                else if (refNum >= 71 && refNum <= 100) partNum = 4;
+                else if (refNum >= 101 && refNum <= 130) partNum = 5;
+                else if (refNum >= 131 && refNum <= 146) partNum = 6;
+                else if (refNum >= 147) partNum = 7;
+              }
+            }
+
             if (!partNum) {
               const q0 = cq.questions?.[0];
-              if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && cq.questions?.length === 1) {
+              const qCount = cq.questions?.length || 0;
+              if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && qCount === 1) {
                 partNum = 1;
-              } else if (cq.questions?.length === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
+              } else if (qCount === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
                 partNum = 2;
-              } else if (cq.questions?.length === 3 && cq.audioUrl) {
+              } else if (qCount === 3) {
                 partNum = cq.transcript?.toLowerCase().includes('talk') || cq.transcript?.toLowerCase().includes('announcement') ? 4 : 3;
-              } else if (cq.questions?.length === 4 && cq.paragraph) {
+              } else if (qCount === 4 && cq.paragraph) {
                 partNum = 6;
               } else if (cq.paragraph && !cq.audioUrl) {
                 partNum = 7;
@@ -885,25 +903,98 @@ const ExamTakePage = () => {
               </div>
             )}
 
-            {/* REVIEW MODE: TRANSCRIPT */}
-            {(isSubmitted || showExplanation) && currentContext.transcript && (
-              <div
-                style={{
-                  backgroundColor: '#f0fdf4',
-                  border: '1px dashed #86efac',
-                  borderRadius: 12,
-                  padding: 16,
-                  marginTop: 16,
-                }}
-              >
-                <h5 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', fontWeight: 700, color: '#166534', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Sparkles size={16} /> Lời thoại âm thanh (Audio Transcript):
-                </h5>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#1e293b', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-                  {currentContext.transcript}
-                </p>
-              </div>
-            )}
+            {/* REVIEW MODE: TRANSCRIPT & VIETNAMESE TRANSLATION */}
+            {(isSubmitted || showExplanation) && (currentContext.transcript || currentContext.translation) && (() => {
+              const rawTranscript = currentContext.transcript || '';
+              let transcriptText = rawTranscript;
+              let transcriptTranslation = currentContext.translation || '';
+
+              if (!transcriptTranslation && rawTranscript.includes('--- BẢN DỊCH TIẾNG VIỆT ---')) {
+                const parts = rawTranscript.split(/---\s*BẢN DỊCH TIẾNG VIỆT\s*---/i);
+                transcriptText = parts[0]?.trim() || '';
+                transcriptTranslation = parts[1]?.trim() || '';
+              } else if (!transcriptTranslation && rawTranscript.includes('<!--TRANSLATION-->')) {
+                const parts = rawTranscript.split(/<!--TRANSLATION-->/i);
+                transcriptText = parts[0]?.trim() || '';
+                transcriptTranslation = parts[1]?.trim() || '';
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 16 }}>
+                  {transcriptText && (
+                    <div
+                      style={{
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '0.9rem',
+                          fontWeight: 700,
+                          color: '#334155',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <FileText size={16} className="text-indigo-600" /> Lời thoại âm thanh (Audio Transcript):
+                      </h5>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.88rem',
+                          color: '#1e293b',
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {transcriptText}
+                      </p>
+                    </div>
+                  )}
+
+                  {transcriptTranslation && (
+                    <div
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        border: '1px dashed #86efac',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '0.9rem',
+                          fontWeight: 700,
+                          color: '#166534',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
+                        <Languages size={16} className="text-emerald-600" /> Bản dịch tiếng Việt (Vietnamese Translation):
+                      </h5>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.88rem',
+                          color: '#14532d',
+                          whiteSpace: 'pre-wrap',
+                          lineHeight: 1.6,
+                        }}
+                      >
+                        {transcriptTranslation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Navigation Controls between Contexts */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>

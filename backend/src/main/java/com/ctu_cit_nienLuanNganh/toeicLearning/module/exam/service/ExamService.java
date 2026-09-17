@@ -183,6 +183,7 @@ public class ExamService {
                                 .imageUrl(contextQuestionRequest.getImageUrl())
                                 .paragraph(contextQuestionRequest.getParagraph())
                                 .transcript(contextQuestionRequest.getTranscript())
+                                .translation(contextQuestionRequest.getTranslation())
                                 .test(savedTest)
                                 .part(part)
                                 .orderIndex(finalOrderIndex)

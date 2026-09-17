@@ -1,0 +1,656 @@
+﻿{
+    "code":  1000,
+    "message":  "Xem chi tiáº¿t test",
+    "data":  {
+                 "contextQuestions":  [
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536335/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/p8gzlbtidsrmobptni6i.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "51128e7b-5a81-4fba-b6f8-12930610e714",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534179/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/rdapoakesjzbvig2nduz.png",
+                                              "orderIndex":  1,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:53; explanation=(A) NgÆ°á»i phá»¥ ná»¯ Äang bÆ°ng má»t khay thá»©c Än.\n(B) NgÆ°á»i phá»¥ ná»¯ Äang máº·c má»t chiáº¿c Ã¡o khoÃ¡c.\n(C) NgÆ°á»i phá»¥ ná»¯ Äang buá»c tÃ³c lÃªn.\n(D) NgÆ°á»i phá»¥ ná»¯ Äang thÃ¡o mÅ© ra.; id=bd401cbd-3361-40db-b62d-d69cee1d084f; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=1; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) The woman is carrying a tray of food.\n(B) The woman is wearing a jacket.\n(C) The woman is tying up her hair.\n(D) The woman is removing her hat.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536340/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/pqnp80jzi5pcipsjnc3i.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "b59b04b4-9b64-45b1-910c-141afff605c4",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534183/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/dhla5kx8k6mbyhfmqhva.png",
+                                              "orderIndex":  2,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=D; createdAt=2026-09-17T10:14:53; explanation=(A) Má»t vÃ i ngÆ°á»i Äang Äá»©ng cáº¡nh má»t tá»§ Äá»±ng há» sÆ¡.\n(B) Má»t vÃ i ngÆ°á»i Äang lá»¥c tÃ¬m trong má»t chiáº¿c bÃ n lÃ m viá»c.\n(C) Má»t vÃ i ngÆ°á»i Äang xem má»t buá»i thuyáº¿t trÃ¬nh.\n(D) Má»t vÃ i ngÆ°á»i Äang nhÃ¬n vÃ o má»t cuá»n sÃ¡ch.; id=118cc65c-a749-42a2-97ef-6747e7aecaaf; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=2; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) Some people are standing next to a filing cabinet.\n(B) Some people are searching through a desk.\n(C) Some people are watching a presentation.\n(D) Some people are looking at a book.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536344/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/kjgcviubepfby0hrntxl.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "706c7697-c87e-46d6-8f36-558c249deec4",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534186/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/zbzi8baqjtnr1jxzfuwx.png",
+                                              "orderIndex":  3,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:53; explanation=(A) Má»t ngÆ°á»i phá»¥ ná»¯ Äang giá»¯ Äiá»n thoáº¡i Ã¡p vÃ o tai.\n(B) Má»t ngÆ°á»i phá»¥ ná»¯ Äang rÃ³t Äá» uá»ng vÃ o má»t chiáº¿c ly.\n(C) Má»t vÃ i thiáº¿t bá» chiáº¿u sÃ¡ng Äang ÄÆ°á»£c treo trÃªn tráº§n nhÃ .\n(D) Má»t vÃ i viÃªn gáº¡ch Äang ÄÆ°á»£c láº¯p Äáº·t trong má»t hÃ nh lang.; id=f16d4af8-8580-4dcf-89b0-66fe064a0be4; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=3; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) A woman is holding a phone up to her ear.\n(B) A woman is pouring a beverage into a glass.\n(C) Some light fixtures are hanging from the ceiling.\n(D) Some tiles are being installed in a hallway.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536348/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/v8sy20hueqx23sszw6ep.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "83995341-4d3e-4d96-a64f-69419df3e618",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534190/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/xh8lfjggcmwquzmhhynr.png",
+                                              "orderIndex":  4,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:53; explanation=(A) Má»t cÃ¡i thÃ¹ng gá» ÄÆ°á»£c cháº¥t Äáº§y rau cá»§.\n(B) Má»t trong nhá»¯ng ngÆ°á»i ÄÃ n Ã´ng Äang cho rau cá»§ vÃ o má»t chiáº¿c tÃºi mua sáº¯m.\n(C) Má»t chiáº¿c ba lÃ´ ÄÃ£ ÄÆ°á»£c Äáº·t trÃªn máº·t Äáº¥t.\n(D) Má»t trong nhá»¯ng ngÆ°á»i ÄÃ n Ã´ng Äang thÃ² tay vÃ o má»t cÃ¡i xÃ´.; id=fc947c39-ee43-4e49-a907-ea83df435be8; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=4; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) A wooden crate is filled with vegetables.\n(B) One of the men is putting vegetables into a shopping bag.\n(C) A backpack has been set on the ground.\n(D) One of the men is reaching into a bucket.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536353/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/cqjeucng95gubbl6cie9.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "70ecd616-d043-4ae9-a44f-7faf4e1e9406",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534193/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/p631pfg5kvjzmq4zugd4.png",
+                                              "orderIndex":  5,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:53; explanation=(A) Dá»¥ng cá»¥ sÆ¡n ÄÃ£ ÄÆ°á»£c bÃ y ra trÃªn sÃ n nhÃ .\n(B) Anh áº¥y Äang Äáº·t má»t cÃ¢y cá» xuá»ng báº­u cá»­a sá».\n(C) Anh áº¥y Äang nháº¥c má»t lon sÆ¡n báº±ng quai xÃ¡ch cá»§a nÃ³.\n(D) Nhá»¯ng lon sÆ¡n ÄÃ£ ÄÆ°á»£c Äáº·t trÃªn má»t chiáº¿c gháº¿ Äáº©u.; id=7be8ae15-18a5-4bc8-9557-c76bfa7ac63c; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=5; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) Painting supplies have been laid out on the floor.\n(B) He\u0027s laying a brush down on a windowsill.\n(C) He\u0027s lifting a can of paint by its handle.\n(D) Cans of paint have been placed on a step stool.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789536357/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/oyqrnhwsigmhy6qsepxl.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "bc59aeaa-23e6-49be-99cd-5a01cc645c87",
+                                              "imageUrl":  "https://res.cloudinary.com/ovs0odtq/image/upload/v1789534209/Resource/toeic-learning/exams/ets-toeic-2026-test-01/images/c8kzudmcsvjygltudthd.png",
+                                              "orderIndex":  6,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:53; explanation=(A) Má»t con ÄÆ°á»ng mÃ²n bá» bao phá»§ bá»i nhá»¯ng cÃ nh cÃ¢y rÆ¡i.\n(B) Má»t cÃ¡i cÃ¢y Äang náº±m ngang qua má»t bÃ£i cá».\n(C) Má»t Ã­t nÆ°á»c ÄÃ£ Äá»ng láº¡i trÃªn má»t con ÄÆ°á»ng mÃ²n.\n(D) Má»t vÃ i ngÆ°á»i Äi xe Äáº¡p Äang Äáº¡p xe qua má»t cÃ¡nh Äá»ng.; id=653185ec-1557-466b-9caf-9b1190fbcfd9; optionA=(A); optionB=(B); optionC=(C); optionD=(D); questionContent=Select the statement that best describes what you see in the picture.; questionNumber=6; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "(A) A path is covered with fallen branches.\n(B) A tree is lying across a grassy area.\n(C) Some water has pooled on a path.\n(D) Some cyclists are riding through a field.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539676/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/z3pk8umqurxknrdiv6uq.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "ef88c2bc-1bab-43b7-a5e9-b57d1fad9db0",
+                                              "imageUrl":  "",
+                                              "orderIndex":  7,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: Há»i nghá» ÄÆ°á»£c tá» chá»©c á» ÄÃ¢u?\n(A) Má»t ká»³ nghá» ba ngÃ y.\n(B) Táº¡i khÃ¡ch sáº¡n Riverview.\n(C) Trong tá»§ cung cáº¥p.; id=00f982ec-56f6-464f-a7a4-d4078052c8d4; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=7; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: Where is the conference being held?\n(A) A three-day vacation.\n(B) At the Riverview Hotel.\n(C) In the supply cabinet.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539705/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/iu15uceggskl6j4vtmoz.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "491dbf26-9f4c-48af-8797-76f271aefd1b",
+                                              "imageUrl":  "",
+                                              "orderIndex":  8,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: Khi nÃ o quáº£n lÃ½ kho Äáº¿n?\n(A) Cháº¯c cháº¯n rá»i, khÃ´ng váº¥n Äá» gÃ¬.\n(B) Khoáº£ng mÆ°á»i hai thÃ¹ng hÃ ng.\n(C) KhÃ´ng pháº£i cho Äáº¿n chiá»u nay.; id=918147ef-9155-4972-a7aa-be39f12c3832; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=8; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: When does the warehouse manager arrive?\n(A) Sure, no problem.\n(B) About twelve shipping boxes.\n(C) Not until this afternoon.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539712/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/thbccapqpgmrurtfl5ie.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "30fdc93e-6ad8-4eb0-b348-52095ff2f00d",
+                                              "imageUrl":  "",
+                                              "orderIndex":  9,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: CÃ³ má»t cÃ´ng viÃªn Äáº¹p gáº§n ÄÃ¢y, pháº£i khÃ´ng?\n(A) Báº¡n ÄÃ£ Äáº·t giáº¥y cho mÃ¡y photocopy chÆ°a?\n(B) VÃ¢ngânÃ³ náº±m cáº¡nh Há» Greendale.\n(C) ChÃºng á» trong gara Äá» xe.; id=f17c641d-38a5-4e99-9314-65d45013c435; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=9; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: Thereâs a nice park nearby, right?\n(A) Did you order paper for the copier?\n(B) Yesâitâs next to Greendale Lake.\n(C) Theyâre in the parking garage.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539739/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/y1rbzjv6gqntogsdday1.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "a59562d8-c289-48da-8fa1-e0fabacea3db",
+                                              "imageUrl":  "",
+                                              "orderIndex":  10,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: Ai ÄÃ£ gá»­i biÃªn báº£n cuá»c há»p cho bá» pháº­n káº¿ toÃ¡n?\n(A) Trá»£ lÃ½ vÄn phÃ²ng cá»§a chÃºng tÃ´i.\n(B) Há» cÃ³ má»t tÃ i khoáº£n tiáº¿t kiá»m.\n(C) Tiá»n máº·t vÃ  tháº» tÃ­n dá»¥ng.; id=402204e3-3029-4f5e-b065-bb77485928a7; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=10; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: Who sent the meeting minutes to the accounting department?\n(A) Our office assistant.\n(B) They have a savings account.\n(C) Cash and credit cards.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539744/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/qi4szl4ut97lkjnzp4hm.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "4943e98c-200c-4f94-8e7e-4eea6ce5bf82",
+                                              "imageUrl":  "",
+                                              "orderIndex":  11,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: TÃ´i muá»n biáº¿t báº¡n nghÄ© gÃ¬ vá» chuyÃªn viÃªn phÃ¢n tÃ­ch tÃ i chÃ­nh má»i cá»§a chÃºng ta.\n(A) TÃ´i ÄÃ£ chuáº©n bá» Äá» trang trÃ­ cho ngÃ y mai.\n(B) Anh áº¥y cÃ³ váº» ráº¥t cÃ³ nÄng lá»±c.\n(C) Trá»i cuá»i cÃ¹ng ÄÃ£ ngá»«ng mÆ°a.; id=000c3707-8a36-472b-a5c8-35d5242b31ff; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=11; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: Iâd like to know what you think of our new finance analyst.\n(A) Iâve prepared the decorations for tomorrow.\n(B) He seems very competent.\n(C) Itâs finally stopped raining.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539748/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/fqksqbnaiukgwhid9zqv.mp3",
+                                              "createdAt":  "2026-09-17T10:14:53",
+                                              "id":  "54938941-79fc-4ce9-8a37-d0e16f17c879",
+                                              "imageUrl":  "",
+                                              "orderIndex":  12,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:53; explanation=CÃ¢u há»i: HÃ£y Äi nghá» dÆ°á»¡ng cÃ¹ng cÃ´ng ty Äi.\n(A) á», anh áº¥y ÄÃ£ lÃ m váº­y sao?\n(B) VÃ¢ng, ÄÃ³ lÃ  má»t Ã½ tÆ°á»ng hay.\n(C) Anh áº¥y ÄÃ£ cá» gáº¯ng giáº£i quyáº¿t váº¥n Äá» ÄÃ³.; id=23becd01-817f-434f-a68f-24562db19ac4; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=12; updatedAt=2026-09-17T10:14:53}"
+                                                            ],
+                                              "transcript":  "Question: Letâs go on the company retreat.\n(A) Oh, did he?\n(B) Yes, thatâs a good idea.\n(C) He tried to solve that problem.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:53"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539755/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/qqprenlg96t5t0isoflw.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "15291d3c-ec6e-4fb6-9759-3f09634fc8ce",
+                                              "imageUrl":  "",
+                                              "orderIndex":  13,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Máº¥y giá» tÃ´i cÃ³ thá» láº¥y kÃ­nh cá»§a mÃ¬nh?\n(A) KhÃ´ng, nÃ³ khÃ´ng náº·ng láº¯m.\n(B) Khoáº£ng hai mÆ°Æ¡i mÃ©t.\n(C) ChÃºng tÃ´i ÄÃ³ng cá»­a lÃºc sÃ¡u giá».; id=e30666ab-d09e-4b87-8c56-65faf3027dbf; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=13; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: What time can I pick up my glasses?\n(A) No, itâs not very heavy.\n(B) About twenty meters.\n(C) We close at six oâclock.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539759/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/fcku2x0w2pajkljfsqvt.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "e9ef9d2e-0fd3-4ae3-b1f5-206efc64008e",
+                                              "imageUrl":  "",
+                                              "orderIndex":  14,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Äá»i ngÅ© kinh doanh biáº¿t cÃ¡ch sá»­ dá»¥ng pháº§n má»m theo dÃµi, pháº£i khÃ´ng?\n(A) NÃ³ á» trÃªn ká» dÆ°á»i.\n(B) Khá»i hÃ nh lÃºc mÆ°á»i hai giá» ba mÆ°Æ¡i.\n(C) TÃ´i chÆ°a tháº¥y há» sá»­ dá»¥ng nÃ³.; id=75a05cc4-47d8-42e3-bc9b-e596dce908e8; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=14; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: The sales team knows how to use the tracking software, donât they?\n(A) Itâs on the lower shelf.\n(B) A twelve-thirty departure.\n(C) I havenât seen them using it yet.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539764/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/en1pxshksionpg7sgdfp.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "691083da-6a68-49c1-abe7-32cc68e01396",
+                                              "imageUrl":  "",
+                                              "orderIndex":  15,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n cÃ³ Äá»nh Äáº¿n cá»­a hÃ ng kim khÃ­ trÃªn phá» Mill khÃ´ng?\n(A) Cá»­a hÃ ng ÄÃ³ váº«n chÆ°a má».\n(B) GÃ³i hÃ ng mÃ u xanh báº¡n gá»­i cho tÃ´i.\n(C) Má»t Ã­t Äinh vÃ  má»t cÃ¡i bÃºa.; id=24712cb3-cf12-49d7-bbba-f68de85ea8fa; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=15; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Are you going to the hardware store on Mill Street?\n(A) That store hasnât opened yet.\n(B) The blue package you sent me.\n(C) Some nails and a hammer.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539785/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/edoyavu2gwlzxkvldiy3.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "ac839f5f-e120-4924-8694-0eb039f2094c",
+                                              "imageUrl":  "",
+                                              "orderIndex":  16,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n cÃ³ thá» viáº¿t pháº§n giá»i thiá»u cho há»i tháº£o khÃ´ng?\n(A) ÄÃ³ lÃ  má»t cuá»n sÃ¡ch tuyá»t vá»i.\n(B) Anh áº¥y ÄÃ£ lÃ m viá»c á» ÄÃ³ nhiá»u nÄm.\n(C) Anh áº¥y khÃ´ng cÃ²n ná»¯a.; id=8426ce46-00c6-429c-9aef-9ce05c07b630; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=16; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Would you be able to write the introduction for the workshop?\n(A) That was a great book.\n(B) Heâs been working there for years.\n(C) He doesnât have any more.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539799/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/o87yiugq8nfybnume38d.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "6dddbcad-f355-4b79-a5e5-7829939fb9ec",
+                                              "imageUrl":  "",
+                                              "orderIndex":  17,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: TÃ´i ÄÃ£ mua má»t Ã­t hoa cho bá»¯a tiá»c nghá» hÆ°u cá»§a Tunji.\n(A) KhÃ´ng, chá»n báº¥t ká»³ ngÃ y nÃ o.\n(B) Äiá»u ÄÃ³ tháº­t chu ÄÃ¡o.\n(C) Má»t tÃ i xáº¿ giao hÃ ng.; id=f695f23f-0d2c-4d40-ad95-bcbfcdad80dc; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=17; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: I picked up some flowers for Tunjiâs retirement party.\n(A) No, pick any day.\n(B) That was thoughtful.\n(C) A delivery driver.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539806/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/dvxycf5p2q3wq315dg2t.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "512b318e-f7fe-436a-a2b0-2f583a9ae092",
+                                              "imageUrl":  "",
+                                              "orderIndex":  18,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n ÄÃ£ báº£o cÃ¡c thá»±c táº­p sinh Äáº¿n phÃ²ng há»p nÃ o?\n(A) PhÃ²ng Jefferson.\n(B) Cuá»c há»p ráº¥t vui, cáº£m Æ¡n.\n(C) VÃ¢ng, ÄÃ³ lÃ  má»t cuá»c gá»i há»i nghá».; id=1026fc9e-e4d1-482f-ad73-2748926fa7b2; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=18; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Which meeting room did you tell the interns to go to?\n(A) The Jefferson Room.\n(B) The meeting was fun, thanks.\n(C) Yes, itâs a conference call.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539816/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/vtlh6evvp3rs0mugfgd3.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "7878bd78-a41c-456c-866d-00815f5e5724",
+                                              "imageUrl":  "",
+                                              "orderIndex":  19,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Lá»ch háº¹n nha sÄ© cá»§a báº¡n lÃ  thá»© Ba tá»i pháº£i khÃ´ng?\n(A) Báº¡n cÃ³ thá» mÆ°á»£n cá»§a tÃ´i.\n(B) TÃ´i sáº½ pháº£i kiá»m tra lá»ch cá»§a mÃ¬nh.\n(C) VÃ¢ng, ÄÃ³ lÃ  má»t cuá»c há»p tá»t.; id=8e422efc-42d4-4d68-a839-e60af584c079; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=19; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Is your dental appointment next Tuesday?\n(A) You can borrow mine.\n(B) Iâll have to check my calendar.\n(C) Yes, it was a good meeting.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539819/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/lggzo0k109yemrcq47ll.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "baa47581-f021-4d97-b377-61a416c2c38b",
+                                              "imageUrl":  "",
+                                              "orderIndex":  20,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Táº¡i sao khÃ´ng cÃ³ tá» rÆ¡i nÃ o á» sáº£nh chá»?\n(A) ChÆ°a, tÃ´i váº«n chÆ°a nháº­n ÄÆ°á»£c email xÃ¡c nháº­n.\n(B) Ão khoÃ¡c mÃ¹a ÄÃ´ng cá»§a tÃ´i.\n(C) Bá»i vÃ¬ ai ÄÃ³ vá»«a láº¥y cÃ¡i cuá»i cÃ¹ng.; id=a07a2ba8-3f61-45ff-aaa7-5dc359711941; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=20; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Why arenât there any brochures in the lobby?\n(A) No, I havenât received my confirmation e-mail yet.\n(B) My winter coat.\n(C) Because someone just took the last one.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539826/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/ajfh7t1wppfc20sdrcap.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "70bdadbd-9319-4695-ba29-1deb41a526e4",
+                                              "imageUrl":  "",
+                                              "orderIndex":  21,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Quy trÃ¬nh ná»p bÃ¡o cÃ¡o chi phÃ­ cá»§a tÃ´i lÃ  gÃ¬?\n(A) TÃ´i ÄÃ£ gá»­i nÃ³ cho bá» pháº­n tÃ i chÃ­nh.\n(B) Cuá»i ngÃ y.\n(C) ÄÃºng váº­y.; id=81e299ce-7402-4981-a7f5-948b05c728b1; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=21; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Whatâs the process for submitting my expense report?\n(A) I sent it to the finance department.\n(B) The end of the day.\n(C) Thatâs correct.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539832/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/g3ftolpk34qxywyw3ymm.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "25654038-706b-4950-8381-82682d1f0c6a",
+                                              "imageUrl":  "",
+                                              "orderIndex":  22,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n bÃ¡n sáº£n pháº©m trá»±c tuyáº¿n hay táº¡i cá»­a hÃ ng?\n(A) Giáº£m khoáº£ng hai mÆ°Æ¡i pháº§n trÄm.\n(B) Má»t buá»i trÃ¬nh diá»\u0085n sáº£n pháº©m.\n(C) Chá» trá»±c tuyáº¿n.; id=f02b63e8-4041-480d-9df6-71e63bff1eec; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=22; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Do you sell your products online or in stores?\n(A) About twenty percent off.\n(B) A product demonstration.\n(C) Only online.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539837/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/fniauvzafxq9g6en73zj.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "f61c94a5-90af-40b1-af19-266bb5d51652",
+                                              "imageUrl":  "",
+                                              "orderIndex":  23,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n sáº¡c thiáº¿t bá» nÃ y bao lÃ¢u má»t láº§n?\n(A) Báº¥t cá»© khi nÃ o ÄÃ¨n chuyá»n sang mÃ u Äá».\n(B) Má»t cÃ¡i khÃ´ng dÃ¢y.\n(C) Táº¡i cá»­a hÃ ng kim khÃ­.; id=45ba702e-c074-4109-ac1b-f595531b076d; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=23; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: How often do you charge this device?\n(A) Whenever the lights turn red.\n(B) A wireless one.\n(C) At the hardware store.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539843/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/kfpld17abxk3gr5q2qdv.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "6903b861-12bc-4b0c-a845-00efda16b30a",
+                                              "imageUrl":  "",
+                                              "orderIndex":  24,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: VÃ© cho buá»i hÃ²a nháº¡c tá»i thá»© SÃ¡u cÃ³ giÃ¡ mÆ°á»i ÄÃ´ la má»i vÃ©.\n(A) Thá»±c ra, chÃºng mÆ°á»i lÄm.\n(B) KhÃ´ng, tÃ´i khÃ´ng thá» chÆ¡i guitar.\n(C) NÃ³ á» dÃ£y sá» nÄm.; id=830da7c4-c657-4753-a0ae-811d71f313d5; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=24; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: The tickets to Friday nightâs concert cost ten dollars each.\n(A) Actually, theyâre fifteen.\n(B) No, I canât play the guitar.\n(C) Itâs in aisle five.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539849/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/yevxjrklycbx3mfoxy7q.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "59ef620a-1cf3-408b-8f66-9783c07a44c0",
+                                              "imageUrl":  "",
+                                              "orderIndex":  25,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n khÃ´ng thá» cáº­p nháº­t cÆ¡ sá» dá»¯ liá»u ngÃ y hÃ´m nay sao?\n(A) TÃ´i ÄÃ£ lÃ m Äiá»u ÄÃ³ ngÃ y hÃ´m qua.\n(B) ÄÃ³ lÃ  má»t bá» phim thÃº vá».\n(C) KhÃ´ng, chá» mÃ¬nh tÃ´i.; id=86be49fb-ea98-4df0-a175-265e722a88a3; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=25; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Canât you update the database today?\n(A) I did it yesterday.\n(B) Thatâs an interesting movie.\n(C) No, just me.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539859/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/syizk1tc2t3jxfv5qtm3.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "0cd67d52-a49e-40b5-a3b7-1ffdcdbf7912",
+                                              "imageUrl":  "",
+                                              "orderIndex":  26,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: LÃ m tháº¿ nÃ o chÃºng ta sáº½ nhÃ©t thÃªm váº­t tÆ° vÃ o tá»§ ÄÃ³?\n(A) TÃ´i ÄÃ£ Äá»c chÃºng rá»i.\n(B) Natalie phá»¥ trÃ¡ch váº­t tÆ°.\n(C) ÄÃ³ lÃ  cá»­a á» cuá»i hÃ nh lang.; id=86dea968-36fa-4c24-9010-b31fff21d662; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=26; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: How are we going to fit the extra supplies in that closet?\n(A) Iâve already read them.\n(B) Natalieâs in charge of supplies.\n(C) Itâs the door at the end of the hallway.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539861/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/itwjjifrmfzavvybxgkh.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "398cac16-743e-492a-a0bb-9651be923e8c",
+                                              "imageUrl":  "",
+                                              "orderIndex":  27,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=B; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Táº¥t cáº£ cá»­a sá» má»i ÄÃ£ ÄÆ°á»£c láº¯p Äáº·t chÆ°a?\n(A) Cháº¯c cháº¯n rá»i, tÃ´i sáº½ ÄÃ³ng rÃ¨m cá»­a.\n(B) Viá»c xÃ¢y dá»±ng gáº§n nhÆ° ÄÃ£ hoÃ n thÃ nh.\n(C) ChÃºng khÃ´ng cÃ²n ná»¯a.; id=ecc55fb5-520a-48a2-9b81-a194135cc458; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=27; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Have all the new windows been installed?\n(A) Sure, Iâll close the blinds.\n(B) The construction is almost finished.\n(C) Theyâre no longer available.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539883/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/fxb2i8bjaltmfk9n2eoj.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "f961a903-f847-42e5-a2f6-2926b87e8d95",
+                                              "imageUrl":  "",
+                                              "orderIndex":  28,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n muá»n Äi Än trÆ°a ngay bÃ¢y giá» hay vÃ o buá»i trÆ°a?\n(A) TÃ´i Äang ÄÆ°a má»t khÃ¡ch hÃ ng Äi Än trÆ°a.\n(B) á» gÃ³c ÄÆ°á»ng Fourth vÃ  Main.\n(C) MÃ³n Äáº·c biá»t hÃ ng ngÃ y lÃ  sÃºp vÃ  bÃ¡nh sandwich.; id=1f1292f3-c832-486d-b47c-2e2d5138c32b; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=28; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Would you rather go to lunch now or at noon?\n(A) Iâm taking a client to lunch.\n(B) On the corner of Fourth and Main.\n(C) The daily special is soup and a sandwich.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539888/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/as2gptwqib8fihib8ilb.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "f353eb22-f937-452e-985d-28f6a0e54412",
+                                              "imageUrl":  "",
+                                              "orderIndex":  29,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Báº¡n sáº½ tham gia buá»i ÄÃ o táº¡o vÃ o buá»i chiá»u, pháº£i khÃ´ng?\n(A) TrÆ°á»ng phÃ²ng káº¿ toÃ¡n má»i.\n(B) KhÃ´ng, tÃ´i uá»ng cÃ  phÃª Äen.\n(C) ChÃ , nÃ³ phá»¥ thuá»c vÃ o lá»ch trÃ¬nh cá»§a tÃ´i.; id=bd67581a-5756-495f-a3ac-628a02d40ff1; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=29; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: Youâre taking the training in the afternoon, arenât you?\n(A) The new head of the accounting department.\n(B) No, I take my coffee black.\n(C) Well, it depends on my schedule.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539892/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/a81lpejmdkxrbaxnijwh.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "02e1b328-e3af-4b38-8dab-328afb154807",
+                                              "imageUrl":  "",
+                                              "orderIndex":  30,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Khi nÃ o báº¡n sáº½ chá»n má»t quáº£n lÃ½ dá»± Ã¡n má»i?\n(A) MÃ¡y chiáº¿u khÃ´ng hoáº¡t Äá»ng chÃ­nh xÃ¡c.\n(B) Cáº¡nh lá»i vÃ o phÃ­a trÆ°á»c.\n(C) TÃ´i thá»±c sá»± báº­n rá»n trong tuáº§n nÃ y.; id=6066b577-7497-4a01-b211-70194105af0d; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=30; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: When are you going to choose a new project manager?\n(A) The projectorâs not working correctly.\n(B) Next to the front entrance.\n(C) Iâm really busy this week.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789539898/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/kclfeimngabobw931lkv.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "b2886aef-88c5-48f8-9839-5a05287c8dd2",
+                                              "imageUrl":  "",
+                                              "orderIndex":  31,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=C; createdAt=2026-09-17T10:14:54; explanation=CÃ¢u há»i: Khi nÃ o báº¡n sáº½ chá»n má»t quáº£n lÃ½ dá»± Ã¡n má»i?\n(A) MÃ¡y chiáº¿u khÃ´ng hoáº¡t Äá»ng chÃ­nh xÃ¡c.\n(B) Cáº¡nh lá»i vÃ o phÃ­a trÆ°á»c.\n(C) TÃ´i thá»±c sá»± báº­n rá»n trong tuáº§n nÃ y.; id=44351836-a47f-4f64-a97e-ed1d4c0f42a7; optionA=(A); optionB=(B); optionC=(C); optionD=; questionContent=Mark your answer on your answer sheet.; questionNumber=31; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "Question: When are you going to choose a new project manager?\n(A) The projector\u0027s not working correctly.\n(B) Next to the front entrance.\n(C) I\u0027m really busy this week.",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "https://res.cloudinary.com/ovs0odtq/video/upload/v1789562753/Resource/toeic-learning/exams/ets-toeic-2026-test-01/audios/o5moptxnn91gxm2gvxwi.mp3",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "91795f6b-d995-446d-9cc3-76715748f3b4",
+                                              "imageUrl":  "",
+                                              "orderIndex":  32,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=CÃ´ng ty cá»§a nhá»¯ng ngÆ°á»i nÃ³i bÃ¡n loáº¡i sáº£n pháº©m thá»±c pháº©m nÃ o? (A) Káº¹o (B) PhÃ´ mai (C) BÃ¡nh mÃ¬ (D) MÃ¬ á»ng; id=dc7bfa2b-32dd-4215-9224-9a2572bd1f0d; optionA=Candy; optionB=Cheese; optionC=Bread; optionD=Pasta; questionContent=What type of food product does the speakers\u0027 company sell?; questionNumber=32; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=NgÆ°á»i ÄÃ n Ã´ng Äá» xuáº¥t Äiá»u gÃ¬? (A) Giáº£m giÃ¡ (B) ThuÃª thÃªm cÃ´ng nhÃ¢n (C) Xuáº¥t báº£n má»t cÃ´ng thá»©c náº¥u Än (D) Cung cáº¥p thÃªm cÃ¡c lá»±a chá»n; id=f54fbda1-8619-47fc-9da6-d67f38dc49f9; optionA=Lowering prices; optionB=Hiring more workers; optionC=Publishing a recipe; optionD=Offering additional options; questionContent=What does the man suggest?; questionNumber=33; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=NgÆ°á»i phá»¥ ná»¯ nÃ³i cÃ´ áº¥y sáº½ lÃ m gÃ¬? (A) Gá»­i cáº­p nháº­t lá»ch trÃ¬nh (B) LiÃªn há» vá»i quáº£n lÃ½ sáº£n xuáº¥t (C) Äáº¿n thÄm trá»¥ sá» cÃ´ng ty (D) LÃªn káº¿ hoáº¡ch cho má»t chiáº¿n dá»ch quáº£ng cÃ¡o; id=eadfd9c4-1687-4343-92d8-37836accc3d0; optionA=Send a schedule update; optionB=Contact a production manager; optionC=Visit the company headquarters; optionD=Plan an advertising campaign; questionContent=What does the woman say she will do?; questionNumber=34; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "W: Hey, Oliver. Did you see the focus group results for our new spicy cheddar cheese? Everyone really liked it.\nM: Yes. It should be a great addition to our company\u0027s line of cheeses.\nW: Several people mentioned that they\u0027d like to use it in recipesâto add to sauces, for example.\nM: So maybe we should consider selling a shredded version that would melt easily when cooked.\nW: I\u0027m sure we could do that. I\u0027ll get in touch with the production manager with that request.\n\n--- Báº¢N Dá»CH TIáº¾NG VIá»T ---\nW: NÃ y, Oliver. Anh cÃ³ tháº¥y káº¿t quáº£ cá»§a nhÃ³m thá»­ nghiá»m cho loáº¡i phÃ´ mai cheddar cay má»i cá»§a chÃºng ta khÃ´ng? Má»i ngÆ°á»i Äá»u ráº¥t thÃ­ch nÃ³.\nM: CÃ³. NÃ³ sáº½ lÃ  má»t sá»± bá» sung tuyá»t vá»i cho dÃ²ng phÃ´ mai cá»§a cÃ´ng ty chÃºng ta.\nW: Má»t sá» ngÆ°á»i Äá» cáº­p ráº±ng há» muá»n sá»­ dá»¥ng nÃ³ trong cÃ¡c cÃ´ng thá»©c náº¥u ÄnâvÃ­ dá»¥ nhÆ° Äá» thÃªm vÃ o nÆ°á»c sá»t.\nM: Váº­y cÃ³ láº½ chÃºng ta nÃªn cÃ¢n nháº¯c bÃ¡n má»t phiÃªn báº£n phÃ´ mai bÃ o sá»£i Äá» dá»\u0085 tan cháº£y khi náº¥u.\nW: TÃ´i cháº¯c cháº¯n chÃºng ta cÃ³ thá» lÃ m Äiá»u ÄÃ³. TÃ´i sáº½ liÃªn há» vá»i quáº£n lÃ½ sáº£n xuáº¥t Äá» ÄÆ°a ra yÃªu cáº§u ÄÃ³.",
+                                              "translation":  "W: NÃ y, Oliver. Anh cÃ³ tháº¥y káº¿t quáº£ cá»§a nhÃ³m thá»­ nghiá»m cho loáº¡i phÃ´ mai cheddar cay má»i cá»§a chÃºng ta khÃ´ng? Má»i ngÆ°á»i Äá»u ráº¥t thÃ­ch nÃ³.\nM: CÃ³. NÃ³ sáº½ lÃ  má»t sá»± bá» sung tuyá»t vá»i cho dÃ²ng phÃ´ mai cá»§a cÃ´ng ty chÃºng ta.\nW: Má»t sá» ngÆ°á»i Äá» cáº­p ráº±ng há» muá»n sá»­ dá»¥ng nÃ³ trong cÃ¡c cÃ´ng thá»©c náº¥u ÄnâvÃ­ dá»¥ nhÆ° Äá» thÃªm vÃ o nÆ°á»c sá»t.\nM: Váº­y cÃ³ láº½ chÃºng ta nÃªn cÃ¢n nháº¯c bÃ¡n má»t phiÃªn báº£n phÃ´ mai bÃ o sá»£i Äá» dá»\u0085 tan cháº£y khi náº¥u.\nW: TÃ´i cháº¯c cháº¯n chÃºng ta cÃ³ thá» lÃ m Äiá»u ÄÃ³. TÃ´i sáº½ liÃªn há» vá»i quáº£n lÃ½ sáº£n xuáº¥t Äá» ÄÆ°a ra yÃªu cáº§u ÄÃ³.",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "7e38e6e3-4f39-4d36-8c51-bc73dc0aae1b",
+                                              "imageUrl":  "",
+                                              "orderIndex":  35,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=74f75b05-4b7c-4479-9469-2e200c9b232a; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=35; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=5773c5fe-7c10-41c4-8a10-9e85a15f59e5; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=36; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=a1f8db7f-cca3-47bb-aa81-b014ddbccb56; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=37; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "e0284a46-cd06-44f4-b6e7-8899289db6dc",
+                                              "imageUrl":  "",
+                                              "orderIndex":  38,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=dfd959fa-a16b-4d99-ae69-80e1d6b3558f; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=38; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=b3dbd948-7b98-40bb-a00a-5995560a5143; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=39; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=289f4805-edce-4352-a8f5-10ff8420932b; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=40; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "8ab2a95a-4093-4ae9-a0af-331cfd3a8647",
+                                              "imageUrl":  "",
+                                              "orderIndex":  41,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=d1ddb22e-1fdf-4ef4-a480-455583ebcfbc; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=41; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=6b52af9b-5f4d-45f5-becd-32f922ce873e; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=42; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=878b7147-cb17-4ba0-b258-4ffaf1f49b1a; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=43; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "1dbe88bf-749e-4d8e-9ed3-9937bbdb416f",
+                                              "imageUrl":  "",
+                                              "orderIndex":  44,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=29a2b3b7-1199-4797-97d0-bd5ed66e5e74; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=44; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=91916937-8919-42cc-aaaa-78c8fd67b880; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=45; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=560c51d3-7220-4881-a5ef-182a70eadcaa; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=46; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "96508705-d5fa-4477-a208-7091d011c96c",
+                                              "imageUrl":  "",
+                                              "orderIndex":  47,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=68e0ff33-7b16-428d-b7e1-4b65243befc7; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=47; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=96abae32-399e-44e6-a1ca-84fadaf6d8a4; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=48; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=3cf209e7-f8fa-4cca-aacb-98e7cbff56bc; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=49; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "cff7a257-5fd9-41cb-9a08-7bb31164da8c",
+                                              "imageUrl":  "",
+                                              "orderIndex":  50,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=1bc3d231-34a3-41d6-bfa4-a142739ba6fb; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=50; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=d0c63000-9949-4083-a9e7-3aed92e7c167; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=51; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=1fbcfc2f-a05f-487b-9867-e2ec4d63e3cc; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=52; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "1b9e9751-1bf2-4940-9058-53ff4225dbc4",
+                                              "imageUrl":  "",
+                                              "orderIndex":  53,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=8f84ac80-4404-4f25-bca8-dffa6d0f653e; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=53; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=5e135324-43d6-4d9f-b7f1-920ef7e83c63; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=54; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=22b7b331-d27d-452e-8b1a-29b021dc35a4; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=55; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "7b7f3243-6d9f-4c7c-963f-0c04d6879b29",
+                                              "imageUrl":  "",
+                                              "orderIndex":  56,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=bc4e7d00-f17b-42dd-a66b-ea6e00d78595; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=56; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=75fa71aa-0532-45dc-92f9-f06c372e0f38; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=57; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=9d24874f-6137-4e78-909f-bda3d00c8ce4; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=58; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "9a53e12b-c264-4003-aa01-4db0d5534121",
+                                              "imageUrl":  "",
+                                              "orderIndex":  59,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=b6796640-75a4-4f63-85f7-37b7f77998b0; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=59; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=3590a2c8-f81e-4a7b-a2f2-ada3af37ac40; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=60; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=2b2f9ca2-df5f-4f75-a3b0-751ed58f2172; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=61; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "13b056a4-3fb7-4b89-8c02-17884ca32ce5",
+                                              "imageUrl":  "",
+                                              "orderIndex":  62,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=0fa55f55-925a-42e8-b73f-b88ef5b4461e; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=62; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=f0c6bb39-270f-4d13-829c-a500069dac5b; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=63; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=367c1af0-c36e-4a50-a227-3e6e3fefa9e8; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=64; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "e7f498ea-0bcb-4685-ba98-478879ee420a",
+                                              "imageUrl":  "",
+                                              "orderIndex":  65,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=52a91635-a8fb-4b28-a240-c2f9773b9ce8; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=65; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=584246bc-faa0-4818-830c-2136551c99fa; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=66; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=7ad199cd-901c-49d8-9a97-fb1261609493; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=67; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          },
+                                          {
+                                              "audioUrl":  "",
+                                              "createdAt":  "2026-09-17T10:14:54",
+                                              "id":  "5ab12b80-8a60-4078-8ab5-85ac8a6deb4a",
+                                              "imageUrl":  "",
+                                              "orderIndex":  68,
+                                              "paragraph":  "",
+                                              "questions":  [
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=2bfa482e-8865-4a05-97c3-7dd2653bff1a; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=68; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=38734b5b-15d2-4910-9597-2dc92b82af30; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=69; updatedAt=2026-09-17T10:14:54}",
+                                                                "@{correctAnswer=A; createdAt=2026-09-17T10:14:54; explanation=; id=b5b597b4-e552-4cba-bb05-05124edfb0c2; optionA=; optionB=; optionC=; optionD=; questionContent=; questionNumber=70; updatedAt=2026-09-17T10:14:54}"
+                                                            ],
+                                              "transcript":  "",
+                                              "translation":  "",
+                                              "updatedAt":  "2026-09-17T10:14:54"
+                                          }
+                                      ],
+                 "createdAt":  "2026-09-16T11:50:24",
+                 "id":  "ddaaa16f-8d39-4669-9e60-6c9de8270c00",
+                 "status":  "DRAFT",
+                 "titleTest":  "ETS TOEIC 2026 - Test 01",
+                 "updatedAt":  "2026-09-17T10:01:25"
+             },
+    "timestamp":  "2026-09-17 10:16:26"
+}

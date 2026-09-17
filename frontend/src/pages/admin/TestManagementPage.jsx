@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   BookOpen,
@@ -35,6 +35,7 @@ import {
   MessageSquare,
   HelpCircle,
   Radio,
+  Languages,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { examService } from '../../services/examService';
@@ -230,6 +231,7 @@ const createFreshContextQuestion = (partNumber = 1) => {
     imageUrl: '',
     paragraph: '',
     transcript: '',
+    translation: '',
     questions,
   };
 };
@@ -242,6 +244,7 @@ export const createFreshPart1Blank = () => ({
     imageUrl: '',
     paragraph: '',
     transcript: '',
+    translation: '',
     questions: [
       {
         questionContent: 'Select the statement that best describes what you see in the picture.',
@@ -264,6 +267,7 @@ export const createFreshPart2Blank = () => ({
     imageUrl: '',
     paragraph: '',
     transcript: '',
+    translation: '',
     questions: [
       {
         questionContent: 'Mark your answer on your answer sheet.',
@@ -286,6 +290,7 @@ export const createFreshPart3Blank = () => ({
     imageUrl: '', // Ảnh biểu đồ/lịch trình tùy chọn
     paragraph: '',
     transcript: '',
+    translation: '',
     questions: Array.from({ length: 3 }, (_, qIdx) => ({
       questionContent: '',
       optionA: '',
@@ -306,6 +311,7 @@ export const createFreshPart4Blank = () => ({
     imageUrl: '', // Ảnh minh họa/bảng biểu tùy chọn
     paragraph: '',
     transcript: '',
+    translation: '',
     questions: Array.from({ length: 3 }, (_, qIdx) => ({
       questionContent: '',
       optionA: '',
@@ -537,6 +543,51 @@ const TestManagementPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Auto-Save and Draft Recovery (Hybrid Architecture: 5s Client LocalStorage + 30s Smart Server Sync)
+  const AUTOSAVE_STORAGE_KEY = 'toeic_exam_studio_autosave';
+  const isDirtyRef = useRef(false);
+  const markDirty = () => {
+    isDirtyRef.current = true;
+  };
+  const [autoSaveState, setAutoSaveState] = useState({
+    status: 'idle', // 'idle' | 'saving' | 'saved' | 'synced_server'
+    savedAt: null,
+  });
+  const [recoverableDraft, setRecoverableDraft] = useState(null);
+
+  const handleRestoreDraft = () => {
+    if (!recoverableDraft) return;
+    if (recoverableDraft.formTitle) setFormTitle(recoverableDraft.formTitle);
+    if (recoverableDraft.formStatus) setFormStatus(recoverableDraft.formStatus);
+    if (recoverableDraft.formParts && Array.isArray(recoverableDraft.formParts)) {
+      setFormParts(recoverableDraft.formParts);
+    }
+    setToast({
+      type: 'success',
+      message: 'Đã khôi phục toàn bộ nội dung bản nháp từ bộ nhớ trình duyệt!',
+    });
+    setRecoverableDraft(null);
+  };
+
+  const handleDismissDraft = () => {
+    try {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch (e) {
+      console.warn(e);
+    }
+    setRecoverableDraft(null);
+  };
+
+  const clearAutosaveDraft = () => {
+    try {
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch (e) {
+      console.warn(e);
+    }
+    setRecoverableDraft(null);
+    setAutoSaveState({ status: 'saved', savedAt: new Date() });
+  };
+
   // Tính toán số lượng câu hỏi và đối chiếu chuẩn ETS trực tiếp
   const etsMetrics = useMemo(() => {
     let listeningCount = 0;
@@ -580,6 +631,7 @@ const TestManagementPage = () => {
 
   // Áp dụng khung đề Full Test 200 câu chuẩn ETS
   const handleApplyFullETSTest = () => {
+    markDirty();
     const fullParts = createFull200QuestionETSTest();
     setFormParts(fullParts);
     setActivePartIndex(0);
@@ -591,6 +643,7 @@ const TestManagementPage = () => {
 
   // Áp dụng khung đề Mini Test 50 câu
   const handleApplyMiniETSTest = () => {
+    markDirty();
     const miniParts = createMiniETSTest50Questions();
     setFormParts(miniParts);
     setActivePartIndex(0);
@@ -602,6 +655,7 @@ const TestManagementPage = () => {
 
   // Thêm trọn bộ 1 Part theo chuẩn số câu ETS
   const handleAddFullETSPart = (partNum) => {
+    markDirty();
     const fullPart = createFullETSPart(partNum);
     setFormParts((prev) => {
       const filtered = prev.filter((p) => p.partNumber !== partNum);
@@ -617,6 +671,7 @@ const TestManagementPage = () => {
 
   // Khởi tạo lại 6 câu trống chuẩn Part 1
   const handleResetPart1To6 = () => {
+    markDirty();
     setFormParts((prev) =>
       prev.map((p, pIdx) => {
         if (pIdx !== activePartIndex) return p;
@@ -629,45 +684,69 @@ const TestManagementPage = () => {
     });
   };
 
-  // Khởi tạo lại 25 câu trống chuẩn Part 2
+  // Khởi tạo lại 25 câu trống chuẩn Part 2 (bảo toàn các câu đã có)
   const handleResetPart2To25 = () => {
+    markDirty();
     setFormParts((prev) =>
       prev.map((p, pIdx) => {
         if (pIdx !== activePartIndex) return p;
-        return createFreshPart2Blank();
+        const existing = p.contextQuestions || [];
+        if (existing.length >= 25) return p;
+        const remainingCount = 25 - existing.length;
+        const newContexts = Array.from({ length: remainingCount }, () => createFreshContextQuestion(2));
+        return {
+          ...p,
+          contextQuestions: [...existing, ...newContexts],
+        };
       })
     );
     setToast({
       type: 'info',
-      message: 'Đã thiết lập Part 2 với đúng 25 câu hỏi phản hồi (Câu 7 -> 31, 1 Audio/câu, 3 lựa chọn A-B-C)!',
+      message: 'Đã bổ sung đủ 25 câu phản hồi chuẩn Part 2 (bảo toàn nguyên vẹn các câu đã có)!',
     });
   };
 
-  // Khởi tạo lại 13 đoạn hội thoại chuẩn Part 3 (39 câu)
+  // Khởi tạo lại 13 đoạn hội thoại chuẩn Part 3 (39 câu) (bảo toàn các câu đã có)
   const handleResetPart3To13 = () => {
+    markDirty();
     setFormParts((prev) =>
       prev.map((p, pIdx) => {
         if (pIdx !== activePartIndex) return p;
-        return createFreshPart3Blank();
+        const existing = p.contextQuestions || [];
+        if (existing.length >= 13) return p;
+        const remainingCount = 13 - existing.length;
+        const newContexts = Array.from({ length: remainingCount }, () => createFreshContextQuestion(3));
+        return {
+          ...p,
+          contextQuestions: [...existing, ...newContexts],
+        };
       })
     );
     setToast({
       type: 'info',
-      message: 'Đã thiết lập Part 3 với đúng 13 đoạn hội thoại (Câu 32 -> 70, 1 Audio/bài, 3 câu hỏi/bài)!',
+      message: 'Đã bổ sung đủ 13 đoạn hội thoại chuẩn Part 3 (bảo toàn nguyên vẹn các câu đã có)!',
     });
   };
 
-  // Khởi tạo lại 10 bài nói ngắn chuẩn Part 4 (30 câu)
+  // Khởi tạo lại 10 bài nói ngắn chuẩn Part 4 (30 câu) (bảo toàn các câu đã có)
   const handleResetPart4To10 = () => {
+    markDirty();
     setFormParts((prev) =>
       prev.map((p, pIdx) => {
         if (pIdx !== activePartIndex) return p;
-        return createFreshPart4Blank();
+        const existing = p.contextQuestions || [];
+        if (existing.length >= 10) return p;
+        const remainingCount = 10 - existing.length;
+        const newContexts = Array.from({ length: remainingCount }, () => createFreshContextQuestion(4));
+        return {
+          ...p,
+          contextQuestions: [...existing, ...newContexts],
+        };
       })
     );
     setToast({
       type: 'info',
-      message: 'Đã thiết lập Part 4 với đúng 10 bài nói ngắn (Câu 71 -> 100, 1 Audio/bài, 3 câu hỏi/bài)!',
+      message: 'Đã bổ sung đủ 10 bài nói ngắn chuẩn Part 4 (bảo toàn nguyên vẹn các câu đã có)!',
     });
   };
 
@@ -685,6 +764,7 @@ const TestManagementPage = () => {
 
   // Khởi tạo trọn bộ 100 câu Listening (Part 1 -> Part 4) trống
   const handleResetToListening100Blank = () => {
+    markDirty();
     setFormParts(createFreshListening100Blank());
     setActivePartIndex(0);
     setToast({
@@ -755,6 +835,33 @@ const TestManagementPage = () => {
     setFormParts([createFreshPart(1), createFreshPart(5)]);
     setActivePartIndex(0);
     setBuilderOpen(true);
+
+    try {
+      const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (!parsed.testId || parsed.testId === null) && parsed.savedAt && parsed.formParts?.length > 0) {
+          setRecoverableDraft(parsed);
+          setFormParts(parsed.formParts);
+          if (parsed.formTitle) setFormTitle(parsed.formTitle);
+          if (parsed.formStatus) setFormStatus(parsed.formStatus);
+          setAutoSaveState({
+            status: 'saved',
+            savedAt: new Date(parsed.savedAt),
+          });
+          setToast({
+            type: 'info',
+            message: `✓ Đã tự động khôi phục bản nháp đang soạn thảo lúc ${new Date(parsed.savedAt).toLocaleTimeString('vi-VN')}!`,
+          });
+        } else {
+          setRecoverableDraft(null);
+        }
+      } else {
+        setRecoverableDraft(null);
+      }
+    } catch (e) {
+      setRecoverableDraft(null);
+    }
   };
 
   // Open Edit Builder
@@ -765,6 +872,24 @@ const TestManagementPage = () => {
     setFormStatus(test.status || 'PUBLISHED');
     setActivePartIndex(0);
     setBuilderOpen(true);
+
+    let localDraft = null;
+    try {
+      const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.testId === test.id && parsed.savedAt && parsed.formParts) {
+          localDraft = parsed;
+          setRecoverableDraft(parsed);
+        } else {
+          setRecoverableDraft(null);
+        }
+      } else {
+        setRecoverableDraft(null);
+      }
+    } catch (e) {
+      setRecoverableDraft(null);
+    }
 
     try {
       setActionLoading(true);
@@ -798,16 +923,33 @@ const TestManagementPage = () => {
           if (!pNum && cq.part?.namePart) {
             pNum = parseInt(cq.part.namePart.replace(/\D/g, '')) || null;
           }
+
+          // Ưu tiên 2: Xác định Part chuẩn xác 100% qua orderIndex hoặc questionNumber (chuẩn ETS 2026)
           if (!pNum) {
-            // Heuristic phát hiện Part tự động siêu thông minh nếu database cũ không lưu part_id
+            const firstQNum = cq.questions?.[0]?.questionNumber;
+            const refNum = (seqIndex && seqIndex > 0) ? seqIndex : (firstQNum && firstQNum > 0 ? firstQNum : null);
+            if (refNum && refNum > 0) {
+              if (refNum >= 1 && refNum <= 6) pNum = 1;
+              else if (refNum >= 7 && refNum <= 31) pNum = 2;
+              else if (refNum >= 32 && refNum <= 70) pNum = 3;
+              else if (refNum >= 71 && refNum <= 100) pNum = 4;
+              else if (refNum >= 101 && refNum <= 130) pNum = 5;
+              else if (refNum >= 131 && refNum <= 146) pNum = 6;
+              else if (refNum >= 147) pNum = 7;
+            }
+          }
+
+          if (!pNum) {
+            // Heuristic dự phòng cho dữ liệu cũ không có thứ tự
             const q0 = cq.questions?.[0];
-            if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && cq.questions?.length === 1) {
+            const qCount = cq.questions?.length || 0;
+            if (cq.imageUrl && (!cq.paragraph || cq.paragraph.trim() === '') && qCount === 1) {
               pNum = 1;
-            } else if (cq.questions?.length === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
+            } else if (qCount === 1 && (!q0?.optionD || q0?.optionD.trim() === '')) {
               pNum = 2;
-            } else if (cq.questions?.length === 3 && cq.audioUrl) {
+            } else if (qCount === 3) {
               pNum = cq.transcript?.toLowerCase().includes('talk') || cq.transcript?.toLowerCase().includes('announcement') ? 4 : 3;
-            } else if (cq.questions?.length === 4 && cq.paragraph) {
+            } else if (qCount === 4 && cq.paragraph) {
               pNum = 6;
             } else if (cq.paragraph && !cq.audioUrl) {
               pNum = 7;
@@ -826,29 +968,28 @@ const TestManagementPage = () => {
           if (seqIndex === null) {
             // Phục hồi thứ tự thông minh cho các câu hỏi đã lưu trước đây:
             if (pNum === 1) {
-              // Phục hồi thứ tự Part 1 đề ETS 2026 Test 1 qua ảnh hoặc transcript:
               if (cq.imageUrl?.includes('jr8avpv1t07h5onbd1lg') || cq.transcript?.includes('tray of food') || cq.transcript?.includes('wearing a jacket')) {
-                seqIndex = 0; // Câu 1
+                seqIndex = 0;
               } else if (cq.imageUrl?.includes('ni7cfw4nrybfiyw7jbno') || cq.transcript?.includes('filing cabinet') || cq.transcript?.includes('looking at a book')) {
-                seqIndex = 1; // Câu 2
+                seqIndex = 1;
               } else if (cq.imageUrl?.includes('punzfz0kyesbdmqcmeyp') || cq.transcript?.includes('phone up to her ear') || cq.transcript?.includes('pouring a beverage')) {
-                seqIndex = 2; // Câu 3
+                seqIndex = 2;
               } else if (cq.imageUrl?.includes('dzrumhmqeboueoetml2a') || cq.transcript?.includes('wooden crate') || cq.transcript?.includes('vegetables')) {
-                seqIndex = 3; // Câu 4
+                seqIndex = 3;
               } else if (cq.imageUrl?.includes('k8za9txlmfok3pxwlfe6') || cq.transcript?.includes('Painting supplies') || cq.transcript?.includes('can of paint')) {
-                seqIndex = 4; // Câu 5
+                seqIndex = 4;
               } else if (cq.imageUrl?.includes('rnfufvsgmvyoy7lk1qz7') || cq.transcript?.includes('fallen branches') || cq.transcript?.includes('pooled on a path')) {
-                seqIndex = 5; // Câu 6
+                seqIndex = 5;
               }
             } else if (pNum === 2) {
               const qMatch = cq.transcript?.match(/Question #(\d+)/i);
-              if (qMatch) seqIndex = parseInt(qMatch[1], 10) - 7;
+              if (qMatch) seqIndex = parseInt(qMatch[1], 10);
             } else if (pNum === 3) {
               const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
-              if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 32) / 3);
+              if (qMatch) seqIndex = parseInt(qMatch[1], 10);
             } else if (pNum === 4) {
               const qMatch = cq.transcript?.match(/Questions? (\d+)/i);
-              if (qMatch) seqIndex = Math.floor((parseInt(qMatch[1], 10) - 71) / 3);
+              if (qMatch) seqIndex = parseInt(qMatch[1], 10);
             }
             if (seqIndex === null || isNaN(seqIndex)) {
               seqIndex = rawIdx;
@@ -857,12 +998,26 @@ const TestManagementPage = () => {
 
           const cleanParagraph = (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '');
 
+          const rawTranscript = cq.transcript || '';
+          let parsedTranscript = rawTranscript;
+          let parsedTranslation = cq.translation || cq.transcriptTranslation || '';
+          if (!parsedTranslation && rawTranscript.includes('--- BẢN DỊCH TIẾNG VIỆT ---')) {
+            const parts = rawTranscript.split(/---\s*BẢN DỊCH TIẾNG VIỆT\s*---/i);
+            parsedTranscript = parts[0]?.trim() || '';
+            parsedTranslation = parts[1]?.trim() || '';
+          } else if (!parsedTranslation && rawTranscript.includes('<!--TRANSLATION-->')) {
+            const parts = rawTranscript.split(/<!--TRANSLATION-->/i);
+            parsedTranscript = parts[0]?.trim() || '';
+            parsedTranslation = parts[1]?.trim() || '';
+          }
+
           partMap[pNum].contextQuestions.push({
             _seqIndex: seqIndex,
             audioUrl: cq.audioUrl || '',
             imageUrl: cq.imageUrl || '',
             paragraph: cleanParagraph,
-            transcript: cq.transcript || '',
+            transcript: parsedTranscript,
+            translation: parsedTranslation,
             questions:
               cq.questions && cq.questions.length > 0
                 ? cq.questions.map((q) => ({
@@ -892,7 +1047,21 @@ const TestManagementPage = () => {
           partsArr.forEach((p) => {
             p.contextQuestions.sort((a, b) => (a._seqIndex ?? 0) - (b._seqIndex ?? 0));
           });
+
+          // LUÔN LUÔN ƯU TIÊN NẠP DỮ LIỆU GỐC MỚI NHẤT TỪ MÁY CHỦ CSDL (Server Database Single Source of Truth)
           setFormParts(partsArr);
+          isDirtyRef.current = false;
+
+          // Nếu có bản nháp trên trình duyệt, chỉ bật banner thông báo để người dùng chủ động khôi phục nếu muốn
+          if (localDraft && localDraft.formParts && localDraft.formParts.length > 0) {
+            setRecoverableDraft(localDraft);
+            setToast({
+              type: 'info',
+              message: `Đã nạp 100% dữ liệu gốc từ máy chủ CSDL. Phát hiện có bản nháp trình duyệt lúc ${new Date(localDraft.savedAt).toLocaleTimeString('vi-VN')} nếu bạn cần khôi phục.`,
+            });
+          } else {
+            setRecoverableDraft(null);
+          }
         } else {
           setFormParts([createFreshPart(1), createFreshPart(5)]);
         }
@@ -905,6 +1074,25 @@ const TestManagementPage = () => {
       });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // Tải lại dữ liệu tươi mới từ máy chủ CSDL và xóa sạch bản nháp cache trình duyệt
+  const handleReloadFromServer = async () => {
+    if (!selectedTest?.id) return;
+    try {
+      clearAutosaveDraft();
+      await handleOpenEditModal(selectedTest);
+      setToast({
+        type: 'success',
+        message: '✓ Đã làm mới 100% dữ liệu từ máy chủ CSDL thành công!',
+      });
+    } catch (err) {
+      console.error('Reload from server error:', err);
+      setToast({
+        type: 'error',
+        message: 'Không thể tải lại dữ liệu từ máy chủ.',
+      });
     }
   };
 
@@ -966,70 +1154,139 @@ const TestManagementPage = () => {
     setDeleteModalOpen(true);
   };
 
+  // TẦNG 1: Tự động lưu bản nháp vào LocalStorage mỗi 5s / sau khi ngừng gõ (debounce 1.5s, 0% tải Server)
+  useEffect(() => {
+    if (!builderOpen) return;
+    if (!formTitle && (!formParts || formParts.length === 0)) return;
+
+    setAutoSaveState((prev) => ({ ...prev, status: 'saving' }));
+    const timer = setTimeout(() => {
+      try {
+        const draftData = {
+          testId: selectedTest?.id || null,
+          builderMode,
+          formTitle,
+          formStatus,
+          formParts,
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(draftData));
+        setAutoSaveState((prev) => ({
+          status: prev.status === 'synced_server' ? 'synced_server' : 'saved',
+          savedAt: new Date(),
+        }));
+      } catch (err) {
+        console.warn('Auto-save LocalStorage error:', err);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [formTitle, formStatus, formParts, builderMode, selectedTest?.id, builderOpen]);
+
+  // TẦNG 2: Đồng bộ ngầm thông minh lên máy chủ sau mỗi 30s (Chỉ chạy khi có thay đổi thực sự isDirty)
+  useEffect(() => {
+    if (!builderOpen) return;
+
+    const syncTimer = setInterval(() => {
+      // Chỉ tự động đồng bộ khi người dùng THỰC SỰ gõ phím/chỉnh sửa (isDirtyRef.current = true)
+      if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
+        // Bảo toàn trạng thái hiện tại (formStatus), tuyệt đối KHÔNG ép về DRAFT
+        handleSaveExam(null, formStatus, true, true);
+        isDirtyRef.current = false;
+      }
+    }, 30000); // 30s chu kỳ an toàn cho Server Database
+
+    return () => clearInterval(syncTimer);
+  }, [builderOpen, formTitle, formStatus, formParts, builderMode, selectedTest, actionLoading]);
+
+  // Phím tắt Ctrl + S để lưu tức thời lên máy chủ (Tầng 3: On-Demand)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        if (builderOpen) {
+          e.preventDefault();
+          // Lưu bảo toàn đúng trạng thái formStatus (PUBLISHED / DRAFT)
+          handleSaveExam(null, formStatus, true, false);
+          isDirtyRef.current = false;
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [builderOpen, formTitle, formStatus, formParts, builderMode, selectedTest]);
+
+  // Đóng modal an toàn: Cảnh báo người dùng nếu có thay đổi chưa lưu lên máy chủ CSDL
+  const handleCloseBuilder = async () => {
+    if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
+      const confirmClose = window.confirm(
+        'Bạn có những thay đổi chưa được lưu lên máy chủ CSDL. Bạn có muốn lưu trước khi đóng không?\n\n' +
+        '• [OK]: Lưu ngay lên máy chủ rồi đóng.\n' +
+        '• [Cancel]: Giữ bản nháp trên trình duyệt và đóng.'
+      );
+      if (confirmClose) {
+        try {
+          await handleSaveExam(null, formStatus, false, false);
+        } catch (err) {
+          console.warn('Auto-save on close error:', err);
+        }
+      }
+    }
+    isDirtyRef.current = false;
+    setBuilderOpen(false);
+  };
+
   // Submit Exam Builder (Create / Edit)
-  const handleSaveExam = async (e) => {
-    e.preventDefault();
-    if (!formTitle.trim()) {
-      setToast({ type: 'error', message: 'Vui lòng nhập tên đề thi!' });
+  // forcedStatus: 'DRAFT' | 'PUBLISHED' | null
+  // keepOpen: boolean - nếu true thì giữ nguyên modal để tiếp tục nhập liệu
+  // isSilent: boolean - nếu true thì không bắn Toast (dùng cho Auto-Sync ngầm máy chủ)
+  const handleSaveExam = async (e, forcedStatus = null, keepOpen = false, isSilent = false) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const targetStatus = forcedStatus || formStatus;
+
+    if (!formTitle?.trim()) {
+      if (!isSilent) setToast({ type: 'error', message: 'Vui lòng nhập tên đề thi!' });
       return;
     }
 
     if (!formParts || formParts.length === 0) {
-      setToast({ type: 'error', message: 'Bộ đề thi phải có ít nhất 1 phần (Part)!' });
+      if (!isSilent) setToast({ type: 'error', message: 'Bộ đề thi phải có ít nhất 1 phần (Part)!' });
       return;
     }
 
-    // Validate that each question has content and options
-    for (const part of formParts) {
-      const isPart2 = part.partNumber === 2;
-      for (const cq of part.contextQuestions || []) {
-        for (const q of cq.questions || []) {
-          if (part.partNumber === 1) {
-            // Part 1 theo chuẩn ETS: Thí sinh nhìn hình và nghe audio, đề thi KHÔNG in câu hỏi chữ
-            if (!q.questionContent?.trim()) {
-              q.questionContent = 'Select the statement that best describes what you see in the picture.';
-            }
-            // 4 đáp án Part 1 luôn luôn là 4 giá trị (A), (B), (C), (D) cố định
-            q.optionA = '(A)';
-            q.optionB = '(B)';
-            q.optionC = '(C)';
-            q.optionD = '(D)';
-          } else if (part.partNumber === 2) {
-            // Part 2 theo chuẩn ETS: Câu hỏi và 3 câu đáp án nằm hoàn toàn trong audio
-            if (!q.questionContent?.trim()) {
-              q.questionContent = 'Mark your answer on your answer sheet.';
-            }
-            q.optionA = '(A)';
-            q.optionB = '(B)';
-            q.optionC = '(C)';
-            q.optionD = ''; // Part 2 ETS tuyệt đối KHÔNG có lựa chọn D!
-            if (q.correctAnswer === 'D') {
-              q.correctAnswer = 'A';
-            }
-          } else {
-            // Part 3, 4, 5, 6, 7: Các câu hỏi đều có nội dung chữ và các đáp án A, B, C, D
-            if (!q.questionContent?.trim()) {
-              setToast({
-                type: 'error',
-                message: `Vui lòng nhập nội dung cho câu hỏi trong Part ${part.partNumber}!`,
-              });
-              return;
-            }
-            if (!q.optionA?.trim() || !q.optionB?.trim() || !q.optionC?.trim()) {
-              setToast({
-                type: 'error',
-                message: `Các câu hỏi trong Part ${part.partNumber} phải có tối thiểu các đáp án A, B và C!`,
-              });
-              return;
-            }
-            if (part.partNumber !== 2 && !q.optionD?.trim()) {
-              setToast({
-                type: 'error',
-                message: `Các câu hỏi trong Part ${part.partNumber} yêu cầu phải có đủ 4 lựa chọn A, B, C, D!`,
-              });
-              return;
+    // Nếu người dùng chọn Xuất bản (PUBLISHED), kiểm tra xem có câu hỏi nào bị bỏ trống không
+    if (targetStatus === 'PUBLISHED') {
+      let emptyQuestionsCount = 0;
+      for (const part of formParts) {
+        if (part.partNumber !== 1 && part.partNumber !== 2) {
+          for (const cq of part.contextQuestions || []) {
+            for (const q of cq.questions || []) {
+              if (
+                !q.questionContent?.trim() ||
+                !q.optionA?.trim() ||
+                !q.optionB?.trim() ||
+                !q.optionC?.trim() ||
+                (part.partNumber !== 2 && !q.optionD?.trim())
+              ) {
+                emptyQuestionsCount++;
+              }
             }
           }
+        }
+      }
+
+      if (emptyQuestionsCount > 0) {
+        // Cảnh báo thông minh: Đề xuất chuyển thành DRAFT để lưu nháp an toàn
+        const confirmSaveAsDraft = window.confirm(
+          `Phát hiện có ${emptyQuestionsCount} câu hỏi (trong Part 3, 4 hoặc các phần khác) chưa điền đủ nội dung hoặc phương án.\n\n` +
+            `Khuyên dùng: Bạn có muốn lưu dưới dạng BẢN NHÁP (DRAFT) để tiếp tục bổ sung sau không?\n\n` +
+            `• Nhấn [OK]: Chuyển sang BẢN NHÁP (DRAFT) và lưu ngay lập tức.\n` +
+            `• Nhấn [Cancel]: Ở lại chỉnh sửa tiếp.`
+        );
+        if (confirmSaveAsDraft) {
+          return handleSaveExam(null, 'DRAFT', keepOpen);
+        } else {
+          return;
         }
       }
     }
@@ -1055,25 +1312,70 @@ const TestManagementPage = () => {
         let runningQNum = getPartStartNumber(part.partNumber);
 
         const processedContextQuestions = (part.contextQuestions || []).map((cq) => {
-          const rawParagraph = (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '').trim();
+          const cleanParagraph = (cq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '').trim();
           const startQOfContext = runningQNum;
-          const taggedParagraph = `<!--CQ_SEQ:P${part.partNumber}:I${startQOfContext}-->${rawParagraph ? '\n' + rawParagraph : ''}`;
+
+          const cleanTranscript = (cq.transcript || '').trim();
+          const cleanTranslation = (cq.translation || cq.transcriptTranslation || '').trim();
+
+          // Dự phòng kép: Luôn đính kèm bản dịch vào transcript với thẻ chuẩn để bảo toàn 100% trong mọi trường hợp
+          let safeTranscript = cleanTranscript;
+          if (cleanTranslation && !safeTranscript.includes('--- BẢN DỊCH TIẾNG VIỆT ---')) {
+            safeTranscript = `${cleanTranscript}\n\n--- BẢN DỊCH TIẾNG VIỆT ---\n${cleanTranslation}`;
+          }
 
           const questionsWithNumbers = (cq.questions || []).map((q) => {
             const currentQNum = runningQNum++;
+            let qContent = (q.questionContent || '').trim();
+            let optA = (q.optionA || '').trim();
+            let optB = (q.optionB || '').trim();
+            let optC = (q.optionC || '').trim();
+            let optD = part.partNumber === 2 ? '' : (q.optionD || '').trim();
+            let corrAns = q.correctAnswer || 'A';
+
+            if (part.partNumber === 1) {
+              // Part 1 theo chuẩn ETS: Thí sinh nhìn hình và nghe audio, đề thi KHÔNG in câu hỏi chữ
+              if (!qContent) {
+                qContent = 'Select the statement that best describes what you see in the picture.';
+              }
+              // 4 đáp án Part 1 luôn luôn là 4 giá trị (A), (B), (C), (D) cố định
+              optA = '(A)';
+              optB = '(B)';
+              optC = '(C)';
+              optD = '(D)';
+            } else if (part.partNumber === 2) {
+              // Part 2 theo chuẩn ETS: Câu hỏi và 3 câu đáp án nằm hoàn toàn trong audio
+              if (!qContent) {
+                qContent = 'Mark your answer on your answer sheet.';
+              }
+              optA = '(A)';
+              optB = '(B)';
+              optC = '(C)';
+              optD = ''; // Part 2 ETS tuyệt đối KHÔNG có lựa chọn D!
+              if (corrAns === 'D') {
+                corrAns = 'A';
+              }
+            }
+
             return {
               ...q,
               questionNumber: currentQNum,
-              optionD: part.partNumber === 2 ? '' : q.optionD || '',
-              correctAnswer:
-                part.partNumber === 2 && q.correctAnswer === 'D' ? 'A' : q.correctAnswer || 'A',
+              questionContent: qContent,
+              optionA: optA,
+              optionB: optB,
+              optionC: optC,
+              optionD: optD,
+              correctAnswer: corrAns,
+              explanation: (q.explanation || '').trim(),
             };
           });
 
           return {
             ...cq,
             orderIndex: startQOfContext,
-            paragraph: taggedParagraph,
+            paragraph: cleanParagraph,
+            transcript: safeTranscript,
+            translation: cleanTranslation,
             questions: questionsWithNumbers,
           };
         });
@@ -1086,33 +1388,82 @@ const TestManagementPage = () => {
 
       const payload = {
         titleTest: formTitle.trim(),
-        status: formStatus,
+        status: targetStatus,
         parts: cleanedParts,
       };
 
       if (builderMode === 'create') {
         const res = await examService.createTest(payload);
         if (res.code === 1000) {
-          setToast({
-            type: 'success',
-            message: `Tạo bộ đề thi "${formTitle.trim()}" (${formStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+          if (!keepOpen && targetStatus === 'PUBLISHED') {
+            clearAutosaveDraft();
+          }
+          isDirtyRef.current = false;
+          if (!isSilent) {
+            setToast({
+              type: 'success',
+              message: `Tạo bộ đề thi "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+            });
+          }
+          setAutoSaveState({
+            status: 'synced_server',
+            savedAt: new Date(),
           });
-          setBuilderOpen(false);
-          fetchTests(false);
+          setFormStatus(targetStatus);
+          if (keepOpen) {
+            // Chuyển sang edit mode và lấy ID của test vừa tạo
+            await fetchTests(false);
+            const updatedRes = await examService.getTests(1, 10, formTitle.trim(), 'createdAt', 'DESC');
+            if (updatedRes?.code === 1000 && updatedRes?.data?.data?.length > 0) {
+              const matchedTest = updatedRes.data.data.find((t) => t.titleTest === formTitle.trim()) || updatedRes.data.data[0];
+              setSelectedTest(matchedTest);
+              setBuilderMode('edit');
+              // Cập nhật lại testId vào draftData để các lần tự lưu tiếp theo chuẩn ID
+              try {
+                const currentDraft = {
+                  testId: matchedTest.id,
+                  builderMode: 'edit',
+                  formTitle,
+                  formStatus: targetStatus,
+                  formParts,
+                  savedAt: new Date().toISOString(),
+                };
+                localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(currentDraft));
+              } catch (e) {
+                console.warn('Update draft after create error:', e);
+              }
+            }
+          } else {
+            setBuilderOpen(false);
+            fetchTests(false);
+          }
         } else {
-          setToast({ type: 'error', message: res.message || 'Không thể tạo đề thi.' });
+          if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể tạo đề thi.' });
         }
       } else {
         const res = await examService.updateTest(selectedTest.id, payload);
         if (res.code === 1000) {
-          setToast({
-            type: 'success',
-            message: `Cập nhật toàn bộ đề thi "${formTitle.trim()}" thành công!`,
+          if (!keepOpen && targetStatus === 'PUBLISHED') {
+            clearAutosaveDraft();
+          }
+          isDirtyRef.current = false;
+          if (!isSilent) {
+            setToast({
+              type: 'success',
+              message: `Cập nhật toàn bộ đề thi "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+            });
+          }
+          setAutoSaveState({
+            status: 'synced_server',
+            savedAt: new Date(),
           });
-          setBuilderOpen(false);
+          setFormStatus(targetStatus);
+          if (!keepOpen) {
+            setBuilderOpen(false);
+          }
           fetchTests(false);
         } else {
-          setToast({ type: 'error', message: res.message || 'Không thể cập nhật đề thi.' });
+          if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể cập nhật đề thi.' });
         }
       }
     } catch (err) {
@@ -1120,7 +1471,7 @@ const TestManagementPage = () => {
       const msg =
         err.response?.data?.message ||
         'Máy chủ báo lỗi khi lưu đề thi. Vui lòng kiểm tra ràng buộc dữ liệu backend.';
-      setToast({ type: 'error', message: msg });
+      if (!isSilent) setToast({ type: 'error', message: msg });
     } finally {
       setActionLoading(false);
     }
@@ -1156,6 +1507,7 @@ const TestManagementPage = () => {
 
   // --- Builder Sub-actions ---
   const handleAddPart = (partNum) => {
+    markDirty();
     // If part already exists, switch to it
     const existingIdx = formParts.findIndex((p) => p.partNumber === partNum);
     if (existingIdx !== -1) {
@@ -1169,6 +1521,7 @@ const TestManagementPage = () => {
   };
 
   const handleRemovePart = (partIndex) => {
+    markDirty();
     if (formParts.length <= 1) {
       setToast({ type: 'warning', message: 'Bộ đề thi phải có ít nhất 1 phần (Part)!' });
       return;
@@ -1178,6 +1531,7 @@ const TestManagementPage = () => {
   };
 
   const handleAddContextQuestion = (pIdx) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -1191,6 +1545,7 @@ const TestManagementPage = () => {
   };
 
   const handleRemoveContextQuestion = (pIdx, cqIdx) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -1205,6 +1560,7 @@ const TestManagementPage = () => {
   };
 
   const handleAddQuestion = (pIdx, cqIdx) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -1222,6 +1578,7 @@ const TestManagementPage = () => {
   };
 
   const handleRemoveQuestion = (pIdx, cqIdx, qIdx) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -1240,6 +1597,7 @@ const TestManagementPage = () => {
   };
 
   const handleUpdateQuestionField = (pIdx, cqIdx, qIdx, field, value) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -1256,6 +1614,7 @@ const TestManagementPage = () => {
   };
 
   const handleUpdateContextField = (pIdx, cqIdx, field, value) => {
+    markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
@@ -2313,6 +2672,7 @@ const TestManagementPage = () => {
             const hasAudio = Boolean(cq.audioUrl);
             const hasImage = Boolean(cq.imageUrl);
             const hasTranscript = Boolean(cq.transcript?.trim());
+            const hasTranslation = Boolean((cq.translation || cq.transcriptTranslation)?.trim());
 
             const audioKey = `p3-${cqIdx}-audio`;
             const imageKey = `p3-${cqIdx}-image`;
@@ -2369,6 +2729,15 @@ const TestManagementPage = () => {
                       }`}
                     >
                       {hasTranscript ? '✓ Transcript' : 'Chưa transcript'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasTranslation
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-50 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasTranslation ? '✓ Đã có bản dịch' : 'Chưa có bản dịch'}
                     </span>
 
                     {activePart.contextQuestions.length > 1 && (
@@ -2551,39 +2920,75 @@ const TestManagementPage = () => {
                   </div>
 
                   {/* Transcript Âm Thanh Của Toàn Bộ Đoạn Hội Thoại (6/12) */}
-                  <div className="lg:col-span-6 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-                        <FileText size={14} className="text-indigo-600" />
-                        <span>Lời thoại đoạn hội thoại (Audio Transcript)</span>
-                      </label>
+                  <div className="lg:col-span-6 space-y-4">
+                    {/* 1. Transcript Tiếng Anh */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <FileText size={14} className="text-indigo-600" />
+                          <span>Lời thoại tiếng Anh (Audio Transcript)</span>
+                        </label>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const template = `Man: Good morning, Sarah. Did you get a chance to look at the budget proposal for next quarter?\nWoman: Yes, Mark. I reviewed it, but I noticed that travel expenses are much higher than usual.\nMan: That's because our sales team needs to visit clients in Europe next month.\nWoman: I see. In that case, let's schedule a meeting with the department director to approve it.`;
-                          handleUpdateContextField(
-                            activePartIndex,
-                            cqIdx,
-                            'transcript',
-                            cq.transcript ? `${cq.transcript}\n\n${template}` : template
-                          );
-                        }}
-                        className="text-[11px] font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition-all inline-flex items-center gap-1"
-                      >
-                        <Sparkles size={11} /> + Mẫu đối thoại (Man/Woman)
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const template = `Man: Good morning, Sarah. Did you get a chance to look at the budget proposal for next quarter?\nWoman: Yes, Mark. I reviewed it, but I noticed that travel expenses are much higher than usual.\nMan: That's because our sales team needs to visit clients in Europe next month.\nWoman: I see. In that case, let's schedule a meeting with the department director to approve it.`;
+                            handleUpdateContextField(
+                              activePartIndex,
+                              cqIdx,
+                              'transcript',
+                              cq.transcript ? `${cq.transcript}\n\n${template}` : template
+                            );
+                          }}
+                          className="text-[11px] font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition-all inline-flex items-center gap-1"
+                        >
+                          <Sparkles size={11} /> + Mẫu đối thoại (Man/Woman)
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        placeholder="Dán toàn bộ lời thoại đối thoại tiếng Anh trong audio này..."
+                        value={cq.transcript || ''}
+                        onChange={(e) =>
+                          handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
+                        }
+                        className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                      />
                     </div>
 
-                    <textarea
-                      rows={4}
-                      placeholder="Dán toàn bộ lời thoại đối thoại trong audio này (tùy chọn)..."
-                      value={cq.transcript || ''}
-                      onChange={(e) =>
-                        handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
-                      }
-                      className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
-                    />
+                    {/* 2. Bản dịch tiếng Việt */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-emerald-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <Languages size={14} className="text-emerald-600" />
+                          <span>Bản dịch tiếng Việt (Vietnamese Translation)</span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const transTemplate = `Nam: Chào buổi sáng, Sarah. Cô đã có dịp xem qua bản dự thảo ngân sách cho quý tới chưa?\nNữ: Vâng, Mark. Tôi đã xem rồi, nhưng tôi nhận thấy chi phí công tác cao hơn nhiều so với bình thường.\nNam: Đó là vì đội ngũ bán hàng của chúng ta cần đi gặp khách hàng ở Châu Âu vào tháng tới.\nNữ: Tôi hiểu rồi. Trong trường hợp đó, chúng ta hãy sắp xếp một cuộc họp với giám đốc bộ phận để phê duyệt nó nhé.`;
+                            const curTrans = cq.translation || cq.transcriptTranslation || '';
+                            const newTrans = curTrans ? `${curTrans}\n\n${transTemplate}` : transTemplate;
+                            handleUpdateContextField(activePartIndex, cqIdx, 'translation', newTrans);
+                          }}
+                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200 transition-all inline-flex items-center gap-1"
+                        >
+                          <Sparkles size={11} /> + Mẫu bản dịch tiếng Việt
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        placeholder="Dán bản dịch tiếng Việt của đoạn hội thoại vào đây (học viên sẽ xem được sau khi nộp bài)..."
+                        value={cq.translation || cq.transcriptTranslation || ''}
+                        onChange={(e) =>
+                          handleUpdateContextField(activePartIndex, cqIdx, 'translation', e.target.value)
+                        }
+                        className="w-full p-3 rounded-xl border border-emerald-300 text-xs bg-emerald-50/20 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -2635,7 +3040,6 @@ const TestManagementPage = () => {
 
                             <input
                               type="text"
-                              required
                               placeholder={`Nhập nội dung câu hỏi #${itemQNum} (ví dụ: Where does the conversation take place?)...`}
                               value={q.questionContent || ''}
                               onChange={(e) =>
@@ -2660,7 +3064,6 @@ const TestManagementPage = () => {
                                 </span>
                                 <input
                                   type="text"
-                                  required
                                   placeholder={`Nội dung lựa chọn (${optKey})`}
                                   value={q[`option${optKey}`] || ''}
                                   onChange={(e) =>
@@ -2848,6 +3251,7 @@ const TestManagementPage = () => {
             const hasAudio = Boolean(cq.audioUrl);
             const hasImage = Boolean(cq.imageUrl);
             const hasTranscript = Boolean(cq.transcript?.trim());
+            const hasTranslation = Boolean((cq.translation || cq.transcriptTranslation)?.trim());
 
             const audioKey = `p4-${cqIdx}-audio`;
             const imageKey = `p4-${cqIdx}-image`;
@@ -2904,6 +3308,15 @@ const TestManagementPage = () => {
                       }`}
                     >
                       {hasTranscript ? '✓ Transcript' : 'Chưa transcript'}
+                    </span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                        hasTranslation
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-50 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {hasTranslation ? '✓ Đã có bản dịch' : 'Chưa có bản dịch'}
                     </span>
 
                     {activePart.contextQuestions.length > 1 && (
@@ -3086,39 +3499,75 @@ const TestManagementPage = () => {
                   </div>
 
                   {/* Transcript Âm Thanh Của Toàn Bộ Bài Nói (6/12) */}
-                  <div className="lg:col-span-6 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
-                        <FileText size={14} className="text-amber-600" />
-                        <span>Lời thoại bài nói chuyện (Audio Transcript)</span>
-                      </label>
+                  <div className="lg:col-span-6 space-y-4">
+                    {/* 1. Transcript Tiếng Anh */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <FileText size={14} className="text-amber-600" />
+                          <span>Lời thoại tiếng Anh (Audio Transcript)</span>
+                        </label>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const template = `Attention, all airline passengers on Flight 402 to Chicago. Due to severe thunderstorms in the Midwest, our departure has been delayed by approximately 45 minutes. We will begin boarding at Gate B12 as soon as the weather clears. Please check the monitor screens for further gate updates.`;
-                          handleUpdateContextField(
-                            activePartIndex,
-                            cqIdx,
-                            'transcript',
-                            cq.transcript ? `${cq.transcript}\n\n${template}` : template
-                          );
-                        }}
-                        className="text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition-all inline-flex items-center gap-1"
-                      >
-                        <Sparkles size={11} /> + Mẫu bài nói / Thông báo
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const template = `Attention, all airline passengers on Flight 402 to Chicago. Due to severe thunderstorms in the Midwest, our departure has been delayed by approximately 45 minutes. We will begin boarding at Gate B12 as soon as the weather clears. Please check the monitor screens for further gate updates.`;
+                            handleUpdateContextField(
+                              activePartIndex,
+                              cqIdx,
+                              'transcript',
+                              cq.transcript ? `${cq.transcript}\n\n${template}` : template
+                            );
+                          }}
+                          className="text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-200 transition-all inline-flex items-center gap-1"
+                        >
+                          <Sparkles size={11} /> + Mẫu bài nói / Thông báo
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        placeholder="Dán toàn bộ lời phát thanh, bài phát biểu hoặc tin nhắn thoại trong audio này..."
+                        value={cq.transcript || ''}
+                        onChange={(e) =>
+                          handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
+                        }
+                        className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                      />
                     </div>
 
-                    <textarea
-                      rows={4}
-                      placeholder="Dán toàn bộ lời phát thanh, bài phát biểu hoặc tin nhắn thoại trong audio này (tùy chọn)..."
-                      value={cq.transcript || ''}
-                      onChange={(e) =>
-                        handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
-                      }
-                      className="w-full p-3 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
-                    />
+                    {/* 2. Bản dịch tiếng Việt */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-emerald-800 flex items-center gap-1.5 uppercase tracking-wider">
+                          <Languages size={14} className="text-emerald-600" />
+                          <span>Bản dịch tiếng Việt (Vietnamese Translation)</span>
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const transTemplate = `Xin toàn thể hành khách trên Chuyến bay 402 đến Chicago chú ý. Do bão sấm sét nghiêm trọng ở vùng Trung Tây, giờ khởi hành của chúng ta đã bị hoãn lại khoảng 45 phút. Chúng tôi sẽ bắt đầu cho hành khách lên máy bay tại Cửa B12 ngay khi thời tiết quang đãng. Xin vui lòng theo dõi màn hình hiển thị để cập nhật thông tin cửa ra máy bay mới nhất.`;
+                            const curTrans = cq.translation || cq.transcriptTranslation || '';
+                            const newTrans = curTrans ? `${curTrans}\n\n${transTemplate}` : transTemplate;
+                            handleUpdateContextField(activePartIndex, cqIdx, 'translation', newTrans);
+                          }}
+                          className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200 transition-all inline-flex items-center gap-1"
+                        >
+                          <Sparkles size={11} /> + Mẫu bản dịch tiếng Việt
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={4}
+                        placeholder="Dán bản dịch tiếng Việt của bài nói chuyện vào đây (học viên sẽ xem được sau khi nộp bài)..."
+                        value={cq.translation || cq.transcriptTranslation || ''}
+                        onChange={(e) =>
+                          handleUpdateContextField(activePartIndex, cqIdx, 'translation', e.target.value)
+                        }
+                        className="w-full p-3 rounded-xl border border-emerald-300 text-xs bg-emerald-50/20 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 leading-relaxed text-slate-800 font-sans shadow-2xs"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -3170,7 +3619,6 @@ const TestManagementPage = () => {
 
                             <input
                               type="text"
-                              required
                               placeholder={`Nhập nội dung câu hỏi #${itemQNum} (ví dụ: Who most likely is the speaker?)...`}
                               value={q.questionContent || ''}
                               onChange={(e) =>
@@ -3195,7 +3643,6 @@ const TestManagementPage = () => {
                                 </span>
                                 <input
                                   type="text"
-                                  required
                                   placeholder={`Nội dung lựa chọn (${optKey})`}
                                   value={q[`option${optKey}`] || ''}
                                   onChange={(e) =>
@@ -3617,7 +4064,7 @@ const TestManagementPage = () => {
       {/* ========================================================================= */}
       <Modal
         isOpen={builderOpen}
-        onClose={() => setBuilderOpen(false)}
+        onClose={handleCloseBuilder}
         title={
           builderMode === 'create'
             ? 'Soạn thảo & Khởi tạo Đề thi TOEIC mới'
@@ -3625,7 +4072,114 @@ const TestManagementPage = () => {
         }
         maxWidth="980px"
       >
-        <form onSubmit={handleSaveExam} className="flex flex-col gap-5">
+        <form onSubmit={handleSaveExam} noValidate className="flex flex-col gap-5">
+          {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
+          {recoverableDraft && (
+            <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-xl flex items-center justify-between flex-wrap gap-2 animate-fadeIn shadow-xs">
+              <div className="flex items-center gap-2.5">
+                <Sparkles size={18} className="text-amber-600 shrink-0" />
+                <div className="text-xs">
+                  <span className="font-bold">Phát hiện phiên làm việc chưa lưu trước đó:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
+                  <span className="font-semibold">
+                    {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
+                  </span>{' '}
+                  ngày {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleDateString('vi-VN') : ''}.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRestoreDraft}
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
+                >
+                  Khôi phục bản nháp này
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissDraft}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-all cursor-pointer"
+                >
+                  Bỏ qua & Xóa
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STICKY QUICK ACTION & AUTOSAVE STATUS BAR */}
+          <div className="sticky -top-4 z-30 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-xs font-extrabold text-slate-800 truncate max-w-[260px]">
+                {formTitle || 'Chưa đặt tên đề thi'}
+              </span>
+              <span
+                className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  formStatus === 'PUBLISHED'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}
+              >
+                {formStatus === 'PUBLISHED' ? 'Đang chọn: Xuất bản' : 'Đang chọn: Bản nháp'}
+              </span>
+
+              {/* Trạng thái Auto-Save Đa Tầng */}
+              {autoSaveState.status === 'saving' && (
+                <span className="text-[11px] text-amber-600 flex items-center gap-1 font-medium">
+                  <RefreshCw size={12} className="animate-spin" /> Đang lưu bản nháp...
+                </span>
+              )}
+              {autoSaveState.status === 'saved' && autoSaveState.savedAt && (
+                <span
+                  className="text-[11px] text-emerald-600 flex items-center gap-1 font-medium"
+                  title="Bản nháp được lưu an toàn liên tục vào bộ nhớ trình duyệt mỗi 5s (0% tải máy chủ)"
+                >
+                  <Check size={13} className="text-emerald-500" /> Tự lưu trình duyệt {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                </span>
+              )}
+              {autoSaveState.status === 'synced_server' && autoSaveState.savedAt && (
+                <span
+                  className="text-[11px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md flex items-center gap-1 font-bold"
+                  title="Dữ liệu đã được đồng bộ an toàn lên cơ sở dữ liệu MySQL của máy chủ"
+                >
+                  <CheckCircle2 size={12} className="text-indigo-600" /> Đã đồng bộ máy chủ {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {builderMode === 'edit' && (
+                <button
+                  type="button"
+                  onClick={handleReloadFromServer}
+                  disabled={actionLoading}
+                  title="Tải lại toàn bộ dữ liệu mới nhất từ CSDL máy chủ và xóa sạch bản nháp cache trình duyệt"
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs"
+                >
+                  <RotateCcw size={13} className="text-slate-500" />
+                  Tải lại từ CSDL
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleSaveExam(null, 'DRAFT', true)}
+                disabled={actionLoading}
+                title="Lưu ngay bản nháp lên máy chủ và tiếp tục soạn thảo (phím tắt: Ctrl + S)"
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              >
+                <Clock size={13} className="text-amber-600" />
+                {actionLoading ? 'Đang lưu...' : 'Lưu nháp máy chủ (Ctrl+S)'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveExam(null, 'PUBLISHED', false)}
+                disabled={actionLoading}
+                title="Kiểm tra và Xuất bản đề thi lên hệ thống"
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+              >
+                <CheckCircle2 size={13} />
+                Xuất bản đề thi
+              </button>
+            </div>
+          </div>
           {/* Test Basic Info & Status */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
             <div>
@@ -3637,7 +4191,10 @@ const TestManagementPage = () => {
                 required
                 placeholder="Ví dụ: ETS TOEIC 2026 - Test 01"
                 value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
+                onChange={(e) => {
+                  setFormTitle(e.target.value);
+                  markDirty();
+                }}
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-base font-bold text-slate-900 bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
@@ -3662,7 +4219,10 @@ const TestManagementPage = () => {
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
-                  onClick={() => setFormStatus('PUBLISHED')}
+                  onClick={() => {
+                    setFormStatus('PUBLISHED');
+                    markDirty();
+                  }}
                 >
                   <CheckCircle2 size={13} className="inline mr-1" /> Xuất bản (PUBLISHED)
                 </button>
@@ -3673,7 +4233,10 @@ const TestManagementPage = () => {
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
-                  onClick={() => setFormStatus('DRAFT')}
+                  onClick={() => {
+                    setFormStatus('DRAFT');
+                    markDirty();
+                  }}
                 >
                   <Clock size={13} className="inline mr-1" /> Bản nháp (DRAFT)
                 </button>
@@ -4395,27 +4958,42 @@ const TestManagementPage = () => {
           )}
 
           {/* Action Buttons Footer */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              className="btn btn-outline"
-              disabled={actionLoading}
-              onClick={() => setBuilderOpen(false)}
-            >
-              Hủy bỏ
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary inline-flex items-center gap-2 px-6 font-bold"
-              disabled={actionLoading}
-            >
-              <Save size={16} />
-              {actionLoading
-                ? 'Đang lưu dữ liệu...'
-                : builderMode === 'create'
-                ? 'Lưu & Khởi tạo Đề thi'
-                : 'Lưu Cập nhật Đề thi'}
-            </button>
+          <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 flex-wrap">
+            <div className="text-xs text-slate-500">
+              <span className="font-bold text-slate-700">💡 Mẹo:</span> Bạn có thể lưu tạm (DRAFT) bất kỳ lúc nào dù Part 3 & 4 chưa làm xong. Phím tắt <kbd className="px-1.5 py-0.5 text-[10px] font-semibold text-slate-800 bg-slate-100 border border-slate-300 rounded-md">Ctrl+S</kbd> để lưu nháp nhanh.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-outline text-xs py-2 px-4"
+                disabled={actionLoading}
+                onClick={handleCloseBuilder}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveExam(null, 'DRAFT', true)}
+                className="btn bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                disabled={actionLoading}
+                title="Lưu nháp lên máy chủ và tiếp tục làm việc"
+              >
+                <Clock size={14} />
+                Lưu nháp máy chủ (DRAFT)
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary inline-flex items-center gap-2 px-6 py-2 text-xs font-bold cursor-pointer"
+                disabled={actionLoading}
+              >
+                <Save size={15} />
+                {actionLoading
+                  ? 'Đang lưu dữ liệu...'
+                  : formStatus === 'PUBLISHED'
+                  ? 'Lưu & Hoàn tất Xuất bản'
+                  : 'Lưu & Hoàn tất Bản nháp'}
+              </button>
+            </div>
           </div>
         </form>
       </Modal>
