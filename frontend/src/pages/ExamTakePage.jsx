@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Clock,
   PlayCircle,
@@ -27,6 +27,8 @@ import {
   Sparkles,
   Info,
   Languages,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import {
@@ -87,6 +89,30 @@ const ExamTakePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // URL Params for Practice mode vs Full Test
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') || 'fulltest';
+  const partsParam = searchParams.get('parts');
+  const timeParam = searchParams.get('time');
+
+  const targetPartNumbers = useMemo(() => {
+    if (mode === 'practice' && partsParam) {
+      const parsed = partsParam.split(',').map((p) => parseInt(p.trim(), 10)).filter((n) => !isNaN(n));
+      return parsed.length > 0 ? parsed : [1, 2, 3, 4, 5, 6, 7];
+    }
+    return [1, 2, 3, 4, 5, 6, 7];
+  }, [mode, partsParam]);
+
+  const initialMinutes = useMemo(() => {
+    if (timeParam !== null && timeParam !== undefined && timeParam !== '') {
+      const parsed = parseInt(timeParam, 10);
+      return isNaN(parsed) ? 120 : parsed;
+    }
+    return mode === 'practice' ? 0 : 120;
+  }, [timeParam, mode]);
+
+  const isStopwatch = initialMinutes === 0;
+
   // Normalized Contexts and Flat Question List
   const [contexts, setContexts] = useState([]);
   const [flatQuestions, setFlatQuestions] = useState([]);
@@ -95,7 +121,7 @@ const ExamTakePage = () => {
   // User Interaction State
   const [userAnswers, setUserAnswers] = useState({}); // { [qId]: 'A' | 'B' | 'C' | 'D' }
   const [flaggedQuestions, setFlaggedQuestions] = useState(new Set()); // Set of qIds
-  const [timeRemaining, setTimeRemaining] = useState(7200); // 120 minutes = 7200s
+  const [timeRemaining, setTimeRemaining] = useState(isStopwatch ? 0 : initialMinutes * 60);
   const [timerActive, setTimerActive] = useState(false);
 
   // Modals & UI States
@@ -124,7 +150,7 @@ const ExamTakePage = () => {
           const rawCqs = testData.contextQuestions || [];
           
           // Trích xuất partNum và seqIndex cho từng context
-          const indexedCqs = rawCqs.map((cq, rawIdx) => {
+          let indexedCqs = rawCqs.map((cq, rawIdx) => {
             let seqIndex = null;
             let parsedPartNumber = null;
 
@@ -213,6 +239,11 @@ const ExamTakePage = () => {
             return (a._seqIndex ?? 0) - (b._seqIndex ?? 0);
           });
 
+          // Nếu ở chế độ Luyện tập theo Part, chỉ giữ lại các cụm bài thuộc các Part đã chọn
+          if (mode === 'practice' && targetPartNumbers.length > 0) {
+            indexedCqs = indexedCqs.filter((cq) => targetPartNumbers.includes(cq._partNum));
+          }
+
           let qCounter = 1;
           const processedContexts = indexedCqs.map((cq, cqIdx) => {
             const partNum = cq._partNum;
@@ -261,7 +292,8 @@ const ExamTakePage = () => {
           });
           setFlatQuestions(allQs);
 
-          // Start timer
+          // Start timer (count up if stopwatch, count down if timed)
+          setTimeRemaining(isStopwatch ? 0 : initialMinutes * 60);
           setTimerActive(true);
         } else {
           setError(res.message || 'Không thể tải đề thi.');
@@ -277,24 +309,30 @@ const ExamTakePage = () => {
     if (testId) {
       fetchTest();
     }
-  }, [testId]);
+  }, [testId, mode, targetPartNumbers, isStopwatch, initialMinutes]);
 
-  // 2. Countdown Timer
+  // 2. Countdown or Stopwatch Timer
   useEffect(() => {
     if (!timerActive || isSubmitted) return;
     const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          handleSubmitExam();
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (isStopwatch) {
+        // Đếm xuôi (bấm giờ tự do)
+        setTimeRemaining((prev) => prev + 1);
+      } else {
+        // Đếm ngược
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            handleSubmitExam();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timerActive, isSubmitted]);
+  }, [timerActive, isSubmitted, isStopwatch]);
 
   // Format seconds to HH:MM:SS
   const formatTime = (secs) => {
@@ -350,6 +388,45 @@ const ExamTakePage = () => {
     setIsSubmitted(true);
     setTimerActive(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Lưu kết quả làm bài vào localStorage
+    try {
+      let correct = 0;
+      flatQuestions.forEach((q) => {
+        if (userAnswers[q.id] === q.correctAnswer) {
+          correct++;
+        }
+      });
+      const totalQ = flatQuestions.length;
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+      const totalSpentSecs = isStopwatch ? timeRemaining : Math.max(0, initialMinutes * 60 - timeRemaining);
+      const hours = Math.floor(totalSpentSecs / 3600);
+      const minutes = Math.floor((totalSpentSecs % 3600) / 60);
+      const seconds = totalSpentSecs % 60;
+      const timeSpentStr = `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      const partLabelStr = mode === 'practice'
+        ? targetPartNumbers.map((p) => `Part ${p}`).join(', ')
+        : 'Full Test';
+
+      const newAttempt = {
+        id: 'att_' + Date.now(),
+        date: dateStr,
+        modeLabel: mode === 'practice' ? 'Luyện tập' : 'Làm full test',
+        partLabel: partLabelStr,
+        score: `${correct}/${totalQ}`,
+        timeSpent: timeSpentStr,
+      };
+
+      const historyKey = `test_history_${testId}`;
+      const existing = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      const updated = [newAttempt, ...(Array.isArray(existing) ? existing : [])];
+      localStorage.setItem(historyKey, JSON.stringify(updated));
+    } catch (err) {
+      console.error('Error saving attempt to history:', err);
+    }
   };
 
   // Score Calculation
@@ -383,6 +460,7 @@ const ExamTakePage = () => {
 
     const estimatedTotal = estimatedListening + estimatedReading;
     const accuracy = Math.round((correctCount / flatQuestions.length) * 100);
+    const timeSpentSecs = isStopwatch ? timeRemaining : Math.max(0, initialMinutes * 60 - timeRemaining);
 
     return {
       totalQuestions: flatQuestions.length,
@@ -395,9 +473,9 @@ const ExamTakePage = () => {
       estimatedReading,
       estimatedTotal,
       accuracy,
-      timeSpent: 7200 - timeRemaining,
+      timeSpent: timeSpentSecs,
     };
-  }, [isSubmitted, flatQuestions, userAnswers, timeRemaining]);
+  }, [isSubmitted, flatQuestions, userAnswers, timeRemaining, isStopwatch, initialMinutes]);
 
   const currentContext = contexts[currentContextIndex];
   const answeredCount = Object.keys(userAnswers).length;
@@ -442,17 +520,20 @@ const ExamTakePage = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f1f5f9', display: 'flex', flexDirection: 'column' }}>
-      {/* 1. TOP STICKY BAR */}
+    <div style={{ minHeight: '100dvh', backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column' }}>
+      {/* 1. TOP STICKY BAR (Glassmorphism & SKILL.md Standard) */}
       <header
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderBottom: '1px solid rgba(226, 232, 240, 0.85)',
+          boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.04)',
           padding: '12px 24px',
+          transition: 'all 0.2s ease',
         }}
       >
         <div
@@ -481,38 +562,83 @@ const ExamTakePage = () => {
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 textDecoration: 'none',
+                transition: 'all 0.15s ease',
               }}
+              className="hover:bg-slate-200 active:scale-[0.98]"
             >
               <ArrowLeft size={15} /> Rời phòng thi
             </Link>
             <div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.2 }}>
-                {test?.titleTest || 'Bài thi TOEIC'}
-              </h1>
-              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h1 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a', margin: 0, lineHeight: 1.2, letterSpacing: '-0.02em' }}>
+                  {test?.titleTest || 'Bài thi TOEIC'}
+                </h1>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    backgroundColor: mode === 'practice' ? '#f0fdf4' : '#eff6ff',
+                    color: mode === 'practice' ? '#166534' : '#1e40af',
+                    border: `1px solid ${mode === 'practice' ? '#bbf7d0' : '#bfdbfe'}`,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {mode === 'practice'
+                    ? `Luyện tập (${targetPartNumbers.map((p) => `P${p}`).join(', ')})`
+                    : 'Full Test'}
+                </span>
+              </div>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 500 }} className="tabular-nums">
                 Part {currentContext.partNumber} • Cụm {currentContextIndex + 1}/{contexts.length}
               </span>
             </div>
           </div>
 
-          {/* Center: Countdown Timer */}
+          {/* Center: Countdown or Stopwatch Timer */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              padding: '6px 18px',
+              padding: '6px 20px',
               borderRadius: 30,
-              backgroundColor: timeRemaining < 300 ? '#fef2f2' : '#f0fdf4',
-              border: `1.5px solid ${timeRemaining < 300 ? '#ef4444' : '#198754'}`,
-              color: timeRemaining < 300 ? '#b91c1c' : '#15803d',
+              backgroundColor: isStopwatch
+                ? '#eff6ff'
+                : timeRemaining < 300
+                ? '#fef2f2'
+                : '#f0fdf4',
+              border: `1.5px solid ${
+                isStopwatch
+                  ? '#3b82f6'
+                  : timeRemaining < 300
+                  ? '#ef4444'
+                  : '#198754'
+              }`,
+              color: isStopwatch
+                ? '#1d4ed8'
+                : timeRemaining < 300
+                ? '#b91c1c'
+                : '#15803d',
               fontWeight: 800,
               fontSize: '1.15rem',
               letterSpacing: '1px',
+              fontVariantNumeric: 'tabular-nums',
+              fontFamily: "'Outfit', monospace",
+              boxShadow: isStopwatch
+                ? '0 2px 10px rgba(59, 130, 246, 0.15)'
+                : '0 2px 10px rgba(25, 135, 84, 0.12)',
             }}
           >
-            <Clock size={20} className={timeRemaining < 300 ? 'pulse-fast' : ''} />
-            <span>{isSubmitted ? 'ĐÃ NỘP BÀI' : formatTime(timeRemaining)}</span>
+            <Clock size={20} className={!isStopwatch && timeRemaining < 300 ? 'pulse-fast' : ''} />
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+              {isSubmitted
+                ? 'ĐÃ NỘP BÀI'
+                : isStopwatch
+                ? `Bấm giờ: ${formatTime(timeRemaining)}`
+                : formatTime(timeRemaining)}
+            </span>
           </div>
 
           {/* Right: Progress & Actions */}
@@ -1213,6 +1339,7 @@ const ExamTakePage = () => {
                         <div
                           key={optKey}
                           onClick={() => handleSelectOption(q.id, optKey)}
+                          className={!isSubmitted ? 'cursor-pointer select-none active:scale-[0.99] transition-all' : 'select-none'}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1222,13 +1349,14 @@ const ExamTakePage = () => {
                             border: `1.5px solid ${optBorder}`,
                             backgroundColor: optBg,
                             cursor: isSubmitted ? 'default' : 'pointer',
-                            transition: 'all 0.15s ease',
+                            transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: isSelected && !isSubmitted ? '0 2px 8px rgba(25, 135, 84, 0.12)' : 'none',
                           }}
                         >
                           <div
                             style={{
-                              width: 26,
-                              height: 26,
+                              width: 28,
+                              height: 28,
                               borderRadius: '50%',
                               border: `2px solid ${isSelected || (isSubmitted && isOptionCorrect) ? optBorder : '#94a3b8'}`,
                               backgroundColor: isSelected ? optBorder : 'transparent',
@@ -1236,12 +1364,13 @@ const ExamTakePage = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '0.8rem',
+                              fontSize: '0.82rem',
                               fontWeight: 800,
                               flexShrink: 0,
+                              transition: 'all 0.15s ease',
                             }}
                           >
-                            {isSelected ? optKey : optKey}
+                            {optKey}
                           </div>
                           <span style={{ fontSize: '0.93rem', color: optTextColor, fontWeight: isSelected ? 600 : 500, flex: 1 }}>
                             {currentContext.partNumber <= 2 ? `(${optKey})` : optText}

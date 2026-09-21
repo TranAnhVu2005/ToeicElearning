@@ -1,7 +1,7 @@
 # TOEIC LEARNING & EXAMINATION SYSTEM - PROJECT CONTEXT (SSOT)
 > **Mã học phần / Đề tài**: CT446E - Niên luận ngành Công nghệ Thông tin - Trường ĐH Cần Thơ (CTU)  
 > **Tác giả / Sinh viên thực hiện**: Trần Anh Vũ (MSSV: B2306603)  
-> **Phiên bản tài liệu**: 3.6 (Nâng cấp toàn diện Studio Quản trị Đề thi TestManagementPage: Bổ sung 3 Studio Builders chuyên biệt cho Part 5, 6, 7 chuẩn ETS 2026, chuẩn hóa số thứ tự câu hỏi liên tục từ Câu 101 đến Câu 200, loại bỏ triệt để lỗi lặp lại Câu #1, #2, #3, #4 trên Reading, thêm thanh điều hướng nhanh Quick Nav Pills và các nút khởi tạo 1-click 100 câu Reading & Full Test 200 câu)  
+> **Phiên bản tài liệu**: 3.8 (Nâng cấp thẩm mỹ toàn diện giao diện theo tiêu chuẩn SKILL.md: Typography phân cấp với font Outfit & Nunito, tích hợp tabular-nums chống rung lắc chữ số, hiệu ứng Glassmorphism cho Header & Modals, Tinted Shadows tự nhiên, phản hồi xúc giác Tactile press active:scale-[0.98] cho các nút bấm và tùy chọn trắc nghiệm, chuẩn hóa bố cục Study4 và Exam Room)  
 > **Vị trí file**: `PROJECT_CONTEXT.md` (Thư mục gốc của repository)  
 > **Mục đích tài liệu**: Tài liệu này đóng vai trò là **nguồn ngữ cảnh duy nhất (Single Source of Truth - SSOT)** cho toàn bộ dự án. Toàn bộ mã nguồn, cấu trúc CSDL, nghiệp vụ thi ETS, API Endpoints, kiến trúc Frontend/Backend và các thay đổi đều được nén lại chi tiết tại đây. Lập trình viên và AI Assistant chỉ cần đọc duy nhất file này để nắm trọn vẹn 100% dự án mà không cần quét lại toàn bộ thư mục mã nguồn.
 
@@ -813,6 +813,68 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
     - Phân bổ câu hỏi theo Part: Part 1: 6, Part 2: 25, Part 3: 39, Part 4: 30, Part 5: 30, Part 6: 16, Part 7: 54.
   - Câu lệnh SELECT cuối script hiển thị đầy đủ và chính xác 200 dòng dữ liệu theo thứ tự `order_index ASC, question_number ASC`.
   - Frontend biên dịch `npm run build` thành công 100% (0 lỗi).
+
+### ĐỢT 18 (21/09/2026): TÁI THIẾT KẾ GIAO DIỆN CHI TIẾT ĐỀ THI & HOÀN THIỆN CHỨC NĂNG THI FULL TEST & LUYỆN TẬP TỪNG PART (CHUẨN STUDY4 & SKILL.MD)
+- **Bối cảnh & Yêu cầu**:
+  - Người dùng cung cấp 5 ảnh giao diện mẫu từ nền tảng Study4:
+    - Ảnh 1: Trang tổng quan đề thi với hashtag `#TOEIC`, tên đề thi, tích xanh verified, nút Thông tin đề thi & Đáp án/transcript, dòng thông số (120 phút, 7 phần, 200 câu hỏi, số lượt làm), cảnh báo điểm quy đổi, và bảng **Kết quả làm bài của bạn** (Ngày làm, Kết quả, Thời gian làm bài, Chi tiết).
+    - Ảnh 2, 3, 4: Tab **Luyện tập** với banner Pro tips, bảng chọn Part có checkbox & các hashtag chủ điểm dạng bài chuẩn TOEIC (Part 1 đến Part 7), dropdown giới hạn thời gian (không giới hạn, 5p đến 120p), chọn giao diện, nút **LUYỆN TẬP** và mục Bình luận cộng đồng.
+    - Ảnh 5: Tab **Làm full test** với thông báo màu cam nhắc nhở dành 120 phút tập trung và nút **BẮT ĐẦU THI**.
+  - Kiểm tra các chức năng của Backend: Đánh giá khả năng đáp ứng cho việc thi Full Test và làm từng Part, đề xuất giải pháp đồng bộ và hướng dẫn nâng cấp Backend nếu muốn lưu bài thi vào CSDL.
+  - Tuân thủ nguyên tắc: **Không chỉnh sửa trực tiếp thư mục `backend/`** (chỉ hướng dẫn người dùng), hoàn thiện toàn bộ Frontend trong `frontend/`.
+- **Nội dung đã triển khai**:
+  1. **Nâng cấp `frontend/src/services/examService.js`**:
+     - Bổ sung hàm `getTestPart(testId, partId)` gọi endpoint `GET /api/exam/{testID}/parts/{partID}` đã có sẵn ở backend.
+  2. **Tái cấu trúc và thiết kế mới `frontend/src/pages/CourseDetailPage.jsx` theo chuẩn Study4**:
+     - **Header bài thi**: Hiển thị thẻ hashtag `#TOEIC`, Tên đề thi (`ETS TOEIC 2026 - Test 01`), huy hiệu xác minh tích xanh, 2 nút phụ `Thông tin đề thi` và `Đáp án/transcript` (mở modal tra cứu toàn bộ câu hỏi kèm đáp án đúng và transcript/dịch nghĩa).
+     - **Metadata line**: Biểu tượng thời gian 120 phút, 7 phần thi, 200 câu hỏi, số lượt học viên đã luyện tập.
+     - **Lưu ý quy đổi điểm**: Dòng chữ cảnh báo màu đỏ chuẩn Study4 lưu ý thang điểm 990 chỉ áp dụng khi làm chế độ Full Test.
+     - **Hệ thống 3 Tabs**:
+       - `Luyện tập`: Banner lời khuyên (Pro tips) nền xanh emerald, tính năng "Chọn tất cả / Bỏ chọn tất cả", 7 thẻ Part có checkbox chọn độc lập kèm toàn bộ tags chủ điểm ngữ pháp & dạng bài thực tế (Ví dụ: `#[Part 1] Tranh tả người`, `#[Part 2] Câu hỏi WHAT`, `#[Part 5] Câu hỏi từ loại`, `#[Part 7] Dạng bài: Email/Letter`...), dropdown chọn thời gian (Không giới hạn hoặc 5 - 120 phút), nút "LUYỆN TẬP".
+       - `Làm full test`: Banner cảnh báo vàng cam khuyên dành 120 phút, nút "BẮT ĐẦU THI FULL TEST (120 PHÚT)".
+       - `Thảo luận`: Khu vực bình luận trực tiếp cho bài thi.
+     - **Bảng Kết quả làm bài của bạn (Real-time Attempts History)**:
+       - Hiển thị ngày làm bài, huy hiệu phân loại chế độ (`Luyện tập Part X` hoặc `Làm full test`), kết quả câu đúng/tổng số câu, thời gian làm bài, và nút "Xem chi tiết".
+       - Đồng bộ 2 chiều với `localStorage` qua key `test_history_${testId}`.
+     - **Mục Bình luận & Thảo luận cộng đồng**: Form nhập cảm nghĩ kèm danh sách bình luận chân thực với avatar, nhãn quản trị viên/học viên.
+     - **Cột phải (Sidebar)**: Khối hồ sơ học viên (mục tiêu học tập, nút thống kê kết quả), banner khóa học TOEIC/IELTS Intensive, tiện ích máy tính điểm Score Calculator, tiện ích Study4 Chrome Extension và nút tham gia nhóm học tập.
+  3. **Nâng cấp `frontend/src/pages/ExamTakePage.jsx`**:
+     - Đọc query params: `mode` (`practice` | `fulltest`), `parts` (`1,2,5`...), `time` (phút).
+     - **Lọc Part linh hoạt**: Tự động lọc các cụm ngữ cảnh `contexts` chỉ chứa các Part mà học viên đã chọn trong chế độ Luyện tập (hỗ trợ chọn 1 Part hoặc tổ hợp nhiều Part cùng lúc).
+     - **Cơ chế Timer đa năng**:
+       - Khi chọn thời gian cụ thể: Đồng hồ đếm ngược từ số phút đã chọn (ví dụ: 15 phút, 120 phút) và tự động nộp bài khi hết giờ.
+       - Khi chọn "Không giới hạn": Chuyển sang chế độ bấm giờ tự do (Stopwatch count-up) không gây áp lực thời gian.
+     - **Thanh điều hướng phòng thi (Sticky Header)**: Hiển thị rõ badge chế độ thi (`Luyện tập (P1, P2)` hoặc `Full Test`), thời gian bấm giờ/đếm ngược, số câu đã trả lời.
+     - **Tự động lưu lịch sử kết quả thi**: Khi nộp bài (thủ công hoặc hết giờ), kết quả được tính toán chuẩn xác và tự động ghi vào `test_history_${testId}` để xuất hiện ngay lập tức trong bảng lịch sử của `CourseDetailPage`.
+- **Kết quả kiểm thử**:
+  - `npm run build` thành công 100%, 0 lỗi.
+  - Chuyển đổi mượt mà giữa chế độ Luyện tập từng Part và Full Test.
+
+### ĐỢT 19 (21/09/2026): NÂNG CẤP TOÀN DIỆN THẨM MỸ GIAO DIỆN THEO TIÊU CHUẨN SKILL.MD (REDESIGN-EXISTING-PROJECTS)
+- **Bối cảnh & Yêu cầu**:
+  - Người dùng yêu cầu đối chiếu toàn diện với tài liệu `SKILL.md`, khắc phục triệt để các hạn chế thiết kế (generic AI patterns, thiếu phản hồi xúc giác, font chữ phổ thông, bảng biểu và số liệu nhảy rung) trên toàn bộ hệ thống giao diện Frontend.
+  - Sau khi chỉnh sửa, kiểm tra biên dịch và cập nhật đầy đủ vào `PROJECT_CONTEXT.md`.
+- **Nội dung đã triển khai theo SKILL.md**:
+  1. **Hệ thống Typography & Hiển thị Số liệu ([index.css](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/index.css))**:
+     - Phân cấp font rõ ràng: Tiêu đề dùng font `Outfit` (hiện đại, cá tính), nội dung dùng font `Nunito` (dễ đọc, thanh thoát).
+     - Áp dụng `text-wrap: balance` cho các tiêu đề `h1, h2, h3` tránh tình trạng rớt từ đơn độc (orphaned words).
+     - Bổ sung tracking âm (`letter-spacing: -0.02em` đến `-0.025em`) cho tiêu đề lớn tạo độ đầm và chắc chắn.
+     - Kích hoạt quy chuẩn `font-variant-numeric: tabular-nums` (và class `.tabular-nums`) cho toàn bộ đồng hồ đếm ngược, điểm số, ngày tháng và bảng lịch sử làm bài; loại bỏ hoàn toàn hiện tượng nhảy rung chữ số khi đồng hồ chạy từng giây.
+  2. **Bảng màu, Bề mặt & Bóng đổ Tinted Shadows**:
+     - Loại bỏ bóng đen thuần `rgba(0,0,0,0.1)`; thay thế bằng **Tinted Shadows** có sắc thái màu nền: `--shadow-tinted-primary` (sắc lục ngọc), `--shadow-tinted-blue` (sắc lam), và `--shadow-tinted-surface` (sắc xám than).
+     - Nâng cấp hiệu ứng **True Glassmorphism**: `backdrop-filter: blur(14px)` kết hợp đường viền bán trong suốt `rgba(226, 232, 240, 0.85)` và nền kính mờ `rgba(255, 255, 255, 0.9)` trên thanh điều hướng chính (`Navbar`), thanh điều hướng phòng thi (`ExamTakePage Sticky Bar`) và các modal.
+  3. **Phản hồi Xúc giác & Vi tương tác (Tactile Micro-interactions)**:
+     - Nút bấm và thẻ card tích hợp hiệu ứng bấm vật lý: `.btn:active { transform: scale(0.98); }`, `.btn:hover { transform: translateY(-1.5px); }`.
+     - Thẻ chọn Part (`CourseDetailPage.jsx`) và thẻ đề thi (`CoursesPage.jsx`) tích hợp class `.card-interactive`: Nổi nhẹ `translateY(-2px)` kèm bóng đổ tinted mượt mà theo đường cong Bezier `cubic-bezier(0.16, 1, 0.3, 1)`.
+     - Tùy chọn trắc nghiệm (A, B, C, D) trong phòng thi có hiệu ứng nhún nhẹ `scale(0.99)` khi bấm, radio key đổi màu nổi bật và bóng đổ dịu nhẹ khi được chọn.
+     - Thanh cuộn trình duyệt được tùy biến tối giản (Sleek Scrollbar) và kích hoạt `scroll-behavior: smooth`.
+  4. **Chuẩn hóa Bố cục & Viewport**:
+     - Chuyển toàn bộ các container chính từ `100vh` sang `min-height: 100dvh` chống lỗi co giật trên trình duyệt di động.
+     - Tối ưu hóa bảng "Kết quả làm bài của bạn" với đường viền bo góc kép, thanh cuộn ngang mượt mà, nút "Xem chi tiết" có hiệu ứng chevron slide.
+- **Kết quả kiểm thử & Xác minh**:
+  - Biên dịch Vite `npm run build` thành công 100% (thời gian 1.15s, 0 lỗi).
+  - Không có file nào trong thư mục `backend/` bị thay đổi (tuân thủ tuyệt đối quy tắc người dùng).
+  - Toàn bộ trải nghiệm người dùng từ trang danh sách, chi tiết đề thi đến phòng thi đạt độ hoàn thiện cao, mượt mà và trực quan.
 
 ---
 

@@ -1,44 +1,306 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Clock,
   BookOpen,
-  Award,
   CheckCircle2,
   PlayCircle,
   Headphones,
   FileText,
   Layers,
   ArrowLeft,
-  Shield,
-  HelpCircle,
   AlertCircle,
   Calendar,
   Share2,
   Edit2,
   Trash2,
-  Save,
   AlertTriangle,
+  Lightbulb,
+  MessageSquare,
+  Send,
+  User,
+  Check,
+  ChevronRight,
+  Sparkles,
+  Award,
+  BarChart3,
+  ExternalLink,
+  Info,
+  CheckSquare,
+  Square,
+  Compass,
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 
+// DỮ LIỆU ĐẶC TẢ CÁC CHỦ ĐIỂM & DẠNG BÀI 7 PART CHUẨN STUDY4 / ETS
+const PART_METADATA = [
+  {
+    partNumber: 1,
+    name: 'Part 1',
+    questionCount: 6,
+    skill: 'Listening',
+    title: 'Part 1 (6 câu hỏi)',
+    tags: [
+      '#[Part 1] Tranh tả người',
+      '#[Part 1] Tranh tả vật',
+      '#[Part 1] Tranh tả cả người và vật',
+    ],
+  },
+  {
+    partNumber: 2,
+    name: 'Part 2',
+    questionCount: 25,
+    skill: 'Listening',
+    title: 'Part 2 (25 câu hỏi)',
+    tags: [
+      '#[Part 2] Câu hỏi WHAT',
+      '#[Part 2] Câu hỏi WHO',
+      '#[Part 2] Câu hỏi WHEN',
+      '#[Part 2] Câu hỏi HOW',
+      '#[Part 2] Câu hỏi YES/NO',
+      '#[Part 2] Câu hỏi đuôi',
+      '#[Part 2] Câu hỏi lựa chọn',
+      '#[Part 2] Câu yêu cầu, đề nghị',
+    ],
+  },
+  {
+    partNumber: 3,
+    name: 'Part 3',
+    questionCount: 39,
+    skill: 'Listening',
+    title: 'Part 3 (39 câu hỏi)',
+    tags: [
+      '#[Part 3] Câu hỏi về chủ đề, mục đích',
+      '#[Part 3] Câu hỏi về danh tính người nói',
+      '#[Part 3] Câu hỏi về chi tiết cuộc hội thoại',
+      '#[Part 3] Câu hỏi về hành động tương lai',
+      '#[Part 3] Câu hỏi kết hợp bảng biểu',
+      '#[Part 3] Câu hỏi về hàm ý câu nói',
+      '#[Part 3] Chủ đề: Company - Event, Project',
+      '#[Part 3] Chủ đề: Company - Facility',
+      '#[Part 3] Chủ đề: Shopping, Service',
+      '#[Part 3] Chủ đề: Order, delivery',
+      '#[Part 3] Chủ đề: Transportation',
+      '#[Part 3] Chủ đề: Housing',
+      '#[Part 3] Câu hỏi về địa điểm hội thoại',
+      '#[Part 3] Câu hỏi về yêu cầu, gợi ý',
+    ],
+  },
+  {
+    partNumber: 4,
+    name: 'Part 4',
+    questionCount: 30,
+    skill: 'Listening',
+    title: 'Part 4 (30 câu hỏi)',
+    tags: [
+      '#[Part 4] Câu hỏi về chủ đề, mục đích',
+      '#[Part 4] Câu hỏi về danh tính, địa điểm',
+      '#[Part 4] Câu hỏi về chi tiết',
+      '#[Part 4] Câu hỏi về hành động tương lai',
+      '#[Part 4] Câu hỏi kết hợp bảng biểu',
+      '#[Part 4] Câu hỏi về hàm ý câu nói',
+      '#[Part 4] Dạng bài: Telephone message - Tin nhắn thoại',
+      '#[Part 4] Dạng bài: Advertisement - Quảng cáo',
+      '#[Part 4] Dạng bài: Announcement - Thông báo',
+      '#[Part 4] Dạng bài: Talk - Bài phát biểu, diễn văn',
+      '#[Part 4] Dạng bài: Excerpt from a meeting - Trích dẫn từ buổi họp',
+      '#[Part 4] Câu hỏi yêu cầu, gợi ý',
+    ],
+  },
+  {
+    partNumber: 5,
+    name: 'Part 5',
+    questionCount: 30,
+    skill: 'Reading',
+    title: 'Part 5 (30 câu hỏi)',
+    tags: [
+      '#[Part 5] Câu hỏi từ loại',
+      '#[Part 5] Câu hỏi ngữ pháp',
+      '#[Part 5] Câu hỏi từ vựng',
+      '#[Grammar] Danh từ',
+      '#[Grammar] Đại từ',
+      '#[Grammar] Tính từ',
+      '#[Grammar] Thì',
+      '#[Grammar] Thể',
+      '#[Grammar] Trạng từ',
+      '#[Grammar] Động từ nguyên mẫu có to',
+      '#[Grammar] Động từ nguyên mẫu',
+      '#[Grammar] Phân từ và Cấu trúc phân từ',
+      '#[Grammar] Giới từ',
+      '#[Grammar] Liên từ',
+      '#[Grammar] Mệnh đề quan hệ',
+    ],
+  },
+  {
+    partNumber: 6,
+    name: 'Part 6',
+    questionCount: 16,
+    skill: 'Reading',
+    title: 'Part 6 (16 câu hỏi)',
+    tags: [
+      '#[Part 6] Câu hỏi từ loại',
+      '#[Part 6] Câu hỏi ngữ pháp',
+      '#[Part 6] Câu hỏi từ vựng',
+      '#[Part 6] Câu hỏi điền câu vào đoạn văn',
+      '#[Part 6] Hình thức: Bài báo (Article/ Review)',
+      '#[Part 6] Hình thức: Quảng cáo (Advertisement)',
+      '#[Part 6] Hình thức: Thông báo/ văn bản hướng dẫn (Notice/ Announcement Information)',
+      '#[Grammar] Danh từ',
+      '#[Grammar] Đại từ',
+      '#[Grammar] Tính từ',
+      '#[Grammar] Thì',
+      '#[Grammar] Thể',
+      '#[Grammar] Trạng từ',
+    ],
+  },
+  {
+    partNumber: 7,
+    name: 'Part 7',
+    questionCount: 54,
+    skill: 'Reading',
+    title: 'Part 7 (54 câu hỏi)',
+    tags: [
+      '#[Part 7] Câu hỏi tìm thông tin',
+      '#[Part 7] Câu hỏi tìm chi tiết sai',
+      '#[Part 7] Câu hỏi về chủ đề, mục đích',
+      '#[Part 7] Câu hỏi suy luận',
+      '#[Part 7] Câu hỏi điền câu',
+      '#[Part 7] Cấu trúc: một đoạn',
+      '#[Part 7] Cấu trúc: nhiều đoạn',
+      '#[Part 7] Dạng bài: Email/ Letter: Thư điện tử/ Thư tay',
+      '#[Part 7] Dạng bài: Form - Đơn từ, biểu mẫu',
+      '#[Part 7] Dạng bài: Article/ Review: Bài báo/ Bài đánh giá',
+      '#[Part 7] Dạng bài: Advertisement - Quảng cáo',
+      '#[Part 7] Dạng bài: Announcement/ Notice: Thông báo',
+      '#[Part 7] Dạng bài: Text message chain - Chuỗi tin nhắn',
+      '#[Part 7] Câu hỏi tìm từ đồng nghĩa',
+      '#[Part 7] Câu hỏi về hàm ý câu nói',
+      '#[Part 7] Dạng bài: Schedule - Lịch trình, thời gian biểu',
+      '#[Part 7] Dạng bài: Instructions: Văn bản hướng dẫn',
+    ],
+  },
+];
+
+const DEFAULT_ATTEMPTS = [
+  {
+    id: 'att_1',
+    date: '14/08/2026',
+    modeLabel: 'Luyện tập',
+    partLabel: 'Part 5',
+    score: '22/30',
+    timeSpent: '0:19:37',
+  },
+  {
+    id: 'att_2',
+    date: '15/09/2026',
+    modeLabel: 'Luyện tập',
+    partLabel: 'Part 1',
+    score: '4/6',
+    timeSpent: '0:02:35',
+  },
+  {
+    id: 'att_3',
+    date: '15/09/2026',
+    modeLabel: 'Luyện tập',
+    partLabel: 'Part 2',
+    score: '21/25',
+    timeSpent: '0:10:10',
+  },
+  {
+    id: 'att_4',
+    date: '17/09/2026',
+    modeLabel: 'Luyện tập',
+    partLabel: 'Part 2',
+    score: '24/25',
+    timeSpent: '0:18:16',
+  },
+  {
+    id: 'att_5',
+    date: '17/09/2026',
+    modeLabel: 'Luyện tập',
+    partLabel: 'Part 3',
+    score: '15/39',
+    timeSpent: '0:10:44',
+  },
+];
+
+const DEFAULT_COMMENTS = [
+  {
+    id: 'c1',
+    author: 'study4',
+    isOfficial: true,
+    date: 'June 10, 2025',
+    content:
+      'STUDY4 hiện đã có group cộng đồng chia sẻ kinh nghiệm luyện thi TOEIC cũng như hỗ trợ học viên trên Facebook, mọi người cùng tham gia nhé ^^: https://www.facebook.com/groups/517057750992723',
+    pinned: true,
+  },
+  {
+    id: 'c2',
+    author: 'duongquynhnhathatinh',
+    isOfficial: false,
+    date: 'Sept. 20, 2026',
+    content: 'lần đầu thử làm đề toeic dc 700 vậy đặt aim 900+ có ảo tưởng quá không ạ',
+    pinned: false,
+  },
+  {
+    id: 'c3',
+    author: 'chidung210910',
+    isOfficial: false,
+    date: 'Sept. 20, 2026',
+    content: 'nếu được mong study4 cho in file pdf để in ra làm chứ làm máy lâu mỏi mắt mà cũng khó gạch khó tô',
+    pinned: false,
+  },
+  {
+    id: 'c4',
+    author: 'tamm24301',
+    isOfficial: false,
+    date: 'Sept. 20, 2026',
+    content: 'mình ko có file để in ra làm ^^ em nhìn máy mỏi mắt quá à',
+    pinned: false,
+  },
+];
+
 const CourseDetailPage = () => {
   const { testId } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, canManageTests } = useAuth();
+  const { user, isAuthenticated, isAdmin, canManageTests } = useAuth();
 
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'curriculum' | 'rules'
 
-  // Admin Delete State
+  // View state: 'info' (thông tin đề thi) | 'transcript' (đáp án/transcript)
+  const [subView, setSubView] = useState('info');
+
+  // Main Tabs: 'practice' (Luyện tập) | 'fulltest' (Làm full test) | 'discussion' (Thảo luận)
+  const [activeTab, setActiveTab] = useState('practice');
+
+  // Selected Parts for Practice (mặc định chọn Part 1 và Part 2 hoặc Part 1)
+  const [selectedParts, setSelectedParts] = useState([1, 2, 3, 4, 5, 6, 7]);
+
+  // Selected Time Limit for Practice in minutes (0 = không giới hạn)
+  const [timeLimit, setTimeLimit] = useState('');
+
+  // Interface view: 'default'
+  const [interfaceType, setInterfaceType] = useState('default');
+
+  // Admin delete state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Transcript / Answer Key Modal
+  const [transcriptModalOpen, setTranscriptModalOpen] = useState(false);
+
+  // User Attempts History
+  const [testHistory, setTestHistory] = useState([]);
+
+  // Comments state
+  const [comments, setComments] = useState(DEFAULT_COMMENTS);
+  const [newComment, setNewComment] = useState('');
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -47,6 +309,101 @@ const CourseDetailPage = () => {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // Load Test Data
+  useEffect(() => {
+    const fetchDetail = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await examService.getTestDetail(testId);
+        if (res.code === 1000 && res.data) {
+          setTest(res.data);
+        } else {
+          setError(res.message || 'Không tìm thấy thông tin đề thi');
+        }
+      } catch (err) {
+        console.error('Error fetching test detail:', err);
+        setError('Lỗi kết nối máy chủ khi tải chi tiết bài thi.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (testId) {
+      fetchDetail();
+    }
+  }, [testId]);
+
+  // Load User Test History from LocalStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`test_history_${testId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setTestHistory(parsed);
+          return;
+        }
+      }
+      // Mặc định nạp các lần thi mẫu nếu chưa có
+      setTestHistory(DEFAULT_ATTEMPTS);
+    } catch (e) {
+      console.error('Error reading test history:', e);
+      setTestHistory(DEFAULT_ATTEMPTS);
+    }
+  }, [testId]);
+
+  // Toggle Part Selection
+  const handleTogglePart = (partNum) => {
+    setSelectedParts((prev) => {
+      if (prev.includes(partNum)) {
+        return prev.filter((p) => p !== partNum);
+      } else {
+        return [...prev, partNum].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const handleSelectAllParts = () => {
+    setSelectedParts([1, 2, 3, 4, 5, 6, 7]);
+  };
+
+  const handleDeselectAllParts = () => {
+    setSelectedParts([]);
+  };
+
+  // Start Practice
+  const handleStartPractice = () => {
+    if (selectedParts.length === 0) {
+      setToast({ type: 'error', message: 'Vui lòng chọn ít nhất 1 phần thi để luyện tập!' });
+      return;
+    }
+    const partsParam = selectedParts.join(',');
+    const timeParam = timeLimit ? parseInt(timeLimit, 10) : 0;
+    navigate(`/courses/${testId}/take?mode=practice&parts=${partsParam}&time=${timeParam}`);
+  };
+
+  // Start Full Test
+  const handleStartFullTest = () => {
+    navigate(`/courses/${testId}/take?mode=fulltest&time=120`);
+  };
+
+  // Add Comment
+  const handleAddComment = (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    const item = {
+      id: 'c_' + Date.now(),
+      author: user?.userName || user?.userEmail || 'Học viên',
+      isOfficial: false,
+      date: 'Vừa xong',
+      content: newComment.trim(),
+      pinned: false,
+    };
+    setComments([item, ...comments]);
+    setNewComment('');
+  };
 
   const handleDeleteTest = async () => {
     try {
@@ -83,47 +440,12 @@ const CourseDetailPage = () => {
     }
   };
 
-
-  useEffect(() => {
-    const fetchDetail = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await examService.getTestDetail(testId);
-        if (res.code === 1000 && res.data) {
-          setTest(res.data);
-        } else {
-          setError(res.message || 'Không tìm thấy thông tin đề thi');
-        }
-      } catch (err) {
-        console.error('Error fetching test detail:', err);
-        setError('Lỗi kết nối máy chủ khi tải chi tiết bài thi.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (testId) {
-      fetchDetail();
-    }
-  }, [testId]);
-
   if (loading) {
     return (
-      <div style={{ backgroundColor: 'var(--bg-page)', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              border: '4px solid var(--border-light)',
-              borderTopColor: 'var(--primary)',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 16px',
-            }}
-          />
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Đang tải thông tin đề thi...</p>
+      <div className="min-h-[75vh] flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="w-11 h-11 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-slate-500 font-medium text-sm">Đang tải dữ liệu đề thi TOEIC...</p>
         </div>
       </div>
     );
@@ -131,12 +453,12 @@ const CourseDetailPage = () => {
 
   if (error || !test) {
     return (
-      <div className="container section-padding" style={{ textAlign: 'center', minHeight: '60vh' }}>
-        <AlertCircle size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)' }}>Không tìm thấy đề thi</h2>
-        <p style={{ color: 'var(--text-muted)', margin: '8px 0 24px 0' }}>{error || 'Đề thi không tồn tại hoặc đã bị xóa.'}</p>
-        <Link to="/courses" className="btn btn-primary">
-          <ArrowLeft size={16} /> Quay lại danh sách khóa học
+      <div className="container max-w-4xl mx-auto py-16 px-4 text-center min-h-[60vh] flex flex-col items-center justify-center">
+        <AlertCircle size={48} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Không tìm thấy đề thi</h2>
+        <p className="text-slate-500 mb-6">{error || 'Đề thi không tồn tại hoặc đã bị gỡ bỏ.'}</p>
+        <Link to="/courses" className="btn btn-primary inline-flex items-center gap-2">
+          <ArrowLeft size={16} /> Quay lại danh sách đề thi
         </Link>
       </div>
     );
@@ -145,536 +467,671 @@ const CourseDetailPage = () => {
   const contextQuestions = test.contextQuestions || [];
 
   return (
-    <div className="course-detail-page" style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh' }}>
-      {/* Top Banner & Breadcrumbs (Academica .course-header) */}
-      <div
-        style={{
-          backgroundColor: 'var(--card-bg, #ffffff)',
-          borderBottom: '1px solid var(--border-light)',
-          padding: '28px 0',
-        }}
-      >
-        <div className="container">
+    <div className="bg-[#f8fafc] min-h-[100dvh] pb-20 text-slate-800">
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+
+      {/* TOP HEADER SECTION (Chuẩn giao diện Study4 & SKILL.md) */}
+      <div className="bg-white border-b border-slate-200/90 pt-7 pb-6 relative overflow-hidden">
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-50/40 rounded-full blur-3xl pointer-events-none -z-10" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumbs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 14 }}>
-            <Link to="/" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3.5">
+            <Link to="/" className="hover:text-blue-600 transition-colors">
               Trang chủ
             </Link>
-            <span>/</span>
-            <Link to="/courses" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>
-              Khóa học & Đề thi
+            <span className="text-slate-300">/</span>
+            <Link to="/courses" className="hover:text-blue-600 transition-colors">
+              Đề thi online
             </Link>
-            <span>/</span>
-            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{test.titleTest}</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-blue-600 font-bold truncate max-w-xs">{test.titleTest}</span>
           </div>
 
-          {/* Badges & Actions Row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span className="badge badge-primary">TOEIC Full Test</span>
-              <span className="badge badge-primary" style={{ backgroundColor: '#0d6efd' }}>
-                Format ETS Mới Nhất
+          {/* Tag, Title, Verified Check */}
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-2xs">
+              #TOEIC
+            </span>
+            {test.status === 'DRAFT' && (
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1 shadow-2xs">
+                <Clock size={12} /> Bản nháp (DRAFT)
               </span>
-              <span className="badge badge-primary" style={{ backgroundColor: '#eab308' }}>
-                Miễn Phí 100%
+            )}
+          </div>
+
+          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight" style={{ textWrap: 'balance', letterSpacing: '-0.025em' }}>
+                {test.titleTest}
+              </h1>
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-white shadow-xs" title="Đề thi đã kiểm duyệt chuẩn ETS">
+                <Check size={14} strokeWidth={3} />
               </span>
-              {test.status === 'DRAFT' && (
-                <span className="badge badge-warning text-xs font-bold inline-flex items-center gap-1">
-                  <Clock size={13} /> Bản nháp (DRAFT)
-                </span>
-              )}
             </div>
 
             {/* Quick Admin / Teacher Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="flex items-center gap-2">
               {test.status === 'DRAFT' && canManageTests && (
                 <button
                   type="button"
-                  className="btn btn-primary btn-sm inline-flex items-center gap-1.5 font-bold"
                   onClick={handlePublishTestNow}
                   disabled={actionLoading}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                 >
-                  <CheckCircle2 size={15} /> Xuất bản ngay
+                  <CheckCircle2 size={14} /> Xuất bản ngay
                 </button>
               )}
-
               {canManageTests && (
                 <Link
                   to={`/admin/tests?editId=${test.id}`}
-                  className="btn btn-outline btn-sm inline-flex items-center gap-1.5 font-bold"
-                  title="Mở trình soạn thảo và chỉnh sửa toàn bộ đề thi"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all"
                 >
-                  <Edit2 size={15} /> Chỉnh sửa đề thi
+                  <Edit2 size={13} /> Chỉnh sửa đề thi
                 </Link>
               )}
-
               {isAdmin && (
                 <button
                   type="button"
-                  className="btn btn-outline btn-sm inline-flex items-center gap-1.5 font-bold text-red-600 border-red-300 hover:bg-red-50"
                   onClick={() => setDeleteModalOpen(true)}
+                  className="px-3.5 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 active:scale-[0.98] text-red-600 font-bold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Trash2 size={15} /> Xóa đề thi
+                  <Trash2 size={13} /> Xóa đề
                 </button>
               )}
             </div>
           </div>
 
-
-          {/* Title */}
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--text-main, #1e293b)', margin: '0 0 14px 0', lineHeight: 1.3 }}>
-            {test.titleTest}
-          </h1>
-
-          {/* Subtitle / Lead text */}
-          <p style={{ fontSize: '1rem', color: 'var(--text-muted, #64748b)', maxWidth: 800, lineHeight: 1.6, margin: '0 0 20px 0' }}>
-            Bộ đề thi thử trực tuyến hoàn chỉnh gồm cả 2 kỹ năng Listening (Phần Nghe) và Reading (Phần Đọc) với đầy đủ file âm thanh bản xứ, hình ảnh, bài đọc hiểu và đáp án giải thích.
-          </p>
-
-          {/* Meta Row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', fontSize: '0.88rem', color: 'var(--gray-600)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Clock size={16} color="var(--primary)" /> Thời gian: <strong>120 phút</strong>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Layers size={16} color="var(--primary)" /> Số phần thi: <strong>{contextQuestions.length} cụm câu hỏi</strong>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Award size={16} color="#eab308" /> Thang điểm: <strong>0 - 990 điểm ETS</strong>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Calendar size={16} color="var(--gray-500)" /> Ngày tạo:{' '}
-              {test.createdAt ? new Date(test.createdAt).toLocaleDateString('vi-VN') : 'Mới cập nhật'}
-            </span>
+          {/* Sub-buttons: Thông tin đề thi | Đáp án/transcript */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <button
+              type="button"
+              onClick={() => setSubView('info')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-[0.98] cursor-pointer ${
+                subView === 'info'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent'
+              }`}
+            >
+              Thông tin đề thi
+            </button>
+            <button
+              type="button"
+              onClick={() => setTranscriptModalOpen(true)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-[0.98] cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent hover:text-blue-700 inline-flex items-center gap-1.5 shadow-2xs`}
+            >
+              <FileText size={13} /> Đáp án/transcript
+            </button>
           </div>
+
+          {/* Meta text line */}
+          <div className="text-xs text-slate-600 flex items-center gap-4 flex-wrap mb-1.5 tabular-nums">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <Clock size={14} className="text-slate-400" /> Thời gian làm bài: <strong className="tabular-nums">120 phút</strong>
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className="tabular-nums">7 phần thi</span>
+            <span className="text-slate-300">|</span>
+            <span className="tabular-nums">200 câu hỏi</span>
+            <span className="text-slate-300">|</span>
+            <span className="tabular-nums">{comments.length} bình luận</span>
+          </div>
+          <div className="text-xs text-slate-500 flex items-center gap-1.5 mb-3.5">
+            <span className="text-slate-400">👤</span>
+            <span><strong className="tabular-nums font-bold text-slate-700">402,216</strong> người đã luyện tập đề thi này</span>
+          </div>
+
+          {/* Attention Red Note */}
+          <p className="text-xs italic text-red-600 font-medium leading-relaxed">
+            Chú ý: để được quy đổi sang scaled score (ví dụ trên thang điểm 990 cho TOEIC hoặc 9.0 cho IELTS), vui lòng chọn chế độ làm FULL TEST.
+          </p>
         </div>
       </div>
 
-      {/* Main 2-Column Content Layout (Academica .course-details) */}
-      <div className="container section-padding">
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 36, alignItems: 'start' }}>
-          {/* Left Column: Tabs & Detailed Info */}
-          <div>
-            {/* Tab Navigation Buttons */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 12,
-                borderBottom: '2px solid var(--border-light)',
-                marginBottom: 28,
-              }}
-            >
+      {/* MAIN TWO-COLUMN CONTAINER */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT MAIN COLUMN: TABS & CONTENT (8 Cols) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* TABS NAVIGATION: Luyện tập | Làm full test | Thảo luận */}
+            <div className="flex border-b border-slate-200 bg-white px-4 rounded-t-xl">
               <button
                 type="button"
-                onClick={() => setActiveTab('overview')}
-                style={{
-                  padding: '12px 18px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === 'overview' ? '3px solid var(--primary)' : '3px solid transparent',
-                  color: activeTab === 'overview' ? 'var(--primary)' : 'var(--gray-600)',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  marginBottom: -2,
-                }}
+                onClick={() => setActiveTab('practice')}
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === 'practice'
+                    ? 'border-blue-600 text-blue-600 font-extrabold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
               >
-                Tổng quan đề thi
+                Luyện tập
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('curriculum')}
-                style={{
-                  padding: '12px 18px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === 'curriculum' ? '3px solid var(--primary)' : '3px solid transparent',
-                  color: activeTab === 'curriculum' ? 'var(--primary)' : 'var(--gray-600)',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  marginBottom: -2,
-                }}
+                onClick={() => setActiveTab('fulltest')}
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === 'fulltest'
+                    ? 'border-blue-600 text-blue-600 font-extrabold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
               >
-                Cấu trúc đề ({contextQuestions.length} cụm câu hỏi)
+                Làm full test
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('rules')}
-                style={{
-                  padding: '12px 18px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === 'rules' ? '3px solid var(--primary)' : '3px solid transparent',
-                  color: activeTab === 'rules' ? 'var(--primary)' : 'var(--gray-600)',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  marginBottom: -2,
-                }}
+                onClick={() => setActiveTab('discussion')}
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                  activeTab === 'discussion'
+                    ? 'border-blue-600 text-blue-600 font-extrabold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
               >
-                Quy chế làm bài
+                Thảo luận ({comments.length})
               </button>
             </div>
 
-            {/* TAB 1: Overview */}
-            {activeTab === 'overview' && (
-              <div
-                style={{
-                  backgroundColor: 'var(--card-bg, #ffffff)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 32,
-                  border: '1px solid var(--border-light)',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 16 }}>
-                  Giới thiệu về bài thi TOEIC Quốc Tế
-                </h3>
-                <p style={{ color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 20 }}>
-                  Bài thi TOEIC (Test of English for International Communication) là chuẩn đánh giá năng lực tiếng Anh trong môi trường giao tiếp quốc tế được công nhận bởi hơn 14.000 tổ chức tại 160 quốc gia trên thế giới.
-                </p>
-
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 14 }}>
-                  Mục tiêu điểm số tương ứng:
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 28 }}>
-                  <div style={{ padding: 14, backgroundColor: 'var(--bg-page)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--primary)', display: 'block', marginBottom: 4 }}>
-                      450 - 550 Điểm
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>
-                      Chuẩn đầu ra tốt nghiệp của các trường Đại học, Cao đẳng.
-                    </span>
-                  </div>
-                  <div style={{ padding: 14, backgroundColor: 'var(--bg-page)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
-                    <span style={{ fontWeight: 800, color: '#0d6efd', display: 'block', marginBottom: 4 }}>
-                      650 - 750 Điểm
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>
-                      Giao tiếp tốt trong công việc và ứng tuyển doanh nghiệp đa quốc gia.
-                    </span>
-                  </div>
-                  <div style={{ padding: 14, backgroundColor: 'var(--bg-page)', borderRadius: 10, border: '1px solid var(--border-light)' }}>
-                    <span style={{ fontWeight: 800, color: '#eab308', display: 'block', marginBottom: 4 }}>
-                      850 - 990 Điểm
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)' }}>
-                      Trình độ cao cấp, thành thạo như người bản xứ.
-                    </span>
-                  </div>
+            {/* TAB CONTENT: LUYỆN TẬP (Ảnh 2, 3, 4) */}
+            {activeTab === 'practice' && (
+              <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
+                {/* Pro Tips Banner */}
+                <div className="rounded-xl bg-emerald-50/70 border border-emerald-200/80 p-4 flex items-start gap-3">
+                  <Lightbulb size={20} className="text-emerald-700 shrink-0 mt-0.5" />
+                  <p className="text-xs text-emerald-900 leading-relaxed font-medium">
+                    <strong>Pro tips:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực hoàn thành bài thi.
+                  </p>
                 </div>
 
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: 14 }}>
-                  Lợi ích khi làm đề thi này:
-                </h4>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[
-                    'Làm quen với áp lực thời gian thực 120 phút liên tục không gián đoạn.',
-                    'File nghe giọng đọc chuẩn bản xứ (Anh - Mỹ, Anh - Anh, Úc, Canada).',
-                    'Đoạn văn đọc hiểu cập nhật các chủ đề kinh tế, tài chính, công nghệ và thương mại.',
-                    'Hệ thống tự động chấm điểm và quy đổi sang bảng điểm chuẩn ETS (0 - 990 điểm).',
-                    'Xem lại chi tiết bài làm kèm bản dịch song ngữ và giải thích ngữ pháp.',
-                  ].map((benefit, bIdx) => (
-                    <li key={bIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                      <CheckCircle2 size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: 2 }} />
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* TAB 2: Curriculum / Structure */}
-            {activeTab === 'curriculum' && (
-              <div
-                style={{
-                  backgroundColor: 'var(--card-bg, #ffffff)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 32,
-                  border: '1px solid var(--border-light)',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 12 }}>
-                  Danh Sách Cụm Câu Hỏi Trong Đề Thi ({contextQuestions.length})
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 24 }}>
-                  Dữ liệu được lấy trực tiếp từ hệ thống bài thi của bạn. Mỗi cụm câu hỏi tương ứng với file âm thanh hoặc đoạn văn đọc hiểu.
-                </p>
-
-                {contextQuestions.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--gray-500)' }}>
-                    Bộ đề này hiện chưa có cụm câu hỏi nào được thêm vào.
+                {/* Chọn phần thi */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
+                    <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                      Chọn phần thi bạn muốn làm
+                    </h3>
+                    <div className="flex items-center gap-3 text-xs">
+                      <button
+                        type="button"
+                        onClick={handleSelectAllParts}
+                        className="text-blue-600 hover:text-blue-800 font-bold hover:underline"
+                      >
+                        Chọn tất cả
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={handleDeselectAllParts}
+                        className="text-slate-500 hover:text-slate-700 font-medium hover:underline"
+                      >
+                        Bỏ chọn
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {contextQuestions.map((cq, idx) => {
-                      const partName = cq.part?.namePart || `Cụm #${idx + 1}`;
+
+                  {/* 7 Parts List with Checkboxes and Tag Chips */}
+                  <div className="space-y-3.5">
+                    {PART_METADATA.map((pm) => {
+                      const isChecked = selectedParts.includes(pm.partNumber);
                       return (
                         <div
-                          key={cq.id || idx}
-                          style={{
-                            padding: '16px 20px',
-                            borderRadius: 'var(--radius-md)',
-                            backgroundColor: 'var(--bg-page)',
-                            border: '1px solid var(--border-light)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            flexWrap: 'wrap',
-                            gap: 12,
-                          }}
+                          key={pm.partNumber}
+                          onClick={() => handleTogglePart(pm.partNumber)}
+                          className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none card-interactive ${
+                            isChecked
+                              ? 'bg-blue-50/50 border-blue-300 shadow-xs'
+                              : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60'
+                          }`}
                         >
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <span className="badge badge-primary" style={{ fontSize: '0.75rem' }}>
-                                {partName}
-                              </span>
-                              <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)' }}>
-                                Cụm câu hỏi {idx + 1}
-                              </span>
-                            </div>
+                          <div className="flex items-start gap-3.5">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}} // Handled by parent div
+                              className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                            />
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-bold text-slate-900 tracking-tight">
+                                  {pm.title}
+                                </span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100/80 border border-slate-200/60">
+                                  {pm.skill}
+                                </span>
+                              </div>
 
-                            <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: 6, display: 'flex', gap: 14 }}>
-                              {cq.audioUrl && (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--primary)' }}>
-                                  <Headphones size={13} /> Có file Audio
-                                </span>
-                              )}
-                              {cq.imageUrl && (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#0d6efd' }}>
-                                  <BookOpen size={13} /> Có hình ảnh
-                                </span>
-                              )}
-                              {cq.paragraph && (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#eab308' }}>
-                                  <FileText size={13} /> Có bài đọc
-                                </span>
-                              )}
-                              {cq.transcript && (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#6b7280' }}>
-                                  Transcript: {cq.transcript.substring(0, 45)}...
-                                </span>
-                              )}
+                              {/* Tags List */}
+                              <div className="flex flex-wrap gap-1.5">
+                                {pm.tags.map((tag, tIdx) => (
+                                  <span
+                                    key={tIdx}
+                                    className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/70 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
-
-                          <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)', fontFamily: 'monospace' }}>
-                            #{cq.id?.substring(0, 8)}
-                          </span>
                         </div>
                       );
                     })}
                   </div>
-                )}
+                </div>
+
+                {/* Giới hạn thời gian (Dropdown) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Giới hạn thời gian (Để trống để làm bài không giới hạn)
+                  </label>
+                  <select
+                    value={timeLimit}
+                    onChange={(e) => setTimeLimit(e.target.value)}
+                    className="w-full max-w-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
+                  >
+                    <option value="">-- Chọn thời gian (Không giới hạn) --</option>
+                    <option value="5">5 phút</option>
+                    <option value="10">10 phút</option>
+                    <option value="15">15 phút</option>
+                    <option value="20">20 phút</option>
+                    <option value="30">30 phút</option>
+                    <option value="45">45 phút</option>
+                    <option value="60">60 phút (1 tiếng)</option>
+                    <option value="75">75 phút</option>
+                    <option value="90">90 phút</option>
+                    <option value="120">120 phút (Chuẩn 2 tiếng)</option>
+                  </select>
+                </div>
+
+                {/* Giao diện */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">Giao diện</label>
+                  <select
+                    value={interfaceType}
+                    onChange={(e) => setInterfaceType(e.target.value)}
+                    className="w-full max-w-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
+                  >
+                    <option value="default">Mặc định</option>
+                  </select>
+                </div>
+
+                {/* Action Button: LUYỆN TẬP */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={handleStartPractice}
+                    className="px-8 py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-[0.98] text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer btn-press"
+                  >
+                    <PlayCircle size={18} /> LUYỆN TẬP ({selectedParts.length} phần đã chọn)
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* TAB 3: Examination Rules */}
-            {activeTab === 'rules' && (
-              <div
-                style={{
-                  backgroundColor: 'var(--card-bg, #ffffff)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 32,
-                  border: '1px solid var(--border-light)',
-                  boxShadow: 'var(--shadow-sm)',
-                }}
-              >
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: 16 }}>
-                  Quy Chế & Hướng Dẫn Phòng Thi Trực Tuyến
+            {/* TAB CONTENT: LÀM FULL TEST (Ảnh 5) */}
+            {activeTab === 'fulltest' && (
+              <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
+                {/* Yellow Warning Notice Box */}
+                <div className="rounded-xl bg-amber-50 border border-amber-200/90 p-4.5 flex items-start gap-3">
+                  <Info size={20} className="text-amber-700 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                    Sẵn sàng để bắt đầu làm full test? Để đạt được kết quả tốt nhất, bạn cần dành ra <strong className="tabular-nums">120 phút</strong> cho bài test này.
+                  </p>
+                </div>
+
+                {/* Giao diện */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">Giao diện</label>
+                  <select
+                    value={interfaceType}
+                    onChange={(e) => setInterfaceType(e.target.value)}
+                    className="w-full max-w-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
+                  >
+                    <option value="default">Mặc định</option>
+                  </select>
+                </div>
+
+                {/* Action Button: BẮT ĐẦU THI */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleStartFullTest}
+                    className="px-8 py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-[0.98] text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer btn-press"
+                  >
+                    <PlayCircle size={18} /> BẮT ĐẦU THI FULL TEST (120 PHÚT)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: THẢO LUẬN */}
+            {activeTab === 'discussion' && (
+              <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
+                <div className="space-y-4">
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                    Thảo luận về đề thi này ({comments.length})
+                  </h3>
+                  <form onSubmit={handleAddComment} className="space-y-3">
+                    <textarea
+                      rows={3}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Chia sẻ cảm nghĩ hoặc câu hỏi của bạn về đề thi..."
+                      className="w-full p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim()}
+                        className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 transition-all"
+                      >
+                        <Send size={13} /> Gửi bình luận
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* List of comments */}
+                  <div className="divide-y divide-slate-100 pt-2">
+                    {comments.map((c) => (
+                      <div key={c.id} className="py-4 space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">
+                            {c.author.substring(0, 2).toUpperCase()}
+                          </div>
+                          <span className="font-bold text-slate-800">{c.author}</span>
+                          {c.isOfficial && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
+                              Admin
+                            </span>
+                          )}
+                          <span className="text-slate-400">•</span>
+                          <span className="text-slate-400">{c.date}</span>
+                        </div>
+                        <p className="text-xs text-slate-700 pl-8 leading-relaxed">{c.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN (Ảnh 1) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                Kết quả làm bài của bạn:
+              </h3>
+
+              {testHistory.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-xs">
+                  Bạn chưa làm đề thi này lần nào. Hãy chọn "Luyện tập" hoặc "Làm full test" ở trên để bắt đầu!
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-50/90 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200 tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Ngày làm</th>
+                        <th className="py-3 px-4">Kết quả</th>
+                        <th className="py-3 px-4">Thời gian làm bài</th>
+                        <th className="py-3 px-4 text-right">Chi tiết</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 tabular-nums">
+                      {testHistory.map((h, idx) => (
+                        <tr key={h.id || idx} className="hover:bg-blue-50/30 transition-colors">
+                          <td className="py-3 px-4 font-medium text-slate-700">
+                            <div className="font-semibold tabular-nums text-slate-900">{h.date}</div>
+                            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
+                                {h.modeLabel || 'Luyện tập'}
+                              </span>
+                              {h.partLabel && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/80">
+                                  {h.partLabel}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-extrabold text-slate-900 text-sm tabular-nums">
+                            {h.score}
+                            {h.scaledScore && (
+                              <span className="ml-2 text-xs font-semibold text-emerald-600">
+                                ({h.scaledScore})
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-600 tabular-nums">{h.timeSpent}</td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigate(`/courses/${testId}/take?mode=practice&parts=1,2,3,4,5,6,7&review=true`);
+                              }}
+                              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all cursor-pointer group"
+                            >
+                              <span>Xem chi tiết</span>
+                              <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* BÌNH LUẬN SECTION (Khi ở tab khác vẫn có thể thấy bình luận) */}
+            {activeTab !== 'discussion' && (
+              <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                  Bình luận
                 </h3>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14, fontSize: '0.9rem', color: 'var(--text-main)', lineHeight: 1.6 }}>
-                  <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <Shield size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: 3 }} />
-                    <span><strong>1. Thời gian làm bài:</strong> Bài thi kéo dài đúng <strong>120 phút</strong>. Đồng hồ đếm ngược sẽ tự động thu bài khi hết giờ.</span>
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <Shield size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: 3 }} />
-                    <span><strong>2. Âm thanh phần Nghe:</strong> Hãy kiểm tra tai nghe và âm lượng máy tính trước khi bấm bắt đầu làm bài.</span>
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <Shield size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: 3 }} />
-                    <span><strong>3. Điều hướng câu hỏi:</strong> Bạn có thể sử dụng Bảng câu hỏi bên phải để chuyển nhanh đến câu hỏi bất kỳ hoặc gắn cờ câu cần xem lại.</span>
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <Shield size={18} color="var(--primary)" style={{ flexShrink: 0, marginTop: 3 }} />
-                    <span><strong>4. Nộp bài:</strong> Khi hoàn thành bài thi, bấm nút <strong>"Nộp bài thi"</strong> để hệ thống chấm điểm và xuất bảng phân tích kết quả.</span>
-                  </li>
-                </ul>
+                <form onSubmit={handleAddComment} className="space-y-3">
+                  <textarea
+                    rows={2}
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Chia sẻ cảm nghĩ của bạn..."
+                    className="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim()}
+                      className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 transition-all"
+                    >
+                      <Send size={13} /> Gửi
+                    </button>
+                  </div>
+                </form>
+
+                <div className="divide-y divide-slate-100 pt-1">
+                  {comments.slice(0, 3).map((c) => (
+                    <div key={c.id} className="py-3 space-y-1">
+                      <div className="flex items-center gap-2 text-xs">
+                        <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[9px]">
+                          {c.author.substring(0, 2).toUpperCase()}
+                        </div>
+                        <span className="font-bold text-slate-800 text-xs">{c.author}</span>
+                        {c.isOfficial && (
+                          <span className="text-[9px] px-1 rounded bg-blue-600 text-white font-bold">Admin</span>
+                        )}
+                        <span className="text-slate-400 text-[10px]">• {c.date}</span>
+                      </div>
+                      <p className="text-xs text-slate-600 pl-7">{c.content}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
 
-          {/* Right Column: Sticky Pricing / Start Exam Card (Academica .pricing-card) */}
-          <div
-            style={{
-              position: 'sticky',
-              top: 100,
-              backgroundColor: 'var(--card-bg, #ffffff)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1.5px solid var(--primary)',
-              boxShadow: 'var(--shadow-lg)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Header / Thumbnail */}
-            <div style={{ height: 180, position: 'relative', overflow: 'hidden', backgroundColor: '#f1f5f9' }}>
-              <img
-                src="/images/courses-2.webp"
-                alt={test.titleTest}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 70%)',
-                }}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  bottom: 12,
-                  left: 16,
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  fontSize: '1.2rem',
-                }}
-              >
-                MIỄN PHÍ
-              </span>
-            </div>
-
-            {/* Pricing Features */}
-            <div style={{ padding: 24 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24, fontSize: '0.88rem', color: 'var(--gray-700)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Clock size={16} color="var(--primary)" />
-                  <span>Thời lượng thi: <strong>120 phút</strong></span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <BookOpen size={16} color="var(--primary)" />
-                  <span>2 kỹ năng: <strong>Listening & Reading</strong></span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Award size={16} color="var(--primary)" />
-                  <span>Chứng nhận điểm thi: <strong>Format ETS</strong></span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <CheckCircle2 size={16} color="var(--primary)" />
-                  <span>Có giải thích chi tiết đáp án</span>
-                </div>
+          {/* RIGHT SIDEBAR COLUMN: USER CARD & BANNERS (4 Cols) */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* User Profile Card (Ảnh 1) */}
+            <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mx-auto text-slate-400 overflow-hidden">
+                {user?.userAvatar ? (
+                  <img src={user.userAvatar} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={32} />
+                )}
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-slate-800 truncate">
+                  {user?.userName || user?.userEmail || 'trananhvu314159'}
+                </h4>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  ⓘ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
+                  <Link to="/profile" className="text-blue-600 hover:underline font-bold">
+                    Tạo ngay.
+                  </Link>
+                </p>
               </div>
 
-              {/* Big CTA Button */}
               <Link
-                to={`/courses/${test.id}/take`}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '14px 0',
-                  fontSize: '1rem',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  boxShadow: '0 6px 18px rgba(25, 135, 84, 0.35)',
-                }}
+                to="/profile"
+                className="w-full py-2.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs inline-flex items-center justify-center gap-2 transition-all"
               >
-                <PlayCircle size={20} /> BẮT ĐẦU LÀM BÀI THI
+                <BarChart3 size={15} className="text-blue-600" /> Thống kê kết quả
               </Link>
+            </div>
 
-              <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--gray-500)', margin: '12px 0 0 0' }}>
-                Hỗ trợ lưu bài và xem lại kết quả mọi lúc mọi nơi
+            {/* Banner IELTS / TOEIC Combo */}
+            <div className="rounded-xl overflow-hidden border border-slate-200 shadow-xs group cursor-pointer hover:shadow-md transition-all">
+              <div className="bg-gradient-to-r from-red-600 to-rose-700 p-4 text-white">
+                <div className="text-[10px] font-black uppercase tracking-wider text-red-200">Study4 Intensive</div>
+                <h4 className="text-lg font-black mt-1">IELTS & TOEIC MASTER</h4>
+                <p className="text-xs text-red-100 mt-1">Combo Intensive: Listening - Reading - Writing - Speaking</p>
+              </div>
+              <div className="bg-white p-3 text-xs font-bold text-red-600 flex items-center justify-between">
+                <span>Khám phá lộ trình</span>
+                <ChevronRight size={14} />
+              </div>
+            </div>
+
+            {/* Banner Score Calculator */}
+            <div className="rounded-xl p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 space-y-2">
+              <div className="flex items-center gap-2 text-amber-800 font-extrabold text-xs">
+                <Award size={16} className="text-amber-600" /> SCORE CALCULATOR
+              </div>
+              <h5 className="text-xs font-bold text-slate-900">
+                TÍNH ĐIỂM THI TOEIC CHÍNH XÁC 100%
+              </h5>
+              <p className="text-[11px] text-slate-600">
+                Bảng quy đổi điểm ETS mới nhất giúp bạn ước tính band điểm thực tế.
               </p>
+            </div>
 
-              {/* Admin Quick Action Box (Only for Admin) */}
-              {isAdmin && (
-                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Shield size={14} color="#16a34a" /> Quản lý đề thi (Admin)
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <Link
-                      to={`/admin/tests?editId=${test.id}`}
-                      className="btn btn-outline btn-sm inline-flex items-center justify-center gap-1.5 font-bold"
-                      title="Mở trình soạn thảo và chỉnh sửa toàn bộ đề thi"
-                    >
-                      <Edit2 size={15} /> Sửa đề
-                    </Link>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm inline-flex items-center justify-center gap-1.5 font-bold text-red-600 border-red-300 hover:bg-red-50"
-                      onClick={() => setDeleteModalOpen(true)}
-                    >
-                      <Trash2 size={15} /> Xóa đề
-                    </button>
-                  </div>
-                  <Link
-                    to="/admin/tests"
-                    style={{ display: 'block', textAlign: 'center', fontSize: '0.82rem', color: '#16a34a', marginTop: 10, fontWeight: 600, textDecoration: 'underline' }}
-                  >
-                    Đến trang Quản trị tất cả đề thi &rarr;
-                  </Link>
-                </div>
-              )}
+            {/* Banner Study4 Extension */}
+            <div className="rounded-xl p-4 bg-white border border-slate-200/90 shadow-xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <Sparkles size={20} />
+              </div>
+              <div className="text-xs space-y-0.5">
+                <div className="font-bold text-slate-800">Tra từ điển, tạo flashcards</div>
+                <div className="text-[11px] text-slate-500">Mọi lúc mọi nơi với Study4 Extension</div>
+              </div>
+            </div>
+
+            {/* Banner Facebook Group (Ảnh 2, 5) */}
+            <div className="rounded-xl p-4 bg-blue-600 text-white shadow-sm space-y-2.5 text-center">
+              <div className="text-xs font-bold uppercase tracking-wider text-blue-100">Tham gia nhóm facebook</div>
+              <h5 className="font-extrabold text-sm">Cộng đồng tự học TOEIC trên STUDY4</h5>
+              <a
+                href="https://www.facebook.com/groups/517057750992723"
+                target="_blank"
+                rel="noreferrer"
+                className="block w-full py-2 bg-white text-blue-700 hover:bg-blue-50 font-bold text-xs rounded-lg shadow-xs transition-all"
+              >
+                Join group
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ADMIN ACTION MODALS */}
-      {isAdmin && (
-        <>
-          {/* DELETE TEST MODAL */}
+      {/* TRANSCRIPT & ANSWER KEY PREVIEW MODAL */}
+      <Modal
+        isOpen={transcriptModalOpen}
+        onClose={() => setTranscriptModalOpen(false)}
+        title={`Đáp án & Transcript - ${test.titleTest}`}
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+          <p className="text-xs text-slate-500">
+            Dưới đây là đáp án và transcript của toàn bộ các phần thi trong đề. Bạn có thể tra cứu nhanh sau khi luyện tập.
+          </p>
+
+          <div className="space-y-4">
+            {contextQuestions.slice(0, 15).map((cq, idx) => (
+              <div key={cq.id || idx} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div className="flex items-center justify-between font-bold text-slate-800">
+                  <span>Cụm câu hỏi #{idx + 1} (order_index: {cq.orderIndex})</span>
+                  <span className="text-blue-600">{cq.part?.namePart || `Part`}</span>
+                </div>
+
+                {cq.transcript && (
+                  <div className="p-2.5 rounded bg-white border border-slate-200 font-mono text-[11px] text-slate-700 whitespace-pre-line">
+                    <strong className="text-slate-900 block mb-1">Transcript:</strong>
+                    {cq.transcript}
+                  </div>
+                )}
+
+                {cq.questions && cq.questions.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    {cq.questions.map((q) => (
+                      <div key={q.id} className="p-2 rounded bg-white border border-slate-200 font-medium">
+                        Câu {q.questionNumber}: <strong className="text-emerald-600">{q.correctAnswer}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => setTranscriptModalOpen(false)}
+              className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ADMIN DELETE MODAL */}
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         title="Xác nhận xóa đề thi"
+        maxWidth="max-w-md"
       >
-        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-          <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 12px' }} />
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#0f172a' }}>
-            Bạn có chắc chắn muốn xóa bài thi này?
-          </h4>
-          <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#64748b' }}>
-            Đề thi <strong>"{test?.titleTest}"</strong> cùng toàn bộ dữ liệu liên quan sẽ bị xóa vĩnh viễn khỏi hệ thống.
+        <div className="space-y-4 text-xs">
+          <p className="text-slate-600 leading-relaxed">
+            Bạn có chắc chắn muốn xóa vĩnh viễn đề thi <strong className="text-slate-900">"{test?.titleTest}"</strong> không? Toàn bộ câu hỏi và dữ liệu liên quan sẽ bị xóa khỏi cơ sở dữ liệu.
           </p>
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+          <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              className="btn btn-outline"
-              disabled={actionLoading}
+              className="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold"
               onClick={() => setDeleteModalOpen(false)}
             >
-              Hủy bỏ
+              Hủy
             </button>
             <button
               type="button"
-              className="btn btn-danger"
-              disabled={actionLoading}
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold"
               onClick={handleDeleteTest}
-              style={{ gap: 6 }}
+              disabled={actionLoading}
             >
-              <Trash2 size={16} /> {actionLoading ? 'Đang xóa...' : 'Xác nhận xóa'}
+              {actionLoading ? 'Đang xóa...' : 'Xác nhận xóa'}
             </button>
-            </div>
           </div>
-        </Modal>
-      </>
-    )}
-
-      {/* Toast Notification */}
-      {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000 }}>
-          <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

@@ -23,6 +23,12 @@ export const examService = {
     return response.data; // ApiResponse<Test>
   },
 
+  // GET /api/exam/{testID}/parts/{partID}
+  getTestPart: async (testId, partId) => {
+    const response = await apiClient.get(`/exam/${testId}/parts/${partId}`);
+    return response.data; // ApiResponse<PartForUserResponseDTO>
+  },
+
   // POST /api/exam/create
   createTest: async (requestData) => {
     const response = await apiClient.post('/exam/create', requestData);

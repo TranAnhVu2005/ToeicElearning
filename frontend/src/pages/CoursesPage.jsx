@@ -388,7 +388,7 @@ const CoursesPage = () => {
               return (
                 <div
                   key={test.id}
-                  className="program-card"
+                  className="program-card card-interactive"
                   style={{
                     backgroundColor: 'var(--card-bg, #ffffff)',
                     borderRadius: 'var(--radius-lg)',
@@ -397,7 +397,7 @@ const CoursesPage = () => {
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'all var(--transition-smooth)',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 >
                   {/* Card Thumbnail Image & Ribbon */}
@@ -511,14 +511,14 @@ const CoursesPage = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       <Link
                         to={`/courses/${test.id}`}
-                        className="btn btn-outline btn-sm"
+                        className="btn btn-outline btn-sm btn-press"
                         style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center' }}
                       >
                         Chi tiết đề
                       </Link>
                       <Link
-                        to={`/courses/${test.id}/take`}
-                        className="btn btn-primary btn-sm"
+                        to={`/courses/${test.id}/take?mode=fulltest&time=120`}
+                        className="btn btn-primary btn-sm btn-press"
                         style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center', gap: 6 }}
                       >
                         <PlayCircle size={15} /> Làm bài ngay
