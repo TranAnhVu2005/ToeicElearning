@@ -21,14 +21,18 @@ public class User extends BaseCreatedUpdatedEntity {
     @Column(name = "user_email", nullable = false, unique = true)
     private String userEmail;
 
-    @Column(name = "user_numberphone", nullable = false, unique = true)
+    @Column(name = "user_numberphone", unique = true)
     private String userNumberphone;
 
-    @Column(name = "user_password", nullable = false)
+    @Column(name = "user_password")
     private String userPassword;
 
     @Column(name = "user_avatar")
     private String userAvatar;
+
+    @Builder.Default
+    @Column(name = "auth_provider")
+    private String authProvider = "LOCAL";
 
     @Builder.Default
     @Column(name = "is_locked")

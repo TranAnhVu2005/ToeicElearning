@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, LogIn, BookOpen, CheckCircle, AlertTriangle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import Toast from '../components/common/Toast';
 
 const LoginPage = () => {
@@ -12,7 +13,7 @@ const LoginPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +35,17 @@ const LoginPage = () => {
     if (errorMsg) setErrorMsg('');
   };
 
+  const handleRoleRedirect = (loggedUser) => {
+    const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
+    if (roleStr === 'ROLE_ADMIN') {
+      navigate('/admin/users');
+    } else if (roleStr === 'ROLE_TEACHER') {
+      navigate('/admin/tests');
+    } else {
+      navigate(redirectPath);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.emailOrPhone.trim() || !formData.userPassword) {
@@ -45,22 +57,34 @@ const LoginPage = () => {
       setIsLoading(true);
       setErrorMsg('');
       const loggedUser = await login(formData);
-      // Navigate to appropriate panel based on role
-      const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
-      if (roleStr === 'ROLE_ADMIN') {
-        navigate('/admin/users');
-      } else if (roleStr === 'ROLE_TEACHER') {
-        navigate('/admin/tests');
-      } else {
-        navigate(redirectPath);
-      }
-
+      handleRoleRedirect(loggedUser);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại!';
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      setErrorMsg('');
+      if (!credentialResponse?.credential) {
+        throw new Error('Không nhận được thông tin xác thực từ Google');
+      }
+      const loggedUser = await loginWithGoogle(credentialResponse.credential);
+      handleRoleRedirect(loggedUser);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!';
+      setErrorMsg(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrorMsg('Đăng nhập Google thất bại hoặc bạn đã hủy liên kết.');
   };
 
   return (
@@ -174,6 +198,36 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: '22px 0 18px',
+                color: 'var(--text-muted, #718096)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+              <span style={{ padding: '0 12px' }}>Hoặc tiếp tục với</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                theme="outline"
+                size="large"
+                shape="rectangular"
+                text="continue_with"
+                locale="vi"
+              />
+            </div>
 
             <div className="auth-footer">
               Chưa có tài khoản?{' '}

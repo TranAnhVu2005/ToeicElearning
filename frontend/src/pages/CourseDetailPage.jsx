@@ -491,12 +491,12 @@ const CourseDetailPage = () => {
 
           {/* Tag, Title, Verified Check */}
           <div className="flex items-center gap-2 mb-2.5">
-            <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 shadow-2xs">
-              #TOEIC
+            <span className="eyebrow-tag bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs">
+              #TOEIC ETS 2026
             </span>
             {test.status === 'DRAFT' && (
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1 shadow-2xs">
-                <Clock size={12} /> Bản nháp (DRAFT)
+              <span className="eyebrow-tag bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1 shadow-2xs">
+                <Clock size={11} strokeWidth={1.5} /> DRAFT
               </span>
             )}
           </div>
@@ -526,18 +526,18 @@ const CourseDetailPage = () => {
               {canManageTests && (
                 <Link
                   to={`/admin/tests?editId=${test.id}`}
-                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-bold text-xs inline-flex items-center gap-1.5 transition-all btn-press"
                 >
-                  <Edit2 size={13} /> Chỉnh sửa đề thi
+                  <Edit2 size={13} strokeWidth={1.5} /> Chỉnh sửa đề thi
                 </Link>
               )}
               {isAdmin && (
                 <button
                   type="button"
                   onClick={() => setDeleteModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 active:scale-[0.98] text-red-600 font-bold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 active:scale-[0.98] text-red-600 font-bold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer btn-press"
                 >
-                  <Trash2 size={13} /> Xóa đề
+                  <Trash2 size={13} strokeWidth={1.5} /> Xóa đề
                 </button>
               )}
             </div>
@@ -561,14 +561,14 @@ const CourseDetailPage = () => {
               onClick={() => setTranscriptModalOpen(true)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all active:scale-[0.98] cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200 border border-transparent hover:text-blue-700 inline-flex items-center gap-1.5 shadow-2xs`}
             >
-              <FileText size={13} /> Đáp án/transcript
+              <FileText size={13} strokeWidth={1.5} /> Đáp án/transcript
             </button>
           </div>
 
           {/* Meta text line */}
           <div className="text-xs text-slate-600 flex items-center gap-4 flex-wrap mb-1.5 tabular-nums">
             <span className="inline-flex items-center gap-1.5 font-medium">
-              <Clock size={14} className="text-slate-400" /> Thời gian làm bài: <strong className="tabular-nums">120 phút</strong>
+              <Clock size={14} strokeWidth={1.5} className="text-slate-400" /> Thời gian làm bài: <strong className="tabular-nums">120 phút</strong>
             </span>
             <span className="text-slate-300">|</span>
             <span className="tabular-nums">7 phần thi</span>
@@ -594,12 +594,12 @@ const CourseDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT MAIN COLUMN: TABS & CONTENT (8 Cols) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* TABS NAVIGATION: Luyện tập | Làm full test | Thảo luận */}
-            <div className="flex border-b border-slate-200 bg-white px-4 rounded-t-xl">
+            {/* TABS NAVIGATION: Luyện tập | Làm full test | Chép chính tả | Thảo luận */}
+            <div className="flex border-b border-slate-200 bg-white px-4 rounded-t-xl overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('practice')}
-                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'practice'
                     ? 'border-blue-600 text-blue-600 font-extrabold'
                     : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -610,7 +610,7 @@ const CourseDetailPage = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('fulltest')}
-                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'fulltest'
                     ? 'border-blue-600 text-blue-600 font-extrabold'
                     : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -620,8 +620,23 @@ const CourseDetailPage = () => {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTab('dictation')}
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  activeTab === 'dictation'
+                    ? 'border-indigo-600 text-indigo-600 font-extrabold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Headphones size={15} strokeWidth={1.5} />
+                <span>Chép chính tả</span>
+                <span className="px-1.5 py-0.2 text-[10px] font-black uppercase rounded bg-indigo-100 text-indigo-700 tracking-wider">
+                  Mới
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('discussion')}
-                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                className={`py-3.5 px-5 text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                   activeTab === 'discussion'
                     ? 'border-blue-600 text-blue-600 font-extrabold'
                     : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -636,7 +651,7 @@ const CourseDetailPage = () => {
               <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
                 {/* Pro Tips Banner */}
                 <div className="rounded-xl bg-emerald-50/70 border border-emerald-200/80 p-4 flex items-start gap-3">
-                  <Lightbulb size={20} className="text-emerald-700 shrink-0 mt-0.5" />
+                  <Lightbulb size={20} strokeWidth={1.5} className="text-emerald-700 shrink-0 mt-0.5" />
                   <p className="text-xs text-emerald-900 leading-relaxed font-medium">
                     <strong>Pro tips:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực hoàn thành bài thi.
                   </p>
@@ -667,47 +682,65 @@ const CourseDetailPage = () => {
                     </div>
                   </div>
 
-                  {/* 7 Parts List with Checkboxes and Tag Chips */}
-                  <div className="space-y-3.5">
+                  {/* 7 Parts List with Checkboxes and Tag Chips (Double-Bezel Architecture) */}
+                  <div className="space-y-3">
                     {PART_METADATA.map((pm) => {
                       const isChecked = selectedParts.includes(pm.partNumber);
                       return (
                         <div
                           key={pm.partNumber}
                           onClick={() => handleTogglePart(pm.partNumber)}
-                          className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none card-interactive ${
+                          className={`p-1.5 rounded-2xl border transition-all duration-200 cursor-pointer select-none card-interactive ${
                             isChecked
-                              ? 'bg-blue-50/50 border-blue-300 shadow-xs'
-                              : 'bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/60'
+                              ? 'bg-blue-100/60 border-blue-300/90 shadow-xs'
+                              : 'bg-slate-100/60 border-slate-200/80 hover:border-slate-300 hover:bg-slate-100'
                           }`}
                         >
-                          <div className="flex items-start gap-3.5">
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => {}} // Handled by parent div
-                              className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-slate-900 tracking-tight">
-                                  {pm.title}
-                                </span>
-                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100/80 border border-slate-200/60">
-                                  {pm.skill}
-                                </span>
-                              </div>
-
-                              {/* Tags List */}
-                              <div className="flex flex-wrap gap-1.5">
-                                {pm.tags.map((tag, tIdx) => (
-                                  <span
-                                    key={tIdx}
-                                    className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/70 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
-                                  >
-                                    {tag}
+                          <div
+                            className={`p-4 rounded-[calc(1rem-0.125rem)] transition-colors ${
+                              isChecked ? 'bg-blue-50/70 border border-blue-200/60' : 'bg-white border border-slate-200/50'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3.5">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {}} // Handled by parent div
+                                className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                              />
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-bold text-slate-900 tracking-tight">
+                                    {pm.title}
                                   </span>
-                                ))}
+                                  <div className="flex items-center gap-2">
+                                    {pm.skill === 'Listening' && (
+                                      <Link
+                                        to={`/courses/${testId}/dictation?part=${pm.partNumber}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="px-2.5 py-0.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] inline-flex items-center gap-1 border border-indigo-200/80 transition-colors shadow-2xs"
+                                        title={`Luyện nghe chép chính tả ${pm.name}`}
+                                      >
+                                        <Headphones size={11} strokeWidth={1.5} /> Chép chính tả
+                                      </Link>
+                                    )}
+                                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/80">
+                                      {pm.skill}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Tags List */}
+                                <div className="flex flex-wrap gap-1.5">
+                                  {pm.tags.map((tag, tIdx) => (
+                                    <span
+                                      key={tIdx}
+                                      className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-600 border border-slate-200/70 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -725,7 +758,7 @@ const CourseDetailPage = () => {
                   <select
                     value={timeLimit}
                     onChange={(e) => setTimeLimit(e.target.value)}
-                    className="w-full max-w-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer"
+                    className="w-full max-w-sm px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer tabular-nums"
                   >
                     <option value="">-- Chọn thời gian (Không giới hạn) --</option>
                     <option value="5">5 phút</option>
@@ -753,14 +786,17 @@ const CourseDetailPage = () => {
                   </select>
                 </div>
 
-                {/* Action Button: LUYỆN TẬP */}
+                {/* Action Button: LUYỆN TẬP (Button-in-Button Island CTA) */}
                 <div className="pt-2">
                   <button
                     type="button"
                     onClick={handleStartPractice}
-                    className="px-8 py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-[0.98] text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer btn-press"
+                    className="btn-island group px-7 py-3.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-3 cursor-pointer btn-press"
                   >
-                    <PlayCircle size={18} /> LUYỆN TẬP ({selectedParts.length} phần đã chọn)
+                    <span>LUYỆN TẬP ({selectedParts.length} phần đã chọn)</span>
+                    <span className="btn-icon-bubble bg-white/20">
+                      <PlayCircle size={18} strokeWidth={1.5} />
+                    </span>
                   </button>
                 </div>
               </div>
@@ -771,7 +807,7 @@ const CourseDetailPage = () => {
               <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
                 {/* Yellow Warning Notice Box */}
                 <div className="rounded-xl bg-amber-50 border border-amber-200/90 p-4.5 flex items-start gap-3">
-                  <Info size={20} className="text-amber-700 shrink-0 mt-0.5" />
+                  <Info size={20} strokeWidth={1.5} className="text-amber-700 shrink-0 mt-0.5" />
                   <p className="text-xs text-amber-900 leading-relaxed font-medium">
                     Sẵn sàng để bắt đầu làm full test? Để đạt được kết quả tốt nhất, bạn cần dành ra <strong className="tabular-nums">120 phút</strong> cho bài test này.
                   </p>
@@ -789,15 +825,115 @@ const CourseDetailPage = () => {
                   </select>
                 </div>
 
-                {/* Action Button: BẮT ĐẦU THI */}
+                {/* Action Button: BẮT ĐẦU THI FULL TEST (Button-in-Button Island CTA) */}
                 <div>
                   <button
                     type="button"
                     onClick={handleStartFullTest}
-                    className="px-8 py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-[0.98] text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer btn-press"
+                    className="btn-island group px-8 py-3.5 rounded-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-3 cursor-pointer btn-press"
                   >
-                    <PlayCircle size={18} /> BẮT ĐẦU THI FULL TEST (120 PHÚT)
+                    <span>BẮT ĐẦU THI FULL TEST (120 PHÚT)</span>
+                    <span className="btn-icon-bubble bg-white/20">
+                      <PlayCircle size={18} strokeWidth={1.5} />
+                    </span>
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: CHÉP CHÍNH TẢ (DICTATION) */}
+            {activeTab === 'dictation' && (
+              <div className="bg-white rounded-b-xl border-x border-b border-slate-200/90 p-6 space-y-6 shadow-xs">
+                {/* Intro Banner */}
+                <div className="rounded-xl bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-200/80 p-4 flex items-start gap-3.5">
+                  <Headphones size={22} strokeWidth={1.5} className="text-indigo-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wide">
+                      Phương pháp nghe chép chính tả (TOEIC Dictation Method)
+                    </h4>
+                    <p className="text-xs text-indigo-900/90 leading-relaxed">
+                      Luyện tập nghe từng câu, gõ lại những gì bạn nghe được để rèn luyện khả năng bắt âm, nối âm, từ vựng và cấu trúc ngữ pháp. Hệ thống đối chiếu kết quả từng từ theo thời gian thực (Smart Diff Checker) giúp bạn phát hiện ngay các lỗi sai.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 4 Listening Parts Selection Grid */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-700 tracking-tight uppercase">
+                    Chọn phần nghe muốn chép chính tả:
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {[
+                      {
+                        part: 1,
+                        name: 'Part 1: Mô tả hình ảnh',
+                        desc: '6 câu mô tả tranh đơn lẻ • Luyện nghe chi tiết hành động và đồ vật',
+                        count: '6 câu',
+                        color: 'from-blue-500/10 to-indigo-500/10 border-blue-200 text-blue-800',
+                      },
+                      {
+                        part: 2,
+                        name: 'Part 2: Hỏi & Đáp',
+                        desc: '25 câu hỏi phản xạ nhanh • Rèn luyện nhận diện từ để hỏi và bẫy gián tiếp',
+                        count: '25 câu',
+                        color: 'from-indigo-500/10 to-purple-500/10 border-indigo-200 text-indigo-800',
+                      },
+                      {
+                        part: 3,
+                        name: 'Part 3: Hội thoại',
+                        desc: '39 câu / 13 đoạn hội thoại • Nâng cao khả năng nghe hiểu ngữ cảnh công sở',
+                        count: '39 câu',
+                        color: 'from-sky-500/10 to-blue-500/10 border-sky-200 text-sky-800',
+                      },
+                      {
+                        part: 4,
+                        name: 'Part 4: Bài nói ngắn',
+                        desc: '30 câu / 10 bài độc thoại • Làm quen với thông báo, quảng cáo, tin nhắn thoại',
+                        count: '30 câu',
+                        color: 'from-violet-500/10 to-indigo-500/10 border-violet-200 text-violet-800',
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.part}
+                        className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-xs transition-all flex flex-col justify-between gap-3 group"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-slate-900 tracking-tight">
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200/80">
+                              {item.count}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-slate-400">Audio Cloudinary</span>
+                          <Link
+                            to={`/courses/${testId}/dictation?part=${item.part}`}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-50 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-2xs"
+                          >
+                            Bắt đầu chép <ChevronRight size={13} />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Master Action CTA (Double-Bezel Button-in-Button) */}
+                <div className="pt-2">
+                  <Link
+                    to={`/courses/${testId}/dictation?part=all`}
+                    className="btn-island group px-8 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-extrabold text-sm tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-3 cursor-pointer btn-press"
+                  >
+                    <span>CHÉP CHÍNH TẢ TOÀN BỘ PHẦN NGHE (PART 1 - 4)</span>
+                    <span className="btn-icon-bubble bg-white/20">
+                      <Headphones size={18} strokeWidth={1.5} />
+                    </span>
+                  </Link>
                 </div>
               </div>
             )}
@@ -853,70 +989,72 @@ const CourseDetailPage = () => {
               </div>
             )}
 
-            {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN (Ảnh 1) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                Kết quả làm bài của bạn:
-              </h3>
+            {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN (Ảnh 1 - Double-Bezel Architecture) */}
+            <div className="p-1.5 rounded-2xl bg-slate-100/60 border border-slate-200/80 shadow-xs">
+              <div className="p-6 rounded-[calc(1rem-0.125rem)] bg-white border border-slate-200/50 space-y-4">
+                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                  Kết quả làm bài của bạn:
+                </h3>
 
-              {testHistory.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-xs">
-                  Bạn chưa làm đề thi này lần nào. Hãy chọn "Luyện tập" hoặc "Làm full test" ở trên để bắt đầu!
-                </div>
-              ) : (
-                <div className="overflow-x-auto rounded-lg border border-slate-200/80">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-slate-50/90 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200 tracking-wider">
-                      <tr>
-                        <th className="py-3 px-4">Ngày làm</th>
-                        <th className="py-3 px-4">Kết quả</th>
-                        <th className="py-3 px-4">Thời gian làm bài</th>
-                        <th className="py-3 px-4 text-right">Chi tiết</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 tabular-nums">
-                      {testHistory.map((h, idx) => (
-                        <tr key={h.id || idx} className="hover:bg-blue-50/30 transition-colors">
-                          <td className="py-3 px-4 font-medium text-slate-700">
-                            <div className="font-semibold tabular-nums text-slate-900">{h.date}</div>
-                            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
-                                {h.modeLabel || 'Luyện tập'}
-                              </span>
-                              {h.partLabel && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/80">
-                                  {h.partLabel}
+                {testHistory.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400 text-xs">
+                    Bạn chưa làm đề thi này lần nào. Hãy chọn "Luyện tập" hoặc "Làm full test" ở trên để bắt đầu!
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-slate-200/80">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50/90 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200 tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4">Ngày làm</th>
+                          <th className="py-3 px-4">Kết quả</th>
+                          <th className="py-3 px-4">Thời gian làm bài</th>
+                          <th className="py-3 px-4 text-right">Chi tiết</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 tabular-nums">
+                        {testHistory.map((h, idx) => (
+                          <tr key={h.id || idx} className="hover:bg-blue-50/30 transition-colors">
+                            <td className="py-3 px-4 font-medium text-slate-700">
+                              <div className="font-semibold tabular-nums text-slate-900">{h.date}</div>
+                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
+                                  {h.modeLabel || 'Luyện tập'}
+                                </span>
+                                {h.partLabel && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/80">
+                                    {h.partLabel}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-extrabold text-slate-900 text-sm tabular-nums">
+                              {h.score}
+                              {h.scaledScore && (
+                                <span className="ml-2 text-xs font-semibold text-emerald-600">
+                                  ({h.scaledScore})
                                 </span>
                               )}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 font-extrabold text-slate-900 text-sm tabular-nums">
-                            {h.score}
-                            {h.scaledScore && (
-                              <span className="ml-2 text-xs font-semibold text-emerald-600">
-                                ({h.scaledScore})
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 font-mono text-slate-600 tabular-nums">{h.timeSpent}</td>
-                          <td className="py-3 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigate(`/courses/${testId}/take?mode=practice&parts=1,2,3,4,5,6,7&review=true`);
-                              }}
-                              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all cursor-pointer group"
-                            >
-                              <span>Xem chi tiết</span>
-                              <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-slate-600 tabular-nums">{h.timeSpent}</td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigate(`/courses/${testId}/take?mode=practice&parts=1,2,3,4,5,6,7&review=true`);
+                                }}
+                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold hover:underline transition-all cursor-pointer group"
+                              >
+                                <span>Xem chi tiết</span>
+                                <ChevronRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* BÌNH LUẬN SECTION (Khi ở tab khác vẫn có thể thấy bình luận) */}
@@ -930,32 +1068,33 @@ const CourseDetailPage = () => {
                     rows={2}
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Chia sẻ cảm nghĩ của bạn..."
-                    className="w-full p-3 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Chia sẻ cảm nghĩ hoặc thắc mắc của bạn..."
+                    className="w-full p-3 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                   <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={!newComment.trim()}
-                      className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 transition-all"
+                      className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 transition-all cursor-pointer"
                     >
-                      <Send size={13} /> Gửi
+                      <Send size={13} strokeWidth={1.5} /> Gửi bình luận
                     </button>
                   </div>
                 </form>
 
-                <div className="divide-y divide-slate-100 pt-1">
-                  {comments.slice(0, 3).map((c) => (
+                {/* List of comments */}
+                <div className="divide-y divide-slate-100 pt-2">
+                  {comments.slice(0, 5).map((c) => (
                     <div key={c.id} className="py-3 space-y-1">
                       <div className="flex items-center gap-2 text-xs">
-                        <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-[9px]">
-                          {c.author.substring(0, 2).toUpperCase()}
-                        </div>
-                        <span className="font-bold text-slate-800 text-xs">{c.author}</span>
+                        <span className="font-bold text-slate-800">{c.author}</span>
                         {c.isOfficial && (
-                          <span className="text-[9px] px-1 rounded bg-blue-600 text-white font-bold">Admin</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
+                            Admin
+                          </span>
                         )}
-                        <span className="text-slate-400 text-[10px]">• {c.date}</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-slate-400">{c.date}</span>
                       </div>
                       <p className="text-xs text-slate-600 pl-7">{c.content}</p>
                     </div>
@@ -967,33 +1106,35 @@ const CourseDetailPage = () => {
 
           {/* RIGHT SIDEBAR COLUMN: USER CARD & BANNERS (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
-            {/* User Profile Card (Ảnh 1) */}
-            <div className="bg-white rounded-xl border border-slate-200/90 p-5 shadow-xs text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mx-auto text-slate-400 overflow-hidden">
-                {user?.userAvatar ? (
-                  <img src={user.userAvatar} alt="avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <User size={32} />
-                )}
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-800 truncate">
-                  {user?.userName || user?.userEmail || 'trananhvu314159'}
-                </h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  ⓘ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
-                  <Link to="/profile" className="text-blue-600 hover:underline font-bold">
-                    Tạo ngay.
-                  </Link>
-                </p>
-              </div>
+            {/* User Profile Card (Ảnh 1 - Double-Bezel Architecture) */}
+            <div className="p-1.5 rounded-2xl bg-slate-100/60 border border-slate-200/80 shadow-xs">
+              <div className="p-5 rounded-[calc(1rem-0.125rem)] bg-white border border-slate-200/50 text-center space-y-3">
+                <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-slate-200 flex items-center justify-center mx-auto text-slate-400 overflow-hidden">
+                  {user?.userAvatar ? (
+                    <img src={user.userAvatar} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={32} strokeWidth={1.5} />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-slate-800 truncate">
+                    {user?.userName || user?.userEmail || 'trananhvu314159'}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    ⓘ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
+                    <Link to="/profile" className="text-blue-600 hover:underline font-bold">
+                      Tạo ngay.
+                    </Link>
+                  </p>
+                </div>
 
-              <Link
-                to="/profile"
-                className="w-full py-2.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs inline-flex items-center justify-center gap-2 transition-all"
-              >
-                <BarChart3 size={15} className="text-blue-600" /> Thống kê kết quả
-              </Link>
+                <Link
+                  to="/profile"
+                  className="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs inline-flex items-center justify-center gap-2 transition-all btn-press"
+                >
+                  <BarChart3 size={15} strokeWidth={1.5} className="text-blue-600" /> Thống kê kết quả
+                </Link>
+              </div>
             </div>
 
             {/* Banner IELTS / TOEIC Combo */}

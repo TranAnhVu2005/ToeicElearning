@@ -23,4 +23,11 @@ export const authService = {
     });
     return response.data; // ApiResponse<AuthResponseDTO>
   },
+
+  // POST /api/auth/google
+  loginWithGoogle: async (idToken) => {
+    const response = await apiClient.post('/auth/google', { idToken });
+    return response.data; // ApiResponse<AuthResponseDTO>
+  },
+
 };

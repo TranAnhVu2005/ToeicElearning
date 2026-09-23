@@ -566,7 +566,7 @@ const ExamTakePage = () => {
               }}
               className="hover:bg-slate-200 active:scale-[0.98]"
             >
-              <ArrowLeft size={15} /> Rời phòng thi
+              <ArrowLeft size={15} strokeWidth={1.5} /> Rời phòng thi
             </Link>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -631,7 +631,7 @@ const ExamTakePage = () => {
                 : '0 2px 10px rgba(25, 135, 84, 0.12)',
             }}
           >
-            <Clock size={20} className={!isStopwatch && timeRemaining < 300 ? 'pulse-fast' : ''} />
+            <Clock size={20} strokeWidth={1.5} className={!isStopwatch && timeRemaining < 300 ? 'pulse-fast' : ''} />
             <span style={{ fontVariantNumeric: 'tabular-nums' }}>
               {isSubmitted
                 ? 'ĐÃ NỘP BÀI'
@@ -660,25 +660,20 @@ const ExamTakePage = () => {
                 cursor: 'pointer',
               }}
             >
-              <Layers size={16} color="var(--primary)" />
+              <Layers size={16} strokeWidth={1.5} color="var(--primary)" />
               <span>Bảng câu hỏi ({answeredCount}/{totalQuestionsCount})</span>
             </button>
 
             {!isSubmitted ? (
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn-island group px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs tracking-wide shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer btn-press"
                 onClick={() => setSubmitModalOpen(true)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 18px',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 12px rgba(25, 135, 84, 0.25)',
-                }}
               >
-                <Send size={16} /> Nộp bài
+                <span>Nộp bài</span>
+                <span className="btn-icon-bubble w-6 h-6 bg-white/20">
+                  <Send size={13} strokeWidth={1.5} />
+                </span>
               </button>
             ) : (
               <button
@@ -693,7 +688,7 @@ const ExamTakePage = () => {
                   fontWeight: 600,
                 }}
               >
-                <Eye size={16} /> {showExplanation ? 'Ẩn lời giải' : 'Xem lời giải'}
+                <Eye size={16} strokeWidth={1.5} /> {showExplanation ? 'Ẩn lời giải' : 'Xem lời giải'}
               </button>
             )}
           </div>
@@ -1298,7 +1293,7 @@ const ExamTakePage = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      <Flag size={14} fill={isFlagged ? '#f59e0b' : 'none'} />
+                      <Flag size={14} strokeWidth={1.5} fill={isFlagged ? '#f59e0b' : 'none'} />
                       <span className="hidden-mobile">{isFlagged ? 'Đã ghim' : 'Ghim câu'}</span>
                     </button>
                   </div>
@@ -1375,8 +1370,8 @@ const ExamTakePage = () => {
                           <span style={{ fontSize: '0.93rem', color: optTextColor, fontWeight: isSelected ? 600 : 500, flex: 1 }}>
                             {currentContext.partNumber <= 2 ? `(${optKey})` : optText}
                           </span>
-                          {isSubmitted && isOptionCorrect && <Check size={18} color="#16a34a" />}
-                          {isSubmitted && isSelected && !isOptionCorrect && <X size={18} color="#dc2626" />}
+                          {isSubmitted && isOptionCorrect && <Check size={18} strokeWidth={1.5} color="#16a34a" />}
+                          {isSubmitted && isSelected && !isOptionCorrect && <X size={18} strokeWidth={1.5} color="#dc2626" />}
                         </div>
                       );
                     })}

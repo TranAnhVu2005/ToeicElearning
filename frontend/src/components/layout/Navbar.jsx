@@ -47,17 +47,17 @@ const Navbar = () => {
         <div className="container topbar-container">
           <div className="topbar-left">
             <span>
-              <Mail size={14} /> trananhvu314159@gmail.com
+              <Mail size={13} strokeWidth={1.5} /> trananhvu314159@gmail.com
             </span>
             <span>
-              <Phone size={14} /> 0359906510
+              <Phone size={13} strokeWidth={1.5} /> 0359906510
             </span>
             <span className="hidden-mobile">
-              <MapPin size={14} /> Trường Đại Học Cần Thơ (CTU)
+              <MapPin size={13} strokeWidth={1.5} /> Trường Đại Học Cần Thơ (CTU)
             </span>
           </div>
           <div className="topbar-right">
-            <span>Hệ thống học và luyện thi ToeicElearning chuẩn format mới</span>
+            <span>Hệ thống luyện thi ToeicElearning chuẩn ETS 2026</span>
           </div>
         </div>
       </div>
@@ -66,16 +66,15 @@ const Navbar = () => {
       <nav className="main-navbar">
         <div className="container navbar-container">
           {/* Brand Logo */}
-          <Link to="/" className="brand-logo">
-            <div className="logo-icon-wrapper">
-              <BookOpen size={24} color="#ffffff" />
+          <Link to="/" className="brand-logo group">
+            <div className="logo-icon-wrapper group-hover:scale-105 transition-transform duration-300">
+              <BookOpen size={22} color="#ffffff" strokeWidth={1.5} />
             </div>
             <div className="logo-text">
               <span className="logo-title">Toeic<span>Elearning</span></span>
               <span className="logo-subtitle">Trường Đại Học Cần Thơ</span>
             </div>
           </Link>
-
 
           {/* Desktop Nav Links */}
           <div className="nav-links">
@@ -120,7 +119,7 @@ const Navbar = () => {
                     }}
                   />
                   <span className="user-name-display">{user.userName || user.userEmail}</span>
-                  <ChevronDown size={14} style={{ transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'none' }} />
+                  <ChevronDown size={14} strokeWidth={1.5} style={{ transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'none' }} />
                 </button>
 
                 {dropdownOpen && (
@@ -140,7 +139,7 @@ const Navbar = () => {
                       className="dropdown-item"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      <User size={16} /> Hồ sơ cá nhân
+                      <User size={15} strokeWidth={1.5} /> Hồ sơ cá nhân
                     </Link>
 
                     {canManageTests && (
@@ -149,7 +148,7 @@ const Navbar = () => {
                         className="dropdown-item"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <BookOpen size={16} /> Quản lý đề thi
+                        <BookOpen size={15} strokeWidth={1.5} /> Quản lý đề thi
                       </Link>
                     )}
 
@@ -159,28 +158,27 @@ const Navbar = () => {
                         className="dropdown-item"
                         onClick={() => setDropdownOpen(false)}
                       >
-                        <ShieldCheck size={16} /> Quản lý người dùng
+                        <ShieldCheck size={15} strokeWidth={1.5} /> Quản lý người dùng
                       </Link>
                     )}
 
                     <hr style={{ border: 'none', borderTop: '1px solid var(--gray-100)', margin: '6px 0' }} />
 
-
                     <button
                       className="dropdown-item dropdown-logout-btn"
                       onClick={handleLogout}
                     >
-                      <LogOut size={16} /> Đăng xuất
+                      <LogOut size={15} strokeWidth={1.5} /> Đăng xuất
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <div className="auth-buttons-group">
-                <Link to="/login" className="btn btn-outline btn-sm">
+                <Link to="/login" className="btn btn-outline btn-sm btn-press">
                   Đăng nhập
                 </Link>
-                <Link to="/register" className="btn btn-primary btn-sm">
+                <Link to="/register" className="btn btn-primary btn-sm btn-press shadow-xs">
                   Đăng ký ngay
                 </Link>
               </div>
@@ -192,7 +190,7 @@ const Navbar = () => {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
             </button>
           </div>
         </div>

@@ -16,6 +16,7 @@ import PracticePage from './pages/PracticePage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import ExamTakePage from './pages/ExamTakePage';
+import DictationTakePage from './pages/DictationTakePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
@@ -42,6 +43,7 @@ function App() {
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:testId" element={<CourseDetailPage />} />
               <Route path="/courses/:testId/take" element={<ExamTakePage />} />
+              <Route path="/courses/:testId/dictation" element={<DictationTakePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 

@@ -22,8 +22,8 @@
   --color-surface: #ffffff;
   --color-border: #e2e8f0;
 
-  --font-heading: 'Outfit', 'Nunito', sans-serif;
-  --font-body: 'Nunito', 'Roboto', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', 'Nunito', system-ui, -apple-system, sans-serif;
 }
 
 :root {
@@ -43,7 +43,7 @@
   --info: #0ea5e9;
 
   /* Grays & Neutrals */
-  --bg-page: #f8faf9;
+  --bg-page: #f8fafc;
   --surface: #ffffff;
   --surface-hover: #f3f4f6;
   --border: #e2e8f0;
@@ -70,10 +70,10 @@
   --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
   --shadow-xl: 0 20px 35px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
 
-  /* Tinted Shadows (SKILL.md standard) */
-  --shadow-tinted-primary: 0 10px 25px -5px rgba(25, 135, 84, 0.16), 0 4px 6px -2px rgba(25, 135, 84, 0.06);
-  --shadow-tinted-blue: 0 10px 25px -5px rgba(13, 110, 253, 0.16), 0 4px 6px -2px rgba(13, 110, 253, 0.06);
-  --shadow-tinted-surface: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+  /* Tinted Shadows (SKILL.md & SOFT_SKILL.md) */
+  --shadow-tinted-primary: 0 12px 30px -5px rgba(25, 135, 84, 0.18), 0 4px 6px -2px rgba(25, 135, 84, 0.06);
+  --shadow-tinted-blue: 0 12px 30px -5px rgba(13, 110, 253, 0.18), 0 4px 6px -2px rgba(13, 110, 253, 0.06);
+  --shadow-tinted-surface: 0 12px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
   --glass-bg: rgba(255, 255, 255, 0.88);
   --glass-border: rgba(255, 255, 255, 0.7);
 
@@ -82,12 +82,15 @@
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-2xl: 32px;
   --radius-full: 9999px;
 
-  /* Transitions (SKILL.md standard) */
-  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-base: 250ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-smooth: 350ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Kinetic Motion & Physics (SOFT_SKILL.md Awwwards-Tier) */
+  --ease-kinetic: cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-fast: 180ms var(--ease-kinetic);
+  --transition-base: 300ms var(--ease-kinetic);
+  --transition-smooth: 450ms var(--ease-kinetic);
+  --transition-kinetic: 600ms var(--ease-kinetic);
 }
 
 /* Base Styles */
@@ -234,6 +237,106 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ==============================================================================
+   AWWWARDS-TIER HAPTIC ARCHITECTURE (SOFT_SKILL.MD)
+   ============================================================================== */
+
+/* 1. Double-Bezel (Doppelrand / Nested Enclosures) */
+.double-bezel {
+  padding: 6px;
+  border-radius: 1.5rem;
+  background: rgba(241, 245, 249, 0.7);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 8px 30px -4px rgba(15, 23, 42, 0.04);
+  transition: all var(--transition-base);
+}
+
+.double-bezel-inner {
+  border-radius: calc(1.5rem - 6px);
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.double-bezel:hover {
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: var(--shadow-tinted-surface);
+  transform: translateY(-1.5px);
+}
+
+/* 2. Nested CTA & Button-in-Button Island Architecture */
+.btn-island {
+  border-radius: 9999px;
+  padding: 10px 10px 10px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.925rem;
+  letter-spacing: -0.01em;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-island:active {
+  transform: scale(0.98);
+}
+
+.btn-icon-bubble {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.22);
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.btn-island:hover .btn-icon-bubble {
+  transform: translate(3px, -1.5px) scale(1.08);
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* 3. Eyebrow Tags (Microscopic Pill) */
+.eyebrow-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  line-height: 1;
+}
+
+/* 4. Fluid Island Floating Header */
+.fluid-island-header {
+  position: sticky;
+  top: 12px;
+  z-index: 100;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 16px;
+  transition: all var(--transition-base);
+}
+
+.fluid-island-inner {
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
 }
 
 /* Buttons */

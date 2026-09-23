@@ -66,6 +66,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (idToken) => {
+    const res = await authService.loginWithGoogle(idToken);
+    if (res.code === 1000 && res.data) {
+      const { accessToken, ...userData } = res.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      setToken(accessToken);
+      setUser(userData);
+      return userData;
+    } else {
+      throw new Error(res.message || 'Đăng nhập với Google thất bại');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('currentUser');
@@ -101,6 +115,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         register,
+        loginWithGoogle,
         logout,
         updateUser,
         isAdmin,

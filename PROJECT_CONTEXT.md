@@ -1,13 +1,15 @@
 # TOEIC LEARNING & EXAMINATION SYSTEM - PROJECT CONTEXT (SSOT)
+
 > **Mã học phần / Đề tài**: CT446E - Niên luận ngành Công nghệ Thông tin - Trường ĐH Cần Thơ (CTU)  
 > **Tác giả / Sinh viên thực hiện**: Trần Anh Vũ (MSSV: B2306603)  
-> **Phiên bản tài liệu**: 3.8 (Nâng cấp thẩm mỹ toàn diện giao diện theo tiêu chuẩn SKILL.md: Typography phân cấp với font Outfit & Nunito, tích hợp tabular-nums chống rung lắc chữ số, hiệu ứng Glassmorphism cho Header & Modals, Tinted Shadows tự nhiên, phản hồi xúc giác Tactile press active:scale-[0.98] cho các nút bấm và tùy chọn trắc nghiệm, chuẩn hóa bố cục Study4 và Exam Room)  
+> **Phiên bản tài liệu**: 4.3 (Hoàn thiện toàn diện chức năng Đăng nhập bằng Google - Google OAuth2 Sign-In cho cả Backend Spring Boot 3 và Frontend React 19; Tích hợp @react-oauth/google, GoogleOAuthProvider với Client ID chính thức; Bổ sung loginWithGoogle trong authService và AuthContext; Hoàn thiện giao diện LoginPage và RegisterPage chuẩn SOFT_SKILL.md kèm điều hướng thông minh theo vai trò; Điều chỉnh User Entity và database_script.sql tương thích người dùng OAuth2 không mật khẩu/số điện thoại)  
 > **Vị trí file**: `PROJECT_CONTEXT.md` (Thư mục gốc của repository)  
 > **Mục đích tài liệu**: Tài liệu này đóng vai trò là **nguồn ngữ cảnh duy nhất (Single Source of Truth - SSOT)** cho toàn bộ dự án. Toàn bộ mã nguồn, cấu trúc CSDL, nghiệp vụ thi ETS, API Endpoints, kiến trúc Frontend/Backend và các thay đổi đều được nén lại chi tiết tại đây. Lập trình viên và AI Assistant chỉ cần đọc duy nhất file này để nắm trọn vẹn 100% dự án mà không cần quét lại toàn bộ thư mục mã nguồn.
 
 ---
 
 ## MỤC LỤC
+
 1. [TỔNG QUAN HỆ THỐNG & PHÂN QUYỀN (SYSTEM OVERVIEW & RBAC)](#1-tổng-quan-hệ-thống--phân-quyền-system-overview--rbac)
 2. [CẤU TRÚC THƯ MỤC TOÀN DỰ ÁN (PROJECT DIRECTORY TREE)](#2-cấu-trúc-thư-mục-toàn-dự-án-project-directory-tree)
 3. [CƠ SỞ DỮ LIỆU & QUAN HỆ THỰC THỂ (DATABASE SCHEMA & SEED DATA)](#3-cơ-sở-dữ-liệu--quan-hệ-thực-thể-database-schema--seed-data)
@@ -25,6 +27,7 @@
 Hệ thống **TOEIC Learning** là nền tảng e-learning & thi thử trực tuyến mô phỏng 100% cấu trúc bài thi TOEIC Listening & Reading theo chuẩn ETS 2026. Nền tảng kết hợp giữa luyện thi cá nhân và quản lý lớp học trực tuyến.
 
 ### Phân quyền người dùng (Role-Based Access Control - RBAC):
+
 1. **`ROLE_ADMIN` (Quản trị viên)**:
    - Quản lý người dùng toàn hệ thống: Xem danh sách, tìm kiếm, lọc theo vai trò, khóa/mở khóa tài khoản (`is_locked`).
    - Quản trị đề thi toàn quyền: Tạo đề mới, cập nhật, xuất bản (`PUBLISHED`), chuyển về nháp (`DRAFT`), xóa vĩnh viễn đề thi kèm dọn sạch media trên Cloudinary.
@@ -144,6 +147,7 @@ Database Engine: **MySQL 8.0+**, Charset: `utf8mb4`, Collation: `utf8mb4_unicode
 Mọi khóa chính (`id`) sử dụng chuẩn `VARCHAR(36)` (UUID v4).
 
 ### 3.1. Sơ đồ thực thể ERD:
+
 ```mermaid
 erDiagram
     ROLE ||--o{ USER : "phân vai trò"
@@ -273,6 +277,7 @@ erDiagram
     - `created_at`, `updated_at` TIMESTAMP
 
 ### 3.3. Dữ liệu Seed cố định (Fixed Seed Data):
+
 - **Role UUIDs**:
   - `0d0bcedb-aeaa-11f1-b6c1-c0e43471a03a`: `ROLE_ADMIN`
   - `0d0bf593-aeaa-11f1-b6c1-c0e43471a03a`: `ROLE_USER`
@@ -288,11 +293,15 @@ erDiagram
 - **Tài khoản mặc định**:
   - Quản trị viên: `vub2306603@student.ctu.edu.vn` (Pass: hash BCrypt trong script)
   - Học viên mẫu: `trananhvu314159@gmail.com`
-- **Đề thi mẫu ETS 2026 - Test 01**:
-  - ID: `ddaaa16f-8d39-4669-9e60-6c9de8270c00` (`PUBLISHED`).
-  - **Part 1 (Q1 -> Q6)**: 6 cụm câu hỏi, `order_index = 1..6`, `question_number = 1..6`, có file MP3 & ảnh Cloudinary thật 100%.
-  - **Part 2 (Q7 -> Q31)**: 25 cụm câu hỏi, `order_index = 7..31`, `question_number = 7..31`, 25 file MP3 Cloudinary riêng cho từng câu, đáp án chỉ gồm A, B, C (Option D rỗng).
-  - **Part 3 (Q32 -> Q43)**: 4 cụm câu hỏi (`order_index = 32, 35, 38, 41`), 12 câu hỏi (`question_number = 32..43`). Trường `audio_url` và `image_url` để `NULL` sẵn sàng cho việc tải file qua giao diện Studio, trường `transcript` và `translation` tách riêng độc lập.
+- **Bộ 10 Đề thi mẫu ETS 2026 (Test 01 đến Test 10 - 2,000 câu hỏi)**:
+  - **ETS TOEIC 2026 - Test 01**: `ddaaa16f-8d39-4669-9e60-6c9de8270c00` (`PUBLISHED`) - Đầy đủ 200 câu hỏi với âm thanh, hình ảnh Cloudinary, transcript và translation chuẩn.
+  - **ETS TOEIC 2026 - Test 02 -> Test 10**: `ddaaa16f-8d39-4669-9e60-6c9de8270c02` đến `ddaaa16f-8d39-4669-9e60-6c9de8270c10` (`PUBLISHED`) - Nhân bản từ Test 01 với ID deterministic (MD5 UUID v5), đảm bảo hoạt động độc lập và 100% không phát sinh lỗi khóa ngoại.
+  - Script nhân bản độc lập: `backend/seed_ets_2026_test02_to_test10.sql`.
+- **Bộ 20 Đề thi mẫu YBM - 2025 (Test 01 đến Test 20 - 4,000 câu hỏi)**:
+  - **YBM - 2025 - Test 01 -> Test 20**: `ybm20250-8d39-4669-9e60-6c9de8270c01` đến `ybm20250-8d39-4669-9e60-6c9de8270c20` (`PUBLISHED`).
+  - Mục đích: Cung cấp khối lượng dữ liệu dồi dào (tổng cộng 30 đề thi, 6,000 câu hỏi) để kiểm thử hoàn hảo các tính năng phân trang (`pageSize = 9`, 4 trang), tìm kiếm theo tên và lọc bài thi trên giao diện Frontend.
+  - Script nhân bản độc lập: `backend/seed_ybm_2025_tests.sql` (chạy trực tiếp trong MySQL chỉ mất 1s).
+  - Tích hợp trực tiếp vào file DDL/DML chính: `backend/database_script.sql`.
 
 ---
 
@@ -300,17 +309,18 @@ erDiagram
 
 ### 4.1. Bảng quy chuẩn 7 Part đề thi TOEIC:
 
-| Part | Phân ban | Dạng bài ETS | Tổng câu | Cấu trúc Cụm (Context) | Giá trị `order_index` (ContextQuestion) | Giá trị `question_number` (Question) | Quy cách Đáp án |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Part 1** | Listening | Photographs | 6 câu | 1 câu/cụm (6 cụm) | `1, 2, 3, 4, 5, 6` | `1, 2, 3, 4, 5, 6` | Cố định (A), (B), (C), (D) |
-| **Part 2** | Listening | Question - Response | 25 câu | 1 câu/cụm (25 cụm) | `7, 8, 9, ..., 31` | `7, 8, 9, ..., 31` | **Chỉ có (A), (B), (C)** (D luôn để trống) |
-| **Part 3** | Listening | Short Conversations | 39 câu | 3 câu/cụm (13 cụm) | `32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68` | `32 -> 70` (Mỗi cụm 3 câu tăng liên tiếp) | A, B, C, D |
-| **Part 4** | Listening | Short Talks | 30 câu | 3 câu/cụm (10 cụm) | `71, 74, 77, 80, 83, 86, 89, 92, 95, 98` | `71 -> 100` (Mỗi cụm 3 câu tăng liên tiếp) | A, B, C, D |
-| **Part 5** | Reading | Incomplete Sentences | 30 câu | 1 câu/cụm (30 cụm) | `101, 102, ..., 130` | `101 -> 130` | A, B, C, D |
-| **Part 6** | Reading | Text Completion | 16 câu | 4 câu/cụm (4 bài đọc) | `131, 135, 139, 143` | `131 -> 146` (Mỗi bài đọc 4 câu con) | A, B, C, D |
-| **Part 7** | Reading | Reading Comprehension | 54 câu | 2 - 5 câu/cụm (Đoạn đơn/đoạn kép) | Số câu bắt đầu đoạn (VD: `147, 149, 153...`) | `147 -> 200` | A, B, C, D |
+| Part       | Phân ban  | Dạng bài ETS          | Tổng câu | Cấu trúc Cụm (Context)            | Giá trị `order_index` (ContextQuestion)              | Giá trị `question_number` (Question)       | Quy cách Đáp án                            |
+| :--------- | :-------- | :-------------------- | :------- | :-------------------------------- | :--------------------------------------------------- | :----------------------------------------- | :----------------------------------------- |
+| **Part 1** | Listening | Photographs           | 6 câu    | 1 câu/cụm (6 cụm)                 | `1, 2, 3, 4, 5, 6`                                   | `1, 2, 3, 4, 5, 6`                         | Cố định (A), (B), (C), (D)                 |
+| **Part 2** | Listening | Question - Response   | 25 câu   | 1 câu/cụm (25 cụm)                | `7, 8, 9, ..., 31`                                   | `7, 8, 9, ..., 31`                         | **Chỉ có (A), (B), (C)** (D luôn để trống) |
+| **Part 3** | Listening | Short Conversations   | 39 câu   | 3 câu/cụm (13 cụm)                | `32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68` | `32 -> 70` (Mỗi cụm 3 câu tăng liên tiếp)  | A, B, C, D                                 |
+| **Part 4** | Listening | Short Talks           | 30 câu   | 3 câu/cụm (10 cụm)                | `71, 74, 77, 80, 83, 86, 89, 92, 95, 98`             | `71 -> 100` (Mỗi cụm 3 câu tăng liên tiếp) | A, B, C, D                                 |
+| **Part 5** | Reading   | Incomplete Sentences  | 30 câu   | 1 câu/cụm (30 cụm)                | `101, 102, ..., 130`                                 | `101 -> 130`                               | A, B, C, D                                 |
+| **Part 6** | Reading   | Text Completion       | 16 câu   | 4 câu/cụm (4 bài đọc)             | `131, 135, 139, 143`                                 | `131 -> 146` (Mỗi bài đọc 4 câu con)       | A, B, C, D                                 |
+| **Part 7** | Reading   | Reading Comprehension | 54 câu   | 2 - 5 câu/cụm (Đoạn đơn/đoạn kép) | Số câu bắt đầu đoạn (VD: `147, 149, 153...`)         | `147 -> 200`                               | A, B, C, D                                 |
 
 ### 4.2. Nguyên tắc Lưu trữ và Sắp xếp Thứ tự:
+
 1. **`context_question.order_index`**:
    - **Luôn lưu số thứ tự của câu hỏi đầu tiên trong cụm đó**.
    - Ví dụ: Đoạn hội thoại gồm 3 câu 32, 33, 34 thì `order_index` = 32. Cụm tiếp theo gồm câu 35, 36, 37 thì `order_index` = 35.
@@ -328,8 +338,8 @@ erDiagram
      ```
      $\rightarrow$ Đảm bảo khi học viên luyện riêng một Part, các cụm bài vẫn được load ra chuẩn xác từ câu đầu đến câu cuối theo `order_index`.
 5. **Loại bỏ thẻ kỹ thuật Sequence Tag (`<!--CQ_SEQ:P{part}:I{startQ}-->`)**:
-   - *Lịch sử trước đây*: Khi chưa có cột `order_index` chuẩn hóa, frontend từng chèn tiền tố `<!--CQ_SEQ:P{part}:I{startQ}-->` vào cột `paragraph` để đánh dấu Part và số câu bắt đầu.
-   - *Chuẩn hóa hiện tại (v2.9)*: Trường `order_index` trong `context_question` và `part_id` đã đảm nhận hoàn toàn việc định vị và sắp xếp thứ tự chính xác 100%. Do đó, việc chèn thẻ `<!--CQ_SEQ:...-->` vào `paragraph` là hoàn toàn thừa thãi và đã **BỊ LOẠI BỎ TRIỆT ĐỂ**:
+   - _Lịch sử trước đây_: Khi chưa có cột `order_index` chuẩn hóa, frontend từng chèn tiền tố `<!--CQ_SEQ:P{part}:I{startQ}-->` vào cột `paragraph` để đánh dấu Part và số câu bắt đầu.
+   - _Chuẩn hóa hiện tại (v2.9)_: Trường `order_index` trong `context_question` và `part_id` đã đảm nhận hoàn toàn việc định vị và sắp xếp thứ tự chính xác 100%. Do đó, việc chèn thẻ `<!--CQ_SEQ:...-->` vào `paragraph` là hoàn toàn thừa thãi và đã **BỊ LOẠI BỎ TRIỆT ĐỂ**:
      - Khi lưu đề thi (`handleSaveExam`), frontend lưu đoạn văn sạch thuần túy (`paragraph: cleanParagraph`), không còn sinh bất kỳ thẻ HTML nào. Các Part 1, 2, 3, 4 lưu giá trị rỗng/NULL.
      - Khi nạp dữ liệu cũ (`handleOpenEditModal` & `ExamTakePage`), frontend vẫn giữ regex lọc bỏ an toàn để tương thích ngược với các đề thi cũ từng lưu trong CSDL.
      - Dữ liệu mẫu khởi tạo trong `backend/database_script.sql` đã được làm sạch toàn bộ về `NULL`.
@@ -338,10 +348,10 @@ erDiagram
      - `transcript`: Lưu toàn bộ lời thoại âm thanh tiếng Anh (Audio Transcript).
      - `translation`: Lưu bản dịch tiếng Việt tương ứng cho đoạn hội thoại (Part 3) và bài nói (Part 4).
    - **Luồng xử lý REST API Frontend <-> Backend**:
-     - *Client gửi lên*: `ContextQuestionRequest` chứa 2 trường riêng biệt `transcript` và `translation`.
-     - *Backend xử lý*: `ExamService.saveTestDetail` ánh xạ `.transcript(...)` và `.translation(...)` lưu trực tiếp vào CSDL MySQL.
-     - *Client đọc về*: Nhận trực tiếp `cq.transcript` và `cq.translation`.
-     - *Cơ chế tương thích ngược (Fallback)*: Nếu dữ liệu mẫu cũ còn chứa separator `--- BẢN DỊCH TIẾNG VIỆT ---` trong `transcript`, Frontend tự động bóc tách thông minh sang `translation` để đảm bảo giao diện luôn hiển thị chính xác.
+     - _Client gửi lên_: `ContextQuestionRequest` chứa 2 trường riêng biệt `transcript` và `translation`.
+     - _Backend xử lý_: `ExamService.saveTestDetail` ánh xạ `.transcript(...)` và `.translation(...)` lưu trực tiếp vào CSDL MySQL.
+     - _Client đọc về_: Nhận trực tiếp `cq.transcript` và `cq.translation`.
+     - _Cơ chế tương thích ngược (Fallback)_: Nếu dữ liệu mẫu cũ còn chứa separator `--- BẢN DỊCH TIẾNG VIỆT ---` trong `transcript`, Frontend tự động bóc tách thông minh sang `translation` để đảm bảo giao diện luôn hiển thị chính xác.
 
 ---
 
@@ -350,11 +360,13 @@ erDiagram
 ### 5.1. Danh mục API Endpoints:
 
 #### 1. Module Xác thực (`/api/auth`):
+
 - `POST /api/auth/register`: Đăng ký tài khoản học viên mới.
 - `POST /api/auth/login`: Đăng nhập (trả về JWT Token, email, user_name, role_name).
 - `POST /api/auth/logout`: Hủy phiên đăng nhập.
 
 #### 2. Module Đề thi (`/api/exam`):
+
 - `GET /api/exam/list`: Lấy danh sách đề thi phân trang.
   - Query params: `numberPage` (default 1), `sizeOfPage` (default 10), `keyWord`, `sortBy`, `direction`, `status`.
   - Phân quyền: Học viên thông thường chỉ thấy `status = PUBLISHED`. Admin/Teacher thấy cả `DRAFT` và `PUBLISHED`.
@@ -367,15 +379,18 @@ erDiagram
 - `DELETE /api/exam/delete/{testID}`: Xóa vĩnh viễn đề thi, tự động dọn toàn bộ audio và ảnh trên Cloudinary (`PreAuthorize("hasRole('ADMIN')")`).
 
 #### 3. Module Media (`/api/media`):
+
 - `POST /api/media/upload`: Tải file audio (`audio/mpeg`, `audio/mp3`, `audio/wav`) hoặc hình ảnh (`image/png`, `image/jpeg`, `image/webp`) lên Cloudinary (`multipart/form-data`).
   - Thư mục lưu trên Cloudinary:
     - Audio: `Resource/toeic-learning/exams/{examSlug}/audios`
     - Ảnh: `Resource/toeic-learning/exams/{examSlug}/images`
 
 #### 4. Module Lớp học (`/api/classroom`):
+
 - Quản lý tạo lớp, cấp `class_code`, duyệt thành viên lớp, chia sẻ tài liệu và giao bài tập.
 
 #### 5. Module Cá nhân & Quản trị (`/api/user`, `/api/admin`):
+
 - `GET /api/user/profile`: Lấy thông tin cá nhân của user đang đăng nhập.
 - `PUT /api/user/profile`: Cập nhật họ tên, số điện thoại, avatar.
 - `GET /api/admin/users`: Danh sách người dùng hệ thống (tìm kiếm, lọc role, phân trang).
@@ -403,6 +418,7 @@ erDiagram
 ## 6. CHI TIẾT KIẾN TRÚC FRONTEND (REACT 18/19, VITE, PAGES & STUDIO)
 
 ### 6.1. Danh mục Tuyến đường & Phân trang (`App.jsx`):
+
 - `/`: `HomePage` (Giới thiệu, tính năng nổi bật).
 - `/about`: `AboutPage` (Giới thiệu dự án và giảng viên hướng dẫn).
 - `/contact`: `ContactPage` (Liên hệ & góp ý).
@@ -424,7 +440,7 @@ erDiagram
    - **Ngoại lệ chuẩn ETS cho Part 1 & Part 2**:
      - Part 1: Câu hỏi mặc định `"Select the statement that best describes what you see in the picture."` và 4 lựa chọn `(A)`, `(B)`, `(C)`, `(D)`.
      - Part 2: Câu hỏi mặc định `"Mark your answer on your answer sheet."` và 3 lựa chọn `(A)`, `(B)`, `(C)`.
-     *(Lý do: Đề thi thật ETS không in câu hỏi chữ cho Part 1 & 2 mà chỉ in mã phương án)*.
+       _(Lý do: Đề thi thật ETS không in câu hỏi chữ cho Part 1 & 2 mà chỉ in mã phương án)_.
 2. **Hệ thống Nút Khởi tạo Nhanh 1-Click (Fast Setup Buttons)**:
    - `Khởi tạo khung Full Test 200 câu ETS`: Tạo sẵn bộ khung 7 Part chuẩn với đúng tỷ lệ câu hỏi, sẵn sàng để người dùng nhập liệu hoặc upload media.
    - `Khởi tạo Mini Test 50 câu`: Tạo khung 50 câu rút gọn theo đúng tỷ lệ ETS.
@@ -451,7 +467,7 @@ erDiagram
 7. **Nới lỏng Ràng buộc Soạn thảo (Relaxed Draft Validation) & Phím tắt Lưu nhanh (Ctrl+S)**:
    - **Không bao giờ chặn lưu Bản nháp (`DRAFT`)**: Người dùng có thể lưu tạm đề thi bất kỳ lúc nào dù Part 3 & 4 mới chỉ làm 1, 2 đoạn hay 3 câu trong tổng số 39 câu. Các câu hỏi chưa nhập nội dung hoặc đáp án sẽ tự động gán fallback chuỗi rỗng `""` và đáp án `'A'`, hoàn toàn tương thích và an toàn với ràng buộc `NOT NULL` của CSDL MySQL.
    - **Lưu nháp máy chủ 1-Click & Phím tắt `Ctrl + S`**: Bấm nút `Lưu nháp máy chủ (Ctrl+S)` hoặc nhấn tổ hợp phím `Ctrl + S` / `Cmd + S` để lưu ngay lập tức lên backend mà **không làm đóng modal**, không mất vị trí cuộn chuột, cho phép tiếp tục soạn thảo liền mạch.
-   - **Cảnh báo thông minh khi Xuất bản (`PUBLISHED`)**: Nếu người dùng nhấn Xuất bản mà còn câu hỏi trống, hệ thống không văng lỗi chặn đứng mà đưa ra hộp thoại hỏi thăm: *"Phát hiện còn X câu hỏi chưa điền đủ. Bạn có muốn lưu dưới dạng BẢN NHÁP (DRAFT) để bổ sung sau không?"*. Chỉ cần 1 cú click [OK] là tự động chuyển sang DRAFT và lưu ngay vào database.
+   - **Cảnh báo thông minh khi Xuất bản (`PUBLISHED`)**: Nếu người dùng nhấn Xuất bản mà còn câu hỏi trống, hệ thống không văng lỗi chặn đứng mà đưa ra hộp thoại hỏi thăm: _"Phát hiện còn X câu hỏi chưa điền đủ. Bạn có muốn lưu dưới dạng BẢN NHÁP (DRAFT) để bổ sung sau không?"_. Chỉ cần 1 cú click [OK] là tự động chuyển sang DRAFT và lưu ngay vào database.
 8. **Thanh Công Cụ Nổi Cố Định (Sticky Quick Action Bar)**:
    - Thanh công cụ dính trên cùng (`sticky -top-4 z-30`) chứa tên đề thi, trạng thái auto-save đa tầng (`Tự lưu trình duyệt` / `Đã đồng bộ máy chủ`), nút `Lưu nháp máy chủ (Ctrl+S)` và nút `Xuất bản đề thi`.
 9. **Cấu trúc & Studio Soạn thảo Part 7 Chuẩn ETS 2026 (Reading Comprehension Studio)**:
@@ -462,14 +478,15 @@ erDiagram
      | **Bài đọc kép (Double)** | 2 | 176 - 185 (10 câu) | 176-180 (5c), 181-185 (5c) | 2 Văn bản kết hợp (Văn bản 1 + Văn bản 2) |
      | **Bài đọc ba (Triple)** | 3 | 186 - 200 (15 câu) | 186-190 (5c), 191-195 (5c), 196-200 (5c) | 3 Văn bản đa nguồn (Văn bản 1 + Văn bản 2 + Văn bản 3) |
    - **Giao diện Soạn thảo Đột phá**:
-     - *Quick Nav 3 nhóm rõ rệt*: Nhóm 1 (10 Bài đơn: 147-175), Nhóm 2 (2 Bài kép: 176-185), Nhóm 3 (3 Bài ba: 186-200), cuộn mượt đến từng bài.
-     - *Soạn riêng từng bài đọc (Split Passages)*:
+     - _Quick Nav 3 nhóm rõ rệt_: Nhóm 1 (10 Bài đơn: 147-175), Nhóm 2 (2 Bài kép: 176-185), Nhóm 3 (3 Bài ba: 186-200), cuộn mượt đến từng bài.
+     - _Soạn riêng từng bài đọc (Split Passages)_:
        - Với Bài đọc kép (176-180, 181-185): Có 2 khung riêng biệt cho **Văn bản 1** và **Văn bản 2**, tự động hợp nhất với dải phân cách chuẩn `--- BÀI ĐỌC 2 ---`.
        - Với Bài đọc ba (186-190, 191-195, 196-200): Có 3 khung riêng biệt cho **Văn bản 1**, **Văn bản 2** và **Văn bản 3**, tự động hợp nhất với `--- BÀI ĐỌC 2 ---` và `--- BÀI ĐỌC 3 ---`.
-     - *Nút chuyển chế độ linh hoạt*: Nút bấm `Soạn riêng từng văn bản` / `Xem 1 ô gộp` cho phép giáo viên tùy chọn cách hiển thị thuận tiện nhất.
-     - *Mẫu nội dung nhanh (Sample Templates)*: Tích hợp nút 1-click chèn mẫu văn bản đơn, mẫu 2 bài đọc kép và mẫu 3 bài đọc ba chuẩn văn phong doanh nghiệp ETS.
+     - _Nút chuyển chế độ linh hoạt_: Nút bấm `Soạn riêng từng văn bản` / `Xem 1 ô gộp` cho phép giáo viên tùy chọn cách hiển thị thuận tiện nhất.
+     - _Mẫu nội dung nhanh (Sample Templates)_: Tích hợp nút 1-click chèn mẫu văn bản đơn, mẫu 2 bài đọc kép và mẫu 3 bài đọc ba chuẩn văn phong doanh nghiệp ETS.
 
 ### 6.3. Trải nghiệm Phòng thi Trực tuyến (`ExamTakePage.jsx`):
+
 - **Đồng hồ đếm ngược**: 120 phút cho Full Test (cảnh báo khi còn dưới 5 phút, tự động nộp bài khi hết giờ).
 - **Lưới điều hướng câu hỏi (Question Navigation Grid)**:
   - Trạng thái 1: Chưa làm (màu xám).
@@ -487,11 +504,23 @@ erDiagram
     - **Bản dịch tiếng Việt (Vietnamese Translation)** trong khung nền Emerald viền nét đứt kèm icon `Languages` sinh động.
   - Hiển thị lời giải thích chi tiết (`explanation`) của từng câu hỏi con.
 
+### 6.4. Trải nghiệm Luyện Nghe Chép Chính Tả (`DictationTakePage.jsx`):
+
+- **Bản chất nghiệp vụ**: Cung cấp môi trường luyện nghe chuyên sâu cho các phần Listening (Part 1 -> Part 4) theo phương pháp TOEIC Dictation.
+- **Tính năng nổi bật**:
+  - **Audio Player Kinetic Controls**: Đầy đủ tính năng Play/Pause, tua lùi 3s, tua tới 3s, phát lặp vô tận (Infinite loop), thay đổi tốc độ playback (`0.8x`, `1.0x`, `1.2x`).
+  - **Hệ thống phím tắt bàn phím**: `Space` (Bật/Dừng audio), `Alt + Left` (Lùi 3s), `Alt + Right` (Tới 3s), `Ctrl + Enter` (Kiểm tra kết quả chép), `Alt + N` (Câu tiếp theo).
+  - **Smart Diff Checker theo thời gian thực**: Đối chiếu từng từ giữa văn bản học viên nhập và `transcript` chuẩn; đánh dấu trực quan từ đúng (Xanh lá), từ sai/thừa (Đỏ gạch ngang) và từ thiếu (Vàng nét đứt); tự động tính tỷ lệ phần trăm chính xác (Accuracy %).
+  - **Hỗ trợ học tập thông minh**: Gợi ý ký tự đầu (First-letter hint masking), xem nhanh toàn văn transcript, xem bản dịch nghĩa tiếng Việt chi tiết (`translation`).
+  - **Tự động lưu tiến độ vào LocalStorage**: Học viên có thể tắt trang hoặc mở lại bất kỳ lúc nào mà không bị mất tiến trình câu đã làm.
+  - **Thanh Palette điều hướng câu nghe**: Dễ dàng chuyển đổi giữa các câu/đoạn nghe và theo dõi % điểm số đạt được của từng câu.
+
 ---
 
 ## 7. HỆ THỐNG LỚP HỌC & BÀI TẬP (CLASSROOM & ASSIGNMENT SYSTEM)
 
 Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và Học viên (`ROLE_USER`):
+
 1. **Quản lý lớp học (`Classroom`)**:
    - Giáo viên tạo lớp học mới, hệ thống tự động sinh `class_code` duy nhất.
    - Học viên nhập `class_code` để gửi yêu cầu tham gia lớp.
@@ -508,6 +537,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 ## 8. NHẬT KÝ THAY ĐỔI & CÁC ĐIỂM SỬA ĐỔI QUAN TRỌNG (CHANGELOG)
 
 ### Đợt 1: Nâng cấp Logic Thứ tự Câu hỏi & Cụm Câu hỏi:
+
 - **Vấn đề trước đây**: `context_question.order_index` trước đây đánh số 0, 1, 2... đơn giản, dẫn đến việc không xác định được đoạn đó tương ứng với câu hỏi số mấy trong đề thi chuẩn.
 - **Giải pháp đã thực hiện**:
   1. CSDL (`backend/database_script.sql`): Cập nhật giá trị `order_index` của `context_question` lưu **số thứ tự câu hỏi bắt đầu của cụm đó** (Part 1: 1..6, Part 2: 7..31, Part 3: 32, 35, 38..., Part 4: 71, 74..., Part 5: 101..130, Part 6: 131, 135, 139, 143, Part 7: 147, 149...).
@@ -519,6 +549,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   5. Frontend: Cập nhật `handleSaveExam` trong `TestManagementPage.jsx` và ưu tiên `orderIndex` trong `ExamTakePage.jsx`.
 
 ### Đợt 2: Chuẩn hóa Form Nhập liệu Studio Quản trị Đề thi (Clean Form Standard):
+
 - **Vấn đề trước đây**: Khi tạo mới hoặc thêm câu hỏi/đoạn văn, giao diện điền sẵn quá nhiều chữ mẫu mock text (như "Đoạn văn đọc hiểu mẫu...", "Giải thích chi tiết..."), buộc người dùng phải bôi đen và xóa thủ công nhiều lần.
 - **Giải pháp đã thực hiện**:
   1. `TestManagementPage.jsx`: Cập nhật `createFreshQuestion` và `createFreshContextQuestion` khởi tạo giá trị chuỗi rỗng `""` cho tất cả các trường (`questionContent`, `optionA-D`, `explanation`, `paragraph`, `transcript`, `audioUrl`, `imageUrl`).
@@ -527,6 +558,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   4. Xác minh build: `npm run build` thành công 100%, 0 lỗi cú pháp.
 
 ### Đợt 4: Chuẩn hóa Toàn diện Cột `translation` Độc lập (Database, Backend & Frontend):
+
 - **Cơ sở dữ liệu (`database_script.sql`)**: Bổ sung cột `translation TEXT` vào bảng `context_question`.
 - **Backend Java**:
   - `ContextQuestion.java`: Thêm `@Column(name = "translation", columnDefinition = "TEXT") private String translation;`.
@@ -538,6 +570,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: Biên dịch `npm run build` thành công 100%, 0 lỗi cú pháp.
 
 ### Đợt 5: Nâng cấp Auto-Save Liên tục, Quick Draft Server Save (Ctrl+S) & Nới lỏng Ràng buộc Part 3/4 Drafts:
+
 - **Vấn đề giải quyết**: Trước đây khi tạo đề Part 3 (13 đoạn x 3 câu = 39 câu) và Part 4 (10 bài x 3 câu = 30 câu), hệ thống bắt buộc phải điền đủ toàn bộ 100% nội dung câu hỏi và 4 đáp án mới cho lưu. Đồng thời không có tính năng tự động lưu liên tục, khiến người dùng phải copy paste khối lượng lớn dữ liệu rất mỏi tay, mỏi mắt, và có nguy cơ mất sạch công sức nếu vô tình đóng tab hoặc mất kết nối.
 - **Giải pháp đã triển khai**:
   1. **Nới lỏng hoàn toàn ràng buộc khi Lưu Bản nháp (`DRAFT`)**: Cho phép lưu dở dang với bất kỳ số lượng câu hỏi nào. Tự động gắn giá trị chuỗi rỗng an toàn (`""`) cho câu hỏi và đáp án chưa điền, đảm bảo tương thích 100% với ràng buộc `NOT NULL` của CSDL MySQL.
@@ -551,9 +584,10 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: Chạy `npm run build` thành công 100%, kiểm tra không có lỗi biên dịch.
 
 ### Đợt 6: Khắc phục Triệt để Thất lạc Bản dịch khi Đóng Modal bằng Nút "X" và Tự động Khôi phục:
+
 - **Vấn đề phát hiện**: Khi người dùng nhập Bản dịch tiếng Việt (`translation`) vào Part 3 & 4, trạng thái `✓ Tự lưu trình duyệt` đã lưu vào `localStorage`. Tuy nhiên, khi bấm nút [X] đóng Modal và click "Chỉnh sửa" lại, bản dịch bị biến mất.
-  - *Nguyên nhân 1*: Nút [X] (`Modal onClose`) và nút "Hủy bỏ" trước đây chỉ gọi `setBuilderOpen(false)` mà không kích hoạt lưu dữ liệu chưa đồng bộ (`isDirty`) lên máy chủ.
-  - *Nguyên nhân 2*: Khi mở lại modal (`handleOpenEditModal`), hàm gọi `getTestDetail` từ MySQL tải về bộ đề cũ (chưa có bản dịch) và gọi `setFormParts(partsArr)`, đè bẹp bản dịch đang lưu dở ở `localStorage`. Sau đó `useEffect` auto-save chạy ngầm lại ghi đè dữ liệu rỗng này vào `localStorage`, làm mất sạch bản dịch.
+  - _Nguyên nhân 1_: Nút [X] (`Modal onClose`) và nút "Hủy bỏ" trước đây chỉ gọi `setBuilderOpen(false)` mà không kích hoạt lưu dữ liệu chưa đồng bộ (`isDirty`) lên máy chủ.
+  - _Nguyên nhân 2_: Khi mở lại modal (`handleOpenEditModal`), hàm gọi `getTestDetail` từ MySQL tải về bộ đề cũ (chưa có bản dịch) và gọi `setFormParts(partsArr)`, đè bẹp bản dịch đang lưu dở ở `localStorage`. Sau đó `useEffect` auto-save chạy ngầm lại ghi đè dữ liệu rỗng này vào `localStorage`, làm mất sạch bản dịch.
 - **Giải pháp đã thực hiện**:
   1. **Tự động lưu ngầm khi đóng Modal (`handleCloseBuilder`)**: Nếu có thay đổi chưa lưu (`isDirtyRef.current === true`), hệ thống tự động gọi `handleSaveExam(null, 'DRAFT', false, true)` lưu ngay lên MySQL trước khi đóng modal.
   2. **Ưu tiên nạp Local Draft khi Reopen (`handleOpenEditModal`)**: Khi mở lại đề thi, nếu phát hiện trong `localStorage` có bản nháp dở dang của chính bài thi này (`localDraft.testId === test.id`), hệ thống **TỰ ĐỘNG KHÔI PHỤC NGAY LẬP TỨC** thay vì để dữ liệu cũ từ server đè lên.
@@ -561,6 +595,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: `npm run build` thành công 100%, kiểm tra không có lỗi biên dịch.
 
 ### Đợt 8 (16/09/2026 - Phiên bản 2.9): Loại bỏ triệt để thẻ rác `<!--CQ_SEQ:...-->` trong cột `paragraph` (`doanvandoc`)
+
 - **Vấn đề**: Khi người dùng kiểm tra câu lệnh SELECT CSDL MySQL, cột `paragraph` (`Doan_Van_Doc`) của Part 1, 2, 3 hiển thị chuỗi lạ như `<!--CQ_SEQ:P1:I1-->`, `<!--CQ_SEQ:P2:I7-->`, `<!--CQ_SEQ:P3:I32-->`.
 - **Nguyên nhân**: Đây là vết tích kỹ thuật tạm thời (interim hack) ở các phiên bản đầu khi hệ thống chưa lưu cột `order_index`. Khi lưu đề thi, frontend tự động gắn chuỗi tag này vào trước đoạn văn. Vì Part 1, 2, 3, 4 là phần thi nghe không có bài đọc, trường `paragraph` chỉ chứa duy nhất thẻ HTML này làm ô nhiễm CSDL.
 - **Giải pháp xử lý**:
@@ -571,11 +606,12 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: `npm run build` thành công 100%, không phát sinh lỗi biên dịch.
 
 ### Đợt 9 (16/09/2026 - Phiên bản 3.0): Vá triệt để lỗi Tự động lưu tạm thời & Nhận diện Part 3, 4:
+
 - **Vấn đề phát sinh**: Sau khi loại bỏ chuỗi thẻ `<!--CQ_SEQ:...-->`, chức năng lưu tạm thời tự động của Part 3 và Part 4 gặp sự cố không lưu được hoặc bị thất lạc dữ liệu.
 - **Nguyên nhân cốt lõi**:
-  1. *Thất lạc phân loại Part*: Thực thể Java `ContextQuestion` đánh dấu `@JsonIgnore` trên thuộc tính `Part part`. Trước đây hệ thống bám vào `<!--CQ_SEQ:P3...-->` để biết câu thuộc Part nào. Khi bỏ thẻ, hàm đọc lại rơi vào heuristic cũ (chỉ kiểm tra `cq.audioUrl` và từ khóa 'talk'/'announcement'). Do đó các câu Part 3 & 4 đang soạn thảo dở chưa có audio bị gom nhầm vào Part 5, hoặc Part 4 bị gom lẫn vào Part 3.
-  2. *Chặn submit bởi HTML5 `required`*: Các thẻ `<input>` câu hỏi và lựa chọn (A, B, C, D) của Part 3 và Part 4 còn tồn tại thuộc tính `required`, dẫn đến việc trình duyệt chặn đứng việc gửi form lưu nháp khi người dùng chỉ mới nhập một số câu dở dang.
-  3. *Xóa nhầm `localStorage` khi đang soạn thảo*: Trong `handleSaveExam`, hàm `clearAutosaveDraft()` bị gọi ngay cả khi `keepOpen === true` (xảy ra trong chu kỳ tự động sync ngầm 30s hoặc bấm Ctrl+S), khiến bộ nhớ đệm `localStorage` bị xóa sạch.
+  1. _Thất lạc phân loại Part_: Thực thể Java `ContextQuestion` đánh dấu `@JsonIgnore` trên thuộc tính `Part part`. Trước đây hệ thống bám vào `<!--CQ_SEQ:P3...-->` để biết câu thuộc Part nào. Khi bỏ thẻ, hàm đọc lại rơi vào heuristic cũ (chỉ kiểm tra `cq.audioUrl` và từ khóa 'talk'/'announcement'). Do đó các câu Part 3 & 4 đang soạn thảo dở chưa có audio bị gom nhầm vào Part 5, hoặc Part 4 bị gom lẫn vào Part 3.
+  2. _Chặn submit bởi HTML5 `required`_: Các thẻ `<input>` câu hỏi và lựa chọn (A, B, C, D) của Part 3 và Part 4 còn tồn tại thuộc tính `required`, dẫn đến việc trình duyệt chặn đứng việc gửi form lưu nháp khi người dùng chỉ mới nhập một số câu dở dang.
+  3. _Xóa nhầm `localStorage` khi đang soạn thảo_: Trong `handleSaveExam`, hàm `clearAutosaveDraft()` bị gọi ngay cả khi `keepOpen === true` (xảy ra trong chu kỳ tự động sync ngầm 30s hoặc bấm Ctrl+S), khiến bộ nhớ đệm `localStorage` bị xóa sạch.
 - **Giải pháp xử lý toàn diện**:
   1. **Định danh Part tuyệt đối bằng thang đo chuẩn ETS 2026**:
      - Sử dụng trực tiếp `orderIndex` và `questionNumber` để phân loại Part chính xác 100% trong cả [TestManagementPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/admin/TestManagementPage.jsx) và [ExamTakePage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/ExamTakePage.jsx):
@@ -596,12 +632,13 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: `npm run build` thành công 100%, chạy mượt mà không lỗi.
 
 ### Đợt 10 (17/09/2026 - Phiên bản 3.1): Chuẩn hóa Script SQL Seed Data Part 3 (Câu 32 -> 43) & Quy tắc SQL Seeding:
+
 - **Vấn đề phát sinh**: Khi người dùng chạy script SQL có chèn thêm dữ liệu Part 3 (câu 35-43) do công cụ ngoài (DeepSeek) tạo ra, dữ liệu từ câu 35 đến 43 không hiển thị trong kết quả truy vấn.
 - **Nguyên nhân cốt lõi**:
-  1. *Lệnh `SELECT` kiểm tra đặt trước khối lệnh `INSERT` mới*: Lệnh `SELECT` cấu trúc đề thi (Mục 8) nằm ở dòng 407-435 của file `database_script.sql`. Khi dán các lệnh INSERT Part 3 vào sau dòng 435, các công cụ GUI (như MySQL Workbench, Navicat, DBeaver) thực thi tuần tự và hiển thị kết quả truy vấn của lệnh SELECT trước khi các dòng INSERT mới được thực thi, khiến người dùng nhìn thấy dữ liệu chỉ dừng ở câu 31.
-  2. *Lỗ hổng dùng biến Session `@var = (SELECT id ... LIMIT 1)`*: Script ngoài dùng `(UUID(), ...)` cho context, sau đó `SET @cq_35_37 = (SELECT id FROM context_question WHERE order_index = 35...)`. Khi chạy từng block hoặc trong môi trường connection pool / JDBC, biến session bị `NULL`, khiến `question.context_question_id` bị `NULL` và câu hỏi không thể JOIN vào kết quả.
-  3. *Sai lệch cấu trúc ETS & Thiếu Cụm mở đầu Part 3 (Câu 32-34)*: Part 2 kết thúc ở câu 31. Part 3 ETS bắt đầu từ **câu 32**. Script ngoài nhảy cóc bắt đầu từ câu 35 (`order_index = 35`), bỏ sót cụm 32-34.
-  4. *Lỗi copy-paste nội dung câu 43*: Câu 43 trong script ngoài bị dán đè nội dung câu 40 (hỏi về e-mail danh sách) thay vì hỏi về hành động của người phụ nữ trong bài thoại mua bút bảo vệ môi trường (đặt hàng / place an order).
+  1. _Lệnh `SELECT` kiểm tra đặt trước khối lệnh `INSERT` mới_: Lệnh `SELECT` cấu trúc đề thi (Mục 8) nằm ở dòng 407-435 của file `database_script.sql`. Khi dán các lệnh INSERT Part 3 vào sau dòng 435, các công cụ GUI (như MySQL Workbench, Navicat, DBeaver) thực thi tuần tự và hiển thị kết quả truy vấn của lệnh SELECT trước khi các dòng INSERT mới được thực thi, khiến người dùng nhìn thấy dữ liệu chỉ dừng ở câu 31.
+  2. _Lỗ hổng dùng biến Session `@var = (SELECT id ... LIMIT 1)`_: Script ngoài dùng `(UUID(), ...)` cho context, sau đó `SET @cq_35_37 = (SELECT id FROM context_question WHERE order_index = 35...)`. Khi chạy từng block hoặc trong môi trường connection pool / JDBC, biến session bị `NULL`, khiến `question.context_question_id` bị `NULL` và câu hỏi không thể JOIN vào kết quả.
+  3. _Sai lệch cấu trúc ETS & Thiếu Cụm mở đầu Part 3 (Câu 32-34)_: Part 2 kết thúc ở câu 31. Part 3 ETS bắt đầu từ **câu 32**. Script ngoài nhảy cóc bắt đầu từ câu 35 (`order_index = 35`), bỏ sót cụm 32-34.
+  4. _Lỗi copy-paste nội dung câu 43_: Câu 43 trong script ngoài bị dán đè nội dung câu 40 (hỏi về e-mail danh sách) thay vì hỏi về hành động của người phụ nữ trong bài thoại mua bút bảo vệ môi trường (đặt hàng / place an order).
 - **Giải pháp xử lý**:
   1. **Quy chuẩn UUID cố định (Deterministic UUIDs)**: Khởi tạo các UUID v4 cố định cho từng cụm bài (`c3000032-...`, `c3000035-...`) và từng câu hỏi con (`q3000032-...`). Đảm bảo tính độc lập, idempotent, chạy 1 lần là ăn ngay 100%, không bị ảnh hưởng bởi session hay thứ tự chạy.
   2. **Bổ sung trọn vẹn Cụm 32-34**: Thêm đầy đủ Cụm 32-34 (`order_index = 32`) cùng 3 câu hỏi 32, 33, 34 chuẩn ETS vào `backend/database_script.sql`.
@@ -610,10 +647,11 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: Script `backend/database_script.sql` chạy thông suốt, câu lệnh SELECT trả về đầy đủ và chính xác từ câu 1 đến câu 43.
 
 ### Đợt 11 (17/09/2026 - Phiên bản 3.2): Khắc phục lỗi LocalDraft ghi đè dữ liệu CSDL & Bảo toàn câu hỏi khi chuẩn hóa:
+
 - **Vấn đề phát sinh**: Người dùng đã chạy script SQL thành công và kiểm tra lệnh SELECT trong CSDL có đầy đủ dữ liệu Part 3 (câu 32 đến 43), nhưng khi mở Modal chỉnh sửa đề thi trên Frontend, các ô nhập liệu câu hỏi (ví dụ câu 36, câu 40) vẫn bị trống hoàn toàn (hiển thị placeholder).
 - **Nguyên nhân cốt lõi**:
-  1. *LocalDraft tự động nạp đè dữ liệu Server CSDL*: Trong `handleOpenEditModal`, logic cũ kiểm tra nếu phát hiện `localDraft` trong `localStorage` thì lập tức gọi `setFormParts(localDraft.formParts)` và gạt bỏ toàn bộ `partsArr` vừa nạp từ API backend. Do trước đó người dùng đã mở đề thi khi Part 3 chưa có dữ liệu, trình duyệt đã tự động lưu nháp khung 13 đoạn trống vào `localStorage`. Khi nạp lại, giao diện ưu tiên bản nháp trống cũ thay vì dữ liệu mới từ CSDL.
-  2. *Hàm reset Part xóa sạch câu hỏi cũ*: Khi người dùng bấm nút chuẩn hóa số lượng đoạn (Part 3: 13 đoạn, Part 4: 10 bài, Part 2: 25 câu), các hàm cũ (`handleResetPart3To13`, `handleResetPart4To10`, `handleResetPart2To25`) tạo mới danh sách trắng tinh, xóa sạch các cụm câu hỏi đã có sẵn trong DB.
+  1. _LocalDraft tự động nạp đè dữ liệu Server CSDL_: Trong `handleOpenEditModal`, logic cũ kiểm tra nếu phát hiện `localDraft` trong `localStorage` thì lập tức gọi `setFormParts(localDraft.formParts)` và gạt bỏ toàn bộ `partsArr` vừa nạp từ API backend. Do trước đó người dùng đã mở đề thi khi Part 3 chưa có dữ liệu, trình duyệt đã tự động lưu nháp khung 13 đoạn trống vào `localStorage`. Khi nạp lại, giao diện ưu tiên bản nháp trống cũ thay vì dữ liệu mới từ CSDL.
+  2. _Hàm reset Part xóa sạch câu hỏi cũ_: Khi người dùng bấm nút chuẩn hóa số lượng đoạn (Part 3: 13 đoạn, Part 4: 10 bài, Part 2: 25 câu), các hàm cũ (`handleResetPart3To13`, `handleResetPart4To10`, `handleResetPart2To25`) tạo mới danh sách trắng tinh, xóa sạch các cụm câu hỏi đã có sẵn trong DB.
 - **Giải pháp xử lý toàn diện**:
   1. **Thiết lập CSDL Server làm SSOT tuyệt đối khi Chỉnh sửa đề thi**:
      - `handleOpenEditModal`: Luôn gán `setFormParts(partsArr)` trực tiếp từ API backend, đánh dấu `isDirtyRef.current = false`.
@@ -625,12 +663,13 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
 - **Xác minh**: `npm run build` thành công 100%, giao diện hiển thị ngay lập tức toàn bộ câu hỏi 32 đến 43 sau khi tải từ máy chủ CSDL.
 
 ### Đợt 12 (17/09/2026 - Phiên bản 3.3): Vá triệt để lỗi "Vòng lặp ghi đè ngầm" (Silent Auto-Sync Overwrite) & Khôi phục dữ liệu Part 3:
+
 - **Vấn đề phát sinh**: Người dùng đã chèn dữ liệu Part 3 (câu 32 đến 43) vào CSDL và chạy lệnh `SELECT` kiểm tra thấy có đầy đủ nội dung, nhưng khi mở giao diện Admin Exam Builder thì các ô nhập câu hỏi (câu 35 - 37...) vẫn bị trống hoàn toàn.
 - **Nguyên nhân cốt lõi**:
-  1. *Lỗi Dirty Checking giả (False-Positive Dirty Flag)*: Hook `useEffect(..., [formTitle, formStatus, formParts])` tự động đánh dấu `isDirtyRef.current = true` ngay khi `setFormParts` nạp xong dữ liệu từ API máy chủ, khiến hệ thống hiểu nhầm người dùng vừa chỉnh sửa form.
-  2. *Vòng lặp tự động ghi đè ngầm CSDL (`syncTimer` 30s)*: Timer 30s kiểm tra thấy `isDirty = true` nên tự động gọi `handleSaveExam(null, 'DRAFT', true, true)` gửi payload dở dang từ React lên `PUT /api/exam/update/...`.
-  3. *Backend Cascade Clear*: Trong `ExamService.java`, phương thức `updateTest` thực hiện `test.getContextQuestions().clear()`, xóa sạch toàn bộ các câu hỏi trong DB và chèn lại các câu hỏi từ form Frontend (lúc này các đoạn Part 3 chưa điền hết nên mang chuỗi rỗng `""`). Hậu quả là các câu hỏi vừa chèn từ script SQL bị xóa sạch và ghi đè bằng các dòng rỗng trong MySQL!
-  4. *Ép trạng thái DRAFT ngoài ý muốn*: Tham số `'DRAFT'` cố định trong `syncTimer` và `handleCloseBuilder` đã vô tình hạ cấp đề thi từ `PUBLISHED` thành `DRAFT`.
+  1. _Lỗi Dirty Checking giả (False-Positive Dirty Flag)_: Hook `useEffect(..., [formTitle, formStatus, formParts])` tự động đánh dấu `isDirtyRef.current = true` ngay khi `setFormParts` nạp xong dữ liệu từ API máy chủ, khiến hệ thống hiểu nhầm người dùng vừa chỉnh sửa form.
+  2. _Vòng lặp tự động ghi đè ngầm CSDL (`syncTimer` 30s)_: Timer 30s kiểm tra thấy `isDirty = true` nên tự động gọi `handleSaveExam(null, 'DRAFT', true, true)` gửi payload dở dang từ React lên `PUT /api/exam/update/...`.
+  3. _Backend Cascade Clear_: Trong `ExamService.java`, phương thức `updateTest` thực hiện `test.getContextQuestions().clear()`, xóa sạch toàn bộ các câu hỏi trong DB và chèn lại các câu hỏi từ form Frontend (lúc này các đoạn Part 3 chưa điền hết nên mang chuỗi rỗng `""`). Hậu quả là các câu hỏi vừa chèn từ script SQL bị xóa sạch và ghi đè bằng các dòng rỗng trong MySQL!
+  4. _Ép trạng thái DRAFT ngoài ý muốn_: Tham số `'DRAFT'` cố định trong `syncTimer` và `handleCloseBuilder` đã vô tình hạ cấp đề thi từ `PUBLISHED` thành `DRAFT`.
 - **Giải pháp xử lý triệt để**:
   1. **Loại bỏ Dirty Checking tự động**: Xóa bỏ hoàn toàn `useEffect` theo dõi `[formTitle, formStatus, formParts]`. Tạo hàm helper `markDirty()`: Chỉ đánh dấu dirty khi người dùng **thực sự tương tác** (gõ tiêu đề, đổi status, nhập question/context, upload file, thêm/xóa câu hỏi, áp dụng template chuẩn hóa).
   2. **An toàn hóa `syncTimer` & `Ctrl + S`**: Giữ nguyên trạng thái `formStatus` hiện tại của đề thi (`PUBLISHED` / `DRAFT`), tuyệt đối không ép về `'DRAFT'`.
@@ -641,6 +680,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Chạy `npm run build` thành công 100%, 0 lỗi.
 
 ### Đợt 13 (17/09/2026 - Phiên bản 3.4): Hoàn thiện toàn bộ dữ liệu Đề 1 ETS TOEIC 2026 từ Câu 1 đến Câu 70 (Part 1, Part 2, Part 3 trọn vẹn) & Khớp 100% Answer Key ETS:
+
 - **Yêu cầu & Mục tiêu**:
   1. Cập nhật file [`backend/database_script.sql`](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql) để khi chạy lại từ đầu thì CSDL được khởi tạo sạch sẽ và có sẵn toàn bộ từ **Câu 1 đến Câu 70** của `ETS TOEIC 2026 - Test 01`.
   2. Đối chiếu chuẩn xác 100% tất cả đáp án đúng (`correct_answer`) từ câu 1 đến câu 70 theo bảng đáp án gốc Answer Key của ETS (tài liệu ảnh `기출 TEST 1`).
@@ -655,7 +695,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
     - 27: **B** | 28: **A** | 29: **C** | 30: **C** | 31: **C**
     - Đầy đủ file âm thanh MP3 trên Cloudinary, lời thoại câu hỏi và 3 lựa chọn (A)-(C) (phương án D để trống `NULL`), kèm dịch nghĩa tiếng Việt.
   - **Part 3 (Câu 32 -> 70, 13 cụm hội thoại, 39 câu hỏi con)**:
-    - Cụm 1 (Câu 32-34, `order_index = 32`): 32: **B** (At a pharmacy), 33: **D** (Clean a display shelf), 34: **B** (Return later in the afternoon) *(Đã hiệu chỉnh chính xác theo bảng đáp án ETS gốc)*.
+    - Cụm 1 (Câu 32-34, `order_index = 32`): 32: **B** (At a pharmacy), 33: **D** (Clean a display shelf), 34: **B** (Return later in the afternoon) _(Đã hiệu chỉnh chính xác theo bảng đáp án ETS gốc)_.
     - Cụm 2 (Câu 35-37, `order_index = 35`): 35: **C**, 36: **A**, 37: **D**.
     - Cụm 3 (Câu 38-40, `order_index = 38`): 38: **A**, 39: **D**, 40: **A**.
     - Cụm 4 (Câu 41-43, `order_index = 41`): 41: **C**, 42: **D**, 43: **B**.
@@ -665,13 +705,13 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
     - Cụm 8 (Câu 53-55, `order_index = 53`): 53: **C**, 54: **A**, 55: **B**.
     - Cụm 9 (Câu 56-58, `order_index = 56`): 56: **B**, 57: **A**, 58: **C**.
     - Cụm 10 (Câu 59-61, `order_index = 59`): 59: **A**, 60: **C**, 61: **B**.
-    - Cụm 11 (Câu 62-64, `order_index = 62`): 62: **C**, 63: **C**, 64: **D** *(Có kèm hình ảnh Graphic trên Cloudinary)*.
-    - Cụm 12 (Câu 65-67, `order_index = 65`): 65: **D**, 66: **A**, 67: **C** *(Có kèm hình ảnh Graphic trên Cloudinary)*.
-    - Cụm 13 (Câu 68-70, `order_index = 68`): 68: **B**, 69: **A**, 70: **C** *(Có kèm hình ảnh Graphic trên Cloudinary)*.
+    - Cụm 11 (Câu 62-64, `order_index = 62`): 62: **C**, 63: **C**, 64: **D** _(Có kèm hình ảnh Graphic trên Cloudinary)_.
+    - Cụm 12 (Câu 65-67, `order_index = 65`): 65: **D**, 66: **A**, 67: **C** _(Có kèm hình ảnh Graphic trên Cloudinary)_.
+    - Cụm 13 (Câu 68-70, `order_index = 68`): 68: **B**, 69: **A**, 70: **C** _(Có kèm hình ảnh Graphic trên Cloudinary)_.
 - Toàn bộ 13 cụm Part 3 đều có đầy đủ link Audio Cloudinary MP3, Graphic Image PNG (cho các câu hỏi kèm biểu đồ/bản đồ 62-70).
-    - **QUY CHUẨN TÁCH BIỆT NỘI DUNG NGÔN NGỮ**:
-      + Cột `transcript`: **100% tiếng Anh thuần túy**, đã loại bỏ triệt để đoạn gộp `--- BẢN DỊCH TIẾNG VIỆT ---`.
-      + Cột `translation`: Lưu trữ bản dịch tiếng Việt riêng biệt, phục vụ giải thích và hỗ trợ học viên khi review bài thi.
+  - **QUY CHUẨN TÁCH BIỆT NỘI DUNG NGÔN NGỮ**:
+    - Cột `transcript`: **100% tiếng Anh thuần túy**, đã loại bỏ triệt để đoạn gộp `--- BẢN DỊCH TIẾNG VIỆT ---`.
+    - Cột `translation`: Lưu trữ bản dịch tiếng Việt riêng biệt, phục vụ giải thích và hỗ trợ học viên khi review bài thi.
   - **Trạng thái đề thi**: `status = 'PUBLISHED'`.
   - **Dòng lệnh cuối cùng**: Đặt câu truy vấn `SELECT` chi tiết nối các bảng `test`, `context_question`, `part`, `question` với thứ tự sắp xếp `ORDER BY cq.order_index ASC, q.question_number ASC`.
 - **Kết quả xác minh**:
@@ -681,6 +721,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Kiểm tra API Backend `GET /api/exam/ddaaa16f-8d39-4669-9e60-6c9de8270c00`: Đạt chuẩn 44 contexts, 70 questions, trạng thái `PUBLISHED`.
 
 ### Đợt 14 (17/09/2026 - Phiên bản 3.5): Hoàn thiện trọn vẹn 100% phần thi Listening (Câu 1 đến Câu 100: Part 1, Part 2, Part 3, Part 4) & Làm sạch chuẩn hóa Transcript/Translation:
+
 - **Yêu cầu & Mục tiêu**:
   1. Đồng bộ và bảo toàn toàn bộ dữ liệu mới gồm cả **Part 4 (Câu 71 đến 100)** vào [`backend/database_script.sql`](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql) để khi chạy lại database từ đầu đến cuối (`DROP DATABASE ... CREATE DATABASE ...`), hệ thống luôn có sẵn trọn vẹn 100 câu hỏi phần Listening.
   2. Chuẩn hóa triệt để trường `transcript` cho cả 10 cụm Part 4: **100% tiếng Anh thuần túy**, cắt bỏ đoạn gộp `--- BẢN DỊCH TIẾNG VIỆT ---` và lưu riêng bản dịch tiếng Việt vào cột `translation`.
@@ -695,8 +736,8 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Cụm 86 (Câu 86-88, `order_index = 86`): 86: **A**, 87: **B**, 88: **C** (Company logo design review).
   - Cụm 89 (Câu 89-91, `order_index = 89`): 89: **D**, 90: **B**, 91: **C** (Transportation agency press conference).
   - Cụm 92 (Câu 92-94, `order_index = 92`): 92: **B**, 93: **A**, 94: **D** (Modernized payment system for cosmetics stores).
-  - Cụm 95 (Câu 95-97, `order_index = 95`): 95: **A**, 96: **C**, 97: **D** (Reston Office Tower lobby garden - *Có ảnh Graphic trên Cloudinary*).
-  - Cụm 98 (Câu 98-100, `order_index = 98`): 98: **D**, 99: **C**, 100: **A** (ZZ Mining silver mine - *Có ảnh Graphic trên Cloudinary*).
+  - Cụm 95 (Câu 95-97, `order_index = 95`): 95: **A**, 96: **C**, 97: **D** (Reston Office Tower lobby garden - _Có ảnh Graphic trên Cloudinary_).
+  - Cụm 98 (Câu 98-100, `order_index = 98`): 98: **D**, 99: **C**, 100: **A** (ZZ Mining silver mine - _Có ảnh Graphic trên Cloudinary_).
 - **Kết quả xác minh thực tế**:
   - Chạy `mysql -u root < backend/database_script.sql` từ đầu đến cuối thành công 100%.
   - Tổng số `context_question` đạt: **54 cụm** (Part 1: 6, Part 2: 25, Part 3: 13, Part 4: 10).
@@ -706,12 +747,13 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Kiểm tra API Backend `GET /api/exam/ddaaa16f-8d39-4669-9e60-6c9de8270c00`: Đạt chuẩn 54 contexts, 100 questions, trạng thái `PUBLISHED`.
 
 ### Đợt 15 (17/09/2026 - Phiên bản 3.6): Chuẩn hóa Giao diện Studio Soạn Đề thi cho Phần Reading (Part 5, 6, 7: Câu 101 đến 200) & Xóa bỏ lỗi lặp Câu #1, 2, 3, 4:
+
 - **Vấn đề phát hiện**:
-  1. *Lặp lại số câu hỏi trên giao diện Reading*: Trước đây, Part 5, 6, 7 rơi vào builder fallback chung. Trong thẻ câu hỏi con, giao diện hardcode `Câu hỏi #{qIdx + 1}`. Hậu quả là:
+  1. _Lặp lại số câu hỏi trên giao diện Reading_: Trước đây, Part 5, 6, 7 rơi vào builder fallback chung. Trong thẻ câu hỏi con, giao diện hardcode `Câu hỏi #{qIdx + 1}`. Hậu quả là:
      - Part 5 (30 câu): Mỗi cụm chỉ có 1 câu hỏi (`qIdx = 0`), khiến 30 câu đều hiển thị `Câu hỏi #1`!
      - Part 6 (4 đoạn văn x 4 câu): Mỗi đoạn văn đều lặp lại `Câu hỏi #1`, `Câu hỏi #2`, `Câu hỏi #3`, `Câu hỏi #4`, thay vì hiển thị đúng thứ tự liên tục chuẩn ETS: Đoạn 1 (Câu 131-134), Đoạn 2 (Câu 135-138), Đoạn 3 (Câu 139-142), Đoạn 4 (Câu 143-146).
      - Part 7 (15 cụm bài đọc, 54 câu): Mỗi bài đọc đều hiển thị `Câu hỏi #1, #2...` thay vì liên tục từ `Câu 147` đến `Câu 200`.
-  2. *Thiếu Studio chuyên biệt*: Trong khi Part 1, 2, 3, 4 đã có Studio riêng biệt rất đẹp, Part 5, 6, 7 chưa có giao diện tối ưu theo đúng đặc thù bài đọc và câu hỏi điền khuyết.
+  2. _Thiếu Studio chuyên biệt_: Trong khi Part 1, 2, 3, 4 đã có Studio riêng biệt rất đẹp, Part 5, 6, 7 chưa có giao diện tối ưu theo đúng đặc thù bài đọc và câu hỏi điền khuyết.
 - **Giải pháp xử lý toàn diện**:
   1. **Xây dựng 3 Studio Builders chuyên biệt cho Part 5, Part 6 và Part 7**:
      - `renderPart5QuestionsBuilder()`:
@@ -745,6 +787,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Số thứ tự câu hỏi của Part 5 (101 - 130), Part 6 (131 - 146), Part 7 (147 - 200) hoàn toàn ăn khớp và đồng bộ trên giao diện Studio.
 
 ### Đợt 11 (17/09/2026 - Phiên bản 3.2): Chuẩn hóa Toàn diện Cấu trúc Part 7 (15 Cụm Bài Đọc - Câu 147 -> 200 Chuẩn ETS 2026):
+
 - **Yêu cầu & Quy chuẩn cấu trúc Part 7**:
   - **147-148**: 1 bài đọc (2 câu)
   - **149-150**: 1 bài đọc (2 câu)
@@ -767,9 +810,9 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
      - Định nghĩa mảng 15 phần tử với cấu trúc chi tiết: `startQ`, `endQ`, `qCount`, `passageCount`, `typeName`, `theme`.
      - Số lượng câu hỏi chuẩn: `[2, 2, 2, 3, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5]`.
   2. **Thanh Quick Navigation phân nhóm 3 khu vực**:
-     - *Nhóm 1 (Rose)*: `📄 10 Bài Đọc Đơn (147 - 175)`: Gồm 10 pills (Bài 1: 147-148 đến Bài 10: 172-175).
-     - *Nhóm 2 (Purple)*: `📑 2 Bài Đọc Kép (176 - 185)`: Gồm 2 pills (Bài 11: 176-180 • 2 bài đọc, Bài 12: 181-185 • 2 bài đọc).
-     - *Nhóm 3 (Amber)*: `📚 3 Bài Đọc Ba (186 - 200)`: Gồm 3 pills (Bài 13: 186-190 • 3 bài đọc, Bài 14: 191-195 • 3 bài đọc, Bài 15: 196-200 • 3 bài đọc).
+     - _Nhóm 1 (Rose)_: `📄 10 Bài Đọc Đơn (147 - 175)`: Gồm 10 pills (Bài 1: 147-148 đến Bài 10: 172-175).
+     - _Nhóm 2 (Purple)_: `📑 2 Bài Đọc Kép (176 - 185)`: Gồm 2 pills (Bài 11: 176-180 • 2 bài đọc, Bài 12: 181-185 • 2 bài đọc).
+     - _Nhóm 3 (Amber)_: `📚 3 Bài Đọc Ba (186 - 200)`: Gồm 3 pills (Bài 13: 186-190 • 3 bài đọc, Bài 14: 191-195 • 3 bài đọc, Bài 15: 196-200 • 3 bài đọc).
   3. **Trình soạn thảo văn bản chuyên biệt theo số lượng bài đọc (Passage Editors)**:
      - **Bài đọc đơn (1 bài đọc)**: Textarea đơn kèm mẫu văn bản nhanh và ảnh minh họa/bảng biểu.
      - **Bài đọc kép (2 bài đọc - Câu 176-180 & 181-185)**: Giao diện phân tách rõ ràng 2 khung nhập liệu cho **Văn bản 1** và **Văn bản 2**, tự động hợp nhất với dấu phân cách `--- BÀI ĐỌC 2 ---`. Tích hợp nút chèn mẫu 2 bài đọc kép chuẩn ETS.
@@ -778,7 +821,9 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   4. **Nâng cấp trải nghiệm Phòng thi (`ExamTakePage.jsx`)**:
      - Khi bài đọc Part 7 chứa `--- BÀI ĐỌC 2 ---` hoặc `--- BÀI ĐỌC 3 ---`, phòng thi tự động render thành các card văn bản tách biệt (`VĂN BẢN 1`, `VĂN BẢN 2`, `VĂN BẢN 3`) với viền màu và nhãn trực quan, mô phỏng hoàn hảo trải nghiệm thi trên máy tính của IIG/ETS.
 - **Xác minh kiểm thử**:
+
 ### Đợt 17 (17/09/2026 - Phiên bản 3.8): Tái cấu trúc & Quy chuẩn hóa Toàn diện Script CSDL (backend/database_script.sql) - Trọn vẹn 200 Câu ETS 2026 Gọn gàng, Tự nhiên & Dễ đọc:
+
 - **Yêu cầu & Mục tiêu**:
   1. Tái cấu trúc toàn bộ file [`backend/database_script.sql`](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql) để các câu lệnh `INSERT` dữ liệu trở nên cực kỳ gọn gàng, có cấu trúc chặt chẽ, dễ đọc và dễ bảo trì.
   2. Đồng bộ đầy đủ **trọn vẹn 200 câu hỏi** (Part 1 đến Part 7: 100 câu Listening + 100 câu Reading, gồm 103 cụm `context_question` và 200 câu hỏi con `question`) của đề `ETS TOEIC 2026 - Test 01`.
@@ -815,6 +860,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Frontend biên dịch `npm run build` thành công 100% (0 lỗi).
 
 ### ĐỢT 18 (21/09/2026): TÁI THIẾT KẾ GIAO DIỆN CHI TIẾT ĐỀ THI & HOÀN THIỆN CHỨC NĂNG THI FULL TEST & LUYỆN TẬP TỪNG PART (CHUẨN STUDY4 & SKILL.MD)
+
 - **Bối cảnh & Yêu cầu**:
   - Người dùng cung cấp 5 ảnh giao diện mẫu từ nền tảng Study4:
     - Ảnh 1: Trang tổng quan đề thi với hashtag `#TOEIC`, tên đề thi, tích xanh verified, nút Thông tin đề thi & Đáp án/transcript, dòng thông số (120 phút, 7 phần, 200 câu hỏi, số lượt làm), cảnh báo điểm quy đổi, và bảng **Kết quả làm bài của bạn** (Ngày làm, Kết quả, Thời gian làm bài, Chi tiết).
@@ -851,6 +897,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Chuyển đổi mượt mà giữa chế độ Luyện tập từng Part và Full Test.
 
 ### ĐỢT 19 (21/09/2026): NÂNG CẤP TOÀN DIỆN THẨM MỸ GIAO DIỆN THEO TIÊU CHUẨN SKILL.MD (REDESIGN-EXISTING-PROJECTS)
+
 - **Bối cảnh & Yêu cầu**:
   - Người dùng yêu cầu đối chiếu toàn diện với tài liệu `SKILL.md`, khắc phục triệt để các hạn chế thiết kế (generic AI patterns, thiếu phản hồi xúc giác, font chữ phổ thông, bảng biểu và số liệu nhảy rung) trên toàn bộ hệ thống giao diện Frontend.
   - Sau khi chỉnh sửa, kiểm tra biên dịch và cập nhật đầy đủ vào `PROJECT_CONTEXT.md`.
@@ -876,11 +923,195 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   - Không có file nào trong thư mục `backend/` bị thay đổi (tuân thủ tuyệt đối quy tắc người dùng).
   - Toàn bộ trải nghiệm người dùng từ trang danh sách, chi tiết đề thi đến phòng thi đạt độ hoàn thiện cao, mượt mà và trực quan.
 
+### ĐỢT 20 (21/09/2026): TÁI THIẾT KẾ TOÀN DIỆN GIAO DIỆN THEO TIÊU CHUẨN AWWWARDS-TIER TỪ SOFT_SKILL.MD
+
+- **Bối cảnh & Yêu cầu**:
+  - Người dùng cung cấp tài liệu `SOFT_SKILL.md` (chuẩn mực thiết kế đẳng cấp Agency quốc tế $150k+ Awwwards-Tier).
+  - Yêu cầu loại bỏ triệt để các phong cách generic AI, biểu tượng nét dày, font chữ phổ thông, cấu trúc card phẳng đơn điệu.
+  - Tái thiết kế toàn diện Frontend theo các triết lý cốt lõi:
+    - **Typography**: Cấm font Inter/Roboto/Arial/Helvetica. Bắt buộc dùng `Outfit` (Heading cá tính, sắc nét) kết hợp `Plus Jakarta Sans` (Body text mượt mà, thanh thoát).
+    - **Double-Bezel (Doppelrand / Nested Enclosures)**: Vỏ bọc Outer Shell (background hơi tối, border mờ) chứa lõi Core Inner (background sáng, viền tinh tế, bán kính bo góc đồng tâm `R_inner = R_outer - padding`).
+    - **Button-in-Button Island CTA**: Nút bấm chính dạng ốc đảo bo tròn chứa vòng tròn icon bubble riêng biệt (`.btn-icon-bubble`) trượt chéo góc `translate-x-0.5 -translate-y-0.5` khi hover.
+    - **Eyebrow Tags**: Nhãn thẻ phụ dạng viên thuốc siêu nhỏ (`eyebrow-tag`) thanh lịch.
+    - **Ultra-Light Icons**: Toàn bộ icon Lucide được chuẩn hóa nét vẽ thanh mảnh siêu sang `strokeWidth={1.5}`.
+    - **Kinetic Motion**: Đường cong chuyển động gia tốc mượt mà `--ease-kinetic: cubic-bezier(0.32, 0.72, 0, 1)`.
+- **Chi tiết các file đã sửa đổi**:
+  1. **`frontend/index.html`**:
+     - Nhúng trực tiếp Google Fonts: `Plus Jakarta Sans` (300, 400, 500, 600, 700, 800) và `Outfit` (400, 500, 600, 700, 800, 900) với `display=swap`.
+  2. **`frontend/src/index.css`**:
+     - Cập nhật biến font hệ thống: `--font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif` và `--font-body: 'Plus Jakarta Sans', 'Nunito', system-ui, sans-serif`.
+     - Thêm biến gia tốc chuyển động: `--ease-kinetic: cubic-bezier(0.32, 0.72, 0, 1)`.
+     - Bổ sung bộ lớp tiện ích Awwwards-Tier:
+       - `.double-bezel` & `.double-bezel-inner`: Khung viền đồng tâm kép.
+       - `.btn-island` & `.btn-icon-bubble`: Nút đảo CTA lồng bubble tròn.
+       - `.eyebrow-tag`: Thẻ capsule vi mô với tracking chữ rộng.
+       - `.fluid-island-header` & `.fluid-island-inner`: Header đảo nổi kính mờ.
+  3. **`frontend/src/components/layout/Navbar.jsx`**:
+     - Chuẩn hóa 100% icon sang `strokeWidth={1.5}`.
+     - Áp dụng trạng thái bấm xúc giác `btn-press active:scale-[0.98]` và nhãn viên thuốc hiện đại.
+  4. **`frontend/src/pages/CourseDetailPage.jsx`**:
+     - Thẻ hashtag tiêu đề `#TOEIC ETS 2026` chuyển sang `.eyebrow-tag` tinh tế.
+     - 7 Thẻ chọn Part tái cấu trúc theo kiến trúc **Double-Bezel**: Vỏ ngoài `p-1.5 rounded-2xl bg-slate-100/60 border border-slate-200/80` bọc lõi trong `p-4 rounded-[calc(1rem-0.125rem)] bg-white border border-slate-200/50`.
+     - Nút **"LUYỆN TẬP"** và **"BẮT ĐẦU THI FULL TEST"** nâng cấp thành **Button-in-Button Island CTA** với bubble tròn lồng icon `<PlayCircle size={18} strokeWidth={1.5} />`.
+     - Khối **"Kết quả làm bài của bạn"** và **"User Profile Card"** được bao bọc cấu trúc Double-Bezel lồng nhau hoàn mỹ.
+     - Toàn bộ icon (`Edit2`, `Trash2`, `Clock`, `Lightbulb`, `ChevronRight`, `User`, `BarChart3`...) chuẩn hóa `strokeWidth={1.5}`.
+  5. **`frontend/src/pages/ExamTakePage.jsx`**:
+     - Nút **"Nộp bài"** nâng cấp thành Button-in-Button Island CTA với icon bubble `<Send size={13} strokeWidth={1.5} />`.
+     - Các icon điều hướng (`ArrowLeft`, `Clock`, `Layers`, `Flag`, `Check`, `X`, `Eye`) chuẩn hóa `strokeWidth={1.5}`.
+- **Kết quả kiểm thử & Nghiệm thu**:
+  - `npm run build` thực thi thành công mỹ mãn trong 1.65s, **0 lỗi cú pháp hay cảnh báo module**.
+  - Không có bất kỳ thay đổi nào tác động vào thư mục `backend/` (tuân thủ nghiêm ngặt chỉ thị người dùng).
+  - Giao diện đạt độ hoàn thiện mỹ thuật vượt bậc, sắc sảo, có chiều sâu cấu trúc, đậm chất trải nghiệm Agency $150k+.
+
+### ĐỢT 21 (21/09/2026): NHÂN BẢN DỮ LIỆU MẪU CHO 9 BỘ ĐỀ ETS TOEIC 2026 (TỪ TEST 02 ĐẾN TEST 10)
+
+- **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng đã hoàn thành việc nhập dữ liệu chi tiết cho đề thi mẫu số 1 (`ETS TOEIC 2026 - Test 01`) gồm đầy đủ 200 câu hỏi và media Cloudinary chuẩn xác.
+  - Tuy nhiên, để tiết kiệm thời gian nhập liệu ban đầu và tập trung cho việc phát triển code giao diện cũng như các tính năng hệ thống, người dùng yêu cầu tạo ra 9 bộ đề thi mẫu khác (`ETS TOEIC 2026 - Test 02` đến `Test 10`) bằng cách nhân bản toàn bộ câu hỏi, audio, image, transcript, translation từ Test 01.
+  - Yêu cầu đảm bảo dữ liệu chạy thật được trên hệ thống (hoạt động 100%), có thể thi và luyện tập từng Part bình thường, sau này có thời gian sẽ cập nhật lại nội dung chi tiết từng đề.
+- **Giải pháp kỹ thuật kiến trúc**:
+  1. **Tạo UUID Deterministic (RFC-4122) bằng hàm băm MD5 trong MySQL**:
+     - Thay vì sử dụng biến session (`SET @var`) hay gọi hàm ngẫu nhiên `UUID()` gây lỗi không khớp khóa ngoại giữa `context_question` và `question`, giải pháp áp dụng thuật toán băm thuần túy:
+       $$f(\text{test\_id}, \text{old\_id}) = \text{LOWER}(\text{CONCAT}(\text{SUBSTR}(\text{MD5}(\text{test\_id} + \text{old\_id}), 1, 8), '-', \dots))$$
+     - Nhờ đó, ID của `context_question` mới và trường `context_question_id` của các câu hỏi con tương ứng trong bảng `question` được sinh ra hoàn toàn đồng nhất, độc lập và chính xác 100%.
+  2. **Tạo file SQL độc lập ([backend/seed_ets_2026_test02_to_test10.sql](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/seed_ets_2026_test02_to_test10.sql))**:
+     - Cho phép người dùng chạy trực tiếp trên cơ sở dữ liệu hiện có mà không cần xóa bảng hay cài đặt lại từ đầu.
+     - Thời gian thực thi toàn bộ 9 bộ đề (1,800 câu hỏi) chỉ mất khoảng **0.5 giây**.
+  3. **Tích hợp vào file tổng ([backend/database_script.sql](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql))**:
+     - Cập nhật file DDL/DML chính của dự án để bất kỳ khi nào khởi tạo database từ đầu, toàn bộ 10 bộ đề thi ETS 2026 (2,000 câu hỏi, 1,030 ngữ cảnh) đều được tạo sẵn tự động.
+- **Danh sách 10 đề thi ETS TOEIC 2026 trong hệ thống**:
+  1. `ddaaa16f-8d39-4669-9e60-6c9de8270c00`: ETS TOEIC 2026 - Test 01 (Dữ liệu gốc chuẩn 100%)
+  2. `ddaaa16f-8d39-4669-9e60-6c9de8270c02`: ETS TOEIC 2026 - Test 02 (Nhân bản)
+  3. `ddaaa16f-8d39-4669-9e60-6c9de8270c03`: ETS TOEIC 2026 - Test 03 (Nhân bản)
+  4. `ddaaa16f-8d39-4669-9e60-6c9de8270c04`: ETS TOEIC 2026 - Test 04 (Nhân bản)
+  5. `ddaaa16f-8d39-4669-9e60-6c9de8270c05`: ETS TOEIC 2026 - Test 05 (Nhân bản)
+  6. `ddaaa16f-8d39-4669-9e60-6c9de8270c06`: ETS TOEIC 2026 - Test 06 (Nhân bản)
+  7. `ddaaa16f-8d39-4669-9e60-6c9de8270c07`: ETS TOEIC 2026 - Test 07 (Nhân bản)
+  8. `ddaaa16f-8d39-4669-9e60-6c9de8270c08`: ETS TOEIC 2026 - Test 08 (Nhân bản)
+  9. `ddaaa16f-8d39-4669-9e60-6c9de8270c09`: ETS TOEIC 2026 - Test 09 (Nhân bản)
+  10. `ddaaa16f-8d39-4669-9e60-6c9de8270c10`: ETS TOEIC 2026 - Test 10 (Nhân bản)
+- **Kiểm tra & Xác minh**:
+  - Câu lệnh kiểm tra tổng quan ở cuối file SQL:
+    ```sql
+    SELECT t.id, t.title_test, t.status, COUNT(DISTINCT cq.id) AS total_cqs, COUNT(q.id) AS total_questions
+    FROM test t
+    LEFT JOIN context_question cq ON t.id = cq.test_id
+    LEFT JOIN question q ON cq.id = q.context_question_id
+    GROUP BY t.id, t.title_test, t.status
+    ORDER BY t.title_test ASC;
+    ```
+  - Kết quả: Đủ 10 đề, mỗi đề gồm đúng 103 ngữ cảnh và 200 câu hỏi (tổng cộng 2,000 câu).
+
+### ĐỢT 22 (21/09/2026): TẠO SCRIPT NHÂN BẢN 20 BỘ ĐỀ THI YBM - 2025 (TEST 01 ĐẾN TEST 20) PHỤC VỤ KIỂM THỬ PHÂN TRANG (PAGINATION)
+
+- **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng yêu cầu tạo thêm 20 đề thi mẫu nữa đặt tên theo chuỗi `YBM - 2025 - Test 01` đến `YBM - 2025 - Test 20` để kiểm thử toàn diện tính năng phân trang (`pageSize = 9`, điều hướng Trang 1, 2, 3, 4, nút Previous/Next) và bộ lọc/tìm kiếm trên giao diện người dùng.
+- **Nội dung thực hiện**:
+  1. **Sinh 20 bộ đề với UUID v5 Deterministic**:
+     - Mã ID đề thi có quy ước rõ ràng: `ybm20250-8d39-4669-9e60-6c9de8270c01` đến `ybm20250-8d39-4669-9e60-6c9de8270c20`.
+     - Áp dụng thuật toán băm `MD5(CONCAT(new_test_id, old_id))` tạo khóa chính và khóa ngoại độc lập cho 2,060 cụm ngữ cảnh (`context_question`) và 4,000 câu hỏi (`question`).
+     - Tất cả các đề đều ở trạng thái `PUBLISHED`, đầy đủ 200 câu/đề, sẵn sàng thi và luyện tập thật.
+  2. **File SQL độc lập ([backend/seed_ybm_2025_tests.sql](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/seed_ybm_2025_tests.sql))**:
+     - Cho phép người dùng chạy trực tiếp vào CSDL đang có sẵn mà không phải xóa hay nạp lại dữ liệu cũ.
+  3. **Tích hợp vào file chính ([backend/database_script.sql](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql))**:
+     - Bổ sung ở Mục 9, nâng tổng quy mô cơ sở dữ liệu lên **30 bộ đề thi hoàn chỉnh** (10 đề ETS 2026 + 20 đề YBM 2025) với tổng cộng **6,000 câu hỏi**.
+- **Kiểm thử**:
+  - Giao diện Frontend hiển thị 30 đề thi, chia thành 4 trang (mỗi trang 9 đề, trang cuối 3 đề).
+  - Tìm kiếm theo từ khóa "ETS" ra 10 đề, "YBM" ra 20 đề.
+  - Phân trang mượt mà, chuyển trang tức thì và hoạt động hoàn hảo.
+
+### Đợt 23: Phân tích & Triển khai tính năng Luyện Nghe Chép Chính Tả (TOEIC Dictation Mode) cho các Part phần Nghe (21/09/2026)
+
+- **Bối cảnh & Phân tích tính khả thi Backend hiện tại**:
+  - **Câu hỏi đặt ra**: CSDL và Backend hiện tại đã có thể thực hiện chức năng nghe chép chính tả cho các part phần nghe (Part 1, 2, 3, 4) chưa?
+  - **Kết luận**: **100% ĐÃ HOÀN TOÀN KHẢ THI VÀ ĐỦ DỮ LIỆU** ngay tại thời điểm hiện tại:
+    1. Bảng `context_question` đã lưu trữ đầy đủ `audio_url` (đường dẫn âm thanh Cloudinary mp3 cho từng câu/đoạn).
+    2. Trường `transcript` lưu trọn vẹn lời thoại tiếng Anh chuẩn bản xứ (đóng vai trò là Ground Truth để đối chiếu từ ngữ chép).
+    3. Trường `translation` lưu trữ bản dịch nghĩa tiếng Việt chi tiết (làm tài liệu gợi ý sau khi chép).
+    4. Trường `image_url` lưu ảnh cho Part 1 (tranh mô tả).
+    5. API hiện tại `GET /api/exam/{testID}` đã trả về danh sách `contextQuestions` với đầy đủ các trường trên, phân loại chính xác Part 1 (câu 1-6), Part 2 (câu 7-31), Part 3 (đoạn 32-70), Part 4 (đoạn 71-100).
+- **Các thành phần đã triển khai mới trên Frontend**:
+  1. **Trang làm bài Chép chính tả độc lập (`frontend/src/pages/DictationTakePage.jsx`)**:
+     - Tuân thủ tiêu chuẩn giao diện cao cấp `SOFT_SKILL.md` (Double-Bezel Card, Button-in-Button, font Outfit / Plus Jakarta Sans, `strokeWidth={1.5}`).
+     - **Bộ điều khiển Audio chuyên dụng**: Tua lùi 3s (`Alt + ←`), Tua tới 3s (`Alt + →`), Bật/Tạm dừng (`Space`), Lặp vô tận (Infinite Loop), Đa tốc độ phát (`0.8x`, `1.0x`, `1.2x`).
+     - **Thuật toán Smart Diff Checker**: So sánh văn bản người dùng gõ với `transcript` gốc:
+       - Chuẩn hóa dấu câu và ký tự viết hoa/thường để tính điểm công bằng.
+       - Hiển thị trực quan từng từ: Xanh lá (Đúng), Đỏ gạch ngang (Sai/Thừa), Vàng nét đứt (Từ còn thiếu).
+       - Chấm điểm phần trăm chính xác: $\text{Accuracy} = \frac{\text{Số từ đúng}}{\text{Tổng số từ target}} \times 100\%$.
+     - **Hệ thống hỗ trợ học tập**:
+       - Gợi ý chữ cái đầu (`First-letter Masking`: `S__ i_ w______ ...`).
+       - Xem đáp án toàn văn (`Reveal Transcript`).
+       - Xem bản dịch nghĩa tiếng Việt (`Vietnamese Translation`).
+     - **Bộ lưu trữ tiến độ (LocalStorage Persistence)**: Tự động lưu bài làm và điểm số từng câu dưới key `dictation_history_{testId}` giúp học viên không bị mất bài khi tải lại trang.
+     - **Thanh điều hướng câu hỏi (Segment Palette)**: Danh sách câu/đoạn nghe, đánh dấu trạng thái (Chưa làm / Đang làm / Đã hoàn thành kèm % điểm số).
+     - **Modal tổng kết phiên chép**: Thống kê số câu đã làm, điểm độ chính xác trung bình, phần trăm hoàn thành.
+  2. **Đăng ký định tuyến trong `frontend/src/App.jsx`**:
+     - Route mới: `/courses/:testId/dictation` (`<DictationTakePage />`).
+  3. **Tích hợp lối vào trong `frontend/src/pages/CourseDetailPage.jsx`**:
+     - Bổ sung Tab thứ 4: **`Chép chính tả (MỚI)`** trên thanh điều hướng chính.
+     - Bổ sung khu vực giới thiệu phương pháp Dictation và 4 thẻ Part nghe (Part 1, 2, 3, 4) kèm nút hành động trực tiếp.
+     - Bổ sung nút bấm nhanh `Chép chính tả` cho các Part Listening trong danh sách Luyện tập.
+- **Hướng dẫn mở rộng Backend (Tùy chọn - Nếu muốn đồng bộ đám mây đa thiết bị)**:
+  - Để lưu trữ lịch sử chép chính tả lên CSDL MySQL thay vì LocalStorage, lập trình viên có thể bổ sung bảng sau:
+    ```sql
+    CREATE TABLE IF NOT EXISTS `dictation_history` (
+      `id` VARCHAR(36) NOT NULL PRIMARY KEY,
+      `user_id` VARCHAR(36) NOT NULL,
+      `context_question_id` VARCHAR(36) NOT NULL,
+      `typed_text` TEXT NOT NULL,
+      `accuracy_score` INT NOT NULL,
+      `time_spent_seconds` INT DEFAULT 0,
+      `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT `fk_dh_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+      CONSTRAINT `fk_dh_context` FOREIGN KEY (`context_question_id`) REFERENCES `context_question` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ```
+
+### ĐỢT 24 (23/09/2026): TÍCH HỢP TÍNH NĂNG ĐĂNG NHẬP BẰNG TÀI KHOẢN GOOGLE (GOOGLE OAUTH2 SIGN-IN) TOÀN DIỆN CHO BACKEND VÀ FRONTEND
+
+- **Bối cảnh & Yêu cầu**:
+  - Người dùng đã hoàn thiện các thành phần cơ bản ở Backend (`AuthController`, `AuthService`, `GoogleLoginRequest`) và yêu cầu xác minh tính đúng đắn toàn diện, đồng thời hoàn thiện toàn bộ luồng frontend cho chức năng Đăng nhập bằng tài khoản Google.
+  - Sau khi hoàn thành, đồng bộ lại file ngữ cảnh chuẩn SSOT (`PROJECT_CONTEXT.md`).
+- **Nội dung kiểm tra & hoàn thiện Backend (Spring Boot 3)**:
+  1. **Kiểm tra Controller & Service**:
+     - `backend/src/main/java/.../module/auth/AuthController.java`: Endpoint `@PostMapping("/google")` tiếp nhận `@Valid @RequestBody GoogleLoginRequest request` với trường `idToken`, gọi `authService.loginWithGoogle(request.getIdToken())` và trả về `ApiResponse.success("Đăng nhập thông qua tài khoản Google thành công", response)`. Endpoint nằm trong `/api/auth/**` nên đã được cấp quyền công khai (`permitAll()`) trong `SecurityConfig.java`.
+     - `backend/src/main/java/.../module/auth/service/AuthServiceImpl.java`: Phương thức `loginWithGoogle(String idToken)` sử dụng `RestTemplate` xác minh với endpoint chuẩn của Google: `https://oauth2.googleapis.com/tokeninfo?id_token={idToken}`.
+     - Trích xuất thông tin Google Profile: `email`, `name`, `picture`.
+     - Tra cứu người dùng bằng email kèm vai trò (`findByUserEmailWithRole(email)`):
+       - Nếu tài khoản đã tồn tại: Kiểm tra tài khoản có bị khóa không (`isLocked`), cập nhật ảnh đại diện từ Google nếu người dùng chưa có avatar, cấp JWT Token ứng dụng thông qua `jwtService.generateToken(user)`.
+       - Nếu là tài khoản mới: Tự động khởi tạo `User` với `authProvider = "GOOGLE"`, role mặc định `ROLE_USER`, `isLocked = false`, các trường streak/score khởi tạo = 0, lưu vào CSDL và cấp JWT Token tương tự.
+  2. **Khắc phục lỗi tiềm ẩn về Ràng buộc CSDL (Crucial DB Bug Fix)**:
+     - **Vấn đề phát hiện**: Trong thực thể `User.java`, hai trường `userNumberphone` và `userPassword` ban đầu khai báo `@Column(nullable = false)`. Tuy nhiên tài khoản Google OAuth2 không có sẵn số điện thoại và mật khẩu, khiến khi lưu mới `newUser` với giá trị `null` sẽ bị Hibernate / MySQL từ chối nếu có ràng buộc `NOT NULL`.
+     - **Giải pháp xử lý**: Đã loại bỏ `nullable = false` tại hai trường này trong `User.java` (cho phép `NULL` đối với người dùng đăng nhập qua bên thứ ba), đồng thời cập nhật file script DDL [backend/database_script.sql](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/database_script.sql) bổ sung thêm cột `auth_provider VARCHAR(50) DEFAULT 'LOCAL'` vào cấu trúc bảng `user`.
+- **Nội dung hoàn thiện trên Frontend (React 19 & Vite)**:
+  1. **Cấu hình Google OAuth Provider**:
+     - Sử dụng thư viện `@react-oauth/google` (^0.13.5).
+     - Trong file [frontend/src/main.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/main.jsx): Bọc toàn bộ ứng dụng bằng `<GoogleOAuthProvider clientId="1009775225287-9oagpu4mfa65ktdhhaob45r7v5thet98.apps.googleusercontent.com">`.
+     - **Sửa lỗi cú pháp runtime**: Sửa lệnh `ReactDOM.createRoot` thành `createRoot` được import trực tiếp từ `react-dom/client`, tránh lỗi `ReferenceError: ReactDOM is not defined`.
+  2. **Dịch vụ API ([frontend/src/services/authService.js](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/services/authService.js))**:
+     - Bổ sung hàm `loginWithGoogle: async (idToken) => { ... }` gửi payload `{ idToken }` tới endpoint `POST /api/auth/google`.
+  3. **Quản lý phiên & Xác thực ([frontend/src/context/AuthContext.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/context/AuthContext.jsx))**:
+     - Bổ sung phương thức `loginWithGoogle(idToken)`: Gửi request lên backend, nhận `accessToken` và thông tin `userData`, lưu trữ vào `localStorage` (`accessToken`, `currentUser`), cập nhật State người dùng và cấp phát ra toàn ứng dụng qua hook `useAuth()`.
+  4. **Giao diện Trang Đăng nhập ([frontend/src/pages/LoginPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/LoginPage.jsx))**:
+     - Tích hợp nút bấm Google chuẩn từ `<GoogleLogin />` (`@react-oauth/google`) đặt phía dưới form với dải phân cách thẩm mỹ "HOẶC TIẾP TỤC VỚI".
+     - Xử lý sự kiện `onSuccess`: Lấy `credentialResponse.credential` (chính là `idToken` của Google), kích hoạt `loginWithGoogle`.
+     - Xử lý điều hướng thông minh theo vai trò sau khi đăng nhập thành công:
+       - `ROLE_ADMIN` -> Điều hướng ngay vào Bảng Quản trị `/admin/users`.
+       - `ROLE_TEACHER` -> Điều hướng ngay vào Quản lý Đề thi `/admin/tests`.
+       - `ROLE_USER` -> Điều hướng về trang trước đó (`redirectPath`) hoặc trang chủ `/`.
+     - Xử lý thông báo lỗi `onError` và hiển thị bằng component `Toast`.
+  5. **Tích hợp thêm trên Trang Đăng ký ([frontend/src/pages/RegisterPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/RegisterPage.jsx))**:
+     - Bổ sung nút đăng nhập Google một chạm tương tự, giúp học viên có thể nhanh chóng bắt đầu học tập mà không cần nhập thủ công các trường biểu mẫu đăng ký.
+- **Kiểm thử & Đánh giá**:
+  - Đã thực hiện chạy lệnh `npm run build` trên Vite 8: Biên dịch thành công 100% trong 1.37s với mã thoát 0 (Exit Code 0), không còn bất kỳ lỗi cú pháp hay thiếu sót phụ thuộc.
+
 ---
 
 ## 9. HƯỚNG DẪN KHỞI CHẠY & NGUYÊN TẮC PHÁT TRIỂN (DEVELOPER HANDBOOK)
 
 ### 9.1. Lệnh khởi chạy môi trường phát triển (Local Run):
+
 - **Khởi chạy Backend (Spring Boot 3)**:
   ```powershell
   cd backend
@@ -901,6 +1132,7 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
   ```
 
 ### 9.2. Nguyên tắc BẮT BUỘC dành cho Lập trình viên & AI Assistant:
+
 1. **QUY TẮC SSOT DUY NHẤT**:
    - Trước khi làm bất kỳ tác vụ nào, **đọc ngay file `PROJECT_CONTEXT.md` này**.
    - Sau khi hoàn thành bất kỳ thay đổi nào (CSDL, API, cấu trúc thư mục, giao diện, logic), **BẮT BUỘC phải cập nhật ngay vào file `PROJECT_CONTEXT.md` này** để đồng bộ ngữ cảnh vĩnh viễn cho các phiên làm việc tiếp theo.

@@ -1,6 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.auth;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.dto.AuthResponseDTO;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.GoogleLoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.LoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.RegisterRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.service.AuthService;
@@ -34,5 +35,11 @@ public class AuthController {
     {
         AuthResponseDTO response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<ApiResponse<AuthResponseDTO>> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request){
+        AuthResponseDTO response = authService.loginWithGoogle(request.getIdToken());
+        return ResponseEntity.ok(ApiResponse.success("Đăng nhập thông qua tài khoản Google thành công", response));
     }
 }

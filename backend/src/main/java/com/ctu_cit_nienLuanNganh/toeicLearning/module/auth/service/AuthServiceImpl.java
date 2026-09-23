@@ -16,6 +16,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor //Anotation tạo ra hàm xây dựng chứa tất cả các trường dữ liệu có từ khóa final
@@ -78,5 +82,56 @@ public class AuthServiceImpl implements AuthService{
             throw  new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
         return authMapper.toDTO(user, jwtService.generateToken(user));
+    }
+
+    @Override
+    public AuthResponseDTO loginWithGoogle(String idToken) {
+        String googleVerifyUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> googlePayLoad;
+        try{
+            googlePayLoad = restTemplate.getForObject(googleVerifyUrl, Map.class); //Lấy dữ liệu từ google và trả về một map
+        } catch (Exception e){
+            throw new AppException(ErrorCode.UNAUTHENTICATED); //Token không hợp lệ
+        }
+        if(googlePayLoad==null || !googlePayLoad.containsKey("email")){
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        String email = (String) googlePayLoad.get("email");
+        String name = (String) googlePayLoad.getOrDefault("name","Google User");
+        String picture = (String) googlePayLoad.get("picture");
+
+        Optional<User> existingUserOpt = userRepository.findByUserEmailWithRole(email);
+        User user;
+        if(existingUserOpt.isPresent()){
+            user = existingUserOpt.get();
+            if(Boolean.TRUE.equals(user.getIsLocked())){
+                throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+            }
+            if(picture!=null && (user.getUserAvatar() == null || user.getUserAvatar().isEmpty())) {
+                user.setUserAvatar(picture);
+                userRepository.save(user);
+            }
+        }
+        else{
+            Role defaultRole = roleRepository.findByRoleName(RoleType.ROLE_USER.name())
+                    .orElseThrow(()-> new AppException(ErrorCode.ROLE_NOT_FOUND));
+
+            User newUser = User.builder()
+                    .userName(name)
+                    .userEmail(email)
+                    .userAvatar(picture)
+                    .authProvider("GOOGLE")
+                    .role(defaultRole)
+                    .isLocked(false)
+                    .currentStreak(0)
+                    .highestStreak(0)
+                    .totalScore(0)
+                    .build();
+            user = userRepository.save(newUser);
+        }
+        String appAccessToken = jwtService.generateToken(user);
+        return authMapper.toDTO(user, appAccessToken);
     }
 }

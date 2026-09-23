@@ -7,4 +7,5 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.RegisterReque
 public interface AuthService {
     AuthResponseDTO register(RegisterRequest request);
     AuthResponseDTO login(LoginRequest request);
+    AuthResponseDTO loginWithGoogle(String idToken);
 }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Phone, Lock, UserPlus, BookOpen, CheckCircle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import Toast from '../components/common/Toast';
 
 const RegisterPage = () => {
@@ -15,8 +16,40 @@ const RegisterPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleRoleRedirect = (loggedUser) => {
+    const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
+    if (roleStr === 'ROLE_ADMIN') {
+      navigate('/admin/users');
+    } else if (roleStr === 'ROLE_TEACHER') {
+      navigate('/admin/tests');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      setErrorMsg('');
+      if (!credentialResponse?.credential) {
+        throw new Error('Không nhận được thông tin xác thực từ Google');
+      }
+      const loggedUser = await loginWithGoogle(credentialResponse.credential);
+      handleRoleRedirect(loggedUser);
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Đăng ký/Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!';
+      setErrorMsg(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrorMsg('Đăng nhập Google thất bại hoặc bạn đã đóng cửa sổ đăng nhập.');
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -239,6 +272,36 @@ const RegisterPage = () => {
                 )}
               </button>
             </form>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: '22px 0 18px',
+                color: 'var(--text-muted, #718096)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+              <span style={{ padding: '0 12px' }}>Hoặc tiếp tục với</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                theme="outline"
+                size="large"
+                shape="rectangular"
+                text="continue_with"
+                locale="vi"
+              />
+            </div>
 
             <div className="auth-footer">
               Đã có tài khoản?{' '}
