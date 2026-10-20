@@ -35,6 +35,7 @@ public enum ErrorCode {
     QUESTION_NOT_FOUND(3002, "Không tìm thấy câu hỏi yêu cầu", HttpStatus.NOT_FOUND),
     FILE_NOT_FOUND(3003, "Không tìm thấy file", HttpStatus.NOT_FOUND),
     FILE_UPLOAD_FAILED(3004, "Tải file lên hệ thống thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
+    TEST_RESULT_NOT_FOUND(3005, "Không tìm thấy kết quả làm bài thi", HttpStatus.NOT_FOUND),
 
 
     // Đặt vào trong enum ErrorCode.java

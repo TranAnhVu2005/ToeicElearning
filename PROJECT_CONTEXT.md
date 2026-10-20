@@ -2,7 +2,7 @@
 
 > **Mã học phần / Đề tài**: CT446E - Niên luận ngành Công nghệ Thông tin - Trường ĐH Cần Thơ (CTU)  
 > **Tác giả / Sinh viên thực hiện**: Trần Anh Vũ (MSSV: B2306603)  
-> **Phiên bản tài liệu**: 4.3 (Hoàn thiện toàn diện chức năng Đăng nhập bằng Google - Google OAuth2 Sign-In cho cả Backend Spring Boot 3 và Frontend React 19; Tích hợp @react-oauth/google, GoogleOAuthProvider với Client ID chính thức; Bổ sung loginWithGoogle trong authService và AuthContext; Hoàn thiện giao diện LoginPage và RegisterPage chuẩn SOFT_SKILL.md kèm điều hướng thông minh theo vai trò; Điều chỉnh User Entity và database_script.sql tương thích người dùng OAuth2 không mật khẩu/số điện thoại)  
+> **Phiên bản tài liệu**: 4.5 (Tái cấu trúc Module Exam theo chuẩn Service Interface/Impl; Bổ sung các Repositories TestResultRepository và UserAnswerRepository; Hoàn thiện luồng Nộp bài thi Server-side & Xem lại lịch sử thi Test History & Review chuẩn ETS 10-990)  
 > **Vị trí file**: `PROJECT_CONTEXT.md` (Thư mục gốc của repository)  
 > **Mục đích tài liệu**: Tài liệu này đóng vai trò là **nguồn ngữ cảnh duy nhất (Single Source of Truth - SSOT)** cho toàn bộ dự án. Toàn bộ mã nguồn, cấu trúc CSDL, nghiệp vụ thi ETS, API Endpoints, kiến trúc Frontend/Backend và các thay đổi đều được nén lại chi tiết tại đây. Lập trình viên và AI Assistant chỉ cần đọc duy nhất file này để nắm trọn vẹn 100% dự án mà không cần quét lại toàn bộ thư mục mã nguồn.
 
@@ -78,12 +78,12 @@ TOEIC_LEARNING/
 │           │   └── PaymentTransaction.java, Notification.java
 │           ├── module/            <-- Tổ chức theo Module chức năng
 │           │   ├── auth/          <-- Đăng ký, đăng nhập, cấp phát JWT (AuthController, AuthService)
-│           │   ├── exam/          <-- Quản lý đề thi, làm bài thi, luyện tập part
+│           │   ├── exam/          <-- Quản lý đề thi, làm bài thi, luyện tập part, nộp bài & lịch sử
 │           │   │   ├── ExamController.java
-│           │   │   ├── dto/       <-- PartForUserResponseDTO, TestDetailResponseDTO, v.v.
+│           │   │   ├── dto/       <-- PartForUserResponseDTO, SubmitExamResponseDTO, TestHistoryResponseDTO, TestResultDetailResponseDTO
 │           │   │   ├── mapper/    <-- PartForUserMapper, TestMapper
-│           │   │   ├── request/   <-- CreateTestRequest, ContextQuestionRequest, QuestionRequest
-│           │   │   └── service/   <-- ExamService (Lưu đề, tính orderIndex, dọn media thừa, publish/draft)
+│           │   │   ├── request/   <-- CreateTestRequest, ContextQuestionRequest, QuestionRequest, SubmitExamAnswer
+│           │   │   └── service/   <-- ExamService (Interface), ExamServiceImpl (Implementation)
 │           │   ├── classroom/     <-- Quản lý lớp học (ClassRoomController, ClassroomResponseDTO)
 │           │   ├── media/         <-- Upload file đa phương tiện (MediaController)
 │           │   ├── user/          <-- Quản lý thông tin học viên cá nhân (UserController, UserService)
@@ -221,20 +221,21 @@ erDiagram
    - `id` VARCHAR(36) PK
    - `listening_score` INT DEFAULT 0 (Điểm Listening 5 -> 495)
    - `reading_score` INT DEFAULT 0 (Điểm Reading 5 -> 495)
-   - `total_score` INT DEFAULT 0 (Tổng điểm 10 -> 990)
-   - `correct_count` INT DEFAULT 0 (Số câu đúng)
-   - `total_count` INT DEFAULT 0 (Tổng số câu trong bài nộp)
-   - `total_time` INT DEFAULT 0 (Thời gian làm bài tính bằng giây)
-   - `user_id` VARCHAR(36) NOT NULL FK -> `user(id)`
-   - `test_id` VARCHAR(36) NOT NULL FK -> `test(id)`
-   - `part_id` VARCHAR(36) NULL FK -> `part(id)` (Nếu làm riêng theo Part)
-   - `assignment_id` VARCHAR(36) NULL FK -> `assignment(id)` (Nếu làm theo bài tập giáo viên giao)
-   - `created_at`, `updated_at` TIMESTAMP
+   - `total_score` INT DEFAULT 0 (Tổng điểm 10 -> 990 nếu Full Test; tổng câu đúng nếu theo Part)
+   - `correct_count` INT DEFAULT 0 (Số câu làm đúng)
+   - `total_count` INT NOT NULL (Tổng số câu trong bài nộp)
+   - `total_time` INT NOT NULL (Thời gian làm bài tính bằng giây)
+   - `teacher_comment` TEXT (Nhận xét của giáo viên nếu là bài tập giao)
+   - `user_id` VARCHAR(36) FK -> `user(id)` ON DELETE CASCADE
+   - `test_id` VARCHAR(36) FK -> `test(id)` ON DELETE CASCADE
+   - `part_id` VARCHAR(36) NULL FK -> `part(id)` (NULL nếu làm Full Test)
+   - `assignment_id` VARCHAR(36) NULL FK -> `assignment(id)` ON DELETE SET NULL
+   - `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 8. **`user_answer`**: Lựa chọn đáp án của học viên cho từng câu hỏi.
    - `id` VARCHAR(36) PK
-   - `selected_option` CHAR(1) ('A', 'B', 'C', 'D')
-   - `is_correct` BOOLEAN DEFAULT FALSE
-   - `question_id` VARCHAR(36) NOT NULL FK -> `question(id)`
+   - `selected_answer` CHAR(1) ('A', 'B', 'C', 'D' hoặc NULL nếu bỏ qua)
+   - `is_correct` BOOLEAN NOT NULL (Đúng hay sai)
+   - `question_id` VARCHAR(36) NOT NULL FK -> `question(id)` ON DELETE CASCADE
    - `test_result_id` VARCHAR(36) NOT NULL FK -> `test_result(id)` ON DELETE CASCADE
 9. **`classroom`**: Lớp học do giáo viên phụ trách.
    - `id` VARCHAR(36) PK
@@ -372,6 +373,9 @@ erDiagram
   - Phân quyền: Học viên thông thường chỉ thấy `status = PUBLISHED`. Admin/Teacher thấy cả `DRAFT` và `PUBLISHED`.
 - `GET /api/exam/{testID}`: Lấy chi tiết Full Test (200 câu) kèm cấu trúc Part, ContextQuestion và Question.
 - `GET /api/exam/{testID}/parts/{partID}`: Lấy danh sách câu hỏi của 1 Part cụ thể (trả về `PartForUserResponseDTO`) phục vụ màn hình Luyện tập theo Part.
+- `POST /api/exam/submit`: Nộp bài thi (Full Test hoặc theo Part). Chấm điểm server-side, tính scaled score TOEIC (10 - 990), cập nhật chuỗi Streak, lưu vào bảng `test_result` & `user_answer`.
+- `GET /api/exam/history`: Lấy lịch sử làm bài thi của người dùng (`?testId={testId}` cho CourseDetailPage hoặc không truyền cho ProfilePage).
+- `GET /api/exam/history/{resultId}`: Lấy chi tiết bài thi đã làm để xem lại (Review Mode: hiển thị đáp án chọn, đáp án đúng, câu đúng/sai, lời giải thích và transcript).
 - `POST /api/exam/create`: Tạo bộ đề thi mới (`PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")`).
 - `PUT /api/exam/update/{testID}`: Cập nhật nội dung đề thi, tự động dọn dẹp media thừa trên Cloudinary (`PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")`).
 - `PATCH /api/exam/{testID}/publish`: Xuất bản đề thi sang `PUBLISHED` để học viên thi thử.
@@ -398,7 +402,11 @@ erDiagram
 
 ### 5.2. Các Service Cốt lõi:
 
-1. **`ExamService.java`**:
+1. **`ExamService.java` & `ExamServiceImpl.java`**:
+   - Kiến trúc Interface - Implementation phân tách rõ ràng (Clean Architecture).
+   - `submitExam`: Chấm điểm tự động, tính scaled score TOEIC (10 - 990), cập nhật chuỗi ngày học (`currentStreak`, `highestStreak`, `lastActiveDate`) và lưu `test_result`, `user_answer`.
+   - `getTestHistory`: Truy vấn danh sách bài đã nộp từ `TestResultRepository`.
+   - `getTestResultDetail`: Truy vấn chi tiết câu trả lời từ `UserAnswerRepository` phục vụ Review mode.
    - `saveTestDetail`: Duyệt qua cây đề thi, tính toán `orderIndex` và `questionNumber`.
      - Sử dụng helper `getStartingQuestionNumber(partIndex, questionCounter)`:
        - Part 1 $\rightarrow$ 1 | Part 2 $\rightarrow$ 7 | Part 3 $\rightarrow$ 32 | Part 4 $\rightarrow$ 71 | Part 5 $\rightarrow$ 101 | Part 6 $\rightarrow$ 131 | Part 7 $\rightarrow$ 147.
@@ -1103,8 +1111,44 @@ Hệ thống hỗ trợ tương tác giữa Giáo viên (`ROLE_TEACHER`) và H�
      - Xử lý thông báo lỗi `onError` và hiển thị bằng component `Toast`.
   5. **Tích hợp thêm trên Trang Đăng ký ([frontend/src/pages/RegisterPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/RegisterPage.jsx))**:
      - Bổ sung nút đăng nhập Google một chạm tương tự, giúp học viên có thể nhanh chóng bắt đầu học tập mà không cần nhập thủ công các trường biểu mẫu đăng ký.
+### ĐỢT 25 (24/09/2026): TÁI CẤU TRÚC TOÀN DIỆN GIAO DIỆN LÀM BÀI THI (EXAM TAKE PAGE) THEO PHONG CÁCH STUDY4
+
+- **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng cung cấp 5 ảnh chụp thực tế từ nền tảng luyện thi hàng đầu STUDY4 và yêu cầu thiết kế lại giao diện phòng thi [frontend/src/pages/ExamTakePage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/ExamTakePage.jsx).
+  - Vấn đề giao diện cũ: Phân trang theo từng ngữ cảnh đơn lẻ (`currentContextIndex`), buộc thí sinh phải nhấn nút "Ngữ cảnh kế tiếp" hàng trăm lần liên tục, gây ức chế và không phản ánh đúng trải nghiệm thi trực tuyến.
+  - Mục tiêu mới: **Hiển thị toàn bộ câu hỏi của một Part trong 1 trang cuộn duy nhất**, kết hợp Sidebar cố định bên phải với đồng hồ đếm ngược, nút Nộp bài và bảng câu hỏi phân theo Part có khả năng nhảy câu tức thì.
+- **Nội dung cải tiến & thiết kế mới**:
+  1. **Hiển thị toàn bộ câu hỏi của mỗi Part trên một trang cuộn (Single-page Part Scrolling)**:
+     - Chuyển đổi trạng thái điều hướng chính sang `activePart` (từ Part 1 đến Part 7).
+     - Khi thí sinh chọn một Part (ví dụ Part 1 hoặc Part 2): Toàn bộ câu hỏi thuộc Part đó (Part 1: câu 1-6; Part 2: câu 7-31; Part 3: đoạn 32-70; Part 4: đoạn 71-100; Part 5: câu 101-130; Part 6: đoạn 131-146; Part 7: đoạn 147-200) được kết xuất liền mạch từ trên xuống dưới trên một trang cuộn mượt mà.
+     - Dưới chân mỗi Part trang bị nút chuyển Part nhanh (`Quay lại Part trước` / `Chuyển sang Part kế tiếp` hoặc `Hoàn tất & Nộp bài`).
+  2. **Thanh chọn Part dạng Pill ở đầu trang (Top Navigation Tabs)**:
+     - Thiết kế theo chuẩn STUDY4: Hàng nút pill bo tròn `[Part 1] [Part 2] ... [Part 7]` gắn chặt phía dưới Header (`sticky top-[53px]`).
+     - Hiển thị tiến độ câu đã làm ngay trên từng pill (ví dụ: `Part 1 (6/6)`).
+     - Bổ sung nút chuyển đổi `Highlight nội dung` và mở rộng/thu gọn `Hướng dẫn làm bài ETS Directions`.
+  3. **Sidebar điều khiển & Bảng câu hỏi cố định bên phải (Right Sticky Sidebar)**:
+     - Chiều rộng chuẩn 320px, cố định khi cuộn trang (`position: sticky; top: 108px`).
+     - **Khu vực 1 (Đồng hồ & Nộp bài)**:
+       - Hiển thị nhãn `Thời gian làm bài:` kèm đồng hồ đếm ngược/bấm giờ cỡ chữ lớn, font số monospace/tabular-nums.
+       - Nút `NỘP BÀI` lớn, viền nổi bật, click mở Modal xác nhận thông tin tổng số câu đã làm / chưa làm.
+       - Liên kết `Khôi phục/lưu bài làm` và ghi chú hướng dẫn đánh dấu ghim câu hỏi để xem lại (Review).
+     - **Khu vực 2 (Bảng 200 câu hỏi chia theo từng Part)**:
+       - Phân nhóm rõ ràng theo từng Part (`Part 1`, `Part 2`, ..., `Part 7`).
+       - Lưới 5 cột hiển thị các nút số thứ tự câu hỏi:
+         - Chưa làm: Nền trắng, viền xám nhạt (`#cbd5e1`).
+         - Đã làm: Nền xanh lam (`#3b82f6`), chữ trắng đậm.
+         - Đã đánh dấu xem lại: Nền vàng cam (`#fef3c7`), chấm cờ cam ở góc.
+         - Sau khi nộp bài: Nền xanh lá cho câu đúng (`#10b981`), nền đỏ cho câu sai (`#ef4444`).
+       - **Tính năng nhảy câu thông minh**: Khi bấm vào bất kỳ số câu hỏi nào trên bảng, nếu câu đó thuộc Part khác, hệ thống sẽ tự động chuyển sang Part tương ứng và cuộn mượt mà (`scrollIntoView`) đưa câu hỏi đó vào giữa màn hình kèm hiệu ứng nhấp nháy làm nổi bật.
+  4. **Bộ điều khiển âm thanh tùy biến (`AudioPlayerBar`)**:
+     - Thiết kế thanh phát audio thanh mảnh, tinh tế cho từng file nghe (Part 1, 2, 3, 4) thay thế thẻ audio mặc định thô kệch của trình duyệt.
+     - Đầy đủ nút Play/Pause tròn, thanh trượt Scrubber tua thời gian, hiển thị thời lượng hiện tại/tổng, nút bật/tắt âm lượng kèm thanh chỉnh âm lượng, và nút đổi tốc độ nghe đa mức (`0.8x`, `1.0x`, `1.2x`).
+  5. **Bảo tồn trọn vẹn chế độ Chấm điểm & Xem lại (Review Mode)**:
+     - Giữ nguyên thẻ tổng kết điểm số chuẩn ETS sau khi nộp (Listening / Reading / Tổng điểm / Độ chính xác).
+     - Hiển thị đáp án đúng (tích xanh), đáp án thí sinh chọn (nếu sai gạch chéo đỏ), lời giải thích chi tiết, audio transcript và bản dịch tiếng Việt cho từng câu hỏi.
+     - **Sửa lỗi hiển thị thời gian làm bài trong Sidebar sau khi nộp**: Khắc phục việc đồng hồ Sidebar bị gán cứng thành `'00:00'`; cập nhật hiển thị chính xác tổng thời gian hoàn thành thực tế (`formatTime(scoreResults?.timeSpent || 0)`), đồng bộ 100% với thẻ kết quả (ví dụ: `01:34` tương ứng 1p 34s).
 - **Kiểm thử & Đánh giá**:
-  - Đã thực hiện chạy lệnh `npm run build` trên Vite 8: Biên dịch thành công 100% trong 1.37s với mã thoát 0 (Exit Code 0), không còn bất kỳ lỗi cú pháp hay thiếu sót phụ thuộc.
+  - Chạy lệnh `npm run build` trên Vite 8: Biên dịch thành công 100% trong 1.81s với mã thoát 0 (Exit Code 0).
 
 ---
 

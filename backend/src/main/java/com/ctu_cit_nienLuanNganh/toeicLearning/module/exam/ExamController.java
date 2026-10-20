@@ -7,7 +7,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TestStatus;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.service.ExamService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.service.ExamServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/exam")
 @RequiredArgsConstructor
 public class ExamController {
-    private final ExamService examService;
+    private final ExamServiceImpl examService;
     @GetMapping("/list")
     public ResponseEntity<ApiResponse<PageResponse<Test>>> getFullTest(
             @ModelAttribute PageParams pageParams,

@@ -22,8 +22,6 @@ public class UserAnswer extends BaseEntity { // Bảng này trong SQL không có
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
 
-    @Column(name = "time_spent")
-    private Integer timeSpent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_result_id")
