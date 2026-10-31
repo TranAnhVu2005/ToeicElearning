@@ -26,10 +26,36 @@ public class PaymentTransaction extends BaseEntity {
     @Column(name = "vnp_txn_ref", nullable = false, unique = true, length = 100)
     private String vnpTxnRef;
 
+    @Column(name = "product_type", length = 40)
+    private String productType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_application_id")
+    private TeacherApplication teacherApplication;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_id")
+    private Test test;
+
+    @Column(name = "product_name_snapshot", length = 255)
+    private String productNameSnapshot;
+
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
     @CreationTimestamp
     @Column(name = "payment_date", updatable = false)
     private LocalDateTime paymentDate;
+
+    @Column(name = "vnp_transaction_no", length = 32)
+    private String vnpTransactionNo;
+
+    @Column(name = "vnp_response_code", length = 8)
+    private String vnpResponseCode;
+
+    @Column(name = "vnp_transaction_status", length = 8)
+    private String vnpTransactionStatus;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
 }

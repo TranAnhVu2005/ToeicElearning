@@ -10,6 +10,7 @@ public class UserMapper {
         if (u == null) {
             return null;
         }
+        boolean hasLocalPassword = u.getUserPassword() != null && !u.getUserPassword().isBlank();
         return UserResponseDTO.builder()
                 .id(u.getId())
                 .userName(u.getUserName())
@@ -17,6 +18,8 @@ public class UserMapper {
                 .userNumberphone(u.getUserNumberphone())
                 .userAvatar(u.getUserAvatar())
                 .role(u.getRole() != null ? u.getRole().getRoleName() : "ROLE_USER")
+                .hasLocalPassword(hasLocalPassword)
+                .canSetLocalPassword(!hasLocalPassword && u.getGoogleSub() != null && !u.getGoogleSub().isBlank())
                 .build();
     }
 }

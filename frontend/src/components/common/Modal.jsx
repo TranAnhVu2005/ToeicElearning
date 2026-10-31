@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px' }) => {
+const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', className = '' }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -25,7 +25,7 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px' })
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal-container"
+        className={`modal-container ${className}`.trim()}
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >

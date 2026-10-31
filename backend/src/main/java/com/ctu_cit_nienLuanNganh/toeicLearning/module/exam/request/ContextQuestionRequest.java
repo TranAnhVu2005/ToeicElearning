@@ -10,6 +10,12 @@ import java.util.List;
 public class ContextQuestionRequest {
     private String audioUrl;
     private String imageUrl;
+    private String audioPublicId;
+    private String imagePublicId;
+    private String audioFormat;
+    private String imageFormat;
+    private String audioDeliveryType;
+    private String imageDeliveryType;
     private String paragraph;
     private String transcript;
     private String translation;

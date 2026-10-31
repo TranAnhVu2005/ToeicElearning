@@ -7,10 +7,9 @@ import apiClient from '../api/apiClient';
  * @param {File} file - File nhị phân từ input máy tính
  * @param {string} testTitle - Tiêu đề bài thi để tự động gom nhóm thư mục
  * @param {'audio' | 'image'} type - Phân loại tệp tin
- * @param {string} [oldUrl] - Đường link cũ cần xóa khỏi Cloudinary (nếu có)
  * @returns {Promise<string>} - Đường link URL hoàn chỉnh của file trên Cloudinary
  */
-export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio', oldUrl = null) => {
+export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio', privateExamMedia = false) => {
   if (!file) {
     throw new Error('Chưa có file nào được chọn.');
   }
@@ -28,10 +27,7 @@ export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', folder);
-  if (oldUrl && typeof oldUrl === 'string' && oldUrl.includes('cloudinary.com')) {
-    formData.append('oldUrl', oldUrl.trim());
-  }
-
+  if (privateExamMedia) formData.append('privateExamMedia', 'true');
   const response = await apiClient.post('/media/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -39,7 +35,7 @@ export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio
   });
 
   if (response.data && response.data.code === 1000 && response.data.data?.url) {
-    return response.data.data.url;
+    return response.data.data;
   }
 
   throw new Error(response.data?.message || 'Không thể tải file lên máy chủ.');
@@ -47,13 +43,12 @@ export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio
 
 /**
  * Upload ảnh đại diện (Avatar) người dùng lên Cloudinary
- * Tự động gom vào thư mục Resource/toeic-learning/avatars và xóa avatar cũ nếu có
+ * Tự động gom vào thư mục Resource/toeic-learning/avatars
  * 
  * @param {File} file - File ảnh từ máy tính
- * @param {string} [oldAvatarUrl] - URL avatar cũ của người dùng
  * @returns {Promise<string>} - URL avatar mới
  */
-export const uploadAvatar = async (file, oldAvatarUrl = null) => {
+export const uploadAvatar = async (file) => {
   if (!file) {
     throw new Error('Chưa có file nào được chọn.');
   }
@@ -61,10 +56,6 @@ export const uploadAvatar = async (file, oldAvatarUrl = null) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', 'Resource/toeic-learning/avatars');
-  if (oldAvatarUrl && typeof oldAvatarUrl === 'string' && oldAvatarUrl.includes('cloudinary.com')) {
-    formData.append('oldUrl', oldAvatarUrl.trim());
-  }
-
   const response = await apiClient.post('/media/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -77,19 +68,3 @@ export const uploadAvatar = async (file, oldAvatarUrl = null) => {
 
   throw new Error(response.data?.message || 'Không thể tải ảnh đại diện lên máy chủ.');
 };
-
-/**
- * Xóa file media (audio, ảnh) trên Cloudinary thông qua backend API
- * Endpoint: DELETE /api/media/delete?url=...
- * 
- * @param {string} url - URL của media Cloudinary cần xóa
- * @returns {Promise<any>}
- */
-export const deleteMedia = async (url) => {
-  if (!url || typeof url !== 'string') return;
-  const response = await apiClient.delete('/media/delete', {
-    params: { url: url.trim() },
-  });
-  return response.data;
-};
-

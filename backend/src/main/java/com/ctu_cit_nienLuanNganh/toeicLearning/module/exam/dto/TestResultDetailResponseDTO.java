@@ -20,10 +20,15 @@ public class TestResultDetailResponseDTO {
     private Integer listeningScore;
     private Integer readingScore;
     private Integer totalScore;
+    private String scoreType;
     private Integer correctCount;
     private Integer totalCount;
     private Integer totalTime;
     private LocalDateTime createdAt;
+    private String teacherComment;
+    private String assignmentId;
+    private String sourceResultId;
+    private Boolean lateSubmission;
 
     private List<QuestionReviewDTO> questions;
     @Getter

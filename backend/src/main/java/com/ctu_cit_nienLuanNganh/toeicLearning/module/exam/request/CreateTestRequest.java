@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -11,4 +12,7 @@ public class CreateTestRequest {
     private String titleTest; // Tên bộ đề (VD: ETS 2024 - Test 1)
     private TestStatus status; // Trạng thái đề thi (DRAFT hoặc PUBLISHED)
     private List<TestPartRequest> parts; // Danh sách các phần thi trong đề
+    private Boolean isVip;
+    private BigDecimal vipPriceVnd;
+    private String classroomId;
 }

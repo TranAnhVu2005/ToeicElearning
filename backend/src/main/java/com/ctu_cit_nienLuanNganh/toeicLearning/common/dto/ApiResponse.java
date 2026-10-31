@@ -2,6 +2,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,12 +17,16 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL) // Mấy trường null sẽ không có trong api
 public class ApiResponse<T> {
     @Builder.Default
+    @JsonView(ApiViews.Public.class)
     private int code = 1000;
 
+    @JsonView(ApiViews.Public.class)
     private String message;
+    @JsonView(ApiViews.Public.class)
     private T data;
 
     @Builder.Default
+    @JsonView(ApiViews.Public.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp = LocalDateTime.now();
 

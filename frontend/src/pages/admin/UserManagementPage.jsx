@@ -24,6 +24,7 @@ const UserManagementPage = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -73,13 +74,13 @@ const UserManagementPage = () => {
       if (showLoading) setLoading(true);
       const res = await adminService.getUsers(currentPage, pageSize, debouncedKeyword, sortBy, direction);
       if (res.code === 1000 && res.data) {
-        console.log('Fetched admin users from backend:', res.data.content);
+        setLoadError(false);
         setUsers(res.data.content || []);
         setTotalPages(res.data.totalPages || 1);
         setTotalElements(res.data.totalElements || 0);
       }
     } catch (err) {
-      console.error('Fetch users error:', err);
+      setLoadError(true);
       setToast({
         type: 'error',
         message: err.response?.data?.message || 'Không thể tải danh sách người dùng.',
@@ -120,8 +121,6 @@ const UserManagementPage = () => {
 
       // 2. Call backend API
       const res = await adminService.changeUserStatus(targetId, nextIsLocked);
-      console.log('Change status response:', res);
-
       if (res.code === 1000) {
         setToast({
           type: 'success',
@@ -140,7 +139,6 @@ const UserManagementPage = () => {
         });
       }
     } catch (err) {
-      console.error('Change status error:', err);
       // Revert on failure
       setUsers((prevUsers) =>
         prevUsers.map((u) => (u.id === targetId ? { ...u, isLocked: currentLockedStatus, locked: currentLockedStatus } : u))
@@ -182,78 +180,26 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="admin-page-wrapper bg-gray-50">
-      {/* Admin Header Banner */}
-      <div className="page-header-banner" style={{ padding: '36px 0 24px' }}>
-        <div className="container">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16a34a' }}>
-              <Users size={24} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span className="badge badge-primary" style={{ fontSize: '0.72rem' }}>Hệ Thống Quản Trị</span>
-                <span className="badge badge-neutral" style={{ fontSize: '0.72rem' }}>Admin Portal</span>
-              </div>
-              <h1 className="page-title" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                Quản Lý Người Dùng
-              </h1>
-              <p className="page-subtitle" style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>
-                Theo dõi, tìm kiếm và phân quyền trạng thái hoạt động của học viên trong hệ thống ({totalElements} tài khoản)
-              </p>
-            </div>
-          </div>
-
-          {/* Admin Navigation Tabs */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 24, borderBottom: '2px solid #e2e8f0' }}>
-            <Link
-              to="/admin/tests"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '12px 20px',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                textDecoration: 'none',
-                color: '#64748b',
-                borderBottom: '3px solid transparent',
-                marginBottom: -2,
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#0f172a')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = '#64748b')}
-            >
-              <BookOpen size={18} /> Quản lý Đề thi
-            </Link>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '12px 20px',
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                color: '#198754',
-                borderBottom: '3px solid #198754',
-                marginBottom: -2,
-                cursor: 'default',
-              }}
-            >
-              <Users size={18} /> Quản lý Người dùng
-              <span style={{ backgroundColor: '#dcfce7', color: '#16a34a', padding: '2px 8px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 800 }}>
-                {totalElements}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="admin-page-wrapper user-management-page">
       <div className="container section-padding">
+        <header className="user-management-heading">
+          <div className="user-management-title-row">
+            <div className="user-management-title-icon"><Users size={25} /></div>
+            <div>
+              <p className="user-management-eyebrow">QUẢN TRỊ / TÀI KHOẢN</p>
+              <h1>Quản lý người dùng</h1>
+              <p className="user-management-description">Tra cứu tài khoản và kiểm soát quyền truy cập hệ thống.</p>
+            </div>
+          </div>
+          <nav className="user-management-tabs" aria-label="Điều hướng quản trị">
+            <Link to="/admin/tests"><BookOpen size={17} /> Quản lý đề thi</Link>
+            <span className="is-active" aria-current="page"><Users size={17} /> Người dùng <b>{totalElements}</b></span>
+          </nav>
+        </header>
 
         {/* Toast Alert */}
         {toast && (
-          <div style={{ marginBottom: 20 }}>
+          <div className="user-management-toast">
             <Toast
               type={toast.type}
               message={toast.message}
@@ -263,9 +209,9 @@ const UserManagementPage = () => {
         )}
 
         {/* Overview Stats Bar */}
-        <div className="admin-stats-bar">
+        <div className="admin-stats-bar user-management-stats">
           <div className="admin-stat-card">
-            <div className="admin-stat-icon" style={{ background: '#e6f4ea', color: 'var(--primary)' }}>
+            <div className="admin-stat-icon stat-icon-yellow">
               <Users size={24} />
             </div>
             <div>
@@ -275,7 +221,7 @@ const UserManagementPage = () => {
           </div>
 
           <div className="admin-stat-card">
-            <div className="admin-stat-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+            <div className="admin-stat-icon stat-icon-pink">
               <UserCheck size={24} />
             </div>
             <div>
@@ -287,7 +233,7 @@ const UserManagementPage = () => {
           </div>
 
           <div className="admin-stat-card">
-            <div className="admin-stat-icon" style={{ background: '#fef3c7', color: '#b45309' }}>
+            <div className="admin-stat-icon stat-icon-paper">
               <ShieldCheck size={24} />
             </div>
             <div>
@@ -300,9 +246,9 @@ const UserManagementPage = () => {
         </div>
 
         {/* Search & Actions Toolbar */}
-        <div className="table-toolbar-card">
+        <div className="table-toolbar-card user-management-toolbar">
           <div className="toolbar-search-box">
-            <Search size={18} color="var(--gray-400)" />
+            <Search size={18} aria-hidden="true" />
             <input
               type="text"
               placeholder="Tìm theo tên, email hoặc số điện thoại..."
@@ -313,16 +259,16 @@ const UserManagementPage = () => {
             {searchInput && (
               <button
                 onClick={() => setSearchInput('')}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)', fontSize: '0.85rem' }}
+                className="user-search-clear" aria-label="Xóa từ khóa tìm kiếm"
               >
                 ✕
               </button>
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              className="btn btn-outline btn-sm"
+          <div className="user-toolbar-actions">
+              <button
+                className="btn btn-outline btn-sm user-refresh-button"
               onClick={() => fetchUsers(true)}
               disabled={loading}
               title="Làm mới dữ liệu"
@@ -337,21 +283,21 @@ const UserManagementPage = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th style={{ width: 75, textAlign: 'center' }}>
+                <th className="user-number-column">
                   STT
                 </th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('userName')}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    Người dùng <ArrowUpDown size={12} />
-                  </span>
+                <th className="user-sortable">
+                  <button type="button" onClick={() => toggleSort('userName')}>
+                    Người dùng <ArrowUpDown size={12} aria-hidden="true" />
+                  </button>
                 </th>
                 <th>Số điện thoại</th>
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
-                <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('createdAt')}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    Ngày tạo <ArrowUpDown size={12} />
-                  </span>
+                <th className="user-sortable">
+                  <button type="button" onClick={() => toggleSort('createdAt')}>
+                    Ngày tạo <ArrowUpDown size={12} aria-hidden="true" />
+                  </button>
                 </th>
                 <th style={{ textAlign: 'right' }}>Hành động</th>
               </tr>
@@ -359,14 +305,23 @@ const UserManagementPage = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <td colSpan="7" className="user-table-state">
                     <div className="loading-spinner" style={{ margin: '0 auto 12px' }} />
                     <p className="text-muted">Đang tải danh sách người dùng...</p>
                   </td>
                 </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan="7" className="user-table-state">
+                    <p>Không tải được danh sách tài khoản. Hãy thử tải lại.</p>
+                    <button type="button" className="btn btn-outline btn-sm user-refresh-button" onClick={() => fetchUsers(true)}>
+                      <RefreshCw size={15} /> Thử lại
+                    </button>
+                  </td>
+                </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <td colSpan="7" className="user-table-state">
                     <p className="text-muted">Không tìm thấy tài khoản nào khớp với từ khóa tìm kiếm.</p>
                   </td>
                 </tr>
@@ -377,7 +332,7 @@ const UserManagementPage = () => {
                   const locked = getIsLocked(item);
                   return (
                     <tr key={item.id}>
-                      <td style={{ textAlign: 'center', fontWeight: 700, color: 'var(--gray-500)' }}>
+                      <td className="user-number-cell">
                         #{stt.toString().padStart(2, '0')}
                       </td>
                       <td>
@@ -388,12 +343,12 @@ const UserManagementPage = () => {
                             className="user-avatar-small"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(item.userName || 'User') + '&background=198754&color=fff';
+                              e.target.src = '/images/default-avatar.svg';
                             }}
                           />
                           <div>
                             <div className="user-table-name">
-                              {item.userName} {isSelf && <span className="badge badge-primary" style={{ fontSize: '0.65rem' }}>Bạn</span>}
+                              {item.userName} {isSelf && <span className="user-self-tag">Bạn</span>}
                             </div>
                             <div className="user-table-email">{item.userEmail}</div>
                           </div>
@@ -403,9 +358,9 @@ const UserManagementPage = () => {
                         <span className="user-table-phone">{item.userNumberphone || '-'}</span>
                       </td>
                       <td>
-                        <span className={`badge ${item.roleName === 'ROLE_ADMIN' ? 'badge-primary' : 'badge-neutral'}`}>
+                        <span className={`user-role-tag ${item.roleName === 'ROLE_ADMIN' ? 'is-admin' : 'is-learner'}`}>
                           {item.roleName === 'ROLE_ADMIN' ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span className="user-tag-content">
                               <Shield size={12} /> Admin
                             </span>
                           ) : (
@@ -415,31 +370,29 @@ const UserManagementPage = () => {
                       </td>
                       <td>
                         <span
-                          className={`badge ${locked ? 'badge-danger' : 'badge-primary'}`}
-                          style={{ transition: 'all 0.2s ease' }}
+                          className={`user-status-tag ${locked ? 'is-locked' : 'is-active'}`}
                         >
                           {locked ? 'Đã khóa' : 'Hoạt động'}
                         </span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--gray-500)', fontSize: '0.85rem' }}>
+                        <div className="user-created-date">
                           <Clock size={13} /> {formatDate(item.createdAt)}
                         </div>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td className="user-action-cell">
                         <button
-                          className={`btn btn-sm ${locked ? 'btn-primary' : 'btn-danger'}`}
-                          style={{ padding: '6px 12px', fontSize: '0.8rem', transition: 'all 0.15s ease' }}
+                          className={`btn btn-sm user-lock-button ${locked ? 'is-unlock' : 'is-lock'}`}
                           onClick={() => handleOpenStatusModal(item)}
                           disabled={isSelf}
                           title={isSelf ? 'Không thể tự khóa tài khoản của chính mình' : locked ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
                         >
                           {locked ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span className="user-tag-content">
                               <Unlock size={13} /> Mở khóa
                             </span>
                           ) : (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span className="user-tag-content">
                               <Lock size={13} /> Khóa
                             </span>
                           )}
@@ -490,13 +443,13 @@ const UserManagementPage = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        <div className="user-status-confirmation">
           <div
             style={{
               padding: 12,
-              borderRadius: '50%',
-              background: getIsLocked(selectedUser) ? '#e6f4ea' : '#fee2e2',
-              color: getIsLocked(selectedUser) ? 'var(--primary)' : 'var(--danger)',
+              border: '2px solid #111111',
+              background: getIsLocked(selectedUser) ? '#FFE600' : '#FF5B93',
+              color: '#111111',
             }}
           >
             <AlertTriangle size={24} />

@@ -1,13 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
-import { uploadAvatar } from '../services/uploadService';
-import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Info, RefreshCw } from 'lucide-react';
+import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Receipt, LoaderCircle, RefreshCw } from 'lucide-react';
 import Toast from '../components/common/Toast';
+import { teacherApplicationService } from '../services/teacherApplicationService';
+import { GoogleLogin } from '@react-oauth/google';
 
 const ProfilePage = () => {
-  const { user, updateUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'password'
+  const { user, updateUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'payments' ? 'payments' : 'profile');
+  const [paymentRows, setPaymentRows] = useState([]);
+  const [paymentPage, setPaymentPage] = useState(1);
+  const [paymentPages, setPaymentPages] = useState(0);
+  const [paymentTotal, setPaymentTotal] = useState(0);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [paymentRefresh, setPaymentRefresh] = useState(0);
   const fileInputRef = useRef(null);
 
   // Profile Edit State
@@ -30,15 +40,41 @@ const ProfilePage = () => {
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordToast, setPasswordToast] = useState(null);
+  const [canSetLocalPassword, setCanSetLocalPassword] = useState(null);
+  const [passwordCapabilityError, setPasswordCapabilityError] = useState(false);
+  const [profileRefresh, setProfileRefresh] = useState(0);
+
+  useEffect(() => {
+    if (activeTab !== 'payments') return undefined;
+    let active = true;
+    setPaymentLoading(true);
+    setPaymentError('');
+    teacherApplicationService.listPayments({ page: paymentPage, size: 10 })
+      .then((response) => {
+        if (!active) return;
+        if (response.code !== 1000) throw new Error(response.message || 'Không tải được lịch sử thanh toán.');
+        const data = response.data || {};
+        setPaymentRows(data.content || []);
+        setPaymentPages(data.totalPages || 0);
+        setPaymentTotal(data.totalElements || 0);
+      })
+      .catch((error) => { if (active) setPaymentError(error.response?.data?.message || error.message || 'Không tải được lịch sử thanh toán.'); })
+      .finally(() => { if (active) setPaymentLoading(false); });
+    return () => { active = false; };
+  }, [activeTab, paymentPage, paymentRefresh]);
 
 
   // Fetch fresh profile on mount
   useEffect(() => {
+    let active = true;
     const fetchFreshProfile = async () => {
       try {
         const res = await userService.getProfile();
-        if (res.code === 1000 && res.data) {
+        if (res.code !== 1000 || !res.data) throw new Error('Không tải được hồ sơ tài khoản.');
+        if (active) {
           updateUser(res.data);
+          setCanSetLocalPassword(Boolean(res.data.canSetLocalPassword));
+          setPasswordCapabilityError(false);
           setProfileData({
             userName: res.data.userName || '',
             userEmail: res.data.userEmail || '',
@@ -46,12 +82,13 @@ const ProfilePage = () => {
             userAvatar: res.data.userAvatar || '/images/default-avatar.svg',
           });
         }
-      } catch (err) {
-        console.error('Profile check error:', err);
+      } catch {
+        if (active) setPasswordCapabilityError(true);
       }
     };
     fetchFreshProfile();
-  }, []);
+    return () => { active = false; };
+  }, [updateUser, profileRefresh]);
 
   // Initialize data from current user context
   useEffect(() => {
@@ -70,8 +107,8 @@ const ProfilePage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setProfileToast({ type: 'error', message: 'Vui lòng chọn file hình ảnh hợp lệ (PNG, JPG, WebP).' });
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setProfileToast({ type: 'error', message: 'Chọn ảnh PNG hoặc JPEG có kích thước tối đa 5 MB.' });
       return;
     }
 
@@ -183,12 +220,8 @@ const ProfilePage = () => {
       });
 
       if (res.code === 1000) {
-        setPasswordToast({ type: 'success', message: 'Đổi mật khẩu thành công! Mật khẩu mới đã được cập nhật.' });
-        setPasswordData({
-          oldUserPassword: '',
-          newUserPassword: '',
-          confirmNewPassword: '',
-        });
+        logout();
+        navigate('/login?passwordChanged=true', { replace: true });
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu cũ!';
@@ -198,14 +231,51 @@ const ProfilePage = () => {
     }
   };
 
+  const handleGooglePasswordSetup = async (credentialResponse) => {
+    setPasswordToast(null);
+    if (!credentialResponse?.credential) {
+      setPasswordToast({ type: 'error', message: 'Google chưa xác nhận tài khoản. Vui lòng thử lại.' });
+      return;
+    }
+    if (!passwordData.newUserPassword || passwordData.newUserPassword.length < 6 || passwordData.newUserPassword.length > 100) {
+      setPasswordToast({ type: 'error', message: 'Mật khẩu mới phải có từ 6 đến 100 ký tự.' });
+      return;
+    }
+    if (passwordData.newUserPassword !== passwordData.confirmNewPassword) {
+      setPasswordToast({ type: 'error', message: 'Mật khẩu xác nhận không khớp.' });
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+      const res = await userService.setLocalPassword({
+        googleIdToken: credentialResponse.credential,
+        newUserPassword: passwordData.newUserPassword,
+      });
+      if (res.code !== 1000) throw new Error(res.message || 'Không thể thiết lập mật khẩu.');
+      logout();
+      navigate('/login?passwordSet=true', { replace: true });
+    } catch (err) {
+      const message = err.response?.data?.message || err.message || 'Không thể thiết lập mật khẩu.';
+      setPasswordToast({ type: 'error', message });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const roleName = typeof user?.role === 'string' ? user.role : user?.role?.roleName || user?.roleName;
+  const isAdmin = roleName === 'ROLE_ADMIN';
+  const isTeacher = roleName === 'ROLE_TEACHER';
+  const roleLabel = isAdmin ? 'Quản trị viên hệ thống' : isTeacher ? 'Giáo viên TOEIC' : 'Học viên TOEIC';
+
   return (
-    <div className="profile-page bg-gray-50">
+    <div className="profile-page neo-brutal-profile">
       {/* Header Banner */}
       <div className="page-header-banner">
         <div className="container">
           <span className="badge badge-primary" style={{ marginBottom: 8 }}>Tài khoản cá nhân</span>
           <h1 className="page-title">Hồ Sơ Của Bạn</h1>
-          <p className="page-subtitle">Quản lý thông tin tài khoản, bảo mật và ảnh đại diện học viên.</p>
+          <p className="page-subtitle">Quản lý thông tin tài khoản, bảo mật và ảnh đại diện của bạn.</p>
         </div>
       </div>
 
@@ -221,7 +291,7 @@ const ProfilePage = () => {
                   className="profile-avatar-large"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.userName || 'User') + '&background=198754&color=fff';
+                    e.target.src = '/images/default-avatar.svg';
                   }}
                 />
                 <button
@@ -251,8 +321,8 @@ const ProfilePage = () => {
 
               <h3 className="profile-card-name">{user?.userName || 'Học viên'}</h3>
               <p className="profile-card-email">{user?.userEmail}</p>
-              <span className={`badge ${user?.role === 'ROLE_ADMIN' || user?.role?.roleName === 'ROLE_ADMIN' ? 'badge-primary' : 'badge-neutral'}`} style={{ marginTop: 6 }}>
-                {user?.role === 'ROLE_ADMIN' || user?.role?.roleName === 'ROLE_ADMIN' ? 'Quản trị viên hệ thống' : 'Học viên TOEIC'}
+              <span className={`badge ${isAdmin ? 'badge-primary' : isTeacher ? 'badge-warning' : 'badge-neutral'}`} style={{ marginTop: 6 }}>
+                {roleLabel}
               </span>
             </div>
 
@@ -268,6 +338,12 @@ const ProfilePage = () => {
                 onClick={() => setActiveTab('password')}
               >
                 <Lock size={18} /> Đổi mật khẩu
+              </button>
+              <button
+                className={`profile-tab-btn ${activeTab === 'payments' ? 'active' : ''}`}
+                onClick={() => { setPaymentPage(1); setActiveTab('payments'); }}
+              >
+                <Receipt size={18} /> Thanh toán
               </button>
             </div>
           </div>
@@ -303,7 +379,7 @@ const ProfilePage = () => {
                         <input
                           type="file"
                           ref={fileInputRef}
-                          accept="image/png, image/jpeg, image/webp"
+                          accept="image/png, image/jpeg,.png,.jpg,.jpeg"
                           style={{ display: 'none' }}
                           onChange={handleFileUpload}
                           disabled={profileLoading}
@@ -326,7 +402,7 @@ const ProfilePage = () => {
                           </button>
                         )}
                         <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
-                          {selectedAvatarFile ? `Đã chọn: ${selectedAvatarFile.name}` : 'Hỗ trợ file PNG, JPG, JPEG, WebP'}
+                          {selectedAvatarFile ? `Đã chọn: ${selectedAvatarFile.name}` : 'Hỗ trợ PNG/JPEG tối đa 5 MB'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginTop: 12, fontSize: '0.8rem', color: '#15803d' }}>
@@ -426,6 +502,75 @@ const ProfilePage = () => {
                   </div>
                 )}
 
+                {canSetLocalPassword === null ? (
+                  passwordCapabilityError ? (
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-2 border-black bg-rose-100 p-4 font-bold shadow-[3px_3px_0_#111]">
+                      <span>Không tải được trạng thái bảo mật tài khoản.</span>
+                      <button
+                        type="button"
+                        className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black"
+                        onClick={() => {
+                          setCanSetLocalPassword(null);
+                          setPasswordCapabilityError(false);
+                          setProfileRefresh((current) => current + 1);
+                        }}
+                      >
+                        Thử lại
+                      </button>
+                    </div>
+                  ) : (
+                    <div role="status" className="border-2 border-black bg-white p-4 font-bold shadow-[3px_3px_0_#111]">
+                      Đang tải trạng thái bảo mật tài khoản…
+                    </div>
+                  )
+                ) : canSetLocalPassword ? (
+                  <div className="max-w-xl border-2 border-black bg-[#FFFDF2] p-5 shadow-[4px_4px_0_#111]">
+                    <p className="mb-4 text-sm font-semibold text-[#222]">
+                      Tài khoản này đăng nhập bằng Google và chưa có mật khẩu cục bộ. Nhập mật khẩu mới, sau đó xác minh lại Google để thiết lập.
+                    </p>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="newUserPassword">Mật khẩu mới</label>
+                      <div className="input-with-icon">
+                        <span className="input-icon"><Lock size={18} /></span>
+                        <input
+                          type="password" id="newUserPassword" className="form-control"
+                          autoComplete="new-password" minLength={6} maxLength={100}
+                          value={passwordData.newUserPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newUserPassword: e.target.value })}
+                          disabled={passwordLoading}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="confirmNewPassword">Xác nhận mật khẩu mới</label>
+                      <div className="input-with-icon">
+                        <span className="input-icon"><Lock size={18} /></span>
+                        <input
+                          type="password" id="confirmNewPassword" className="form-control"
+                          autoComplete="new-password" minLength={6} maxLength={100}
+                          value={passwordData.confirmNewPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, confirmNewPassword: e.target.value })}
+                          disabled={passwordLoading}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-5 flex flex-col items-start gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wide">Xác minh tài khoản Google</span>
+                      {passwordLoading ? (
+                        <span className="flex items-center gap-2 border-2 border-black bg-[#FFE600] px-4 py-2 font-black">
+                          <LoaderCircle size={16} className="animate-spin" /> Đang thiết lập…
+                        </span>
+                      ) : (
+                        <GoogleLogin
+                          onSuccess={handleGooglePasswordSetup}
+                          onError={() => setPasswordToast({ type: 'error', message: 'Xác minh Google thất bại hoặc đã bị hủy.' })}
+                          useOneTap={false} prompt="select_account" theme="outline" size="large"
+                          shape="rectangular" text="continue_with" locale="vi"
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : (
                 <form onSubmit={handlePasswordSubmit}>
                   <div className="form-group">
                     <label className="form-label" htmlFor="oldUserPassword">
@@ -498,7 +643,29 @@ const ProfilePage = () => {
                     </button>
                   </div>
                 </form>
+                )}
               </div>
+            )}
+
+            {activeTab === 'payments' && (
+              <section className="text-[#111]">
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b-2 border-black pb-4">
+                  <div><h2 className="text-2xl font-black">Lịch sử thanh toán</h2><p className="mt-1 text-sm font-semibold">Giao dịch gắn với tài khoản này · {paymentTotal} giao dịch</p></div>
+                  <button type="button" onClick={() => setPaymentRefresh((current) => current + 1)} disabled={paymentLoading} className="inline-flex items-center gap-2 border-2 border-black bg-white px-3 py-2 text-sm font-black disabled:opacity-50"><RefreshCw size={15} /> Tải lại</button>
+                </div>
+                {paymentError && <div role="alert" className="mb-4 border-2 border-black bg-rose-200 p-3 font-bold">{paymentError}</div>}
+                {paymentLoading ? <div className="flex items-center justify-center gap-2 border-2 border-black bg-white p-8 font-bold"><LoaderCircle size={18} className="animate-spin" /> Đang tải giao dịch…</div>
+                  : paymentRows.length === 0 ? <div className="border-2 border-dashed border-black bg-white p-8 text-center font-bold">Bạn chưa có giao dịch thanh toán nào.</div>
+                    : <div className="overflow-x-auto border-2 border-black bg-white shadow-[3px_3px_0_#111]"><table className="w-full min-w-[650px] border-collapse text-left text-sm"><thead className="bg-black text-white"><tr><th className="p-3">Sản phẩm</th><th className="p-3">Số tiền</th><th className="p-3">Trạng thái</th><th className="p-3">Thời gian</th><th className="p-3">Mã giao dịch</th></tr></thead><tbody>{paymentRows.map((payment) => {
+                      const statusLabels = { PENDING: 'Đang xử lý', SUCCESS: 'Thành công', FAILED: 'Thất bại', CANCELLED: 'Đã hủy', EXPIRED: 'Hết hạn' };
+                      const statusColors = { PENDING: 'bg-amber-200', SUCCESS: 'bg-lime-200', FAILED: 'bg-rose-200', CANCELLED: 'bg-[#f1eedf]', EXPIRED: 'bg-rose-200' };
+                      const product = payment.productName || (payment.productType === 'TEACHER_APPLICATION' ? 'Đăng ký giáo viên' : payment.productType === 'TEST_VIP' ? 'Đề VIP' : 'Sản phẩm');
+                      const timestamp = payment.paidAt || payment.createdAt;
+                      const displayTime = timestamp ? new Date(`${timestamp}+07:00`).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—';
+                      return <tr key={payment.transactionReference} className="border-t border-black/20 align-top"><td className="p-3 font-bold">{product}{payment.productType === 'TEST_VIP' && <span className="mt-1 block text-xs font-semibold">Quyền truy cập vĩnh viễn</span>}</td><td className="p-3 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(payment.amount || 0))}</td><td className="p-3"><span className={`inline-block border border-black px-2 py-1 text-xs font-black ${statusColors[payment.status] || 'bg-white'}`}>{statusLabels[payment.status] || 'Chưa rõ'}</span></td><td className="p-3">{displayTime}</td><td className="max-w-40 break-all p-3 font-mono text-xs">{payment.transactionReference}</td></tr>;
+                    })}</tbody></table></div>}
+                {!paymentLoading && paymentPages > 1 && <nav className="mt-4 flex items-center justify-between gap-3 border-2 border-black bg-white p-3" aria-label="Phân trang lịch sử thanh toán"><button type="button" disabled={paymentPage <= 1} onClick={() => setPaymentPage((current) => current - 1)} className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black disabled:opacity-40">Trang trước</button><span className="text-sm font-bold" aria-live="polite">Trang {paymentPage} / {paymentPages}</span><button type="button" disabled={paymentPage >= paymentPages} onClick={() => setPaymentPage((current) => current + 1)} className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black disabled:opacity-40">Trang sau</button></nav>}
+              </section>
             )}
           </div>
         </div>

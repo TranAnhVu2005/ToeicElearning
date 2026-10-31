@@ -22,7 +22,7 @@ Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý ngư�
 - Làm full test, luyện theo Part, xem lại lần làm đã hoàn thành.
 - Theo dõi điểm/yếu theo Part, đặt mục tiêu điểm/ngày thi và nhận gợi ý ôn tập (đề xuất cần duyệt).
 - Luyện lại câu sai theo danh sách cá nhân; nhận bài ôn theo khoảng cách thời gian (đề xuất cần duyệt).
-- Tiếp tục phiên làm bài đã lưu sau khi mất mạng/đóng trình duyệt nếu phiên còn hiệu lực (đề xuất cần duyệt).
+- Tiếp tục phiên làm bài đã lưu sau khi mất mạng/đóng trình duyệt nếu phiên còn hiệu lực (đã được chủ dự án chọn; xem giới hạn và trạng thái tại `PROJECT_CONTEXT.md`, `docs/02_DATABASE.md` và `docs/04_FLOW_LOGIC.md`).
 
 ### Giáo viên
 - Gửi hồ sơ đăng ký giáo viên và hoàn tất khoản phí theo phương thức hệ thống hỗ trợ; nhận thông báo khi thanh toán xác nhận, sau đó chờ admin phê duyệt.
@@ -41,16 +41,22 @@ Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý ngư�
 - Frontend: React/JSX, Vite, React Router, Tailwind CSS, Axios.
 - JWT bearer auth; media bài thi lưu Cloudinary.
 - Mô hình đề: `Test -> ContextQuestion -> Question`, với `Part` cho 7 phần TOEIC.
-- Đọc `PROJECT_CONTEXT.md` (<100 dòng) để biết entry points, command, trạng thái thực thi và các giới hạn đang biết.
+- Đọc `PROJECT_CONTEXT.md` (mục tiêu gọn, không quá khoảng 130 dòng) để biết entry points, command, trạng thái thực thi và các giới hạn đang biết.
 
 ## 4. Định hướng kiến trúc sản phẩm
+- Giữ nguyên kiến trúc đang có: một backend Spring Boot modular monolith cung cấp REST API và một frontend React/Vite SPA. Đây là ràng buộc để tiếp tục code dễ theo dõi, không phải kiến trúc tạm thời cần thay ngay.
+- Backend tiếp tục mở rộng các module hiện có (`auth`, `exam`, `user`, `admin`, `media`, `classroom`) và cách tổ chức Controller/Service/Repository/Entity/DTO/Mapper cùng `common`, `config`, `security` tại nơi các cấu trúc đó đã được dùng. Đọc code module thực tế trước khi chọn vị trí cho chức năng mới.
+- Frontend tiếp tục dùng routes/pages/components/context/services và `apiClient.js`; tích hợp qua REST API và tái sử dụng UI/convention hiện có.
+- Ưu tiên thay đổi nhỏ, cục bộ và tương thích phần code đã có. Không tạo microservices, BFF, GraphQL, CQRS/event-driven stack, thay framework hoặc tái cấu trúc hàng loạt nếu chủ dự án chưa yêu cầu rõ.
 - Backend xác thực quyền ADMIN/USER, trạng thái giao dịch và quyền truy cập đề. Frontend guard chỉ hỗ trợ trải nghiệm điều hướng.
 - Không để client quyết định thanh toán thành công, đáp án đúng, hay quyền mua đề.
 - Phân biệt đề draft/published và free/VIP. Đề VIP chỉ mở khi backend xác nhận quyền hợp lệ.
+- Mỗi đề VIP có giá bán riêng bằng VND do admin cấu hình trên đề; người dùng mua một lần và được truy cập vĩnh viễn. Backend đọc giá đã lưu, không nhận giá từ trình duyệt. Giá tại thời điểm checkout phải được snapshot trong giao dịch để lịch sử không đổi khi admin cập nhật giá sau này.
 - Lưu bài nộp/kết quả phía server là mục tiêu cần triển khai vì yêu cầu xem lại bài; trạng thái hiện tại ghi trong `PROJECT_CONTEXT.md`.
 - Tách đăng ký/kiểm tra thanh toán giáo viên khỏi phê duyệt vai trò: thanh toán thành công chỉ chuyển hồ sơ sang “chờ duyệt”, không tự cấp role TEACHER.
 - Mỗi lớp, thành viên, đề riêng, assignment, submission và notification phải được scope theo quyền sở hữu phía backend.
-- Báo cáo dashboard cần định nghĩa metric rõ ràng, timezone, khoảng ngày và cách tính “đang hoạt động”.
+- Dashboard admin định nghĩa presence là heartbeat trong 5 phút, lượt bắt đầu theo session mới trong `exam_session.started_at`, và lượt hoàn tất theo bản ghi submit trong `test_result`; timezone mặc định `Asia/Ho_Chi_Minh`. Resume session không tính là lượt bắt đầu mới.
+- Các yêu cầu bảo mật trong `docs/06_SECURITY_SPEC.md` phải được triển khai dần trong kiến trúc này. Nếu biện pháp cần đổi đáng kể JWT/session hoặc cấu trúc hệ thống, phân tích tác động và đề xuất lộ trình tương thích trước; không tự đổi kiến trúc.
 
 ## 5. Nguồn định dạng và giới hạn điểm thi
 
@@ -67,23 +73,25 @@ ETS cũng nêu rõ kết quả ứng dụng luyện tập của họ không đư
 1. **Nền tảng đáng tin cậy:** auth/RBAC, quản trị đề, catalog/free-VIP, phòng thi, backend submit/history/review, an toàn answer key.
 2. **Lớp học:** teacher application/approval, classroom membership/material, đề private, assignment/deadline/submission/report/feedback.
 3. **Thương mại:** VNPAY checkout/IPN, entitlement, màn admin transaction, đối soát và chính sách hoàn/đơn lỗi.
+
+**Trạng thái hiện tại:** flow checkout VNPAY cho phí đăng ký giáo viên và đề VIP, IPN/return/status, hồ sơ và admin approval đã có trong code; entitlement đề VIP cấp vĩnh viễn từ IPN hợp lệ. Build thành công không đồng nghĩa đã tích hợp merchant hoặc kiểm thử payment end-to-end; đối soát/refund vẫn cần quy trình vận hành được chốt.
 4. **Cải thiện học tập:** đánh giá đầu vào, mục tiêu/kế hoạch học, sổ câu sai, ôn tập ngắt quãng, tiến bộ theo Part, tiếp tục phiên thi, audio tools.
 5. **Giữ chân và vận hành:** notification preferences, metrics/dashboard, report nội dung lỗi, vận hành/backup/audit.
 
 Thứ tự là đề xuất quản trị scope, chủ dự án có thể thay đổi. Không bắt đầu triển khai cho đến khi người dùng yêu cầu.
 
-## 6.1. Đề xuất tính năng bổ sung cần chủ dự án duyệt
+## 6.1. Đề xuất tính năng bổ sung và trạng thái duyệt
 
 - **Diagnostic + study plan:** bài đánh giá ngắn, mục tiêu điểm/ngày thi và gợi ý nội dung luyện từ phần yếu. Đây là chức năng định hướng học, không được tuyên bố đảm bảo tăng điểm.
 - **Wrong-answer notebook + spaced repetition:** gom câu sai/bỏ trống và nhắc ôn lại; người học có thể loại câu khỏi danh sách hoặc đánh dấu đã nắm.
-- **Resumable exam session:** tự lưu câu trả lời và trạng thái phiên; khi quay lại xác thực phiên còn hạn, tránh tạo submit lặp. Xác định rõ thời hạn/thiết bị/đồng hồ server.
+- **Resumable exam session (đã được chọn và nối code):** autosave/khôi phục đáp án, đồng hồ server, scope và fingerprint nội dung đề, idempotent submit; chính sách thời lượng/retention và giới hạn còn ghi trong `docs/02_DATABASE.md`, `docs/04_FLOW_LOGIC.md`.
 - **Content quality workflow:** báo lỗi câu/audio/ảnh/đáp án; Admin xem hàng đợi, ghi quyết định và version đề để tránh sửa âm thầm kết quả cũ.
 - **Listening controls:** tốc độ phát, tua lùi ngắn, transcript hiện sau lượt luyện hoặc theo quyền cài đặt; không làm lộ transcript/answer trong chế độ mock exam.
 - **Operational reporting:** phân biệt attempt bắt đầu/nộp, funnel xem đề → checkout → thanh toán → hoàn thành; chỉ lưu metric cần thiết.
 - **Notification preferences:** chọn loại/kênh/thời gian yên lặng; thông báo deadline vẫn có ngày giờ tuyệt đối và chống gửi trùng.
 - **Commercial readiness:** chính sách gói/giá, quyền truy cập, hóa đơn/biên nhận, hoàn/đơn lỗi, liên hệ hỗ trợ, điều khoản và quyền nội dung trước mở bán.
 
-Các mục này là benchmark/đề xuất, chưa được coi là yêu cầu đã duyệt. Tham khảo: [ETS OLPC](https://www.etsglobal.org/mf/en/content/toeic-official-learning-and-preparation-course), [HOCTOEIC practice guide](https://hoctoeic.vn/huong-dan-su-dung), [Google Classroom analytics](https://support.google.com/edu/classroom/answer/17231999?hl=en-eu), [TOEIC Test app by ETS Global](https://www.etsglobal.org/fx/en/content/toeic-test-application).
+Các mục còn lại là benchmark/đề xuất, chưa được coi là yêu cầu đã duyệt; ngoại lệ resumable exam session đã được chủ dự án chọn. Tham khảo: [ETS OLPC](https://www.etsglobal.org/mf/en/content/toeic-official-learning-and-preparation-course), [HOCTOEIC practice guide](https://hoctoeic.vn/huong-dan-su-dung), [Google Classroom analytics](https://support.google.com/edu/classroom/answer/17231999?hl=en-eu), [TOEIC Test app by ETS Global](https://www.etsglobal.org/fx/en/content/toeic-test-application).
 
 ## 7. Yêu cầu vận hành cho bản thương mại
 
@@ -94,7 +102,7 @@ Các mục này là benchmark/đề xuất, chưa được coi là yêu cầu đ
 
 ## 8. Cách dùng tài liệu
 
-- `PROJECT_CONTEXT.md` là bản tóm tắt gọn dưới 100 dòng; `AGENTS.md` quy định thứ tự đọc và cách làm việc.
+- `PROJECT_CONTEXT.md` là bản tóm tắt gọn, mục tiêu không quá khoảng 130 dòng; `AGENTS.md` quy định thứ tự đọc và cách làm việc.
 - Trước implementation, đọc đặc tả liên quan; tác vụ có ảnh hưởng bảo mật phải đọc `docs/06_SECURITY_SPEC.md` và xác minh code.
 - Các tài liệu mô tả yêu cầu/đề xuất; trạng thái code phải xác nhận từ repository.
 

@@ -19,6 +19,9 @@ public class TestHistoryResponseDTO {
     private Integer listeningScore;
     private Integer readingScore;
     private Integer totalScore;
+    private String scoreType;
+    private String scoreLabel;
+    private String sourceResultId;
 
     private Integer correctCount;
     private Integer totalCount;

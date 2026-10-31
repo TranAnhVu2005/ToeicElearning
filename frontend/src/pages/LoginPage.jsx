@@ -1,29 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, LogIn, BookOpen, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, LogIn, BookOpen, CheckCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import Toast from '../components/common/Toast';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     emailOrPhone: '',
     userPassword: '',
   });
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('locked') === 'true') {
+      return 'Tài khoản của bạn đã bị Khóa bởi Quản trị viên. Bạn đã bị đăng xuất khỏi hệ thống.';
+    }
+    if (params.get('passwordChanged') === 'true') {
+      return 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại bằng mật khẩu mới.';
+    }
+    if (params.get('passwordSet') === 'true') {
+      return 'Đã thiết lập mật khẩu. Vui lòng đăng nhập bằng email hoặc số điện thoại và mật khẩu mới.';
+    }
+    return '';
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const { login, loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Check if kicked out due to account locking
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('locked') === 'true') {
-      setErrorMsg('Tài khoản của bạn đã bị Khóa bởi Quản trị viên. Bạn đã bị đăng xuất khỏi hệ thống.');
-    }
-  }, [location.search]);
 
   const redirectPath = location.state?.from?.pathname || '/';
 
@@ -38,9 +42,9 @@ const LoginPage = () => {
   const handleRoleRedirect = (loggedUser) => {
     const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
     if (roleStr === 'ROLE_ADMIN') {
-      navigate('/admin/users');
+      navigate('/admin/dashboard');
     } else if (roleStr === 'ROLE_TEACHER') {
-      navigate('/admin/tests');
+      navigate('/classrooms');
     } else {
       navigate(redirectPath);
     }

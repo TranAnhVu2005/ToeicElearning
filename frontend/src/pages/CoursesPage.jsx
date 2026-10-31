@@ -3,21 +3,13 @@ import { Link } from 'react-router-dom';
 import {
   Search,
   BookOpen,
-  Clock,
   CheckCircle2,
   PlayCircle,
-  FileText,
-  Filter,
-  Layers,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
-  ArrowRight,
-  Award,
   AlertCircle,
   Edit2,
   Trash2,
-  Save,
   AlertTriangle,
   Settings,
   Plus,
@@ -26,15 +18,6 @@ import { examService } from '../services/examService';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
-
-const courseImages = [
-  '/images/courses-2.webp',
-  '/images/courses-3.webp',
-  '/images/courses-8.webp',
-  '/images/courses-12.webp',
-  '/images/education-8.webp',
-  '/images/campus-4.webp',
-];
 
 const CoursesPage = () => {
   const { isAdmin } = useAuth();
@@ -48,7 +31,7 @@ const CoursesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'full' | 'listening' | 'reading'
+  const [activeFilter, setActiveFilter] = useState('all');
   const [sortBy, setSortBy] = useState('createdAt');
   const [direction, setDirection] = useState('DESC');
 
@@ -78,13 +61,17 @@ const CoursesPage = () => {
       const res = await examService.deleteTest(selectedTest.id);
       if (res.code === 1000) {
         setTests((prev) => prev.filter((t) => t.id !== selectedTest.id));
-        setToast({ type: 'success', message: `Đã xóa đề thi "${selectedTest.titleTest}" thành công!` });
+        setToast({
+          type: 'success',
+          message: res.data === 'ARCHIVED'
+            ? `Đề "${selectedTest.titleTest}" đã được gỡ khỏi catalog và chuyển về bản nháp để giữ lịch sử.`
+            : `Đề "${selectedTest.titleTest}" chưa có lịch sử và đã được xóa.`,
+        });
         setDeleteModalOpen(false);
       } else {
         setToast({ type: 'error', message: res.message || 'Không thể xóa đề thi.' });
       }
     } catch (err) {
-      console.error('Delete test error:', err);
       setToast({ type: 'error', message: err.response?.data?.message || 'Lỗi máy chủ khi xóa đề thi.' });
     } finally {
       setActionLoading(false);
@@ -96,7 +83,7 @@ const CoursesPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await examService.getTests(page, pageSize, search, sort, dir, 'PUBLISHED');
+      const res = await examService.getTests(page, pageSize, search, sort, dir, 'PUBLISHED', activeFilter.toUpperCase());
       if (res.code === 1000 && res.data) {
         setTests(res.data.content || []);
 
@@ -106,13 +93,12 @@ const CoursesPage = () => {
       } else {
         setError(res.message || 'Không thể lấy danh sách đề thi');
       }
-    } catch (err) {
-      console.error('Error fetching tests:', err);
+    } catch {
       setError('Lỗi kết nối máy chủ khi tải danh sách đề thi.');
     } finally {
       setLoading(false);
     }
-  }, [pageSize]);
+  }, [pageSize, activeFilter]);
 
   // Initial load and filter effect
   useEffect(() => {
@@ -120,7 +106,7 @@ const CoursesPage = () => {
       fetchTests(currentPage, searchTerm, sortBy, direction);
     }, 300);
     return () => clearTimeout(timer);
-  }, [currentPage, searchTerm, sortBy, direction, fetchTests]);
+  }, [currentPage, searchTerm, sortBy, direction, activeFilter, fetchTests]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
@@ -143,30 +129,25 @@ const CoursesPage = () => {
   };
 
   return (
-    <div className="courses-page" style={{ backgroundColor: 'var(--bg-page)', minHeight: '100vh' }}>
+    <div className="courses-page neo-courses-page" style={{ minHeight: '100vh' }}>
       {/* Page Header Banner (Academica Page Title) */}
-      <div className="page-header-banner">
+      <div className="page-header-banner neo-courses-hero">
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="badge badge-primary text-xs tracking-wider">
-                TRƯỜNG ĐẠI HỌC CẦN THƠ
-              </span>
-              <span className="badge badge-neutral text-xs">
-                ToeicElearning 2026
-              </span>
+              <span className="neo-courses-kicker">TOEIC LEARNING · CTU</span>
             </div>
-            <h1 className="text-3xl font-black text-slate-900 mb-2">
-              Kho Khóa Học & Bộ Đề Thi ToeicElearning
+            <h1 className="neo-courses-title">
+              Kho đề thi <span>TOEIC</span>
             </h1>
-            <p className="text-slate-500 text-sm max-w-2xl">
-              Hệ thống luyện thi ToeicElearning trực tuyến chuẩn cấu trúc 7 phần của Trường Đại Học Cần Thơ, có giải thích đáp án chi tiết và tính điểm tự động.
+            <p className="neo-courses-subtitle">
+              Tìm đề phù hợp, xem thông tin truy cập và bắt đầu luyện tập theo mục tiêu của bạn.
             </p>
           </div>
           {isAdmin && (
             <Link
               to="/admin/tests?action=create"
-              className="btn btn-primary inline-flex items-center gap-2 px-5 py-2.5 text-sm md:text-base font-bold shadow-md hover:shadow-lg transition-all"
+              className="neo-button neo-button-primary inline-flex items-center gap-2"
             >
               <Plus size={18} /> Soạn đề thi mới
             </Link>
@@ -179,11 +160,10 @@ const CoursesPage = () => {
         {/* Toolbar & Filter Bar (Academica .courses-2 toolbar) */}
         <div
           style={{
-            backgroundColor: 'var(--card-bg, #ffffff)',
-            borderRadius: 'var(--radius-lg)',
+            backgroundColor: 'var(--neo-surface)',
             padding: '20px 24px',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--shadow-sm)',
+            border: 'var(--neo-line)',
+            boxShadow: 'var(--neo-shadow)',
             marginBottom: 32,
             display: 'flex',
             alignItems: 'center',
@@ -206,9 +186,9 @@ const CoursesPage = () => {
               style={{
                 width: '100%',
                 padding: '10px 16px 10px 42px',
-                borderRadius: 'var(--radius-md)',
-                border: '1.5px solid var(--border)',
-                backgroundColor: 'var(--bg-page)',
+                borderRadius: 0,
+                border: '2px solid var(--neo-ink)',
+                backgroundColor: 'var(--neo-paper)',
                 color: 'var(--text-main, #1e293b)',
                 fontSize: '0.92rem',
                 outline: 'none',
@@ -220,29 +200,33 @@ const CoursesPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
-              className={`btn btn-sm ${activeFilter === 'all' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setActiveFilter('all')}
+              className={`neo-button ${activeFilter === 'all' ? 'neo-button-primary' : 'neo-button-light'}`}
+              aria-pressed={activeFilter === 'all'}
+              onClick={() => { setActiveFilter('all'); setCurrentPage(1); }}
             >
               Tất cả ({totalElements})
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${activeFilter === 'full' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setActiveFilter('full')}
+              className={`neo-button ${activeFilter === 'full' ? 'neo-button-primary' : 'neo-button-light'}`}
+              aria-pressed={activeFilter === 'full'}
+              onClick={() => { setActiveFilter('full'); setCurrentPage(1); }}
             >
               Full Test (120p)
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${activeFilter === 'listening' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setActiveFilter('listening')}
+              className={`neo-button ${activeFilter === 'listening' ? 'neo-button-primary' : 'neo-button-light'}`}
+              aria-pressed={activeFilter === 'listening'}
+              onClick={() => { setActiveFilter('listening'); setCurrentPage(1); }}
             >
               Phần Nghe (Part 1-4)
             </button>
             <button
               type="button"
-              className={`btn btn-sm ${activeFilter === 'reading' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setActiveFilter('reading')}
+              className={`neo-button ${activeFilter === 'reading' ? 'neo-button-primary' : 'neo-button-light'}`}
+              aria-pressed={activeFilter === 'reading'}
+              onClick={() => { setActiveFilter('reading'); setCurrentPage(1); }}
             >
               Phần Đọc (Part 5-7)
             </button>
@@ -253,12 +237,13 @@ const CoursesPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)', whiteSpace: 'nowrap' }}>Sắp xếp:</span>
               <select
+                value={sortBy === 'titleTest' ? `name-${direction.toLowerCase()}` : 'date-desc'}
                 onChange={handleSortChange}
                 style={{
                   padding: '8px 14px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1.5px solid var(--border)',
-                  backgroundColor: 'var(--bg-page)',
+                  borderRadius: 0,
+                  border: '2px solid var(--neo-ink)',
+                  backgroundColor: 'var(--neo-paper)',
                   color: 'var(--text-main, #1e293b)',
                   fontSize: '0.85rem',
                   fontWeight: 600,
@@ -276,14 +261,14 @@ const CoursesPage = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/admin/tests?action=create"
-                  className="btn btn-primary btn-sm inline-flex items-center gap-1.5 font-bold shadow-xs hover:shadow-md transition-all"
+                className="neo-button neo-button-primary inline-flex items-center gap-1.5"
                 >
                   <Plus size={15} /> Soạn đề thi mới
                 </Link>
 
                 <Link
                   to="/admin/tests"
-                  className="btn btn-outline btn-sm inline-flex items-center gap-1.5 font-bold"
+                className="neo-button neo-button-light inline-flex items-center gap-1.5"
                 >
                   <Settings size={15} /> Quản trị đề thi
                 </Link>
@@ -317,9 +302,10 @@ const CoursesPage = () => {
           <div
             style={{
               padding: 24,
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 0,
               backgroundColor: '#fef2f2',
-              border: '1.5px solid #fca5a5',
+              border: '2px solid #b42318',
+              boxShadow: '4px 4px 0 #111',
               color: '#991b1b',
               textAlign: 'center',
               marginBottom: 32,
@@ -330,7 +316,7 @@ const CoursesPage = () => {
             <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem' }}>{error}</p>
             <button
               type="button"
-              className="btn btn-sm btn-primary"
+              className="neo-button neo-button-primary"
               onClick={() => fetchTests(currentPage, searchTerm, sortBy, direction)}
             >
               Thử lại ngay
@@ -342,11 +328,12 @@ const CoursesPage = () => {
         {!loading && !error && tests.length === 0 && (
           <div
             style={{
-              backgroundColor: 'var(--card-bg, #ffffff)',
-              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--neo-surface)',
+              borderRadius: 0,
               padding: '60px 24px',
               textAlign: 'center',
-              border: '1px solid var(--border-light)',
+              border: 'var(--neo-line)',
+              boxShadow: 'var(--neo-shadow)',
             }}
           >
             <BookOpen size={48} color="var(--primary)" style={{ margin: '0 auto 16px', opacity: 0.6 }} />
@@ -358,7 +345,7 @@ const CoursesPage = () => {
             </p>
             <button
               type="button"
-              className="btn btn-outline btn-sm"
+              className="neo-button neo-button-light"
               onClick={() => {
                 setSearchTerm('');
                 setActiveFilter('all');
@@ -379,88 +366,38 @@ const CoursesPage = () => {
             }}
           >
             {tests.map((test, index) => {
-              const imageSrc = courseImages[index % courseImages.length];
-              const contextCount = test.contextQuestions?.length || 0;
-              const formattedDate = test.createdAt
-                ? new Date(test.createdAt).toLocaleDateString('vi-VN')
-                : 'Mới cập nhật';
-
               return (
                 <div
                   key={test.id}
-                  className="program-card card-interactive"
+                  className={`program-card neo-course-card neo-course-card-${index % 3}`}
                   style={{
-                    backgroundColor: 'var(--card-bg, #ffffff)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--border)',
-                    boxShadow: 'var(--shadow-sm)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 >
-                  {/* Card Thumbnail Image & Ribbon */}
-                  <div style={{ position: 'relative', height: 200, overflow: 'hidden', backgroundColor: '#e2e8f0' }}>
-                    <img
-                      src={imageSrc}
-                      alt={test.titleTest}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
-                    />
-                    {/* Ribbon Tag */}
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        padding: '4px 10px',
-                        borderRadius: 20,
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        letterSpacing: '0.5px',
-                        backgroundColor: '#198754',
-                        color: '#ffffff',
-                        boxShadow: 'var(--shadow-md)',
-                      }}
-                    >
-                      FREE TEST
-                    </span>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: 12,
-                        left: 12,
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                        color: '#ffffff',
-                        backdropFilter: 'blur(4px)',
-                      }}
-                    >
-                      Format ETS
-                    </span>
+                  <div className="neo-course-art" aria-hidden="true">
+                    <span>TOEIC<br />PRACTICE</span>
+                    <strong>{String(index + 1).padStart(2, '0')}</strong>
+                    <span className="neo-course-access">{test.isVip ? 'VIP' : 'FREE'}</span>
                   </div>
 
                   {/* Card Body */}
-                  <div style={{ padding: 24, display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div className="neo-course-body">
                     {/* Category Tags */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                      <span className="badge badge-primary" style={{ fontSize: '0.7rem' }}>
-                        TOEIC Full Test
-                      </span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>
-                        {formattedDate}
+                      <span className="neo-course-type">BÀI THI TOEIC</span>
+                      <span className={`border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase ${test.isVip ? 'bg-[#FF5B93]' : 'bg-[#FFE600]'}`}>
+                        {test.isVip ? `VIP · ${new Intl.NumberFormat('vi-VN').format(Number(test.vipPriceVnd || 0))} ₫` : 'Miễn phí'}
                       </span>
                     </div>
 
                     {/* Title */}
                     <h3
                       style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        color: 'var(--text-main, #1e293b)',
+                        fontSize: '1.35rem',
+                        fontWeight: 900,
+                        color: 'var(--neo-ink)',
                         marginBottom: 10,
                         lineHeight: 1.4,
                       }}
@@ -478,7 +415,7 @@ const CoursesPage = () => {
                         flex: 1,
                       }}
                     >
-                      Đề thi thử đầy đủ các kỹ năng Nghe và Đọc theo chuẩn format kỳ thi TOEIC quốc tế. Có giải thích chi tiết từng câu.
+                      Xem chi tiết cấu trúc và quyền truy cập trước khi bắt đầu làm bài.
                     </p>
 
                     {/* Metrics Row */}
@@ -488,8 +425,8 @@ const CoursesPage = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px 0',
-                        borderTop: '1px solid var(--border-light)',
-                        borderBottom: '1px solid var(--border-light)',
+                        borderTop: '2px solid var(--neo-ink)',
+                        borderBottom: '2px solid var(--neo-ink)',
                         marginBottom: 20,
                         fontSize: '0.82rem',
                         color: 'var(--gray-600)',
@@ -497,13 +434,7 @@ const CoursesPage = () => {
                       }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <Clock size={15} color="var(--primary)" /> 120 phút
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <Layers size={15} color="var(--primary)" /> {contextCount} cụm phần
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <Award size={15} color="#eab308" /> Điểm max 990
+                        <CheckCircle2 size={15} color="var(--neo-ink)" /> Đề đã phát hành
                       </span>
                     </div>
 
@@ -511,18 +442,24 @@ const CoursesPage = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       <Link
                         to={`/courses/${test.id}`}
-                        className="btn btn-outline btn-sm btn-press"
+                        className="neo-button neo-button-light"
                         style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center' }}
                       >
                         Chi tiết đề
                       </Link>
-                      <Link
-                        to={`/courses/${test.id}/take?mode=fulltest&time=120`}
-                        className="btn btn-primary btn-sm btn-press"
-                        style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center', gap: 6 }}
-                      >
-                        <PlayCircle size={15} /> Làm bài ngay
-                      </Link>
+                      {test.isVip ? (
+                        <Link to={`/courses/${test.id}`} className="neo-button neo-button-primary" style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center' }}>
+                          Xem / mua đề
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/courses/${test.id}/take?mode=fulltest&time=120`}
+                          className="neo-button neo-button-primary"
+                          style={{ textDecoration: 'none', textAlign: 'center', justifyContent: 'center', gap: 6 }}
+                        >
+                          <PlayCircle size={15} /> Làm bài ngay
+                        </Link>
+                      )}
                     </div>
 
                     {/* Quick Admin Actions Row (Only visible to Admin) */}
@@ -532,14 +469,14 @@ const CoursesPage = () => {
                         <div className="flex gap-1.5">
                           <Link
                             to={`/admin/tests?editId=${test.id}`}
-                            className="btn btn-outline btn-sm px-2.5 py-1 text-xs gap-1 font-bold inline-flex items-center"
+                            className="neo-button neo-button-light px-2.5 py-1 text-xs gap-1 font-bold inline-flex items-center"
                             title="Chỉnh sửa toàn bộ cấu trúc đề thi"
                           >
                             <Edit2 size={13} /> Sửa
                           </Link>
                           <button
                             type="button"
-                            className="btn btn-outline btn-sm px-2.5 py-1 text-xs gap-1 font-bold inline-flex items-center text-red-600 border-red-200 hover:bg-red-50"
+                            className="neo-button px-2.5 py-1 text-xs gap-1 font-bold inline-flex items-center text-red-700 bg-red-100"
                             onClick={() => handleOpenDeleteModal(test)}
                           >
                             <Trash2 size={13} /> Xóa
@@ -567,7 +504,7 @@ const CoursesPage = () => {
           >
             <button
               type="button"
-              className="btn btn-outline btn-sm"
+              className="neo-button neo-button-light"
               disabled={currentPage <= 1}
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               style={{ display: 'flex', alignItems: 'center', gap: 4 }}
@@ -579,7 +516,7 @@ const CoursesPage = () => {
               <button
                 key={pageNum}
                 type="button"
-                className={`btn btn-sm ${pageNum === currentPage ? 'btn-primary' : 'btn-outline'}`}
+                className={`neo-button ${pageNum === currentPage ? 'neo-button-primary' : 'neo-button-light'}`}
                 onClick={() => setCurrentPage(pageNum)}
                 style={{ width: 36, height: 36, padding: 0 }}
               >
@@ -589,7 +526,7 @@ const CoursesPage = () => {
 
             <button
               type="button"
-              className="btn btn-outline btn-sm"
+              className="neo-button neo-button-light"
               disabled={currentPage >= totalPages}
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               style={{ display: 'flex', alignItems: 'center', gap: 4 }}
@@ -607,21 +544,21 @@ const CoursesPage = () => {
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Xác nhận xóa đề thi"
+        title="Xác nhận xóa hoặc gỡ đề thi"
       >
         <div style={{ textAlign: 'center', padding: '10px 0' }}>
           <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 12px' }} />
           <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#0f172a' }}>
-            Bạn có chắc chắn muốn xóa bài thi này?
+            Bạn có chắc chắn muốn gỡ đề thi này khỏi catalog?
           </h4>
           <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#64748b' }}>
-            Đề thi <strong>"{selectedTest?.titleTest}"</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Thao tác này không thể hoàn tác.
+            Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ không còn xuất hiện trong catalog. Nếu đã có lượt làm hoặc giao dịch, hệ thống chuyển đề về bản nháp để giữ lịch sử; nếu chưa có, đề sẽ bị xóa cùng nội dung.
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
             <button
               type="button"
-              className="btn btn-outline"
+            className="neo-button neo-button-light"
               disabled={actionLoading}
               onClick={() => setDeleteModalOpen(false)}
             >
@@ -629,12 +566,12 @@ const CoursesPage = () => {
             </button>
             <button
               type="button"
-              className="btn btn-danger"
+              className="neo-button neo-button-danger"
               disabled={actionLoading}
               onClick={handleConfirmDelete}
               style={{ gap: 6 }}
             >
-              <Trash2 size={16} /> {actionLoading ? 'Đang xóa...' : 'Xác nhận xóa'}
+              <Trash2 size={16} /> {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
             </button>
             </div>
           </div>

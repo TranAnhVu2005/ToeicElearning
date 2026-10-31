@@ -28,13 +28,9 @@ import {
   ChevronDown,
   ChevronUp,
   ZoomIn,
-  Eye,
   Link2,
   Check,
   Headphones,
-  MessageSquare,
-  HelpCircle,
-  Radio,
   Languages,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -46,7 +42,6 @@ import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 import {
   ETS_PART_DIRECTIONS,
-  ETS_GENERAL_DIRECTIONS,
 } from '../../constants/etsDirections';
 
 // CẤU TRÚC ĐỀ THI TOEIC LISTENING & READING CHUẨN ETS MỚI NHẤT
@@ -266,7 +261,7 @@ const createFreshContextQuestion = (partNumber = 1) => {
 // Khởi tạo Part 1 có sẵn đúng 6 câu trống chuẩn ETS (6 Audio, 6 Ảnh, 4 đáp án cố định A, B, C, D)
 export const createFreshPart1Blank = () => ({
   partNumber: 1,
-  contextQuestions: Array.from({ length: 6 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 6 }, () => ({
     audioUrl: '',
     imageUrl: '',
     paragraph: '',
@@ -289,7 +284,7 @@ export const createFreshPart1Blank = () => ({
 // Khởi tạo Part 2 có sẵn đúng 25 câu trống chuẩn ETS (Câu 7 -> 31, mỗi câu 1 Audio lẻ, KHÔNG ẢNH, 3 đáp án cố định A, B, C)
 export const createFreshPart2Blank = () => ({
   partNumber: 2,
-  contextQuestions: Array.from({ length: 25 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 25 }, () => ({
     audioUrl: '',
     imageUrl: '',
     paragraph: '',
@@ -312,13 +307,13 @@ export const createFreshPart2Blank = () => ({
 // Khởi tạo Part 3 có sẵn đúng 13 bài nghe (Câu 32 -> 70, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
 export const createFreshPart3Blank = () => ({
   partNumber: 3,
-  contextQuestions: Array.from({ length: 13 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 13 }, () => ({
     audioUrl: '',
     imageUrl: '', // Ảnh biểu đồ/lịch trình tùy chọn
     paragraph: '',
     transcript: '',
     translation: '',
-    questions: Array.from({ length: 3 }, (_, qIdx) => ({
+    questions: Array.from({ length: 3 }, () => ({
       questionContent: '',
       optionA: '',
       optionB: '',
@@ -333,13 +328,13 @@ export const createFreshPart3Blank = () => ({
 // Khởi tạo Part 4 có sẵn đúng 10 bài nghe (Câu 71 -> 100, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
 export const createFreshPart4Blank = () => ({
   partNumber: 4,
-  contextQuestions: Array.from({ length: 10 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 10 }, () => ({
     audioUrl: '',
     imageUrl: '', // Ảnh minh họa/bảng biểu tùy chọn
     paragraph: '',
     transcript: '',
     translation: '',
-    questions: Array.from({ length: 3 }, (_, qIdx) => ({
+    questions: Array.from({ length: 3 }, () => ({
       questionContent: '',
       optionA: '',
       optionB: '',
@@ -354,7 +349,7 @@ export const createFreshPart4Blank = () => ({
 // Khởi tạo Part 5 có sẵn đúng 30 câu hỏi độc lập chuẩn ETS (Câu 101 -> 130)
 export const createFreshPart5Blank = () => ({
   partNumber: 5,
-  contextQuestions: Array.from({ length: 30 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 30 }, () => ({
     audioUrl: '',
     imageUrl: '',
     paragraph: '',
@@ -377,7 +372,7 @@ export const createFreshPart5Blank = () => ({
 // Khởi tạo Part 6 có sẵn đúng 4 bài đọc điền khuyết chuẩn ETS (Câu 131 -> 146, 4 đoạn x 4 câu)
 export const createFreshPart6Blank = () => ({
   partNumber: 6,
-  contextQuestions: Array.from({ length: 4 }, (_, i) => ({
+  contextQuestions: Array.from({ length: 4 }, () => ({
     audioUrl: '',
     imageUrl: '',
     paragraph: '',
@@ -544,8 +539,8 @@ export const createMiniETSTest50Questions = () => {
   ];
 };
 
-const TestManagementPage = () => {
-  const { isAdmin, isTeacher } = useAuth();
+const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
+  const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [tests, setTests] = useState([]);
@@ -570,6 +565,9 @@ const TestManagementPage = () => {
   const [selectedTest, setSelectedTest] = useState(null);
   const [formTitle, setFormTitle] = useState('');
   const [formStatus, setFormStatus] = useState('PUBLISHED'); // 'DRAFT' | 'PUBLISHED'
+  const [formIsVip, setFormIsVip] = useState(false);
+  const [formVipPriceVnd, setFormVipPriceVnd] = useState('');
+  const [classroomId, setClassroomId] = useState(classroomScope);
   const [formParts, setFormParts] = useState([createFreshPart(1), createFreshPart(5)]);
   const [activePartIndex, setActivePartIndex] = useState(0);
 
@@ -601,21 +599,27 @@ const TestManagementPage = () => {
   const [toast, setToast] = useState(null);
 
   // Auto-Save and Draft Recovery (Hybrid Architecture: 5s Client LocalStorage + 30s Smart Server Sync)
-  const AUTOSAVE_STORAGE_KEY = 'toeic_exam_studio_autosave';
+  const AUTOSAVE_STORAGE_KEY = classroomScope
+    ? `toeic_exam_studio_autosave_class_${classroomScope}`
+    : 'toeic_exam_studio_autosave';
   const isDirtyRef = useRef(false);
-  const markDirty = () => {
-    isDirtyRef.current = true;
-  };
+  const editLoadRequestRef = useRef(0);
   const [autoSaveState, setAutoSaveState] = useState({
     status: 'idle', // 'idle' | 'saving' | 'saved' | 'synced_server'
     savedAt: null,
   });
   const [recoverableDraft, setRecoverableDraft] = useState(null);
+  const markDirty = () => {
+    isDirtyRef.current = true;
+    setAutoSaveState((previous) => ({ ...previous, status: 'saving' }));
+  };
 
   const handleRestoreDraft = () => {
     if (!recoverableDraft) return;
     if (recoverableDraft.formTitle) setFormTitle(recoverableDraft.formTitle);
     if (recoverableDraft.formStatus) setFormStatus(recoverableDraft.formStatus);
+    if (recoverableDraft.formIsVip !== undefined) setFormIsVip(Boolean(recoverableDraft.formIsVip));
+    if (recoverableDraft.formVipPriceVnd !== undefined) setFormVipPriceVnd(recoverableDraft.formVipPriceVnd);
     if (recoverableDraft.formParts && Array.isArray(recoverableDraft.formParts)) {
       setFormParts(recoverableDraft.formParts);
     }
@@ -629,21 +633,21 @@ const TestManagementPage = () => {
   const handleDismissDraft = () => {
     try {
       localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
-    } catch (e) {
-      console.warn(e);
+    } catch {
+      // Storage may be unavailable; the in-memory draft remains usable.
     }
     setRecoverableDraft(null);
   };
 
-  const clearAutosaveDraft = () => {
+  const clearAutosaveDraft = useCallback(() => {
     try {
       localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
-    } catch (e) {
-      console.warn(e);
+    } catch {
+      // Storage may be unavailable; the in-memory draft remains usable.
     }
     setRecoverableDraft(null);
     setAutoSaveState({ status: 'saved', savedAt: new Date() });
-  };
+  }, [AUTOSAVE_STORAGE_KEY]);
 
   // Tính toán số lượng câu hỏi và đối chiếu chuẩn ETS trực tiếp
   const etsMetrics = useMemo(() => {
@@ -972,7 +976,9 @@ const TestManagementPage = () => {
     async (showLoading = true) => {
       try {
         if (showLoading) setLoading(true);
-        const res = await examService.getTests(
+        const res = classroomId
+          ? await examService.getClassroomTests(classroomId, currentPage, pageSize)
+          : await examService.getAdminTests(
           currentPage,
           pageSize,
           debouncedKeyword,
@@ -986,7 +992,6 @@ const TestManagementPage = () => {
           setTotalElements(res.data.totalElements || 0);
         }
       } catch (err) {
-        console.error('Fetch tests error:', err);
         setToast({
           type: 'error',
           message: err.response?.data?.message || 'Không thể tải danh sách đề thi.',
@@ -995,7 +1000,7 @@ const TestManagementPage = () => {
         if (showLoading) setLoading(false);
       }
     },
-    [currentPage, pageSize, debouncedKeyword, sortBy, direction, statusTab]
+    [classroomId, currentPage, pageSize, debouncedKeyword, sortBy, direction, statusTab]
   );
 
 
@@ -1004,11 +1009,17 @@ const TestManagementPage = () => {
   }, [fetchTests]);
 
   // Open Create Builder
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = useCallback(() => {
+    editLoadRequestRef.current += 1;
+    setActionLoading(false);
+    setAutoSaveState({ status: 'saving', savedAt: null });
     setBuilderMode('create');
     setSelectedTest(null);
-    setFormTitle(`ETS TOEIC 2026 - Test ${(totalElements + 1).toString().padStart(2, '0')}`);
+    setFormTitle(classroomId ? 'Đề TOEIC riêng của lớp' : `ETS TOEIC 2026 - Test ${(totalElements + 1).toString().padStart(2, '0')}`);
     setFormStatus('PUBLISHED');
+    setFormIsVip(false);
+    setFormVipPriceVnd('');
+    setClassroomId(classroomScope);
     setFormParts([createFreshPart(1), createFreshPart(5)]);
     setActivePartIndex(0);
     setBuilderOpen(true);
@@ -1022,6 +1033,8 @@ const TestManagementPage = () => {
           setFormParts(parsed.formParts);
           if (parsed.formTitle) setFormTitle(parsed.formTitle);
           if (parsed.formStatus) setFormStatus(parsed.formStatus);
+          if (parsed.formIsVip !== undefined) setFormIsVip(Boolean(parsed.formIsVip));
+          if (parsed.formVipPriceVnd !== undefined) setFormVipPriceVnd(parsed.formVipPriceVnd);
           setAutoSaveState({
             status: 'saved',
             savedAt: new Date(parsed.savedAt),
@@ -1036,17 +1049,22 @@ const TestManagementPage = () => {
       } else {
         setRecoverableDraft(null);
       }
-    } catch (e) {
+    } catch {
       setRecoverableDraft(null);
     }
-  };
+  }, [AUTOSAVE_STORAGE_KEY, classroomId, classroomScope, totalElements]);
 
   // Open Edit Builder
-  const handleOpenEditModal = async (test) => {
+  const handleOpenEditModal = useCallback(async (test, targetClassroomId = classroomScope) => {
+    const requestId = ++editLoadRequestRef.current;
     setBuilderMode('edit');
+    setAutoSaveState({ status: 'saving', savedAt: null });
     setSelectedTest(test);
     setFormTitle(test.titleTest || '');
     setFormStatus(test.status || 'PUBLISHED');
+    setFormIsVip(Boolean(test.isVip));
+    setFormVipPriceVnd(test.vipPriceVnd == null ? '' : String(test.vipPriceVnd));
+    setClassroomId(targetClassroomId);
     setActivePartIndex(0);
     setBuilderOpen(true);
 
@@ -1064,19 +1082,24 @@ const TestManagementPage = () => {
       } else {
         setRecoverableDraft(null);
       }
-    } catch (e) {
+    } catch {
       setRecoverableDraft(null);
     }
 
     try {
       setActionLoading(true);
-      const res = await examService.getTestDetail(test.id);
+      const res = targetClassroomId
+        ? await examService.getClassroomTestDetail(targetClassroomId, test.id)
+        : await examService.getAdminTestDetail(test.id);
+      if (requestId !== editLoadRequestRef.current) return false;
       if (res.code === 1000 && res.data) {
         const fullTest = res.data;
         setFormTitle(fullTest.titleTest || test.titleTest || '');
         if (fullTest.status) {
           setFormStatus(fullTest.status);
         }
+        setFormIsVip(Boolean(fullTest.isVip));
+        setFormVipPriceVnd(fullTest.vipPriceVnd == null ? '' : String(fullTest.vipPriceVnd));
 
         // Group contextQuestions by partNumber
         const partMap = {};
@@ -1195,6 +1218,12 @@ const TestManagementPage = () => {
             _seqIndex: seqIndex,
             audioUrl: cq.audioUrl || '',
             imageUrl: cq.imageUrl || '',
+            audioPublicId: cq.audioPublicId || '',
+            imagePublicId: cq.imagePublicId || '',
+            audioFormat: cq.audioFormat || '',
+            imageFormat: cq.imageFormat || '',
+            audioDeliveryType: cq.audioDeliveryType || '',
+            imageDeliveryType: cq.imageDeliveryType || '',
             paragraph: cleanParagraph,
             transcript: parsedTranscript,
             translation: parsedTranslation,
@@ -1245,30 +1274,39 @@ const TestManagementPage = () => {
         } else {
           setFormParts([createFreshPart(1), createFreshPart(5)]);
         }
+        return true;
       }
+      setToast({ type: 'error', message: res.message || 'Không thể tải chi tiết đề thi từ máy chủ.' });
+      return false;
     } catch (err) {
-      console.error('Fetch test details error:', err);
-      setToast({
-        type: 'error',
-        message: 'Không thể nạp chi tiết câu hỏi của đề thi.',
-      });
+      if (requestId === editLoadRequestRef.current) {
+        setToast({ type: 'error', message: err.response?.data?.message || 'Không thể nạp chi tiết câu hỏi của đề thi.' });
+      }
+      return false;
     } finally {
-      setActionLoading(false);
+      if (requestId === editLoadRequestRef.current) setActionLoading(false);
     }
-  };
+  }, [AUTOSAVE_STORAGE_KEY, classroomScope]);
+
+  useEffect(() => {
+    if (initialTest?.id && classroomScope) {
+      handleOpenEditModal(initialTest, classroomScope);
+    }
+  }, [classroomScope, initialTest, handleOpenEditModal]);
 
   // Tải lại dữ liệu tươi mới từ máy chủ CSDL và xóa sạch bản nháp cache trình duyệt
   const handleReloadFromServer = async () => {
     if (!selectedTest?.id) return;
     try {
+      const reloaded = await handleOpenEditModal(selectedTest);
+      if (!reloaded) return;
       clearAutosaveDraft();
-      await handleOpenEditModal(selectedTest);
+      setRecoverableDraft(null);
       setToast({
         type: 'success',
         message: '✓ Đã làm mới 100% dữ liệu từ máy chủ CSDL thành công!',
       });
-    } catch (err) {
-      console.error('Reload from server error:', err);
+    } catch {
       setToast({
         type: 'error',
         message: 'Không thể tải lại dữ liệu từ máy chủ.',
@@ -1280,7 +1318,13 @@ const TestManagementPage = () => {
   const handleTogglePublish = async (test) => {
     try {
       setActionLoading(true);
-      if (test.status === 'PUBLISHED') {
+      if (classroomId) {
+        if (test.status !== 'PUBLISHED') {
+          const res = await examService.publishClassroomTest(classroomId, test.id);
+          if (res.code !== 1000) throw new Error(res.message || 'Không thể phát hành đề cho lớp.');
+          setToast({ type: 'success', message: 'Đã phát hành đề riêng trong lớp.' });
+        }
+      } else if (test.status === 'PUBLISHED') {
         const res = await examService.draftTest(test.id);
         if (res.code === 1000) {
           setToast({
@@ -1292,7 +1336,9 @@ const TestManagementPage = () => {
           setToast({ type: 'error', message: res.message || 'Không thể chuyển về bản nháp.' });
         }
       } else {
-        const res = await examService.publishTest(test.id);
+        const res = classroomId
+          ? await examService.publishClassroomTest(classroomId, test.id)
+          : await examService.publishTest(test.id);
         if (res.code === 1000) {
           setToast({
             type: 'success',
@@ -1304,7 +1350,6 @@ const TestManagementPage = () => {
         }
       }
     } catch (err) {
-      console.error('Toggle publish status error:', err);
       setToast({
         type: 'error',
         message: err.response?.data?.message || 'Lỗi khi cập nhật trạng thái đề thi.',
@@ -1323,10 +1368,10 @@ const TestManagementPage = () => {
       setSearchParams({});
     } else if (editId) {
       const match = tests.find((t) => t.id === editId) || { id: editId, titleTest: 'Đang nạp...' };
-      handleOpenEditModal(match);
+      handleOpenEditModal(match, classroomId);
       setSearchParams({});
     }
-  }, [searchParams, tests, setSearchParams]);
+  }, [searchParams, tests, setSearchParams, classroomId, handleOpenCreateModal, handleOpenEditModal]);
 
   // Open Delete Modal
   const handleOpenDeleteModal = (test) => {
@@ -1339,7 +1384,6 @@ const TestManagementPage = () => {
     if (!builderOpen) return;
     if (!formTitle && (!formParts || formParts.length === 0)) return;
 
-    setAutoSaveState((prev) => ({ ...prev, status: 'saving' }));
     const timer = setTimeout(() => {
       try {
         const draftData = {
@@ -1347,6 +1391,8 @@ const TestManagementPage = () => {
           builderMode,
           formTitle,
           formStatus,
+          formIsVip,
+          formVipPriceVnd,
           formParts,
           savedAt: new Date().toISOString(),
         };
@@ -1355,45 +1401,13 @@ const TestManagementPage = () => {
           status: prev.status === 'synced_server' ? 'synced_server' : 'saved',
           savedAt: new Date(),
         }));
-      } catch (err) {
-        console.warn('Auto-save LocalStorage error:', err);
+      } catch {
+        console.warn('Autosave could not be written to browser storage.');
       }
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [formTitle, formStatus, formParts, builderMode, selectedTest?.id, builderOpen]);
-
-  // TẦNG 2: Đồng bộ ngầm thông minh lên máy chủ sau mỗi 30s (Chỉ chạy khi có thay đổi thực sự isDirty)
-  useEffect(() => {
-    if (!builderOpen) return;
-
-    const syncTimer = setInterval(() => {
-      // Chỉ tự động đồng bộ khi người dùng THỰC SỰ gõ phím/chỉnh sửa (isDirtyRef.current = true)
-      if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
-        // Bảo toàn trạng thái hiện tại (formStatus), tuyệt đối KHÔNG ép về DRAFT
-        handleSaveExam(null, formStatus, true, true);
-        isDirtyRef.current = false;
-      }
-    }, 30000); // 30s chu kỳ an toàn cho Server Database
-
-    return () => clearInterval(syncTimer);
-  }, [builderOpen, formTitle, formStatus, formParts, builderMode, selectedTest, actionLoading]);
-
-  // Phím tắt Ctrl + S để lưu tức thời lên máy chủ (Tầng 3: On-Demand)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-        if (builderOpen) {
-          e.preventDefault();
-          // Lưu bảo toàn đúng trạng thái formStatus (PUBLISHED / DRAFT)
-          handleSaveExam(null, formStatus, true, false);
-          isDirtyRef.current = false;
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [builderOpen, formTitle, formStatus, formParts, builderMode, selectedTest]);
+  }, [AUTOSAVE_STORAGE_KEY, formTitle, formStatus, formIsVip, formVipPriceVnd, formParts, builderMode, selectedTest?.id, builderOpen]);
 
   // Đóng modal an toàn: Cảnh báo người dùng nếu có thay đổi chưa lưu lên máy chủ CSDL
   const handleCloseBuilder = async () => {
@@ -1406,11 +1420,13 @@ const TestManagementPage = () => {
       if (confirmClose) {
         try {
           await handleSaveExam(null, formStatus, false, false);
-        } catch (err) {
-          console.warn('Auto-save on close error:', err);
+        } catch {
+          console.warn('Autosave could not be written to browser storage.');
         }
       }
     }
+    editLoadRequestRef.current += 1;
+    setActionLoading(false);
     isDirtyRef.current = false;
     setBuilderOpen(false);
   };
@@ -1419,13 +1435,19 @@ const TestManagementPage = () => {
   // forcedStatus: 'DRAFT' | 'PUBLISHED' | null
   // keepOpen: boolean - nếu true thì giữ nguyên modal để tiếp tục nhập liệu
   // isSilent: boolean - nếu true thì không bắn Toast (dùng cho Auto-Sync ngầm máy chủ)
-  const handleSaveExam = async (e, forcedStatus = null, keepOpen = false, isSilent = false) => {
+  const handleSaveExam = useCallback(async (e, forcedStatus = null, keepOpen = false, isSilent = false) => {
     if (e && e.preventDefault) e.preventDefault();
 
-    const targetStatus = forcedStatus || formStatus;
+    let targetStatus = forcedStatus || formStatus;
 
     if (!formTitle?.trim()) {
       if (!isSilent) setToast({ type: 'error', message: 'Vui lòng nhập tên đề thi!' });
+      return;
+    }
+
+    if (!classroomId && formIsVip && (!/^\d+$/.test(String(formVipPriceVnd))
+      || Number(formVipPriceVnd) < 1 || Number(formVipPriceVnd) > 99999999)) {
+      if (!isSilent) setToast({ type: 'error', message: 'Đề VIP cần có giá nguyên VND từ 1 đến 99.999.999.' });
       return;
     }
 
@@ -1463,11 +1485,8 @@ const TestManagementPage = () => {
             `• Nhấn [OK]: Chuyển sang BẢN NHÁP (DRAFT) và lưu ngay lập tức.\n` +
             `• Nhấn [Cancel]: Ở lại chỉnh sửa tiếp.`
         );
-        if (confirmSaveAsDraft) {
-          return handleSaveExam(null, 'DRAFT', keepOpen);
-        } else {
-          return;
-        }
+        if (!confirmSaveAsDraft) return;
+        targetStatus = 'DRAFT';
       }
     }
 
@@ -1569,11 +1588,15 @@ const TestManagementPage = () => {
       const payload = {
         titleTest: formTitle.trim(),
         status: targetStatus,
+        isVip: formIsVip,
+        vipPriceVnd: formIsVip && !classroomId ? Number(formVipPriceVnd) : null,
         parts: cleanedParts,
       };
 
       if (builderMode === 'create') {
-        const res = await examService.createTest(payload);
+        const res = classroomId
+          ? await examService.createClassroomTest(classroomId, payload)
+          : await examService.createTest(payload);
         if (res.code === 1000) {
           if (!keepOpen && targetStatus === 'PUBLISHED') {
             clearAutosaveDraft();
@@ -1593,9 +1616,11 @@ const TestManagementPage = () => {
           if (keepOpen) {
             // Chuyển sang edit mode và lấy ID của test vừa tạo
             await fetchTests(false);
-            const updatedRes = await examService.getTests(1, 10, formTitle.trim(), 'createdAt', 'DESC');
-            if (updatedRes?.code === 1000 && updatedRes?.data?.data?.length > 0) {
-              const matchedTest = updatedRes.data.data.find((t) => t.titleTest === formTitle.trim()) || updatedRes.data.data[0];
+            const updatedRes = classroomId
+              ? await examService.getClassroomTests(classroomId, 1, 100)
+              : await examService.getAdminTests(1, 10, formTitle.trim(), 'createdAt', 'DESC', targetStatus);
+            if (updatedRes?.code === 1000 && updatedRes?.data?.content?.length > 0) {
+              const matchedTest = updatedRes.data.content.find((t) => t.titleTest === formTitle.trim()) || updatedRes.data.content[0];
               setSelectedTest(matchedTest);
               setBuilderMode('edit');
               // Cập nhật lại testId vào draftData để các lần tự lưu tiếp theo chuẩn ID
@@ -1605,12 +1630,14 @@ const TestManagementPage = () => {
                   builderMode: 'edit',
                   formTitle,
                   formStatus: targetStatus,
+                  formIsVip,
+                  formVipPriceVnd,
                   formParts,
                   savedAt: new Date().toISOString(),
                 };
                 localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(currentDraft));
-              } catch (e) {
-                console.warn('Update draft after create error:', e);
+              } catch {
+                console.warn('Draft recovery data could not be written to browser storage.');
               }
             }
           } else {
@@ -1621,7 +1648,9 @@ const TestManagementPage = () => {
           if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể tạo đề thi.' });
         }
       } else {
-        const res = await examService.updateTest(selectedTest.id, payload);
+        const res = classroomId
+          ? await examService.updateClassroomTest(classroomId, selectedTest.id, payload)
+          : await examService.updateTest(selectedTest.id, payload);
         if (res.code === 1000) {
           if (!keepOpen && targetStatus === 'PUBLISHED') {
             clearAutosaveDraft();
@@ -1647,7 +1676,6 @@ const TestManagementPage = () => {
         }
       }
     } catch (err) {
-      console.error('Save exam error:', err);
       const msg =
         err.response?.data?.message ||
         'Máy chủ báo lỗi khi lưu đề thi. Vui lòng kiểm tra ràng buộc dữ liệu backend.';
@@ -1655,7 +1683,35 @@ const TestManagementPage = () => {
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [AUTOSAVE_STORAGE_KEY, builderMode, classroomId, clearAutosaveDraft, fetchTests, formIsVip,
+    formParts, formStatus, formTitle, formVipPriceVnd, selectedTest]);
+
+  // TẦNG 2: Đồng bộ ngầm thông minh lên máy chủ sau mỗi 30s (Chỉ chạy khi có thay đổi thực sự isDirty)
+  useEffect(() => {
+    if (!builderOpen) return;
+
+    const syncTimer = setInterval(() => {
+      if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
+        handleSaveExam(null, formStatus, true, true);
+        isDirtyRef.current = false;
+      }
+    }, 30000);
+
+    return () => clearInterval(syncTimer);
+  }, [builderOpen, formTitle, formStatus, actionLoading, handleSaveExam]);
+
+  // Phím tắt Ctrl + S để lưu tức thời lên máy chủ.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S') && builderOpen) {
+        e.preventDefault();
+        handleSaveExam(null, formStatus, true, false);
+        isDirtyRef.current = false;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [builderOpen, formStatus, handleSaveExam]);
 
   // Confirm Delete Test
 
@@ -1663,11 +1719,16 @@ const TestManagementPage = () => {
     if (!selectedTest) return;
     try {
       setActionLoading(true);
-      const res = await examService.deleteTest(selectedTest.id);
+      const res = classroomId
+        ? await examService.deleteClassroomTest(classroomId, selectedTest.id)
+        : await examService.deleteTest(selectedTest.id);
       if (res.code === 1000) {
+        const archived = res.data === 'ARCHIVED';
         setToast({
           type: 'success',
-          message: `Đã xóa đề thi "${selectedTest.titleTest}" thành công!`,
+          message: archived
+            ? `Đề "${selectedTest.titleTest}" đã có lượt làm hoặc giao dịch nên được chuyển về bản nháp để bảo toàn dữ liệu.`
+            : `Đã xóa đề thi "${selectedTest.titleTest}" thành công!`,
         });
         setDeleteModalOpen(false);
         fetchTests(false);
@@ -1675,7 +1736,6 @@ const TestManagementPage = () => {
         setToast({ type: 'error', message: res.message || 'Không thể xóa đề thi.' });
       }
     } catch (err) {
-      console.error('Delete test error:', err);
       const msg =
         err.response?.data?.message ||
         'Lỗi khóa ngoại MySQL: Đề thi có chứa câu hỏi, cần cấu hình ON DELETE CASCADE trong backend để xóa toàn bộ.';
@@ -1686,20 +1746,6 @@ const TestManagementPage = () => {
   };
 
   // --- Builder Sub-actions ---
-  const handleAddPart = (partNum) => {
-    markDirty();
-    // If part already exists, switch to it
-    const existingIdx = formParts.findIndex((p) => p.partNumber === partNum);
-    if (existingIdx !== -1) {
-      setActivePartIndex(existingIdx);
-      setToast({ type: 'info', message: `Đã chuyển sang Part ${partNum} hiện có.` });
-      return;
-    }
-    const newPart = createFreshPart(partNum);
-    setFormParts((prev) => [...prev, newPart].sort((a, b) => a.partNumber - b.partNumber));
-    setActivePartIndex(formParts.length);
-  };
-
   const handleRemovePart = (partIndex) => {
     markDirty();
     if (formParts.length <= 1) {
@@ -1815,16 +1861,17 @@ const TestManagementPage = () => {
     setUploadingKey(currentKey);
 
     try {
-      const currentCq = formParts[pIdx]?.contextQuestions?.[cqIdx];
-      const oldUrl = fieldType === 'audio' ? currentCq?.audioUrl : currentCq?.imageUrl;
-      const uploadedUrl = await uploadMediaFile(file, formTitle || 'TOEIC Test', fieldType, oldUrl);
-      handleUpdateContextField(pIdx, cqIdx, fieldType === 'audio' ? 'audioUrl' : 'imageUrl', uploadedUrl);
+      const uploaded = await uploadMediaFile(file, formTitle || 'TOEIC Test', fieldType, formIsVip);
+      const prefix = fieldType === 'audio' ? 'audio' : 'image';
+      handleUpdateContextField(pIdx, cqIdx, `${prefix}Url`, uploaded.url);
+      handleUpdateContextField(pIdx, cqIdx, `${prefix}PublicId`, uploaded.publicId || '');
+      handleUpdateContextField(pIdx, cqIdx, `${prefix}Format`, uploaded.format || '');
+      handleUpdateContextField(pIdx, cqIdx, `${prefix}DeliveryType`, uploaded.deliveryType || '');
       setToast({
         type: 'success',
         message: `Tải lên ${fieldType === 'audio' ? 'file âm thanh' : 'hình ảnh'} thành công!`,
       });
     } catch (err) {
-      console.error('Upload media error:', err);
       setToast({
         type: 'error',
         message:
@@ -1924,8 +1971,6 @@ const TestManagementPage = () => {
             const hasImage = Boolean(cq.imageUrl);
             const hasAudio = Boolean(cq.audioUrl);
             const hasTranscript = Boolean(cq.transcript?.trim());
-            const hasExplanation = Boolean(q.explanation?.trim());
-
             const imageKey = `p1-${cqIdx}-image`;
             const audioKey = `p1-${cqIdx}-audio`;
             const showImageInput = showUrlInputs[imageKey];
@@ -2070,7 +2115,7 @@ const TestManagementPage = () => {
                                   : 'Đổi ảnh'}
                                 <input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                                   className="hidden"
                                   disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                                   onChange={(e) =>
@@ -2116,7 +2161,7 @@ const TestManagementPage = () => {
                           </div>
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                             className="hidden"
                             disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                             onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
@@ -2173,7 +2218,7 @@ const TestManagementPage = () => {
                                   : 'Đổi file MP3'}
                                 <input
                                   type="file"
-                                  accept="audio/*,.mp3,.wav,.m4a"
+                                  accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                                   className="hidden"
                                   disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                                   onChange={(e) =>
@@ -2218,7 +2263,7 @@ const TestManagementPage = () => {
                           </div>
                           <input
                             type="file"
-                            accept="audio/*,.mp3,.wav,.m4a"
+                            accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                             className="hidden"
                             disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                             onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
@@ -2478,8 +2523,6 @@ const TestManagementPage = () => {
             const qNum = cqIdx + 7;
             const hasAudio = Boolean(cq.audioUrl);
             const hasTranscript = Boolean(cq.transcript?.trim());
-            const hasExplanation = Boolean(q.explanation?.trim());
-
             const audioKey = `p2-${cqIdx}-audio`;
             const showAudioInput = showUrlInputs[audioKey];
 
@@ -2576,7 +2619,7 @@ const TestManagementPage = () => {
                           <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
                           <input
                             type="file"
-                            accept="audio/*,.mp3,.wav,.m4a"
+                            accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                             className="hidden"
                             disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                             onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
@@ -2969,7 +3012,7 @@ const TestManagementPage = () => {
                             <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
                             <input
                               type="file"
-                              accept="audio/*,.mp3,.wav,.m4a"
+                              accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                               className="hidden"
                               disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                               onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
@@ -3038,7 +3081,7 @@ const TestManagementPage = () => {
                             <span>{uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải...' : 'Tải ảnh graphic'}</span>
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                               className="hidden"
                               disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                               onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
@@ -3548,7 +3591,7 @@ const TestManagementPage = () => {
                             <span>{uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải...' : 'Tải MP3 từ máy'}</span>
                             <input
                               type="file"
-                              accept="audio/*,.mp3,.wav,.m4a"
+                              accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                               className="hidden"
                               disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                               onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
@@ -3617,7 +3660,7 @@ const TestManagementPage = () => {
                             <span>{uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải...' : 'Tải ảnh graphic'}</span>
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                               className="hidden"
                               disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                               onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
@@ -5105,7 +5148,7 @@ const TestManagementPage = () => {
                         {uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
                         <input
                           type="file"
-                          accept="image/*,.jpg,.jpeg,.png,.webp"
+                          accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                           className="hidden"
                           disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                           onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
@@ -5334,23 +5377,22 @@ const TestManagementPage = () => {
   };
 
   return (
-    <div className="admin-page py-8 min-h-screen bg-gray-50">
+    <div className="admin-page test-management-page py-8 min-h-screen">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       <div className="container">
         {/* Page Header */}
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+        <div className="test-studio-header flex items-center justify-between flex-wrap gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+              <div className="test-studio-icon w-11 h-11 flex items-center justify-center">
                 <BookOpen size={24} />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="badge badge-primary text-xs">Hệ Thống Quản Trị</span>
-                  <span className="badge badge-neutral text-xs">Admin Portal</span>
+                  <span className="test-studio-scope text-xs">{classroomId ? 'Đề riêng lớp học' : 'QUẢN TRỊ HỆ THỐNG'}</span>
                 </div>
-                <h1 className="text-2xl font-black text-slate-900 m-0">Quản Lý Đề Thi TOEIC</h1>
+                <h1 className="test-studio-title text-2xl m-0">Quản lý đề thi TOEIC</h1>
                 <p className="m-0 text-sm text-slate-500">
                   Soạn thảo, tạo mới câu hỏi và cập nhật đề thi thử cho học viên ({totalElements} đề
                   thi hiện có)
@@ -5360,49 +5402,49 @@ const TestManagementPage = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/courses" className="btn btn-outline btn-sm inline-flex items-center gap-1.5">
+            {!classroomId && <Link to="/courses" className="btn btn-outline btn-sm inline-flex items-center gap-1.5">
               <ExternalLink size={15} /> Xem thư viện học viên
-            </Link>
-            <button
+            </Link>}
+            {!classroomId && <button
               type="button"
-              className="btn btn-primary btn-sm inline-flex items-center gap-1.5 font-bold shadow-sm"
+              className="test-studio-create btn btn-sm inline-flex items-center gap-1.5 font-bold"
               onClick={handleOpenCreateModal}
             >
-              <Plus size={16} /> Soạn đề thi mới
-            </button>
+              <Plus size={16} /> Soạn đề {classroomId ? 'riêng' : 'thi mới'}
+            </button>}
           </div>
         </div>
 
         {/* Admin Navigation Tabs */}
-        <div className="flex gap-2 mb-6 border-b-2 border-gray-200">
-          <div className="inline-flex items-center gap-2 px-5 py-3 font-bold text-sm text-emerald-600 border-b-3 border-emerald-600 -mb-0.5 cursor-default">
+        {!classroomId && <div className="test-studio-nav flex gap-2 mb-6">
+          <div className="is-active inline-flex items-center gap-2 px-5 py-3 font-bold text-sm -mb-0.5 cursor-default">
             <BookOpen size={18} /> Quản lý Đề thi
-            <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-black">
+            <span className="test-studio-count px-2 py-0.5 text-xs font-black">
               {totalElements}
             </span>
           </div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-2 px-5 py-3 font-semibold text-sm text-slate-500 hover:text-slate-900 border-b-3 border-transparent -mb-0.5 transition-all"
+            className="inline-flex items-center gap-2 px-5 py-3 font-semibold text-sm"
           >
             <Users size={18} /> Quản lý Người dùng
           </Link>
-        </div>
+        </div>}
 
         {/* Filter & Search Bar */}
-        <div className="space-y-3 mb-6">
+        <div className="test-studio-filters space-y-3 mb-6">
           {/* Status Segmented Tabs */}
-          <div className="flex items-center gap-2">
+          <div className="test-studio-status-tabs flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => {
                 setStatusTab('PUBLISHED');
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-xl font-bold text-xs inline-flex items-center gap-2 border transition-all ${
+              className={`test-studio-status px-4 py-2 font-bold text-xs inline-flex items-center gap-2 ${
                 statusTab === 'PUBLISHED'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'is-active'
+                  : ''
               }`}
             >
               <CheckCircle2 size={15} /> Đề Đã Xuất Bản (PUBLISHED)
@@ -5413,17 +5455,17 @@ const TestManagementPage = () => {
                 setStatusTab('DRAFT');
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-xl font-bold text-xs inline-flex items-center gap-2 border transition-all ${
+              className={`test-studio-status px-4 py-2 font-bold text-xs inline-flex items-center gap-2 ${
                 statusTab === 'DRAFT'
-                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'is-active'
+                  : ''
               }`}
             >
               <Clock size={15} /> Đề Bản Nháp (DRAFT)
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex items-center justify-between gap-4 flex-wrap">
+          <div className="test-studio-filterbar p-4 flex items-center justify-between gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[260px]">
               <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -5431,7 +5473,7 @@ const TestManagementPage = () => {
                 placeholder={`Tìm kiếm đề thi ${statusTab === 'PUBLISHED' ? 'đã xuất bản' : 'bản nháp'} (ví dụ: ETS 2026)...`}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="test-studio-input w-full pl-10 pr-4 py-2 text-sm"
               />
             </div>
 
@@ -5439,7 +5481,7 @@ const TestManagementPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 outline-none"
+                className="test-studio-select px-3 py-2 text-sm font-semibold"
               >
                 <option value="createdAt">Sắp xếp: Ngày tạo</option>
                 <option value="titleTest">Sắp xếp: Tên đề thi</option>
@@ -5448,7 +5490,7 @@ const TestManagementPage = () => {
               <select
                 value={direction}
                 onChange={(e) => setDirection(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 outline-none"
+                className="test-studio-select px-3 py-2 text-sm font-semibold"
               >
                 <option value="DESC">Mới nhất trước</option>
                 <option value="ASC">Cũ nhất trước</option>
@@ -5467,10 +5509,10 @@ const TestManagementPage = () => {
         </div>
 
         {/* Tests Data Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="test-studio-list overflow-hidden">
           {loading ? (
             <div className="text-center py-16">
-              <div className="w-10 h-10 rounded-full border-3 border-slate-200 border-t-emerald-600 animate-spin mx-auto mb-3" />
+              <div className="test-studio-spinner w-10 h-10 mx-auto mb-3" />
               <p className="text-slate-500 text-sm">Đang nạp danh sách đề thi từ database...</p>
             </div>
           ) : tests.length === 0 ? (
@@ -5494,7 +5536,7 @@ const TestManagementPage = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-sm">
+              <table className="test-studio-table w-full border-collapse text-left text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-xs uppercase">
                     <th className="px-5 py-3.5 w-20 text-center">STT</th>
@@ -5532,8 +5574,8 @@ const TestManagementPage = () => {
                             </div>
                             <div>
                               <div className="font-bold text-slate-900">{test.titleTest}</div>
-                              <span className="badge badge-primary text-[10px] px-1.5 py-0.5 mt-0.5">
-                                Format ETS TOEIC
+                              <span className="test-studio-format text-[10px] px-1.5 py-0.5 mt-0.5">
+                                Định dạng TOEIC
                               </span>
                             </div>
                           </div>
@@ -5647,14 +5689,15 @@ const TestManagementPage = () => {
       <Modal
         isOpen={builderOpen}
         onClose={handleCloseBuilder}
-        title={
+        className="test-builder-modal"
+          title={
           builderMode === 'create'
-            ? 'Soạn thảo & Khởi tạo Đề thi TOEIC mới'
+            ? (classroomId ? 'Soạn đề TOEIC riêng cho lớp' : 'Soạn thảo & Khởi tạo Đề thi TOEIC mới')
             : `Chỉnh sửa toàn bộ Đề thi: "${selectedTest?.titleTest}"`
         }
         maxWidth="980px"
       >
-        <form onSubmit={handleSaveExam} noValidate className="flex flex-col gap-5">
+        <form onSubmit={handleSaveExam} noValidate className="test-builder-form flex flex-col gap-5">
           {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
           {recoverableDraft && (
             <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-xl flex items-center justify-between flex-wrap gap-2 animate-fadeIn shadow-xs">
@@ -5688,7 +5731,7 @@ const TestManagementPage = () => {
           )}
 
           {/* STICKY QUICK ACTION & AUTOSAVE STATUS BAR */}
-          <div className="sticky -top-4 z-30 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between flex-wrap gap-2">
+          <div className="test-builder-toolbar sticky -top-4 z-30 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-xs font-extrabold text-slate-800 truncate max-w-[260px]">
                 {formTitle || 'Chưa đặt tên đề thi'}
@@ -5763,7 +5806,7 @@ const TestManagementPage = () => {
             </div>
           </div>
           {/* Test Basic Info & Status */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+          <div className="test-builder-basic-info p-4 space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                 Tên Bộ Đề Thi TOEIC <span className="text-red-500">*</span>
@@ -5780,6 +5823,41 @@ const TestManagementPage = () => {
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-base font-bold text-slate-900 bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
               />
             </div>
+
+            {!classroomId && <div className="grid gap-4 border-2 border-black bg-[#fff6b8] p-4 md:grid-cols-[1fr_1fr]">
+              <label className="flex cursor-pointer items-center gap-3 font-black">
+                <input
+                  type="checkbox"
+                  checked={formIsVip}
+                  onChange={(event) => {
+                    setFormIsVip(event.target.checked);
+                    if (!event.target.checked) setFormVipPriceVnd('');
+                    markDirty();
+                  }}
+                  className="h-5 w-5 accent-black"
+                />
+                Đề VIP có thu phí
+              </label>
+              <label className="block text-xs font-bold uppercase tracking-wider">
+                Giá riêng (VND)
+                <input
+                  type="number"
+                  min="1"
+                  max="99999999"
+                  step="1"
+                  required={formIsVip}
+                  disabled={!formIsVip}
+                  value={formVipPriceVnd}
+                  onChange={(event) => {
+                    setFormVipPriceVnd(event.target.value);
+                    markDirty();
+                  }}
+                  placeholder={formIsVip ? 'Ví dụ: 49000' : 'Chỉ dùng cho đề VIP'}
+                  className="mt-2 w-full border-2 border-black bg-white px-3 py-2 text-sm font-bold disabled:bg-stone-200"
+                />
+                <span className="mt-1 block normal-case tracking-normal text-slate-600">Giá được máy chủ kiểm tra và lưu theo từng đề.</span>
+              </label>
+            </div>}
 
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
               <div>
@@ -5827,16 +5905,16 @@ const TestManagementPage = () => {
           </div>
 
           {/* ========================================================================= */}
-          {/* BẢNG ĐỐI CHIẾU TIẾN ĐỘ & CẤU TRÚC ĐỀ CHUẨN ETS 2026 (DOL ENGLISH SPEC)    */}
+          {/* BẢNG ĐỐI CHIẾU TIẾN ĐỘ & CẤU TRÚC THAM KHẢO TOEIC    */}
           {/* ========================================================================= */}
-          <div className="bg-emerald-950 text-white p-4 rounded-xl shadow-sm space-y-3">
+          <div className="test-builder-guide p-4 space-y-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-500 text-slate-950 text-[11px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  ETS 2026 Format
+                <span className="test-builder-guide-label text-[11px] font-black px-2 py-0.5 uppercase tracking-wider">
+                  Cấu trúc tham khảo
                 </span>
-                <span className="font-extrabold text-sm text-emerald-300">
-                  Chuẩn đề ETS TOEIC: 200 câu • 120 phút • Thang điểm 10 - 990
+                <span className="test-builder-guide-summary font-extrabold text-sm">
+                  TOEIC Listening & Reading: 200 câu • 120 phút • điểm quy đổi cần đối chiếu theo từng đề
                 </span>
               </div>
 
@@ -5991,7 +6069,7 @@ const TestManagementPage = () => {
             </div>
 
             {/* Active Part Tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
+            <div className="test-builder-part-tabs flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Chọn phần đề thi">
               {formParts.map((part, idx) => {
                 const isActive = idx === activePartIndex;
                 const totalQInPart = part.contextQuestions.reduce(
@@ -6000,28 +6078,24 @@ const TestManagementPage = () => {
                 );
 
                 return (
-                  <div
-                    key={part.partNumber}
-                    onClick={() => setActivePartIndex(idx)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-bold text-sm cursor-pointer border-t border-l border-r transition-all ${
-                      isActive
-                        ? 'bg-white border-slate-300 text-emerald-700 shadow-xs'
-                        : 'bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200/80'
-                    }`}
-                  >
-                    <span>Part {part.partNumber}</span>
-                    <span className="bg-slate-200 text-slate-700 text-[11px] px-1.5 py-0.5 rounded-full font-bold">
-                      {totalQInPart} câu
-                    </span>
+                  <div key={part.partNumber} className="test-builder-part-tab-wrap">
+                    <button
+                      id={`test-builder-part-tab-${part.partNumber}`}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => setActivePartIndex(idx)}
+                      className={`test-builder-part-tab ${isActive ? 'is-active' : ''}`}
+                    >
+                      <span>Part {part.partNumber}</span>
+                      <span className="test-builder-question-count">{totalQInPart} câu</span>
+                    </button>
                     {formParts.length > 1 && (
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemovePart(idx);
-                        }}
-                        className="text-slate-400 hover:text-red-600 ml-1 p-0.5 rounded-sm"
+                        onClick={() => handleRemovePart(idx)}
+                        className="test-builder-remove-part"
                         title="Xóa phần này khỏi đề thi"
+                        aria-label={`Xóa Part ${part.partNumber}`}
                       >
                         <X size={13} />
                       </button>
@@ -6034,7 +6108,7 @@ const TestManagementPage = () => {
 
           {/* ACTIVE PART DETAILS BUILDER */}
           {activePart && (
-            <div className="border border-slate-200 rounded-xl p-5 bg-white space-y-6">
+            <div id={`test-builder-part-panel-${activePart.partNumber}`} role="region" aria-labelledby={`test-builder-part-tab-${activePart.partNumber}`} className="test-builder-part-panel p-5 space-y-6">
               {/* Part Header & Action */}
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 flex-wrap gap-3">
                 <div>
@@ -6066,7 +6140,7 @@ const TestManagementPage = () => {
                     className="btn btn-outline btn-sm text-xs font-semibold text-slate-600 inline-flex items-center gap-1.5"
                   >
                     <BookOpen size={13} />
-                    {showPartDirections ? 'Thu gọn Hướng dẫn' : 'Xem Hướng dẫn ETS'}
+                    {showPartDirections ? 'Thu gọn Hướng dẫn' : 'Xem hướng dẫn Part'}
                     {showPartDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
 
@@ -6093,17 +6167,17 @@ const TestManagementPage = () => {
                 </div>
               </div>
 
-              {/* OFFICIAL ETS DIRECTIONS & INSTRUCTIONS BANNER */}
+              {/* TOEIC REFERENCE DIRECTIONS */}
               {showPartDirections && ETS_PART_DIRECTIONS[activePart.partNumber] && (
                 <div className="p-4 rounded-xl bg-slate-900 text-white border border-slate-800 space-y-3 shadow-2xs">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
-                          ETS Official Directions
+                          Hướng dẫn tham khảo
                         </span>
                         <strong className="text-xs text-emerald-300 font-bold uppercase">
-                          PART {activePart.partNumber} • Hướng Dẫn Làm Bài Chuẩn Quốc Tế
+                          PART {activePart.partNumber} • Cấu trúc TOEIC
                         </strong>
                       </div>
                       <p className="text-xs text-slate-300 leading-relaxed font-serif italic m-0 pt-1">
@@ -6116,7 +6190,7 @@ const TestManagementPage = () => {
                   {activePart.partNumber === 1 && ETS_PART_DIRECTIONS[1].sampleStatement && (
                     <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs text-slate-200 space-y-1">
                       <span className="font-bold text-amber-300 block text-[11px]">
-                        💡 Ví dụ câu mẫu chuẩn đề ETS (Sample Statement):
+                        💡 Ví dụ câu mẫu tham khảo (Sample Statement):
                       </span>
                       <p className="m-0 italic text-slate-300">
                         {ETS_PART_DIRECTIONS[1].sampleStatement}
@@ -6217,7 +6291,7 @@ const TestManagementPage = () => {
                               {uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải lên...' : 'Tải MP3 từ máy'}
                               <input
                                 type="file"
-                                accept="audio/*,.mp3,.wav,.m4a"
+                                accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
                                 className="hidden"
                                 disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
                                 onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
@@ -6267,7 +6341,7 @@ const TestManagementPage = () => {
                                 {uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
                                 <input
                                   type="file"
-                                  accept="image/*,.jpg,.jpeg,.png,.webp"
+                                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
                                   className="hidden"
                                   disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
                                   onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
@@ -6625,17 +6699,20 @@ const TestManagementPage = () => {
       <Modal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        title="Xác nhận xóa đề thi"
+        title={classroomId ? 'Xác nhận xóa đề lớp' : 'Xác nhận xóa hoặc gỡ đề'}
         maxWidth="460px"
       >
         <div className="text-center py-3">
           <AlertTriangle size={48} className="text-red-500 mx-auto mb-3" />
           <h4 className="m-0 mb-2 text-base font-bold text-slate-900">
-            Bạn có chắc chắn muốn xóa bài thi này?
+            {classroomId ? 'Bạn có chắc chắn muốn xóa đề lớp này?' : 'Bạn có chắc chắn muốn gỡ đề hệ thống khỏi catalog?'}
           </h4>
           <p className="m-0 mb-5 text-sm text-slate-500">
-            Đề thi <strong>"{selectedTest?.titleTest}"</strong> cùng các câu hỏi sẽ bị xóa khỏi hệ
-            thống.
+            {classroomId ? (
+              <>Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ bị xóa nếu chưa được dùng trong kết quả hoặc bài tập; đề đã được tham chiếu sẽ bị backend từ chối xóa.</>
+            ) : (
+              <>Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ bị gỡ khỏi catalog. Nếu đã có lượt làm hoặc giao dịch, hệ thống chuyển đề về bản nháp để giữ lịch sử; nếu chưa có, đề sẽ bị xóa cùng nội dung.</>
+            )}
           </p>
 
           <div className="flex justify-center gap-3">
@@ -6653,32 +6730,33 @@ const TestManagementPage = () => {
               disabled={actionLoading}
               onClick={handleConfirmDelete}
             >
-              <Trash2 size={16} /> {actionLoading ? 'Đang xóa...' : 'Xác nhận xóa'}
+              <Trash2 size={16} /> {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
             </button>
           </div>
         </div>
       </Modal>
 
       {/* ========================================================================= */}
-      {/* ETS STRUCTURE GUIDE & HANDBOOK MODAL (DOL ENGLISH STANDARD 2026)          */}
+      {/* TOEIC REFERENCE STRUCTURE GUIDE */}
       {/* ========================================================================= */}
       <Modal
         isOpen={etsGuideOpen}
         onClose={() => setEtsGuideOpen(false)}
-        title="Cẩm nang Cấu trúc Đề thi TOEIC Listening & Reading Mới Nhất (Chuẩn ETS 2026)"
+        className="test-structure-reference-modal"
+        title="Cẩm nang cấu trúc TOEIC Listening & Reading (tài liệu tham khảo)"
         maxWidth="900px"
       >
-        <div className="space-y-5 text-slate-800 text-xs leading-relaxed max-h-[75vh] overflow-y-auto pr-2">
+        <div className="test-structure-reference space-y-5 text-slate-800 text-xs leading-relaxed max-h-[75vh] overflow-y-auto pr-2">
           {/* Header Overview Banner */}
-          <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white p-4 rounded-xl shadow-xs">
-            <h3 className="text-base font-extrabold m-0 text-white flex items-center gap-2">
-              <Sparkles size={18} className="text-amber-300" />
-              Tổng quan Cấu trúc Đề thi TOEIC Chuẩn Quốc Tế
+          <div className="test-structure-reference-banner p-4">
+            <h3 className="text-base font-extrabold m-0 flex items-center gap-2">
+              <Sparkles size={18} />
+              Tổng quan cấu trúc đề TOEIC tham khảo
             </h3>
-            <p className="text-emerald-100 text-xs mt-1 mb-3">
-              Bài thi TOEIC Listening & Reading gồm đúng <strong>200 câu hỏi trắc nghiệm</strong> làm liên tục trong <strong>120 phút</strong>. Thang điểm từ <strong>10 – 990 điểm</strong> (mỗi phần chấm từ 5 – 495 điểm).
+            <p className="text-xs mt-1 mb-3">
+              Khung luyện tập tham chiếu gồm <strong>200 câu</strong> trong <strong>120 phút</strong> (Listening 100 câu/45 phút; Reading 100 câu/75 phút). Điểm scaled cần bảng chuyển đổi hợp lệ theo từng đề; kết quả ước tính trong hệ thống không thay thế điểm chính thức.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-emerald-600/60 text-center">
+            <div className="test-structure-reference-stats grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center">
               <div className="bg-white/10 rounded-lg p-2">
                 <span className="block text-[10px] text-emerald-200 uppercase font-bold">Tổng số câu</span>
                 <strong className="text-base text-white">200 Câu</strong>

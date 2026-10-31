@@ -29,4 +29,7 @@ public class Notification extends BaseCreatedEntity {
 
     @Column(name = "type", length = 50)
     private String type;
+
+    @Column(name = "link", length = 500)
+    private String link;
 }

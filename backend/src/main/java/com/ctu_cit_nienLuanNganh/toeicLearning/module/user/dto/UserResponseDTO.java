@@ -12,4 +12,6 @@ public class UserResponseDTO {
     private String userNumberphone;
     private String userAvatar;
     private String role;
+    private boolean hasLocalPassword;
+    private boolean canSetLocalPassword;
 }

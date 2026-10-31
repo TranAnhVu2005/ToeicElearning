@@ -16,6 +16,9 @@ public class Classroom extends BaseCreatedUpdatedEntity {
     @Column(name = "class_name", nullable = false)
     private String className;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "class_code", nullable = false, unique = true)
     private String classCode;
 

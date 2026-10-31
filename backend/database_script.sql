@@ -43,8 +43,14 @@ CREATE TABLE test (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title_test VARCHAR(255) NOT NULL,
     status VARCHAR(20) DEFAULT 'DRAFT',
+    is_vip BOOLEAN NOT NULL DEFAULT FALSE,
+    vip_price_vnd DECIMAL(10, 0),
+    classroom_id VARCHAR(36),
+    owner_teacher_id VARCHAR(36),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_test_classroom (classroom_id),
+    INDEX idx_test_owner_teacher (owner_teacher_id)
 );
 
 -- ==============================================================================
@@ -58,7 +64,9 @@ CREATE TABLE `user` (
     user_password VARCHAR(255),
     user_avatar VARCHAR(500),
     auth_provider VARCHAR(50) DEFAULT 'LOCAL',
+    google_sub VARCHAR(255) UNIQUE,
     is_locked BOOLEAN DEFAULT FALSE,
+    auth_version INT NOT NULL DEFAULT 0,
     current_streak INT DEFAULT 0,
     highest_streak INT DEFAULT 0,
     total_score INT DEFAULT 0,
@@ -67,6 +75,13 @@ CREATE TABLE `user` (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES role(id)
+);
+
+CREATE TABLE auth_login_attempt (
+    bucket_key CHAR(64) PRIMARY KEY,
+    attempt_count INT NOT NULL,
+    window_started_at DATETIME NOT NULL,
+    INDEX idx_auth_login_attempt_window (window_started_at)
 );
 
 INSERT INTO `user` (
@@ -86,12 +101,32 @@ INSERT INTO `user` (
     '0d0bcedb-aeaa-11f1-b6c1-c0e43471a03a'
 );
 
+CREATE TABLE exam_media_asset (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    public_id VARCHAR(512) NOT NULL UNIQUE,
+    media_format VARCHAR(16) NOT NULL,
+    resource_type VARCHAR(16) NOT NULL,
+    delivery_type VARCHAR(16) NOT NULL,
+    uploaded_by_id VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_exam_media_asset_uploader FOREIGN KEY (uploaded_by_id) REFERENCES `user`(id),
+    INDEX idx_exam_media_asset_uploader (uploaded_by_id)
+);
+
 -- ==============================================================================
 -- 3. NHÓM LỚP HỌC & BÀI TẬP VỀ NHÀ
 -- ==============================================================================
+CREATE TABLE user_presence (
+    user_id VARCHAR(36) PRIMARY KEY,
+    last_seen_at DATETIME NOT NULL,
+    CONSTRAINT fk_user_presence_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
+    INDEX idx_user_presence_last_seen (last_seen_at)
+);
+
 CREATE TABLE classroom (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     class_name VARCHAR(255) NOT NULL,
+    description TEXT NULL,
     class_code VARCHAR(50) UNIQUE NOT NULL,
     teacher_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,12 +134,17 @@ CREATE TABLE classroom (
     CONSTRAINT fk_class_teacher FOREIGN KEY (teacher_id) REFERENCES `user`(id)
 );
 
+ALTER TABLE test
+    ADD CONSTRAINT fk_test_classroom FOREIGN KEY (classroom_id) REFERENCES classroom(id) ON DELETE CASCADE,
+    ADD CONSTRAINT fk_test_owner_teacher FOREIGN KEY (owner_teacher_id) REFERENCES `user`(id);
+
 CREATE TABLE class_member (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     class_id VARCHAR(36) NOT NULL,
     student_id VARCHAR(36) NOT NULL,
     status VARCHAR(20) DEFAULT 'PENDING',
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_class_member_class_student UNIQUE (class_id, student_id),
     CONSTRAINT fk_member_class FOREIGN KEY (class_id) REFERENCES classroom(id),
     CONSTRAINT fk_member_student FOREIGN KEY (student_id) REFERENCES `user`(id)
 );
@@ -112,16 +152,27 @@ CREATE TABLE class_member (
 CREATE TABLE material (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
-    file_url VARCHAR(255) NOT NULL,
+    file_url VARCHAR(1000) NOT NULL,
+    cloudinary_public_id VARCHAR(512),
+    file_format VARCHAR(20),
+    original_file_name VARCHAR(180),
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    uploaded_by_id VARCHAR(36),
     class_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_material_class FOREIGN KEY (class_id) REFERENCES classroom(id)
+    CONSTRAINT fk_material_class FOREIGN KEY (class_id) REFERENCES classroom(id),
+    CONSTRAINT fk_material_uploader FOREIGN KEY (uploaded_by_id) REFERENCES `user`(id)
 );
 
 CREATE TABLE assignment (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
+    instructions TEXT,
     deadline DATETIME NOT NULL,
+    late_policy VARCHAR(32) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     class_id VARCHAR(36) NOT NULL,
     test_id VARCHAR(36),
     external_file_url VARCHAR(255), 
@@ -138,6 +189,12 @@ CREATE TABLE context_question (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     audio_url VARCHAR(255),
     image_url VARCHAR(255),
+    audio_public_id VARCHAR(512),
+    image_public_id VARCHAR(512),
+    audio_format VARCHAR(16),
+    image_format VARCHAR(16),
+    audio_delivery_type VARCHAR(16),
+    image_delivery_type VARCHAR(16),
     paragraph TEXT,      
     transcript TEXT,   
     translation TEXT,
@@ -173,9 +230,11 @@ CREATE INDEX idx_question_order_follow_context_question_id ON question(context_q
 -- ==============================================================================
 CREATE TABLE test_result (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    submission_key VARCHAR(36),
     listening_score INT DEFAULT 0,
     reading_score INT DEFAULT 0,
     total_score INT DEFAULT 0,
+    score_type VARCHAR(32),
     correct_count INT DEFAULT 0,
     total_count INT NOT NULL,
     total_time INT NOT NULL,
@@ -185,10 +244,32 @@ CREATE TABLE test_result (
     test_id VARCHAR(36),                   
     part_id VARCHAR(36),                   
     assignment_id VARCHAR(36),
+    assignment_deadline_snapshot DATETIME,
+    assignment_late BOOLEAN DEFAULT FALSE,
+    source_result_id VARCHAR(36),
+    CONSTRAINT uk_test_result_user_submission UNIQUE (user_id, submission_key),
     CONSTRAINT fk_test_result_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
     CONSTRAINT fk_test_result_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
     CONSTRAINT fk_test_result_part FOREIGN KEY (part_id) REFERENCES part(id),
-    CONSTRAINT fk_test_result_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE SET NULL
+    CONSTRAINT fk_test_result_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE SET NULL,
+    CONSTRAINT fk_test_result_source FOREIGN KEY (source_result_id) REFERENCES test_result(id) ON DELETE SET NULL
+);
+CREATE INDEX idx_test_result_created_at ON test_result(created_at);
+
+CREATE TABLE exam_session (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()), user_id VARCHAR(36) NOT NULL, test_id VARCHAR(36) NOT NULL,
+    assignment_id VARCHAR(36), source_result_id VARCHAR(36), test_result_id VARCHAR(36), scope_key CHAR(64) NOT NULL,
+    test_content_fingerprint CHAR(64) NOT NULL, started_at DATETIME NOT NULL, expires_at DATETIME NOT NULL,
+    duration_limit_seconds INT, status VARCHAR(20) NOT NULL, target_question_ids LONGTEXT NOT NULL,
+    answers_json LONGTEXT NOT NULL, last_saved_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_exam_session_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
+    CONSTRAINT fk_exam_session_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
+    CONSTRAINT fk_exam_session_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE SET NULL,
+    CONSTRAINT fk_exam_session_source FOREIGN KEY (source_result_id) REFERENCES test_result(id) ON DELETE SET NULL,
+    CONSTRAINT fk_exam_session_result FOREIGN KEY (test_result_id) REFERENCES test_result(id) ON DELETE SET NULL,
+    INDEX idx_exam_session_user_status (user_id, status), INDEX idx_exam_session_expires_at (expires_at)
 );
 
 CREATE TABLE user_answer (
@@ -204,14 +285,68 @@ CREATE TABLE user_answer (
 -- ==============================================================================
 -- 6. GIAO DỊCH VNPAY & THÔNG BÁO HỆ THỐNG
 -- ==============================================================================
+CREATE TABLE teacher_application (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    statement VARCHAR(1000),
+    status VARCHAR(24) NOT NULL,
+    reviewed_by_id VARCHAR(36),
+    reviewed_at DATETIME,
+    review_reason VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_teacher_application_user FOREIGN KEY (user_id) REFERENCES `user`(id),
+    CONSTRAINT fk_teacher_application_reviewer FOREIGN KEY (reviewed_by_id) REFERENCES `user`(id),
+    INDEX idx_teacher_application_status_created (status, created_at)
+);
+
 CREATE TABLE payment_transaction (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id VARCHAR(36) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     vnp_txn_ref VARCHAR(100) UNIQUE NOT NULL, 
+    product_type VARCHAR(40),
+    teacher_application_id VARCHAR(36),
+    test_id VARCHAR(36),
+    product_name_snapshot VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES `user`(id)
+    vnp_transaction_no VARCHAR(32),
+    vnp_response_code VARCHAR(8),
+    vnp_transaction_status VARCHAR(8),
+    paid_at DATETIME,
+    CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES `user`(id),
+    CONSTRAINT fk_payment_teacher_application FOREIGN KEY (teacher_application_id) REFERENCES teacher_application(id),
+    CONSTRAINT fk_payment_test FOREIGN KEY (test_id) REFERENCES test(id),
+    INDEX idx_payment_teacher_application (teacher_application_id),
+    INDEX idx_payment_test (test_id)
+);
+
+CREATE TABLE test_entitlement (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    test_id VARCHAR(36) NOT NULL,
+    payment_transaction_id VARCHAR(36) NOT NULL UNIQUE,
+    source VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_test_entitlement_user_test UNIQUE (user_id, test_id),
+    CONSTRAINT fk_test_entitlement_user FOREIGN KEY (user_id) REFERENCES `user`(id),
+    CONSTRAINT fk_test_entitlement_test FOREIGN KEY (test_id) REFERENCES test(id),
+    CONSTRAINT fk_test_entitlement_payment FOREIGN KEY (payment_transaction_id) REFERENCES payment_transaction(id)
+);
+
+CREATE TABLE audit_event (
+    id VARCHAR(36) NOT NULL,
+    occurred_at_utc DATETIME NOT NULL,
+    actor_user_id VARCHAR(36) NULL,
+    action VARCHAR(80) NOT NULL,
+    target_type VARCHAR(60) NOT NULL,
+    target_id VARCHAR(36) NOT NULL,
+    outcome VARCHAR(30) NOT NULL,
+    details VARCHAR(300) NULL,
+    PRIMARY KEY (id),
+    INDEX idx_audit_occurred_utc (occurred_at_utc),
+    INDEX idx_audit_target (target_type, target_id)
 );
 
 CREATE TABLE notification (
@@ -221,6 +356,7 @@ CREATE TABLE notification (
     content TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     type VARCHAR(50),
+    link VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_noti_user FOREIGN KEY (user_id) REFERENCES `user`(id)
 );
@@ -3488,7 +3624,7 @@ Giải thích: Email có câu "Let me know by 12 October whether you will be abl
  'c7000151-8d39-4669-9e60-6c9de8270c00', 152, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 -- ------------------------------------------------------------------------------
--- [PART 7 - CỤM 4]: CÂU 153 - 154 (order_index: 153)
+-- [PART 7 - CỤM 4]: CÂU 153 - 155 (order_index: 153)
 -- ------------------------------------------------------------------------------
 INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at) VALUES
 ('c7000153-8d39-4669-9e60-6c9de8270c00',
@@ -3535,7 +3671,7 @@ Giải thích: Bài báo nêu rõ "The friends, who also own the popular Blue Ba
  'c7000153-8d39-4669-9e60-6c9de8270c00', 154, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 -- ------------------------------------------------------------------------------
--- [PART 7 - CỤM 5]: CÂU 155 - 157 (order_index: 155)
+-- [PART 7 - CỤM 5]: CÂU 156 - 157 (order_index: 156)
 -- ------------------------------------------------------------------------------
 INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at) VALUES
 ('c7000155-8d39-4669-9e60-6c9de8270c00',
@@ -3572,21 +3708,21 @@ Nếu cô muốn sửa đổi đơn hàng của mình, chỉ cần trả lời e
 Trân trọng,
 Deon Welman
 Đại diện Kinh doanh, Skyview Scopes',
- 'ddaaa16f-8d39-4669-9e60-6c9de8270c00', '0d105702-aeaa-11f1-b6c1-c0e43471a03a', 155, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
+ 'ddaaa16f-8d39-4669-9e60-6c9de8270c00', '0d105702-aeaa-11f1-b6c1-c0e43471a03a', 156, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at) VALUES
--- Câu 155 (Đáp án đúng: D)
+-- Câu 155 (Đáp án đúng: A)
 ('q7000155-8d39-4669-9e60-6c9de8270c00',
- 'What is the purpose of the e-mail?',
- 'To request payment', 'To provide operating instructions', 'To advertise a new product', 'To offer a substitute item', 'D',
- 'Câu hỏi: Mục đích của email là gì?
-(A) Để yêu cầu thanh toán
-(B) Để cung cấp hướng dẫn vận hành
-(C) Để quảng cáo một sản phẩm mới
-(D) Để đề nghị một mặt hàng thay thế
+ 'What did Ms. Lafferty and Ms. Flanagan do after the theater closed?',
+ 'They bought it and arranged renovations.', 'They moved their restaurant into it.', 'They organized a film festival there.', 'They sold it to the former owners.', 'A',
+ 'Câu hỏi: Bà Lafferty và bà Flanagan đã làm gì sau khi rạp hát đóng cửa?
+(A) Họ mua lại rạp hát và thu xếp việc cải tạo.
+(B) Họ chuyển nhà hàng của mình vào rạp hát.
+(C) Họ tổ chức một liên hoan phim tại đó.
+(D) Họ bán rạp hát cho những người chủ cũ.
 
-Giải thích: Email thông báo rằng mặt hàng đã đặt đang chờ hàng và đề nghị một sản phẩm thay thế (Belter BTR-1483). Đáp án đúng là (D).',
- 'c7000155-8d39-4669-9e60-6c9de8270c00', 155, '2026-09-16 04:50:24', '2026-09-16 04:50:24'),
+Giải thích: Bài báo cho biết hai người bạn đã mua rạp hát và thực hiện các sửa chữa cần thiết để nơi này tiếp tục hoạt động. Đáp án đúng là (A).',
+ 'c7000153-8d39-4669-9e60-6c9de8270c00', 155, '2026-09-16 04:50:24', '2026-09-16 04:50:24'),
 
 -- Câu 156 (Đáp án đúng: C)
 ('q7000156-8d39-4669-9e60-6c9de8270c00',
@@ -4048,7 +4184,7 @@ The About Us page should include some text explaining your food truck''s theme a
 
 The News page can include text informing visitors about seasonal food items and upcoming promotions or special events such as food festivals.
 
-===== DOCUMENT 2: E-MAIL =====
+--- BÀI ĐỌC 2 ---
 
 To: Doug Abruzzo <dabruzzo@dzacreative.com>
 From: Ed Vale <evale@saffronmail.com>
@@ -4078,7 +4214,7 @@ Trang Giới thiệu nên bao gồm một số văn bản giải thích chủ đ
 
 Trang Tin tức có thể bao gồm văn bản thông báo cho khách truy cập về các mặt hàng thực phẩm theo mùa và các chương trình khuyến mãi hoặc sự kiện đặc biệt sắp tới như lễ hội ẩm thực.
 
-===== TÀI LIỆU 2: THƯ ĐIỆN TỬ =====
+--- BÀI ĐỌC 2 ---
 
 Đến: Doug Abruzzo <dabruzzo@dzacreative.com>
 Từ: Ed Vale <evale@saffronmail.com>
@@ -4187,7 +4323,7 @@ John LaRose
 Community Liaison, Rilamore University
 Office of Communications
 
-===== DOCUMENT 2: PRESS RELEASE =====
+--- BÀI ĐỌC 2 ---
 
 FOR IMMEDIATE RELEASE
 
@@ -4216,7 +4352,7 @@ John LaRose
 Liên lạc Cộng đồng, Đại học Rilamore
 Văn phòng Truyền thông
 
-===== TÀI LIỆU 2: THÔNG CÁO BÁO CHÍ =====
+--- BÀI ĐỌC 2 ---
 
 PHÁT HÀNH NGAY
 
@@ -4308,7 +4444,7 @@ Lawal Home Service provides roofing and solar solutions for Southern California 
 
 Lawal Home Service prides itself on transparent communication and attention to detail. Our project supervisors are always on-site to answer client questions, provide updates, and ensure a safe and clean worksite. To request a free roofing diagnosis, visit www.lawalhomeservice.com or call our booking agent at 310-555-0108.
 
-===== DOCUMENT 2: CONTACT FORM =====
+--- BÀI ĐỌC 2 ---
 
 Lawal Home Service Contact Form
 
@@ -4331,7 +4467,7 @@ Lawal Home Service cung cấp các giải pháp lợp mái và năng lượng m�
 
 Lawal Home Service tự hào về giao tiếp minh bạch và chú ý đến từng chi tiết. Các giám sát viên dự án của chúng tôi luôn có mặt tại công trường để trả lời câu hỏi của khách hàng, cung cấp thông tin cập nhật và đảm bảo một công trường an toàn và sạch sẽ. Để yêu cầu chẩn đoán mái nhà miễn phí, hãy truy cập www.lawalhomeservice.com hoặc gọi cho đại lý đặt lịch của chúng tôi theo số 310-555-0108.
 
-===== TÀI LIỆU 2: MẪU LIÊN HỆ =====
+--- BÀI ĐỌC 2 ---
 
 Mẫu Liên hệ Lawal Home Service
 
@@ -4442,7 +4578,7 @@ We need to have notebooks in stock in time for our annual sale starting August 1
 Thank you,
 Juanita Pereira
 
-===== DOCUMENT 2: E-MAIL REPLY =====
+--- BÀI ĐỌC 2 ---
 
 To: Juanita Pereira <jpereira@bunbunbooks.com>
 From: Omar Balaji <obalaji@darbourycompany.com>
@@ -4458,7 +4594,7 @@ I should have the last sample to you by the end of this week. As long as you sen
 Best regards,
 Omar Balaji, Darboury Company
 
-===== DOCUMENT 3: ORDER FORM =====
+--- BÀI ĐỌC 3 ---
 
 Darboury Company Order Form
 
@@ -4496,7 +4632,7 @@ Chúng tôi cần có sổ tay trong kho kịp cho đợt giảm giá hàng năm
 Cảm ơn,
 Juanita Pereira
 
-===== TÀI LIỆU 2: THƯ TRẢ LỜI =====
+--- BÀI ĐỌC 2 ---
 
 Đến: Juanita Pereira <jpereira@bunbunbooks.com>
 Từ: Omar Balaji <obalaji@darbourycompany.com>
@@ -4512,7 +4648,7 @@ Tôi sẽ có mẫu cuối cùng cho cô vào cuối tuần này. Miễn là cô
 Trân trọng,
 Omar Balaji, Darboury Company
 
-===== TÀI LIỆU 3: MẪU ĐẶT HÀNG =====
+--- BÀI ĐỌC 3 ---
 
 Mẫu Đặt hàng Darboury Company
 
@@ -4627,7 +4763,7 @@ Thanks,
 Charlotte Black
 General Manager, Wilson Autos
 
-===== DOCUMENT 2: REVIEW =====
+--- BÀI ĐỌC 2 ---
 
 Wilson Autos (Westchester)
 ★★★★★
@@ -4636,7 +4772,7 @@ My wife and I just bought a new Excelera truck at the Wilson Autos Westchester l
 
 Henry Riggs, August 22
 
-===== DOCUMENT 3: NOTICE =====
+--- BÀI ĐỌC 3 ---
 
 NOTICE
 
@@ -4667,7 +4803,7 @@ Cảm ơn,
 Charlotte Black
 Tổng Giám đốc, Wilson Autos
 
-===== TÀI LIỆU 2: ĐÁNH GIÁ =====
+--- BÀI ĐỌC 2 ---
 
 Wilson Autos (Westchester)
 ★★★★★
@@ -4676,7 +4812,7 @@ Vợ tôi và tôi vừa mua một chiếc xe tải Excelera mới tại địa 
 
 Henry Riggs, ngày 22 tháng 8
 
-===== TÀI LIỆU 3: THÔNG BÁO =====
+--- BÀI ĐỌC 3 ---
 
 THÔNG BÁO
 

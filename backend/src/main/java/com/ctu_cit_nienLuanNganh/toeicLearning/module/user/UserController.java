@@ -4,8 +4,10 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.CloudinaryService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.dto.UserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserChangePasswordRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.SetLocalPasswordRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserUpdateProfileRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.service.UserService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.service.UserPresenceService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+    private final UserPresenceService userPresenceService;
+
+    @PostMapping("/presence")
+    public ResponseEntity<ApiResponse<Void>> heartbeat(@AuthenticationPrincipal User currentUser) {
+        userPresenceService.heartbeat(currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Đã ghi nhận hoạt động"));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponseDTO>>  viewProfile(@AuthenticationPrincipal User currentUser)
@@ -49,5 +58,14 @@ public class UserController {
     {
         userService.changePassword(currentUser, request);
         return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
+    }
+
+    @PostMapping("/setpassword")
+    public ResponseEntity<ApiResponse<Void>> setLocalPassword(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody SetLocalPasswordRequest request
+    ) {
+        userService.setLocalPassword(currentUser, request);
+        return ResponseEntity.ok(ApiResponse.success("Đã thiết lập mật khẩu. Vui lòng đăng nhập lại."));
     }
 }

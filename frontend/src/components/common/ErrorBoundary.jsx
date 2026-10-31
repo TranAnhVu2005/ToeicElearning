@@ -4,16 +4,11 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error('CRITICAL UI ERROR CAUGHT BY ERROR BOUNDARY:', error, errorInfo);
-    this.setState({ errorInfo });
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
   handleReload = () => {
@@ -34,19 +29,19 @@ class ErrorBoundary extends React.Component {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '2rem',
-            background: 'var(--bg-primary, #f8fafc)',
+            background: 'var(--neo-paper, #FFFDF2)',
             fontFamily: 'Inter, system-ui, sans-serif',
           }}
         >
           <div
             style={{
-              maxWidth: '650px',
+              maxWidth: '600px',
               width: '100%',
               background: '#ffffff',
-              borderRadius: '16px',
+              border: '3px solid #111111',
+              borderRadius: '2px',
               padding: '2.5rem',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #fee2e2',
+              boxShadow: '6px 6px 0 #111111',
               textAlign: 'center',
             }}
           >
@@ -54,9 +49,11 @@ class ErrorBoundary extends React.Component {
               style={{
                 width: '64px',
                 height: '64px',
-                background: '#fee2e2',
-                color: '#ef4444',
-                borderRadius: '50%',
+                background: '#FF5B93',
+                color: '#ffffff',
+                border: '2px solid #111111',
+                borderRadius: '2px',
+                boxShadow: '3px 3px 0 #111111',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -66,32 +63,13 @@ class ErrorBoundary extends React.Component {
               <AlertTriangle size={32} />
             </div>
 
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.75rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#111111', marginBottom: '0.75rem' }}>
               Đã xảy ra lỗi khi tải giao diện
             </h2>
 
-            <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+            <p style={{ color: '#444444', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1.75rem', lineHeight: 1.6 }}>
               Hệ thống vừa phát hiện sự cố không mong muốn trong thành phần hiển thị. Vui lòng thử tải lại trang hoặc quay về trang chủ.
             </p>
-
-            {this.state.error && (
-              <div
-                style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  padding: '1rem',
-                  marginBottom: '1.5rem',
-                  textAlign: 'left',
-                  maxHeight: '160px',
-                  overflowY: 'auto',
-                }}
-              >
-                <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#ef4444', fontFamily: 'monospace' }}>
-                  {this.state.error.toString()}
-                </div>
-              </div>
-            )}
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
@@ -101,13 +79,14 @@ class ErrorBoundary extends React.Component {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  background: '#3b82f6',
-                  color: '#ffffff',
-                  fontWeight: '600',
-                  border: 'none',
+                  border: '2px solid #111111',
+                  borderRadius: '2px',
+                  background: '#FFE600',
+                  color: '#111111',
+                  fontWeight: '900',
+                  boxShadow: '3px 3px 0 #111111',
                   cursor: 'pointer',
-                  transition: 'background 0.2s',
+                  transition: 'transform 0.1s, box-shadow 0.1s',
                 }}
               >
                 <RefreshCw size={18} />
@@ -121,13 +100,14 @@ class ErrorBoundary extends React.Component {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.75rem 1.5rem',
-                  borderRadius: '8px',
-                  background: '#f1f5f9',
-                  color: '#475569',
-                  fontWeight: '600',
-                  border: '1px solid #cbd5e1',
+                  border: '2px solid #111111',
+                  borderRadius: '2px',
+                  background: '#ffffff',
+                  color: '#111111',
+                  fontWeight: '900',
+                  boxShadow: '3px 3px 0 #111111',
                   cursor: 'pointer',
-                  transition: 'background 0.2s',
+                  transition: 'transform 0.1s, box-shadow 0.1s',
                 }}
               >
                 <Home size={18} />

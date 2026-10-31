@@ -5,7 +5,9 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.repository.base.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -18,11 +20,18 @@ public interface UserRepository extends BaseRepository<User, String> {
     @Query("SELECT u from User u JOIN FETCH u.role where u.userEmail = :email")
     Optional<User> findByUserEmailWithRole(@Param("email") String email);
 
+    @Query("SELECT u from User u JOIN FETCH u.role where u.googleSub = :googleSub")
+    Optional<User> findByGoogleSubWithRole(@Param("googleSub") String googleSub);
+
     @Query("SELECT u from User u JOIN FETCH u.role where u.userNumberphone = :numberPhone")
     Optional<User> findByUserNumberPhoneWithRole(@Param("numberPhone") String numberPhone);
 
     @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
     Optional<User> findByIdWithRole(@Param("id") String id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
+    Optional<User> findByIdWithRoleForUpdate(@Param("id") String id);
 
     Optional<User> findByUserEmail(String userEmail);
     Optional<User> findByUserNumberphone(String userNumberPhone);

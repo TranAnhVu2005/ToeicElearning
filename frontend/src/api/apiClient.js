@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -19,7 +21,19 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401 (Unauthorized) & 403 (Forbidden / Locked Account)
+export const shouldClearSession = (error) => {
+  const response = error?.response ?? error;
+  if (response?.status === 401) return true;
+  if (response?.status !== 403) return false;
+
+  const data = response?.data;
+  const message = typeof data === 'string' ? data : (data?.message || data?.error || '');
+  return Number(data?.code) === 2009
+    || message.toLocaleLowerCase().includes('khóa')
+    || message.toLocaleLowerCase().includes('locked');
+};
+
+// Keep valid sessions when a user receives an ordinary role/resource 403.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -27,10 +41,12 @@ apiClient.interceptors.response.use(
       const status = error.response.status;
       const data = error.response.data;
 
-      // Handle 401 (Unauthorized) or 403 (Forbidden / Locked Account)
-      if (status === 401 || status === 403) {
+      // Expired/invalid JWTs and explicitly locked accounts require re-authentication.
+      if (shouldClearSession(error)) {
         const errorMsg = typeof data === 'string' ? data : (data?.error || data?.message || '');
-        const isLockError = errorMsg.toLowerCase().includes('khóa') || errorMsg.toLowerCase().includes('locked');
+        const isLockError = status === 403 && (Number(data?.code) === 2009
+          || errorMsg.toLocaleLowerCase().includes('khóa')
+          || errorMsg.toLocaleLowerCase().includes('locked'));
 
         // Clear credentials
         localStorage.removeItem('accessToken');

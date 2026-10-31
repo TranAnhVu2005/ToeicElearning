@@ -27,6 +27,12 @@ public enum ErrorCode {
     NEW_PASSWORD_SAME_AS_OLD(2008, "Mật khẩu mới không được trùng với mật khẩu cũ", HttpStatus.BAD_REQUEST),
     USER_ACCOUNT_LOCKED(2009, "Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên", HttpStatus.FORBIDDEN),
     CANNOT_LOCK_CURRENT_USER(2010, "Quản trị viên không thể tự khóa tài khoản của chính mình", HttpStatus.BAD_REQUEST),
+    PAYMENT_NOT_CONFIGURED(2011, "Thanh toán trực tuyến chưa được cấu hình", HttpStatus.SERVICE_UNAVAILABLE),
+    TEACHER_APPLICATION_CONFLICT(2012, "Hồ sơ đăng ký giáo viên hiện không thể thực hiện thao tác này", HttpStatus.CONFLICT),
+    PAYMENT_RECONCILIATION_REQUIRED(2013, "Giao dịch đã hết hạn nhưng chưa có kết quả xác nhận; cần đối soát trước khi tạo giao dịch mới", HttpStatus.CONFLICT),
+    LOCAL_PASSWORD_NOT_SET(2014, "Tài khoản này chưa có mật khẩu đăng nhập cục bộ để thay đổi", HttpStatus.BAD_REQUEST),
+    LOCAL_PASSWORD_ALREADY_SET(2015, "Tài khoản đã có mật khẩu cục bộ; hãy dùng chức năng đổi mật khẩu", HttpStatus.CONFLICT),
+    AUTH_RATE_LIMITED(2016, "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.", HttpStatus.TOO_MANY_REQUESTS),
 
 
 
@@ -36,6 +42,10 @@ public enum ErrorCode {
     FILE_NOT_FOUND(3003, "Không tìm thấy file", HttpStatus.NOT_FOUND),
     FILE_UPLOAD_FAILED(3004, "Tải file lên hệ thống thất bại", HttpStatus.INTERNAL_SERVER_ERROR),
     TEST_RESULT_NOT_FOUND(3005, "Không tìm thấy kết quả làm bài thi", HttpStatus.NOT_FOUND),
+    TEST_CONTENT_INVALID(3006, "Đề thi chưa đạt yêu cầu nội dung để xuất bản", HttpStatus.BAD_REQUEST),
+    TEST_ACCESS_REQUIRED(3007, "Bạn chưa có quyền truy cập đề thi này", HttpStatus.FORBIDDEN),
+    TEST_ALREADY_OWNED(3008, "Bạn đã có quyền truy cập đề thi này", HttpStatus.CONFLICT),
+    CLASSROOM_STORAGE_QUOTA_EXCEEDED(3009, "Lớp đã đạt giới hạn dung lượng tài liệu.", HttpStatus.PAYLOAD_TOO_LARGE),
 
 
     // Đặt vào trong enum ErrorCode.java

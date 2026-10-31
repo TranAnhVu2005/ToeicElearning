@@ -1,16 +1,11 @@
-# React + Vite
+# TOEIC Learning — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + Vite SPA. Cài dependencies bằng `npm install`, chạy dev server bằng `npm run dev`, build bằng `npm run build`, và lint bằng `npm run lint`.
 
-Currently, two official plugins are available:
+Frontend mặc định gọi backend local `http://localhost:8080/api`. Khi chạy môi trường khác, đặt `VITE_API_BASE_URL` (đầy đủ base path, ví dụ `https://api.example.com/api`) trong `.env.local` hoặc build environment. Đăng nhập Google đọc `VITE_GOOGLE_CLIENT_ID` (cần khớp `GOOGLE_CLIENT_ID` của backend).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Trang liên hệ mở email bằng `mailto:`. Đặt `VITE_SUPPORT_EMAIL` trong `.env.local` để bật form và chỉ định địa chỉ nhận. Giá trị này là địa chỉ công khai, không phải secret. Nếu chưa cấu hình, form sẽ ở trạng thái disabled. Không commit `.env.local` hoặc thông tin bí mật.
 
-## React Compiler
+Backend production phải đặt `APP_CORS_ALLOWED_ORIGINS` thành danh sách origin chính xác, phân tách bằng dấu phẩy (chỉ scheme + host + port, không path; ví dụ `https://learn.example.com`). Không dùng `*`; mặc định trong source chỉ dành cho hai origin local development.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Các trang, routes và REST client hiện có là một phần của SPA; tính năng mới tiếp tục dùng cấu trúc `pages/`, `components/`, `context/` và `services/` hiện hành.

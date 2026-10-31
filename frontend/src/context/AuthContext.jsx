@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
+import { shouldClearSession } from '../api/apiClient';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('currentUser');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      localStorage.removeItem('currentUser');
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('accessToken') || null);
   const [loading, setLoading] = useState(true);
@@ -23,9 +29,11 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('currentUser', JSON.stringify(res.data));
           }
         } catch (err) {
-          console.error('Failed to fetch user profile:', err);
-          // If token expired, invalid, or user was locked (401/403)
-          if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          console.warn('Could not synchronize current user profile.', {
+            status: err.response?.status ?? null,
+          });
+          // Keep the session for ordinary 403 role/resource denials.
+          if (shouldClearSession(err)) {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('currentUser');
             setToken(null);
@@ -87,13 +95,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const updateUser = (updatedData) => {
+  const updateUser = useCallback((updatedData) => {
     setUser((prev) => {
       const newUserData = { ...prev, ...updatedData };
       localStorage.setItem('currentUser', JSON.stringify(newUserData));
       return newUserData;
     });
-  };
+  }, []);
 
   const isAdmin =
     user?.role === 'ROLE_ADMIN' ||

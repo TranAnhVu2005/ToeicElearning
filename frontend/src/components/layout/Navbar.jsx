@@ -2,22 +2,25 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
+  Activity,
+  GraduationCap,
   BookOpen,
   User,
   LogOut,
   ShieldCheck,
   Menu,
   X,
-  Phone,
-  Mail,
-  MapPin,
-  ChevronDown
+  ChevronDown,
+  Bell,
 } from 'lucide-react';
+import { notificationService } from '../../services/notificationService';
+import { userService } from '../../services/userService';
 
 const Navbar = () => {
-  const { user, isAuthenticated, isAdmin, isTeacher, canManageTests, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isTeacher, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +37,29 @@ const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated) { setUnreadNotifications(0); return; }
+    let active = true;
+    notificationService.getUnreadCount().then((response) => {
+      if (active && response.code === 1000) setUnreadNotifications(response.data?.unreadCount || 0);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [isAuthenticated, location.pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+    const sendHeartbeat = () => {
+      if (document.visibilityState === 'visible') userService.heartbeat().catch(() => {});
+    };
+    sendHeartbeat();
+    const intervalId = window.setInterval(sendHeartbeat, 60_000);
+    document.addEventListener('visibilitychange', sendHeartbeat);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', sendHeartbeat);
+    };
+  }, [isAuthenticated]);
+
   const handleLogout = () => {
     logout();
     setDropdownOpen(false);
@@ -46,18 +72,10 @@ const Navbar = () => {
       <div className="topbar">
         <div className="container topbar-container">
           <div className="topbar-left">
-            <span>
-              <Mail size={13} strokeWidth={1.5} /> trananhvu314159@gmail.com
-            </span>
-            <span>
-              <Phone size={13} strokeWidth={1.5} /> 0359906510
-            </span>
-            <span className="hidden-mobile">
-              <MapPin size={13} strokeWidth={1.5} /> Trường Đại Học Cần Thơ (CTU)
-            </span>
+            <span>TOEIC LISTENING &amp; READING</span>
           </div>
           <div className="topbar-right">
-            <span>Hệ thống luyện thi ToeicElearning chuẩn ETS 2026</span>
+            <span>Luyện theo Part hoặc làm full test</span>
           </div>
         </div>
       </div>
@@ -87,14 +105,27 @@ const Navbar = () => {
             <NavLink to="/practice" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Luyện thi
             </NavLink>
+            {isAuthenticated && !isAdmin && (
+              <NavLink to="/classrooms" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Lớp học
+              </NavLink>
+            )}
+            {isAuthenticated && !isAdmin && !isTeacher && (
+              <NavLink to="/teacher/application" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Đăng ký giáo viên
+              </NavLink>
+            )}
+            {isAuthenticated && <NavLink to="/notifications" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              Thông báo{unreadNotifications > 0 ? ` (${unreadNotifications})` : ''}
+            </NavLink>}
             <NavLink to="/about" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Giới thiệu
             </NavLink>
             <NavLink to="/contact" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Liên hệ
             </NavLink>
-            {canManageTests && (
-              <NavLink to="/admin/tests" className={() => `nav-link ${isAdminActive ? 'active' : ''}`}>
+            {isAdmin && (
+              <NavLink to="/admin/dashboard" className={() => `nav-link ${isAdminActive ? 'active' : ''}`}>
                 Quản trị
               </NavLink>
             )}
@@ -115,7 +146,7 @@ const Navbar = () => {
                     className="user-avatar-small"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.userName || 'User') + '&background=198754&color=fff';
+                      e.target.src = '/images/default-avatar.svg';
                     }}
                   />
                   <span className="user-name-display">{user.userName || user.userEmail}</span>
@@ -142,7 +173,27 @@ const Navbar = () => {
                       <User size={15} strokeWidth={1.5} /> Hồ sơ cá nhân
                     </Link>
 
-                    {canManageTests && (
+                    <Link to="/notifications" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                      <Bell size={15} strokeWidth={1.5} /> Thông báo{unreadNotifications > 0 ? ` (${unreadNotifications})` : ''}
+                    </Link>
+
+                    {!isAdmin && !isTeacher && <Link to="/teacher/application" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                      <GraduationCap size={15} strokeWidth={1.5} /> Hồ sơ giáo viên
+                    </Link>}
+
+                    {isAdmin && (
+                      <Link to="/admin/teacher-applications" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <GraduationCap size={15} strokeWidth={1.5} /> Duyệt hồ sơ giáo viên
+                      </Link>
+                    )}
+
+                    {isAdmin && (
+                      <Link to="/admin/dashboard" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                        <Activity size={15} strokeWidth={1.5} /> Tổng quan hệ thống
+                      </Link>
+                    )}
+
+                    {isAdmin && (
                       <Link
                         to="/admin/tests"
                         className="dropdown-item"
@@ -159,6 +210,16 @@ const Navbar = () => {
                         onClick={() => setDropdownOpen(false)}
                       >
                         <ShieldCheck size={15} strokeWidth={1.5} /> Quản lý người dùng
+                      </Link>
+                    )}
+
+                    {isAdmin && (
+                      <Link
+                        to="/admin/payments"
+                        className="dropdown-item"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <ShieldCheck size={15} strokeWidth={1.5} /> Lịch sử thanh toán
                       </Link>
                     )}
 
@@ -220,6 +281,21 @@ const Navbar = () => {
             >
               Luyện thi
             </NavLink>
+            {isAuthenticated && !isAdmin && (
+              <NavLink
+                to="/classrooms"
+                className="mobile-nav-link"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Lớp học
+              </NavLink>
+            )}
+            {isAuthenticated && <NavLink to="/notifications" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>
+              Thông báo{unreadNotifications > 0 ? ` (${unreadNotifications})` : ''}
+            </NavLink>}
+            {isAuthenticated && !isAdmin && !isTeacher && <NavLink to="/teacher/application" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>
+              <GraduationCap size={16} style={{ marginRight: 8 }} /> Hồ sơ giáo viên
+            </NavLink>}
             <NavLink
               to="/about"
               className="mobile-nav-link"
@@ -234,13 +310,23 @@ const Navbar = () => {
             >
               Liên hệ
             </NavLink>
-            {canManageTests && (
+            {isAdmin && (
+              <NavLink to="/admin/teacher-applications" className={`mobile-nav-link ${isAdminActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <GraduationCap size={16} style={{ marginRight: 8 }} /> Duyệt hồ sơ giáo viên
+              </NavLink>
+            )}
+            {isAdmin && (
               <NavLink
-                to="/admin/tests"
+                to="/admin/dashboard"
                 className={`mobile-nav-link ${isAdminActive ? 'active' : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <ShieldCheck size={16} style={{ marginRight: 8 }} /> Quản trị hệ thống
+                <ShieldCheck size={16} style={{ marginRight: 8 }} /> Tổng quan quản trị
+              </NavLink>
+            )}
+            {isAdmin && (
+              <NavLink to="/admin/payments" className={`mobile-nav-link ${isAdminActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>
+                <ShieldCheck size={16} style={{ marginRight: 8 }} /> Lịch sử thanh toán
               </NavLink>
             )}
 

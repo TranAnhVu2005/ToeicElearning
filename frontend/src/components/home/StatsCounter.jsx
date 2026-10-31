@@ -1,45 +1,23 @@
 import React from 'react';
-import { Users, FileQuestion, Award, CheckCircle } from 'lucide-react';
 
-const StatsCounter = () => {
-  const stats = [
-    {
-      icon: <Users size={32} color="#ffffff" />,
-      value: '2,500+',
-      label: 'Học viên đã tham gia',
-    },
-    {
-      icon: <FileQuestion size={32} color="#ffffff" />,
-      value: '5,000+',
-      label: 'Câu hỏi luyện tập chọn lọc',
-    },
-    {
-      icon: <Award size={32} color="#ffffff" />,
-      value: '95%',
-      label: 'Đạt chuẩn đầu ra Đại học',
-    },
-    {
-      icon: <CheckCircle size={32} color="#ffffff" />,
-      value: '100%',
-      label: 'Bám sát ngân hàng đề ETS',
-    },
-  ];
+const stats = [
+  { value: '07', label: 'Phần thi TOEIC' },
+  { value: '200', label: 'Câu TOEIC Listening & Reading' },
+  { value: '45′', label: 'Listening' },
+  { value: '75′', label: 'Reading' },
+];
 
-  return (
-    <section className="stats-section">
-      <div className="container">
-        <div className="stats-grid">
-          {stats.map((item, idx) => (
-            <div key={idx} className="stat-box">
-              <div className="stat-icon-wrap">{item.icon}</div>
-              <div className="stat-number">{item.value}</div>
-              <div className="stat-title">{item.label}</div>
-            </div>
-          ))}
+const StatsCounter = () => (
+  <section className="stats-section neo-facts" aria-label="Cấu trúc bài thi TOEIC">
+    <div className="container neo-facts-grid">
+      {stats.map((item) => (
+        <div key={item.label} className="neo-fact">
+          <strong>{item.value}</strong>
+          <span>{item.label}</span>
         </div>
-      </div>
-    </section>
-  );
-};
+      ))}
+    </div>
+  </section>
+);
 
 export default StatsCounter;

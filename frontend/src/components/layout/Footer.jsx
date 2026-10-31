@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Mail, Phone, MapPin, Heart, ArrowRight } from 'lucide-react';
+import { BookOpen, ArrowRight } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -11,20 +11,15 @@ const Footer = () => {
           <div className="footer-col">
             <div className="footer-brand">
               <div className="logo-icon-wrapper" style={{ width: 36, height: 36 }}>
-                <BookOpen size={20} color="#ffffff" />
+                <BookOpen size={20} />
               </div>
               <span className="logo-title" style={{ color: '#ffffff', fontSize: '1.4rem' }}>
-                Toeic<span style={{ color: '#48bb78' }}>Elearning</span>
+                Toeic<span style={{ color: '#FF5B93' }}>Learning</span>
               </span>
             </div>
             <p className="footer-desc">
-              ToeicElearning - Hệ thống luyện thi TOEIC trực tuyến của sinh viên Trường Đại Học Cần Thơ. Cung cấp bài tập phân loại theo từng Part từ 1 đến 7, giúp học viên nâng cao điểm số vững chắc.
+              TOEIC Learning hỗ trợ luyện theo từng Part, làm full test và xem lại kết quả trên cùng một nền tảng.
             </p>
-            <div className="footer-contact-info">
-              <p><MapPin size={16} /> Trường Đại Học Cần Thơ, Khu II, Đ. 3/2, P. Xuân Khánh, Q. Ninh Kiều, TP. Cần Thơ</p>
-              <p><Phone size={16} /> 0359906510</p>
-              <p><Mail size={16} /> trananhvu314159@gmail.com</p>
-            </div>
           </div>
 
 
@@ -35,7 +30,7 @@ const Footer = () => {
               <li><Link to="/"><ArrowRight size={14} /> Trang chủ</Link></li>
               <li><Link to="/courses"><ArrowRight size={14} /> Khóa học & Đề thi</Link></li>
               <li><Link to="/practice"><ArrowRight size={14} /> Luyện tập theo Part</Link></li>
-              <li><Link to="/about"><ArrowRight size={14} /> Giới thiệu trung tâm</Link></li>
+              <li><Link to="/about"><ArrowRight size={14} /> Giới thiệu dự án</Link></li>
               <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ & Hỗ trợ</Link></li>
               <li><Link to="/login"><ArrowRight size={14} /> Đăng nhập hệ thống</Link></li>
               <li><Link to="/register"><ArrowRight size={14} /> Đăng ký tài khoản</Link></li>
@@ -55,30 +50,24 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 4: Newsletter / Info */}
+          {/* Col 4: Learning paths and support */}
           <div className="footer-col">
-            <h4 className="footer-heading">Bản tin học tập</h4>
+            <h4 className="footer-heading">Bắt đầu học</h4>
             <p className="footer-desc">
-              Đăng ký nhận mẹo luyện thi TOEIC 800+, chiến thuật giải đề và bộ từ vựng độc quyền hàng tuần.
+              Chọn một phần để luyện, mở đề đã phát hành hoặc gửi câu hỏi cho nhóm dự án.
             </p>
-            <div className="newsletter-form">
-              <input
-                type="email"
-                placeholder="Nhập email của bạn..."
-                className="form-control"
-                style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}
-              />
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 8 }}>
-                Đăng ký ngay
-              </button>
-            </div>
+            <ul className="footer-links">
+              <li><Link to="/practice"><ArrowRight size={14} /> Luyện theo Part</Link></li>
+              <li><Link to="/courses"><ArrowRight size={14} /> Khám phá đề thi</Link></li>
+              <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ hỗ trợ</Link></li>
+            </ul>
           </div>
         </div>
 
         {/* Bottom copyright */}
         <div className="footer-bottom">
           <p>
-            © {new Date().getFullYear()} ToeicElearning - Trường Đại Học Cần Thơ. Phát triển bởi Trần Anh Vũ (Email: trananhvu314159@gmail.com - SĐT: 0359906510).
+            © {new Date().getFullYear()} TOEIC Learning · Nền tảng luyện tập TOEIC.
           </p>
         </div>
       </div>

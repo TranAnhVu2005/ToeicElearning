@@ -1,6 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.service;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageParams;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
@@ -14,12 +15,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AdminServiceImpl implements AdminService{
     private final UserRepository userRepository;
     private final AdminMapper adminMapper;
+    private final AuditEventService auditEventService;
 
     @Override
     public PageResponse<AdminResponseDTO> getAllUsers(PageParams pageParams) {
@@ -37,7 +41,13 @@ public class AdminServiceImpl implements AdminService{
         if (currentUser.getId().equals(targetUser.getId())) {
             throw new AppException(ErrorCode.CANNOT_LOCK_CURRENT_USER);
         }
-        targetUser.setIsLocked(request.getIsLocked());
+        if (!Objects.equals(targetUser.getIsLocked(), request.getIsLocked())) {
+            boolean wasLocked = Boolean.TRUE.equals(targetUser.getIsLocked());
+            targetUser.setIsLocked(request.getIsLocked());
+            targetUser.setAuthVersion((targetUser.getAuthVersion() == null ? 0 : targetUser.getAuthVersion()) + 1);
+            auditEventService.record(currentUser, request.getIsLocked() ? "USER_LOCKED" : "USER_UNLOCKED",
+                    "USER", targetUser.getId(), "locked:" + wasLocked + "->" + request.getIsLocked());
+        }
         User savedUser = userRepository.save(targetUser);
         return adminMapper.toDTO(savedUser);
     }

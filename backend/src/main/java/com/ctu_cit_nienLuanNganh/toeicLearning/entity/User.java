@@ -1,6 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -24,6 +25,7 @@ public class User extends BaseCreatedUpdatedEntity {
     @Column(name = "user_numberphone", unique = true)
     private String userNumberphone;
 
+    @JsonIgnore
     @Column(name = "user_password")
     private String userPassword;
 
@@ -34,9 +36,18 @@ public class User extends BaseCreatedUpdatedEntity {
     @Column(name = "auth_provider")
     private String authProvider = "LOCAL";
 
+    @JsonIgnore
+    @Column(name = "google_sub", unique = true, length = 255)
+    private String googleSub;
+
     @Builder.Default
     @Column(name = "is_locked")
     private Boolean isLocked = false;
+
+    @JsonIgnore
+    @Builder.Default
+    @Column(name = "auth_version", nullable = false, columnDefinition = "INT NOT NULL DEFAULT 0")
+    private Integer authVersion = 0;
 
     @Builder.Default
     @Column(name = "current_streak")

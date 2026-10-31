@@ -1,6 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.security;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
+import jakarta.annotation.PostConstruct;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -11,8 +12,6 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 @Service
@@ -24,14 +23,23 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long EXPIRATION_TIME;
 
+    @PostConstruct
+    void validateConfiguration() {
+        if (EXPIRATION_TIME <= 0) {
+            throw new IllegalStateException("JWT_EXPIRATION must be a positive duration in milliseconds");
+        }
+        try {
+            getSignInKey();
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("JWT_SECRET must be Base64 and decode to at least 32 bytes");
+        }
+    }
+
     public String generateToken(User user)
     {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("email",user.getUserEmail());
-        claims.put("role",user.getRole() !=null ? user.getRole().getRoleName() : "ROLE_USER");
         return Jwts.builder()
-                .setClaims(claims)
                 .setSubject(user.getId())
+                .claim("authVersion", user.getAuthVersion() == null ? 0 : user.getAuthVersion())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
@@ -78,6 +86,9 @@ public class JwtService {
     public boolean isTokenValid(String token, User user)
     {
         final String userId = extractUserId(token);
-        return (userId.equals(user.getId()) && !isTokenExpired(token));
+        Integer tokenVersion = extractClaim(token, claims -> claims.get("authVersion", Integer.class));
+        int currentVersion = user.getAuthVersion() == null ? 0 : user.getAuthVersion();
+        return userId.equals(user.getId()) && !isTokenExpired(token)
+                && (tokenVersion == null ? currentVersion == 0 : tokenVersion == currentVersion);
     }
 }

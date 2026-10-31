@@ -1,64 +1,32 @@
 import React from 'react';
-import { Target, Clock, ShieldCheck, BarChart3, BookCheck, Users } from 'lucide-react';
+import { Target, Clock3, History, BookOpenCheck } from 'lucide-react';
 
-const FeaturesSection = () => {
-  const features = [
-    {
-      icon: <Target size={28} color="var(--primary)" />,
-      title: 'Luyện tập trọng tâm theo Part',
-      desc: 'Dễ dàng ôn luyện theo từng phần thi yếu kém, từ Part 1 mô tả tranh đến Part 7 đọc hiểu đoạn văn phức tạp.',
-    },
-    {
-      icon: <Clock size={28} color="var(--primary)" />,
-      title: 'Thi thử bấm giờ chuẩn ETS',
-      desc: 'Giao diện phòng thi mô phỏng áp lực phòng thi thật với đồng hồ đếm ngược chính xác.',
-    },
-    {
-      icon: <BarChart3 size={28} color="var(--primary)" />,
-      title: 'Thống kê kết quả trực quan',
-      desc: 'Theo dõi tiến trình làm bài, tỉ lệ phần trăm câu đúng và gợi ý các bẫy thường gặp.',
-    },
-    {
-      icon: <BookCheck size={28} color="var(--primary)" />,
-      title: 'Giải thích chi tiết & Ngữ pháp',
-      desc: 'Mỗi câu hỏi đều đi kèm giải thích từ vựng cốt lõi, cấu trúc ngữ pháp và lí do chọn đáp án đúng.',
-    },
-    {
-      icon: <Users size={28} color="var(--primary)" />,
-      title: 'Cộng đồng học viên CTU',
-      desc: 'Kết nối hàng nghìn sinh viên cùng ôn luyện, chia sẻ kinh nghiệm vượt chuẩn đầu ra tiếng Anh.',
-    },
-    {
-      icon: <ShieldCheck size={28} color="var(--primary)" />,
-      title: 'Hệ thống bảo mật & Ổn định',
-      desc: 'Quản lý tài khoản bảo mật bằng JWT và Spring Security tiêu chuẩn doanh nghiệp.',
-    },
-  ];
+const features = [
+  { icon: <Target size={23} />, number: '01', title: 'Chọn Part để luyện', desc: 'Tập trung vào từng phần Listening hoặc Reading theo cấu trúc bài thi TOEIC.' },
+  { icon: <Clock3 size={23} />, number: '02', title: 'Làm bài có tính giờ', desc: 'Thực hành full test trong giới hạn 120 phút để rèn nhịp độ làm bài.' },
+  { icon: <History size={23} />, number: '03', title: 'Xem lại bài đã làm', desc: 'Mở lịch sử, xem kết quả từng câu và đối chiếu đáp án sau khi nộp.' },
+  { icon: <BookOpenCheck size={23} />, number: '04', title: 'Ôn lại câu sai', desc: 'Tạo lượt luyện mới từ những câu sai hoặc bỏ trống trong bài đã làm.' },
+];
 
-  return (
-    <section className="section-padding features-section bg-gray-50">
-      <div className="container">
-        <div className="section-header">
-          <span className="section-subtitle">TẠI SAO CHỌN TOEICELEARNING?</span>
-          <h2 className="section-title">Giải Pháp Luyện Thi Toàn Diện Cho Bạn</h2>
-
-          <p className="section-desc">
-            Được thiết kế dựa trên phương pháp học tập khoa học, giúp bạn tiết kiệm 50% thời gian ôn luyện mà vẫn đạt hiệu quả tối đa.
-          </p>
-        </div>
-
-        <div className="features-grid">
-          {features.map((feat, idx) => (
-            <div key={idx} className="feature-card">
-              <div className="feature-icon-wrapper">{feat.icon}</div>
-              <h3 className="feature-title">{feat.title}</h3>
-              <p className="feature-desc">{feat.desc}</p>
-            </div>
-          ))}
-        </div>
+const FeaturesSection = () => (
+  <section className="section-padding features-section neo-features">
+    <div className="container">
+      <div className="section-header neo-section-heading">
+        <span className="section-subtitle">HỌC THEO CÁCH CỦA BẠN</span>
+        <h2 className="section-title">Một bước nhỏ. Tiến bộ rõ ràng.</h2>
+        <p className="section-desc">Các công cụ luyện tập và xem lại được đặt cùng một nơi để bạn chủ động ôn tập.</p>
       </div>
-    </section>
-  );
-};
+      <div className="features-grid neo-feature-grid">
+        {features.map((feature) => (
+          <article key={feature.number} className="feature-card neo-feature-card">
+            <div className="neo-feature-top"><span className="neo-feature-icon">{feature.icon}</span><span>{feature.number}</span></div>
+            <h3 className="feature-title">{feature.title}</h3>
+            <p className="feature-desc">{feature.desc}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
 export default FeaturesSection;

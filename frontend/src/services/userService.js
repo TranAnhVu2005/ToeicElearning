@@ -7,6 +7,12 @@ export const userService = {
     return response.data; // ApiResponse<UserResponseDTO>
   },
 
+  // POST /api/user/presence
+  heartbeat: async () => {
+    const response = await apiClient.post('/user/presence');
+    return response.data;
+  },
+
   // PATCH /api/user/updateprofile
   // Hỗ trợ cả FormData (chứa file nhị phân) và Object thông thường
   updateProfile: async (updateData) => {
@@ -41,5 +47,11 @@ export const userService = {
       newUserPassword: passwordData.newUserPassword,
     });
     return response.data; // ApiResponse<Void>
+  },
+
+  // POST /api/user/setpassword — requires a recent Google ID token for Google-only accounts
+  setLocalPassword: async ({ googleIdToken, newUserPassword }) => {
+    const response = await apiClient.post('/user/setpassword', { googleIdToken, newUserPassword });
+    return response.data;
   },
 };

@@ -26,4 +26,13 @@ export const adminService = {
     });
     return response.data; // ApiResponse<AdminResponseDTO>
   },
+
+  getPayments: async (params = {}) => (await apiClient.get('/admin/payments', { params })).data,
+  getPaymentDetails: async (paymentId) => (await apiClient.get(`/admin/payments/${paymentId}`)).data,
+
+  getMetricsOverview: async () => (await apiClient.get('/admin/metrics/overview')).data,
+
+  getDailyTestMetrics: async (from, to) => (await apiClient.get('/admin/metrics/tests', { params: { from, to } })).data,
+
+  getAuditEvents: async (page = 1, size = 20) => (await apiClient.get('/admin/audit-events', { params: { page, size } })).data,
 };

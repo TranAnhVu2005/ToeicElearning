@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiViews;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,5 +22,6 @@ public abstract class BaseEntity {
     @GeneratedValue
     @UuidGenerator
     @Column(name="id",updatable = false, nullable = false, length = 36)
+    @JsonView(ApiViews.Public.class)
     private String id;
 }

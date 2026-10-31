@@ -100,6 +100,12 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<!-- Version is managed by the Spring Boot dependency BOM. The same artifact was already
+			     present at runtime through jjwt-jackson; compile scope is needed for JWK/claim parsing. -->
+		</dependency>
 
 		<dependency>
 			<groupId>com.cloudinary</groupId>

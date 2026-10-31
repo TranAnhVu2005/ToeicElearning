@@ -20,6 +20,7 @@ public class SubmitExamResponseDTO{
     private Integer listeningScore;
     private Integer readingScore;
     private Integer totalScore;
+    private String scoreType;
 
     private Integer correctCount;
     private Integer totalCount;

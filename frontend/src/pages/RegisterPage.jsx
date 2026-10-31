@@ -22,9 +22,9 @@ const RegisterPage = () => {
   const handleRoleRedirect = (loggedUser) => {
     const roleStr = loggedUser.role || loggedUser.roleName || loggedUser.role?.roleName;
     if (roleStr === 'ROLE_ADMIN') {
-      navigate('/admin/users');
+      navigate('/admin/dashboard');
     } else if (roleStr === 'ROLE_TEACHER') {
-      navigate('/admin/tests');
+      navigate('/classrooms');
     } else {
       navigate('/');
     }
@@ -91,7 +91,8 @@ const RegisterPage = () => {
     try {
       setIsLoading(true);
       setErrorMsg('');
-      const { confirmPassword, ...registerPayload } = formData;
+      const registerPayload = { ...formData };
+      delete registerPayload.confirmPassword;
       await register(registerPayload);
       navigate('/practice');
     } catch (err) {
@@ -120,17 +121,17 @@ const RegisterPage = () => {
 
               <h2 className="auth-visual-title">Bắt Đầu Hành Trình Chinh Phục TOEIC Hôm Nay</h2>
               <p className="auth-visual-desc">
-                Tạo tài khoản miễn phí để truy cập trọn bộ đề thi thử, lời giải chi tiết và tính năng phân tích điểm số tự động.
+                Tạo tài khoản miễn phí để bắt đầu luyện tập. Một số đề VIP cần mua riêng; giá được hiển thị trước khi thanh toán.
               </p>
 
               <div className="auth-features-list">
                 <div className="auth-feature-item">
                   <CheckCircle size={18} color="#48bb78" />
-                  <span>Miễn phí 100% cho mọi học viên & sinh viên</span>
+                  <span>Tạo tài khoản miễn phí; đề VIP hiển thị giá trước khi mua</span>
                 </div>
                 <div className="auth-feature-item">
                   <CheckCircle size={18} color="#48bb78" />
-                  <span>Cập nhật đề thi ETS mới nhất 2026</span>
+                  <span>Kho luyện tập theo cấu trúc TOEIC Listening & Reading</span>
                 </div>
                 <div className="auth-feature-item">
                   <CheckCircle size={18} color="#48bb78" />
