@@ -1,5 +1,6 @@
 import React from 'react';
 import { Target, Clock3, History, BookOpenCheck } from 'lucide-react';
+import HomePhotoAccent from './HomePhotoAccent';
 
 const features = [
   { icon: <Target size={23} />, number: '01', title: 'Chọn Part để luyện', desc: 'Tập trung vào từng phần Listening hoặc Reading theo cấu trúc bài thi TOEIC.' },
@@ -11,10 +12,13 @@ const features = [
 const FeaturesSection = () => (
   <section className="section-padding features-section neo-features">
     <div className="container">
-      <div className="section-header neo-section-heading">
-        <span className="section-subtitle">HỌC THEO CÁCH CỦA BẠN</span>
-        <h2 className="section-title">Một bước nhỏ. Tiến bộ rõ ràng.</h2>
-        <p className="section-desc">Các công cụ luyện tập và xem lại được đặt cùng một nơi để bạn chủ động ôn tập.</p>
+      <div className="home-features-intro">
+        <div className="section-header neo-section-heading">
+          <span className="section-subtitle">HỌC THEO CÁCH CỦA BẠN</span>
+          <h2 className="section-title">Một bước nhỏ. Tiến bộ rõ ràng.</h2>
+          <p className="section-desc">Các công cụ luyện tập và xem lại được đặt cùng một nơi để bạn chủ động ôn tập.</p>
+        </div>
+        <HomePhotoAccent imageKey="malaysiaDay" className="features-photo-accent" alt="" caption="Tiếp tục khám phá" />
       </div>
       <div className="features-grid neo-feature-grid">
         {features.map((feature) => (

@@ -57,7 +57,7 @@ const flushPendingAnswerSnapshots = async (pendingRef, promiseRef, setSaveState)
   return promise;
 };
 
-const QuestionImage = ({ src }) => {
+const QuestionImage = ({ src, partNumber }) => {
   const [hasError, setHasError] = useState(false);
 
   if (hasError) {
@@ -71,7 +71,7 @@ const QuestionImage = ({ src }) => {
   return (
     <img
       src={src}
-      alt="Hình ảnh câu hỏi Part 1"
+      alt={`Hình ảnh câu hỏi${partNumber ? ` Part ${partNumber}` : ''}`}
       className="mx-auto max-h-[380px] w-full object-contain"
       onError={() => setHasError(true)}
     />
@@ -1086,10 +1086,10 @@ const ExamTakePage = () => {
                       </div>
                     )}
 
-                    {/* Part 1 Photograph */}
-                    {isPart1 && cq.imageUrl && (
-                      <div className="mb-5 mx-auto w-full max-w-xl overflow-hidden border-2 border-[#111111] bg-white text-center">
-                        <QuestionImage src={cq.imageUrl} />
+                    {/* Context image (Part 1 and any other part with an image) */}
+                    {cq.imageUrl && (
+                      <div className={`mb-5 mx-auto w-full ${isPart1 ? 'max-w-xl' : 'max-w-3xl'} overflow-hidden border-2 border-[#111111] bg-white text-center`}>
+                        <QuestionImage src={cq.imageUrl} partNumber={cq.partNumber} />
                       </div>
                     )}
 

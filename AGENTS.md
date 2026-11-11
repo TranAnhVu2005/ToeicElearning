@@ -64,10 +64,10 @@ Người dùng đang duyệt và chỉnh sửa bộ đặc tả trong `docs/`. *
 ## Thiết kế UI
 
 - Với mọi tác vụ tạo mới hoặc restyle giao diện, trước khi sửa hãy đọc `docs/05_UI_UX_SPEC.md`, đặc biệt mục 1–2 và phần màn hình tương ứng; kiểm tra component/page hiện có để giữ đúng kiến trúc và convention.
-- Áp dụng Neo-brutalism theo ảnh tham khảo đã mô tả trong `docs/05_UI_UX_SPEC.md`: nền giấy ngà, mực đen, mảng vàng nổi bật, màu phụ có chủ đích, typography đậm, viền đen rõ và bóng cứng lệch không blur. Các token trong đặc tả là nguồn chuẩn; không tự thay bằng dashboard template/gradient/glassmorphism hoặc bộ component bo tròn, bóng mềm mặc định.
-- Chuyển thể phong cách cho luồng học tập, quản trị và lớp học; chỉ kế thừa visual style, không sao chép nghiệp vụ/route/asset của trang tham khảo. Giữ nội dung dễ đọc, trạng thái tương tác/accessibility đầy đủ và giảm trang trí ở màn thi để không cản trở làm bài.
-- Không chỉ đổi màu: khi phạm vi cho phép, đồng bộ bố cục, phân cấp chữ, hình khối, viền/bóng, trạng thái hover/pressed/focus/disabled/loading và responsive theo đặc tả. Không redesign ngoài phạm vi task.
-- Trước khi kết thúc UI task, rà trạng thái loading/empty/error/success/disabled, keyboard focus, contrast và responsive; nêu rõ viewport/trạng thái nào chưa quan sát. Không báo visual QA nếu chưa thực hiện.
+- Áp dụng Editorial theo `docs/05_UI_UX_SPEC.md` trên mọi route, component dùng chung, trạng thái và màn hình: Gelasio cho nội dung/heading, Ubuntu Mono cho mã và số liệu kỹ thuật; palette đen, trắng, xám sáng với xanh dương làm accent; nhịp 8pt và divider mảnh. Token docs05 là nguồn chuẩn; không để Neo-brutalism, Retro hoặc class legacy quyết định giao diện.
+- Chuyển thể Editorial cho học tập, quản trị, lớp học và phòng thi; chỉ kế thừa visual language, không sao chép nghiệp vụ/route/asset thương mại của ảnh tham khảo. Giữ nội dung dễ đọc, cỡ chữ và trạng thái tương tác/accessibility đầy đủ; ảnh nền cần phối hợp với lớp phủ đảm bảo tương phản và không đặt trang trí dưới vùng thi/đọc.
+- Khi restyle, đồng bộ hierarchy, bố cục, typography, component, trạng thái hover/active/focus/disabled/loading và responsive; không dừng ở đổi màu/font. Không redesign ngoài phạm vi task.
+- Trước khi kết thúc UI task, rà trạng thái loading/empty/error/success/disabled, keyboard focus, contrast, reduced motion và responsive; nêu rõ viewport/trạng thái nào chưa quan sát. Không báo visual QA nếu chưa thực hiện.
 - Giữ nguyên React/Vite SPA, React Router, Tailwind, Axios và cấu trúc page/component/context/service hiện có.
 
 ## Kiểm chứng và báo cáo

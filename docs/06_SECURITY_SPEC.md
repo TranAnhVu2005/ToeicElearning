@@ -1,6 +1,6 @@
 # 06. Đặc tả bảo mật TOEIC Learning
 
-> Tài liệu yêu cầu bảo mật cho sản phẩm dự kiến. Đây không phải chứng nhận, kiểm thử xâm nhập hay bằng chứng rằng các kiểm soát đã được triển khai. Mọi trạng thái code dưới đây là quan sát có giới hạn tại 2026-10-29; phải xác minh lại trước mỗi thay đổi.
+> Tài liệu yêu cầu bảo mật cho sản phẩm dự kiến. Đây không phải chứng nhận, kiểm thử xâm nhập hay bằng chứng rằng các kiểm soát đã được triển khai. Các ghi nhận code trong tài liệu là ảnh chụp có ngày, phạm vi kiểm tra giới hạn; phải xác minh lại từ mã nguồn và cấu hình hiện tại trước mỗi thay đổi.
 
 > Phạm vi bảo mật phải được đáp ứng trong kiến trúc hiện có: backend Spring Boot modular monolith + REST/JWT và frontend React/Vite SPA. Những lựa chọn như BFF/cookie hay tách service bên dưới không phải yêu cầu đổi kiến trúc; chỉ xem xét khi chủ dự án yêu cầu và duyệt tác động.
 

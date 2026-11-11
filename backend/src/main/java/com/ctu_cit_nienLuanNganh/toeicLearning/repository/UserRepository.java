@@ -5,9 +5,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.repository.base.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
-import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -29,8 +27,10 @@ public interface UserRepository extends BaseRepository<User, String> {
     @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
     Optional<User> findByIdWithRole(@Param("id") String id);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
+    // Keep this as an explicit row lock: Hibernate's generated "FOR UPDATE OF alias"
+    // is not accepted by MariaDB, which is used by local development environments.
+    // Callers run inside a service transaction; role remains lazily loadable as needed.
+    @Query(value = "SELECT u.* FROM `user` u WHERE u.id = :id FOR UPDATE", nativeQuery = true)
     Optional<User> findByIdWithRoleForUpdate(@Param("id") String id);
 
     Optional<User> findByUserEmail(String userEmail);

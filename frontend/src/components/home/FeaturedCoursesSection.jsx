@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Clock3, Layers, PlayCircle } from 'lucide-react';
 import { examService } from '../../services/examService';
+import HomePhotoAccent from './HomePhotoAccent';
+
+const cardPhotoKeys = ['books', 'study', 'toeicGoal'];
 
 const FeaturedCoursesSection = () => {
   const [tests, setTests] = useState([]);
@@ -40,6 +43,7 @@ const FeaturedCoursesSection = () => {
               return (
                 <article key={test.id} className={`neo-test-card neo-test-card-${index % 3}`}>
                   <div className="neo-test-card-label"><span>TOEIC PRACTICE</span><span>#{String(index + 1).padStart(2, '0')}</span></div>
+                  <HomePhotoAccent imageKey={cardPhotoKeys[index % cardPhotoKeys.length]} className="neo-test-photo" alt="" caption="Luyện tập theo mục tiêu của bạn" />
                   <div className="neo-test-card-body">
                     <h3>{test.titleTest}</h3>
                     <p>Đề TOEIC đã phát hành. Mở chi tiết để xem thông tin và quyền truy cập.</p>

@@ -2,10 +2,8 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.repository;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ExamSessionStatus;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.ExamSession;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +26,9 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, String
 
     boolean existsByTest_IdAndStatus(String testId, ExamSessionStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select s from ExamSession s where s.id = :id and s.user.id = :userId")
+    // Avoid Hibernate's "FOR UPDATE OF alias", which MariaDB rejects.
+    @Query(value = "SELECT s.* FROM exam_session s WHERE s.id = :id AND s.user_id = :userId FOR UPDATE",
+            nativeQuery = true)
     Optional<ExamSession> findOwnedForUpdate(@Param("id") String id, @Param("userId") String userId);
 
     @Modifying

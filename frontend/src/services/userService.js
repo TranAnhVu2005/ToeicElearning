@@ -31,11 +31,7 @@ export const userService = {
       }
     }
 
-    const response = await apiClient.patch('/user/updateprofile', payload, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiClient.patch('/user/updateprofile', payload);
     return response.data; // ApiResponse<UserResponseDTO>
   },
 

@@ -28,11 +28,7 @@ export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio
   formData.append('file', file);
   formData.append('folder', folder);
   if (privateExamMedia) formData.append('privateExamMedia', 'true');
-  const response = await apiClient.post('/media/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await apiClient.post('/media/upload', formData);
 
   if (response.data && response.data.code === 1000 && response.data.data?.url) {
     return response.data.data;
@@ -56,11 +52,7 @@ export const uploadAvatar = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('folder', 'Resource/toeic-learning/avatars');
-  const response = await apiClient.post('/media/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await apiClient.post('/media/upload', formData);
 
   if (response.data && response.data.code === 1000 && response.data.data?.url) {
     return response.data.data.url;

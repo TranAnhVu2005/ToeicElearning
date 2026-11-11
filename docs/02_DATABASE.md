@@ -126,10 +126,11 @@ Một context có thể đại diện một tập câu hỏi trong UI, nhưng ph
 
 ## 6. SQL và migration
 
-- `backend/database_script.sql` có `DROP DATABASE toeiclearning`; tuyệt đối không dùng lên DB có dữ liệu cần giữ.
-- `backend/database_script_20de.sql` và các file seed là biến thể/bổ sung; kiểm tra ID, schema, quan hệ và thứ tự trước khi chạy.
-- Hai script khởi tạo hiện có cùng phần DDL trước seed. DDL đã gồm các cột VIP/lớp của `Test`, metadata Cloudinary trong `ContextQuestion`, liên kết đề và snapshot tên sản phẩm trong `PaymentTransaction`, cùng bảng `TestEntitlement`; đây chỉ là đồng bộ script, chưa xác minh bằng chạy MySQL hoặc migration trên DB hiện có.
-- Bổ sung lớp học: database mới tạo `classroom.description` từ hai bootstrap script. Với database đã tồn tại, áp dụng một lần `backend/migrations/V20261031_01__add_classroom_description.sql`; không chạy bootstrap script để nâng cấp vì chúng drop database.
+- File khởi tạo hợp nhất hiện hành là `backend/toeic_learning_fresh_install.sql`. Đây là lựa chọn đầy đủ nhất trong các script khởi tạo đã rà: schema bootstrap được đồng bộ với migrations và entity hiện tại, cùng seed đề hiện có. Chỉ chạy trên database mới/trống; file không DROP database/bảng, nhưng sẽ dừng nếu gặp bảng trùng. Cần tạo tài khoản qua luồng đăng ký rồi gán quyền admin bằng thao tác DBA có kiểm soát.
+- `backend/database_script.sql` và `backend/database_script_20de.sql` là script cũ, cả hai có `DROP DATABASE toeiclearning`; không chạy trên DB có dữ liệu cần giữ. Hai file seed rời đã được đưa vào file hợp nhất dưới dạng bản sao draft, vì vậy không chạy/nối thêm chúng sau file hợp nhất.
+- Bản sao ETS/YBM trong seed đều được tạo từ Test 01, không phải đề độc lập; trong file hợp nhất chúng được đổi tên thành local sample copy và đặt `DRAFT`. Test 01 gốc vẫn là seed hiện có; xác minh answer key và quyền phân phối trước khi publish/thương mại hóa.
+- File hợp nhất đã được kiểm tra tĩnh về bảng, đích khóa ngoại, seed tài khoản và câu lệnh DROP; chưa chạy trên MySQL, nên không xem đây là xác nhận runtime hoặc migration trên DB đang dùng.
+- Các file `backend/migrations/` dành cho database đã tồn tại; không chạy bootstrap SQL để nâng cấp. Đối chiếu trạng thái migration/schema trước khi áp dụng migration để tránh chạy lặp.
 - Hiện `spring.jpa.hibernate.ddl-auto=update`; thay đổi schema dài hạn cần migration có version, tương thích dữ liệu seed và rollback.
 - Seed test cần giữ thứ tự câu và toàn vẹn khóa ngoại.
 - Kiểm tra quyền sử dụng thương mại cho ngân hàng câu hỏi/media/transcript/explanation trước khi seed hoặc phát hành đề.

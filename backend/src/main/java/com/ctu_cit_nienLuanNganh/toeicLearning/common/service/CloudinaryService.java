@@ -51,10 +51,20 @@ public class CloudinaryService {
                     "resource_type", folder.endsWith("/audios") ? "video" : "image"
             );
 
-            Map<?, ?> uploadResutt = cloudinary.uploader().upload(file.getBytes(), params);
-            return uploadResutt.get("secure_url").toString();
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+            Object secureUrlValue = uploadResult.get("secure_url");
+            if (!(secureUrlValue instanceof String secureUrl)
+                    || !secureUrl.startsWith("https://res.cloudinary.com/")) {
+                throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+            }
+            return secureUrl;
         }
-        catch (IOException e){
+        catch (AppException exception) {
+            throw exception;
+        }
+        catch (Exception exception){
+            // Do not log SDK response bodies: they can contain account/request details.
+            log.warn("Cloudinary upload failed (exceptionType={}).", exception.getClass().getSimpleName());
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import brandLogo from '../../assets/img/logo1.png';
 
 const Footer = () => {
   return (
@@ -10,11 +11,11 @@ const Footer = () => {
           {/* Col 1: Brand & About */}
           <div className="footer-col">
             <div className="footer-brand">
-              <div className="logo-icon-wrapper" style={{ width: 36, height: 36 }}>
-                <BookOpen size={20} />
+              <div className="footer-logo-mark">
+                <img src={brandLogo} alt="" />
               </div>
-              <span className="logo-title" style={{ color: '#ffffff', fontSize: '1.4rem' }}>
-                Toeic<span style={{ color: '#FF5B93' }}>Learning</span>
+              <span className="logo-title">
+                TOEIC <span>ELearning</span>
               </span>
             </div>
             <p className="footer-desc">

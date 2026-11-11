@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Headphones, BookOpen, ArrowRight } from 'lucide-react';
+import HomePhotoAccent from './HomePhotoAccent';
 
 const ToeicPartsSection = () => {
   const listeningParts = [
@@ -68,6 +69,7 @@ const ToeicPartsSection = () => {
               <Headphones size={22} color="var(--primary)" />
               <h3 className="category-title">Listening Comprehension (Kỹ năng Nghe - 100 câu / 45 phút)</h3>
             </div>
+            <HomePhotoAccent imageKey="malaysiaNight" className="parts-photo-accent" alt="" caption="Nghe và quan sát" />
             <span className="badge badge-primary">Format mới</span>
           </div>
 
@@ -94,6 +96,7 @@ const ToeicPartsSection = () => {
               <BookOpen size={22} color="var(--accent)" />
               <h3 className="category-title">Reading Comprehension (Kỹ năng Đọc - 100 câu / 75 phút)</h3>
             </div>
+            <HomePhotoAccent imageKey="malaysiaDay" className="parts-photo-accent" alt="" caption="Đọc và khám phá" />
             <span className="badge badge-warning">Đòi hỏi tốc độ</span>
           </div>
 

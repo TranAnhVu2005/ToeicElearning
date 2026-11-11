@@ -43,7 +43,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="app-container">
+        <div className="app-container app-shell">
           <Navbar />
           <main className="main-content">
             <ErrorBoundary>

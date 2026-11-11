@@ -4,9 +4,11 @@
 -- TRANSCRIPT TIẾNG ANH THUẦN TÚY, BẢN DỊCH TIẾNG VIỆT LƯU RIÊNG TRONG CỘT TRANSLATION
 -- ĐÁP ÁN ĐỐI CHIẾU CHUẨN 100% THEO ANSWER KEY CHÍNH THỨC ETS TOEIC 2026
 -- ==============================================================================
- DROP DATABASE IF EXISTS toeiclearning;
-CREATE DATABASE toeiclearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--  DROP DATABASE IF EXISTS toeiclearning; 
+-- CREATE DATABASE toeiclearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE toeiclearning;
+
+select * from user;
 
 -- ==============================================================================
 -- 1. BẢNG CẤU HÌNH & DANH MỤC ĐỘC LẬP

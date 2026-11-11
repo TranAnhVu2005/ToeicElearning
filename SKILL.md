@@ -5,6 +5,8 @@ description: Upgrades existing websites and apps to premium quality. Audits curr
 
 # Redesign Skill
 
+> Quy tắc dự án: nếu tài liệu này được dùng trong repository TOEIC Learning, `AGENTS.md` và `docs/05_UI_UX_SPEC.md` là nguồn ưu tiên. Không áp dụng lựa chọn thẩm mỹ bên dưới nếu chúng xung đột Editorial, accessibility, responsive hoặc kiến trúc React/Vite hiện hành. Đây là tài liệu tham khảo tùy chọn, không tự mở rộng phạm vi công việc.
+
 ## How This Works
 
 When applied to an existing project, follow this sequence:

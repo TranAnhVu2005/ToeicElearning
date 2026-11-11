@@ -151,7 +151,7 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 - JS service cần khớp URL, method, content type, query, JSON property và response envelope.
 - Giữ lỗi phân biệt cho 401, 403, 404, validation 400 và lỗi thanh toán.
 - Không dùng payload test chứa `correctAnswer` cho UI thi; tạo DTO public riêng.
-- `apiClient.js` hiện hardcode localhost; chuyển base URL sang env khi có yêu cầu cấu hình môi trường.
+- `frontend/src/api/apiClient.js` đọc `VITE_API_BASE_URL`; mặc định dùng `http://localhost:8080/api`. Giá trị môi trường phải gồm cả base path `/api` như mô tả trong `frontend/README.md`.
 
 ## 5. Kiểm soát bảo mật xuyên API
 

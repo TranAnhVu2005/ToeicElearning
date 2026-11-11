@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { User, Mail, Phone, Lock, UserPlus, BookOpen, CheckCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import { Lock, Mail, Phone, User, UserPlus } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import Toast from '../components/common/Toast';
+import studyBackground from '../assets/img/hero/toeic_980_co_ban_tay.jpg';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -51,11 +52,9 @@ const RegisterPage = () => {
     setErrorMsg('Đăng nhập Google thất bại hoặc bạn đã đóng cửa sổ đăng nhập.');
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
     if (errorMsg) setErrorMsg('');
   };
 
@@ -64,9 +63,8 @@ const RegisterPage = () => {
       return 'Họ và tên phải từ 4 đến 30 ký tự.';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.userEmail)) {
-      return 'Email không hợp lệ.';
-    }
+    if (!emailRegex.test(formData.userEmail)) return 'Email không hợp lệ.';
+
     const phoneRegex = /^0[0-9]{9}$/;
     if (!phoneRegex.test(formData.userNumberphone)) {
       return 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678).';
@@ -74,14 +72,12 @@ const RegisterPage = () => {
     if (!formData.userPassword || formData.userPassword.length < 6) {
       return 'Mật khẩu phải có ít nhất 6 ký tự.';
     }
-    if (formData.userPassword !== formData.confirmPassword) {
-      return 'Mật khẩu xác nhận không trùng khớp.';
-    }
+    if (formData.userPassword !== formData.confirmPassword) return 'Mật khẩu xác nhận không trùng khớp.';
     return null;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     const validationError = validateForm();
     if (validationError) {
       setErrorMsg(validationError);
@@ -104,216 +100,89 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-page-wrapper">
+    <main className="auth-page-wrapper">
       <div className="container">
         <div className="auth-card-container">
-          {/* Left Visual Side */}
           <div className="auth-visual-side">
-            <div className="auth-visual-content">
-              <div className="brand-logo" style={{ marginBottom: 20 }}>
-                <div className="logo-icon-wrapper">
-                  <BookOpen size={24} color="#ffffff" />
-                </div>
-                <div className="logo-text">
-                  <span className="logo-title" style={{ color: '#fff' }}>Toeic<span>Elearning</span></span>
-                </div>
-              </div>
-
-              <h2 className="auth-visual-title">Bắt Đầu Hành Trình Chinh Phục TOEIC Hôm Nay</h2>
-              <p className="auth-visual-desc">
-                Tạo tài khoản miễn phí để bắt đầu luyện tập. Một số đề VIP cần mua riêng; giá được hiển thị trước khi thanh toán.
-              </p>
-
-              <div className="auth-features-list">
-                <div className="auth-feature-item">
-                  <CheckCircle size={18} color="#48bb78" />
-                  <span>Tạo tài khoản miễn phí; đề VIP hiển thị giá trước khi mua</span>
-                </div>
-                <div className="auth-feature-item">
-                  <CheckCircle size={18} color="#48bb78" />
-                  <span>Kho luyện tập theo cấu trúc TOEIC Listening & Reading</span>
-                </div>
-                <div className="auth-feature-item">
-                  <CheckCircle size={18} color="#48bb78" />
-                  <span>Luyện thi linh hoạt theo từng Part hoặc full đề</span>
-                </div>
-              </div>
-            </div>
+            <img className="auth-visual-image" src={studyBackground} alt="Tài liệu luyện thi TOEIC trên bàn học" />
+            <div className="auth-visual-overlay" aria-hidden="true" />
           </div>
 
-          {/* Right Form Side */}
-          <div className="auth-form-side">
-            <div className="auth-header">
-              <h1 className="auth-title">Đăng Ký Tài Khoản</h1>
+          <section className="auth-form-side" aria-labelledby="register-title">
+            <header className="auth-header">
+              <p className="auth-kicker">TOEIC ELEARNING</p>
+              <h1 id="register-title" className="auth-title">Đăng Ký Tài Khoản</h1>
               <p className="auth-subtitle">Trở thành thành viên ToeicElearning chỉ trong 1 phút</p>
-
-            </div>
+            </header>
 
             {errorMsg && (
-              <div style={{ marginBottom: 20 }}>
+              <div className="auth-alert">
                 <Toast type="error" message={errorMsg} onClose={() => setErrorMsg('')} />
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
-                <label className="form-label" htmlFor="userName">
-                  Họ và tên <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+                <label className="form-label" htmlFor="userName">Họ và tên <span className="auth-required">*</span></label>
                 <div className="input-with-icon">
-                  <span className="input-icon"><User size={18} /></span>
-                  <input
-                    type="text"
-                    id="userName"
-                    name="userName"
-                    className="form-control"
-                    placeholder="Nguyễn Văn A"
-                    value={formData.userName}
-                    onChange={handleChange}
-                    required
-                    disabled={isLoading}
-                  />
+                  <span className="input-icon" aria-hidden="true"><User size={18} /></span>
+                  <input id="userName" name="userName" type="text" className="form-control" placeholder="Nhập họ và tên..." autoComplete="name" value={formData.userName} onChange={handleChange} required disabled={isLoading} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="userEmail">
-                  Địa chỉ Email <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+                <label className="form-label" htmlFor="userEmail">Địa chỉ Email <span className="auth-required">*</span></label>
                 <div className="input-with-icon">
-                  <span className="input-icon"><Mail size={18} /></span>
-                  <input
-                    type="email"
-                    id="userEmail"
-                    name="userEmail"
-                    className="form-control"
-                    placeholder="nguyenvana@gmail.com"
-                    value={formData.userEmail}
-                    onChange={handleChange}
-                    required
-                    disabled={isLoading}
-                  />
+                  <span className="input-icon" aria-hidden="true"><Mail size={18} /></span>
+                  <input id="userEmail" name="userEmail" type="email" className="form-control" placeholder="Nhập địa chỉ email..." autoComplete="email" value={formData.userEmail} onChange={handleChange} required disabled={isLoading} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="userNumberphone">
-                  Số điện thoại <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+                <label className="form-label" htmlFor="userNumberphone">Số điện thoại <span className="auth-required">*</span></label>
                 <div className="input-with-icon">
-                  <span className="input-icon"><Phone size={18} /></span>
-                  <input
-                    type="tel"
-                    id="userNumberphone"
-                    name="userNumberphone"
-                    className="form-control"
-                    placeholder="0912345678 (10 số)"
-                    value={formData.userNumberphone}
-                    onChange={handleChange}
-                    required
-                    disabled={isLoading}
-                  />
+                  <span className="input-icon" aria-hidden="true"><Phone size={18} /></span>
+                  <input id="userNumberphone" name="userNumberphone" type="tel" className="form-control" placeholder="Nhập số điện thoại..." autoComplete="tel" inputMode="tel" value={formData.userNumberphone} onChange={handleChange} required disabled={isLoading} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="userPassword">
-                  Mật khẩu <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+                <label className="form-label" htmlFor="userPassword">Mật khẩu <span className="auth-required">*</span></label>
                 <div className="input-with-icon">
-                  <span className="input-icon"><Lock size={18} /></span>
-                  <input
-                    type="password"
-                    id="userPassword"
-                    name="userPassword"
-                    className="form-control"
-                    placeholder="Ít nhất 6 ký tự..."
-                    value={formData.userPassword}
-                    onChange={handleChange}
-                    required
-                    disabled={isLoading}
-                  />
+                  <span className="input-icon" aria-hidden="true"><Lock size={18} /></span>
+                  <input id="userPassword" name="userPassword" type="password" className="form-control" placeholder="Nhập mật khẩu..." autoComplete="new-password" value={formData.userPassword} onChange={handleChange} required disabled={isLoading} />
                 </div>
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="confirmPassword">
-                  Xác nhận mật khẩu <span style={{ color: 'var(--danger)' }}>*</span>
-                </label>
+                <label className="form-label" htmlFor="confirmPassword">Xác nhận mật khẩu <span className="auth-required">*</span></label>
                 <div className="input-with-icon">
-                  <span className="input-icon"><Lock size={18} /></span>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    className="form-control"
-                    placeholder="Nhập lại mật khẩu..."
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    disabled={isLoading}
-                  />
+                  <span className="input-icon" aria-hidden="true"><Lock size={18} /></span>
+                  <input id="confirmPassword" name="confirmPassword" type="password" className="form-control" placeholder="Nhập lại mật khẩu..." autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} required disabled={isLoading} />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ width: '100%', marginTop: 8 }}
-                disabled={isLoading}
-              >
+              <button type="submit" className="btn btn-primary auth-submit" disabled={isLoading}>
                 {isLoading ? (
-                  <span className="flex-center" style={{ gap: 8 }}>
-                    <div className="loading-spinner-sm" /> Đang khởi tạo tài khoản...
-                  </span>
+                  <span className="auth-submit-content"><span className="loading-spinner-sm" /> Đang khởi tạo tài khoản...</span>
                 ) : (
-                  <span className="flex-center" style={{ gap: 8 }}>
-                    <UserPlus size={18} /> Đăng ký thành viên
-                  </span>
+                  <span className="auth-submit-content"><UserPlus size={18} aria-hidden="true" /> Đăng ký thành viên</span>
                 )}
               </button>
             </form>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                margin: '22px 0 18px',
-                color: 'var(--text-muted, #718096)',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                letterSpacing: '0.5px',
-                textTransform: 'uppercase',
-              }}
-            >
-              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
-              <span style={{ padding: '0 12px' }}>Hoặc tiếp tục với</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color, #e2e8f0)' }} />
+            <div className="auth-divider" aria-hidden="true"><span>Hoặc tiếp tục với</span></div>
+            <div className="auth-google">
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} useOneTap={false} theme="outline" size="large" shape="rectangular" text="continue_with" locale="vi" />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap={false}
-                theme="outline"
-                size="large"
-                shape="rectangular"
-                text="continue_with"
-                locale="vi"
-              />
-            </div>
-
-            <div className="auth-footer">
-              Đã có tài khoản?{' '}
-              <Link to="/login" className="auth-link">
-                Đăng nhập ngay
-              </Link>
-            </div>
-          </div>
+            <p className="auth-footer">
+              Đã có tài khoản? <Link to="/login" className="auth-link">Đăng nhập ngay</Link>
+            </p>
+          </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 
