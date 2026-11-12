@@ -366,6 +366,23 @@ CREATE TABLE notification (
 );
 
 -- ==============================================================================
+-- 6.1. BẢNG BÌNH LUẬN ĐỀ THI (TEST COMMENT)
+-- [DÒNG ĐƯỢC THÊM MỚI CHO TÍNH NĂNG BÌNH LUẬN ĐỀ THI - COPY KHỐI NÀY VÀO SQL ĐỂ CHẠY CHO ĐỢT TEST]
+-- ------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS test_comment (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    test_id VARCHAR(36) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_test_comment_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
+    CONSTRAINT fk_test_comment_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_test_comment_test_created ON test_comment(test_id, created_at);
+-- ==============================================================================
+
+-- ==============================================================================
 -- 7. DỮ LIỆU MẪU ĐỀ THI: ETS TOEIC 2026 - TEST 01 (TRỌN BỘ CÂU 1 ĐẾN 200)
 -- ==============================================================================
 INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES 

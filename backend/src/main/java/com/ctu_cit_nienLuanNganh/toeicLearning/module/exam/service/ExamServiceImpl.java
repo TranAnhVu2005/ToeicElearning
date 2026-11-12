@@ -52,6 +52,11 @@ import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestComment;
+import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestCommentRepository;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.CommentResponseDTO;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateCommentRequest;
+
 @Service
 @RequiredArgsConstructor
 public class ExamServiceImpl implements ExamService {
@@ -71,6 +76,7 @@ public class ExamServiceImpl implements ExamService {
     private final ClassMemberRepository classMemberRepository;
     private final AssignmentService assignmentService;
     private final ExamMediaAssetService examMediaAssetService;
+    private final TestCommentRepository testCommentRepository;
 
     private final CloudinaryService cloudinaryService;
     private final AuditEventService auditEventService;
@@ -78,7 +84,7 @@ public class ExamServiceImpl implements ExamService {
     private final PartForUserMapper partForUserMapper;
 
 
-    public PageResponse<Test> getFullTest(PageParams pageParams, TestStatus status, TestCatalogCategory category){
+    public PageResponse<Test> getFullTest(PageParams pageParams, TestStatus status, TestCatalogCategory category, Boolean isVip){
         // Mặc định nếu không truyền status thì chỉ lấy các đề thi đã PUBLISHED, học viên không truy cập các bản nháp được
         if(status == null) {
             status = TestStatus.PUBLISHED;
@@ -87,7 +93,7 @@ public class ExamServiceImpl implements ExamService {
         if (category == null) category = TestCatalogCategory.ALL;
         String categoryName = category.name();
         String keyword = pageParams.getKeyWord() == null ? "" : pageParams.getKeyWord().trim();
-        Page<Test> listTest = testRepository.findCatalogTests(status, categoryName, keyword, pageParams.toPageable());
+        Page<Test> listTest = testRepository.findCatalogTests(status, categoryName, isVip, keyword, pageParams.toPageable());
         return PageResponse.of(listTest);
     }
 
@@ -1713,5 +1719,116 @@ public class ExamServiceImpl implements ExamService {
             case 7 -> 200;
             default -> 0;
         };
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommentResponseDTO> getCommentsByTestId(String testId) {
+        if (!testRepository.existsById(testId)) {
+            throw new AppException(ErrorCode.TEST_NOT_FOUND);
+        }
+        List<TestComment> comments = testCommentRepository.findByTestIdWithUser(testId);
+        return comments.stream().map(this::mapToCommentResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public CommentResponseDTO addComment(String testId, CreateCommentRequest request, User currentUser) {
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        User managedUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (Boolean.TRUE.equals(managedUser.getIsLocked())) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+        }
+        Test managedTest = testRepository.findById(testId)
+                .orElseThrow(() -> new AppException(ErrorCode.TEST_NOT_FOUND));
+
+        String content = request.getContent() != null ? request.getContent().trim() : "";
+        if (content.isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        TestComment comment = TestComment.builder()
+                .test(managedTest)
+                .user(managedUser)
+                .content(content)
+                .build();
+        TestComment saved = testCommentRepository.save(comment);
+        return mapToCommentResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public CommentResponseDTO updateComment(String commentId, CreateCommentRequest request, User currentUser) {
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        User managedUser = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (Boolean.TRUE.equals(managedUser.getIsLocked())) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+        }
+
+        TestComment comment = testCommentRepository.findById(commentId)
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
+
+        boolean isAuthor = comment.getUser() != null && comment.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() != null && "ROLE_ADMIN".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
+        if (!isAuthor && !isAdmin) {
+            throw new AppException(ErrorCode.COMMENT_ACTION_FORBIDDEN);
+        }
+
+        String content = request.getContent() != null ? request.getContent().trim() : "";
+        if (content.isEmpty()) {
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        }
+
+        comment.setContent(content);
+        TestComment updated = testCommentRepository.save(comment);
+        return mapToCommentResponse(updated);
+    }
+
+    @Override
+    @Transactional
+    public void deleteComment(String commentId, User currentUser) {
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        TestComment comment = testCommentRepository.findById(commentId)
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
+
+        boolean isAuthor = comment.getUser() != null && comment.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() != null && "ROLE_ADMIN".equalsIgnoreCase(currentUser.getRole().getRoleName());
+
+        if (!isAuthor && !isAdmin) {
+            throw new AppException(ErrorCode.COMMENT_ACTION_FORBIDDEN);
+        }
+
+        testCommentRepository.delete(comment);
+    }
+
+    private CommentResponseDTO mapToCommentResponse(TestComment comment) {
+        User u = comment.getUser();
+        String roleName = (u != null && u.getRole() != null) ? u.getRole().getRoleName() : "ROLE_USER";
+        boolean isOfficial = "ROLE_ADMIN".equalsIgnoreCase(roleName) || "ROLE_TEACHER".equalsIgnoreCase(roleName);
+        String displayRole = "USER";
+        if ("ROLE_ADMIN".equalsIgnoreCase(roleName)) displayRole = "ADMIN";
+        else if ("ROLE_TEACHER".equalsIgnoreCase(roleName)) displayRole = "TEACHER";
+
+        return CommentResponseDTO.builder()
+                .id(comment.getId())
+                .testId(comment.getTest() != null ? comment.getTest().getId() : null)
+                .userId(u != null ? u.getId() : null)
+                .userName(u != null ? (u.getUserName() != null ? u.getUserName() : u.getUserEmail()) : "Người dùng")
+                .userAvatar(u != null ? u.getUserAvatar() : null)
+                .roleName(displayRole)
+                .isOfficial(isOfficial)
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .build();
     }
 }

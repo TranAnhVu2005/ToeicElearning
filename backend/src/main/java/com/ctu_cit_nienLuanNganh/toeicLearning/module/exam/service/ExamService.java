@@ -15,7 +15,9 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.TestResultDetailR
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.TestAccessResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.DictationResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.ExamSessionResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.CommentResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateCommentRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.SubmitExamAnswer;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.StartExamSessionRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.SaveExamSessionAnswersRequest;
@@ -24,7 +26,7 @@ import java.util.List;
 
 public interface ExamService {
     // 1. Quản trị & Hiển thị đề thi
-    PageResponse<Test> getFullTest(PageParams pageParams, TestStatus status, TestCatalogCategory category);
+    PageResponse<Test> getFullTest(PageParams pageParams, TestStatus status, TestCatalogCategory category, Boolean isVip);
     PageResponse<Test> getAdminTests(PageParams pageParams, TestStatus status);
     PageResponse<Test> getClassroomTests(User teacher, String classroomId, PageParams pageParams);
     PageResponse<Test> getAssignableTests(User teacher, String classroomId, PageParams pageParams);
@@ -52,4 +54,10 @@ public interface ExamService {
     List<TestHistoryResponseDTO> getTestHistory(User currentUser, String testId);
     TestResultDetailResponseDTO getTestResultDetail(User currentUser, String resultId);
     TestResultDetailResponseDTO getAssignmentResultDetail(User teacher, String resultId);
+
+    // 3. Bình luận đề thi (Test Comments)
+    List<CommentResponseDTO> getCommentsByTestId(String testId);
+    CommentResponseDTO addComment(String testId, CreateCommentRequest request, User currentUser);
+    CommentResponseDTO updateComment(String commentId, CreateCommentRequest request, User currentUser);
+    void deleteComment(String commentId, User currentUser);
 }

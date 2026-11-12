@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("unchecked")
 public class CloudinaryService {
     private static final Pattern VERSION_SEGMENT = Pattern.compile("v[0-9]+");
     private static final String APP_FOLDER_PREFIX = "Resource/toeic-learning/";

@@ -16,6 +16,7 @@ public interface TestRepository extends BaseRepository<Test, String>{
     Page<Test> findByStatus(TestStatus status, Pageable pageable);
     Page<Test> findByStatusAndClassroomIsNull(TestStatus status, Pageable pageable);
     @Query(value = "SELECT DISTINCT t FROM Test t WHERE t.status = :status AND t.classroom IS NULL " +
+            "AND (:isVip IS NULL OR (:isVip = true AND t.isVip = true) OR (:isVip = false AND (t.isVip = false OR t.isVip IS NULL))) " +
             "AND (:category = 'ALL' " +
             "OR (:category = 'FULL' " +
             "AND (SELECT COUNT(q) FROM Question q JOIN q.contextQuestion cq WHERE cq.test = t) = 200) " +
@@ -25,6 +26,7 @@ public interface TestRepository extends BaseRepository<Test, String>{
             "AND EXISTS (SELECT cq.id FROM ContextQuestion cq WHERE cq.test = t AND cq.part.namePart IN ('Part 5','Part 6','Part 7')))) " +
             "AND (:keyword = '' OR LOWER(t.titleTest) LIKE LOWER(CONCAT('%', :keyword, '%'))) ",
             countQuery = "SELECT COUNT(DISTINCT t.id) FROM Test t WHERE t.status = :status AND t.classroom IS NULL " +
+                    "AND (:isVip IS NULL OR (:isVip = true AND t.isVip = true) OR (:isVip = false AND (t.isVip = false OR t.isVip IS NULL))) " +
                     "AND (:category = 'ALL' " +
                     "OR (:category = 'FULL' " +
                     "AND (SELECT COUNT(q) FROM Question q JOIN q.contextQuestion cq WHERE cq.test = t) = 200) " +
@@ -34,6 +36,7 @@ public interface TestRepository extends BaseRepository<Test, String>{
                     "AND EXISTS (SELECT cq.id FROM ContextQuestion cq WHERE cq.test = t AND cq.part.namePart IN ('Part 5','Part 6','Part 7')))) " +
                     "AND (:keyword = '' OR LOWER(t.titleTest) LIKE LOWER(CONCAT('%', :keyword, '%')))" )
     Page<Test> findCatalogTests(@Param("status") TestStatus status, @Param("category") String category,
+                                @Param("isVip") Boolean isVip,
                                 @Param("keyword") String keyword, Pageable pageable);
     Page<Test> findByStatusAndClassroomIsNullAndIsVipFalse(TestStatus status, Pageable pageable);
     Page<Test> findByStatusAndClassroom_IdAndOwnerTeacher_IdAndIsVipFalse(TestStatus status, String classroomId, String teacherId, Pageable pageable);

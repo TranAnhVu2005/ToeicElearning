@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/exam/list",
                                 "/api/exam/*/access",
                                 "/api/exam/*/parts/*",
+                                "/api/exam/*/comments",
                                 "/api/media/local/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exam/*/dictation").authenticated()
                         .requestMatchers(HttpMethod.GET,
@@ -67,7 +68,7 @@ public class SecurityConfig {
                         .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(false))
                         .referrerPolicy(referrer -> referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                        .permissionsPolicy(policy -> policy.policy("camera=(), microphone=(), geolocation=()")))
+                        .permissionsPolicyHeader(policy -> policy.policy("camera=(), microphone=(), geolocation=()")))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)

@@ -15,7 +15,9 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.TestAccessRespons
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.DictationResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.ExamSessionResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.CommentResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateCommentRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.TestMetadataRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.SubmitExamAnswer;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.StartExamSessionRequest;
@@ -31,6 +33,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/exam")
@@ -43,9 +46,10 @@ public class ExamController {
     public ResponseEntity<ApiResponse<PageResponse<Test>>> getFullTest(
             @ModelAttribute PageParams pageParams,
             @RequestParam(defaultValue = "ALL") TestCatalogCategory category,
+            @RequestParam(required = false) Boolean isVip,
             HttpServletRequest httpRequest){
         limit("exam-catalog", httpRequest, null, 120, 0);
-        PageResponse<Test> testLists = examService.getFullTest(pageParams, TestStatus.PUBLISHED, category);
+        PageResponse<Test> testLists = examService.getFullTest(pageParams, TestStatus.PUBLISHED, category, isVip);
         return  ResponseEntity
                 .ok(ApiResponse.success("Lấy danh sách tất cả các test thành công",testLists));
     }
@@ -275,6 +279,51 @@ public class ExamController {
         return ResponseEntity.ok(ApiResponse.success(archived
                 ? "Đề đã có lịch sử và được chuyển về bản nháp để giữ dữ liệu review"
                 : "Xóa đề thi thành công", archived ? "ARCHIVED" : "DELETED"));
+    }
+
+    @GetMapping("/{testID}/comments")
+    public ResponseEntity<ApiResponse<List<CommentResponseDTO>>> getComments(
+            @PathVariable String testID,
+            HttpServletRequest httpRequest) {
+        limit("exam-comments-get", httpRequest, null, 120, 0);
+        List<CommentResponseDTO> comments = examService.getCommentsByTestId(testID);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách bình luận thành công", comments));
+    }
+
+    @PostMapping("/{testID}/comments")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<CommentResponseDTO>> addComment(
+            @PathVariable String testID,
+            @Valid @RequestBody CreateCommentRequest request,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        limit("exam-comment-add", httpRequest, currentUser, 60, 30);
+        CommentResponseDTO created = examService.addComment(testID, request, currentUser);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Gửi bình luận thành công", created));
+    }
+
+    @PutMapping("/comments/{commentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<CommentResponseDTO>> updateComment(
+            @PathVariable String commentId,
+            @Valid @RequestBody CreateCommentRequest request,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        limit("exam-comment-update", httpRequest, currentUser, 60, 30);
+        CommentResponseDTO updated = examService.updateComment(commentId, request, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật bình luận thành công", updated));
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<String>> deleteComment(
+            @PathVariable String commentId,
+            @AuthenticationPrincipal User currentUser,
+            HttpServletRequest httpRequest) {
+        limit("exam-comment-delete", httpRequest, currentUser, 60, 30);
+        examService.deleteComment(commentId, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Xóa bình luận thành công", "DELETED"));
     }
 
     private void limit(String scope, HttpServletRequest request, User user, int ipLimit, int userLimit) {

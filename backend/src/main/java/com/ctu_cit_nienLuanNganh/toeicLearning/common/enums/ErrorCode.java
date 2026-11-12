@@ -46,8 +46,10 @@ public enum ErrorCode {
     TEST_CONTENT_INVALID(3006, "Đề thi chưa đạt yêu cầu nội dung để xuất bản", HttpStatus.BAD_REQUEST),
     TEST_ACCESS_REQUIRED(3007, "Bạn chưa có quyền truy cập đề thi này", HttpStatus.FORBIDDEN),
     TEST_ALREADY_OWNED(3008, "Bạn đã có quyền truy cập đề thi này", HttpStatus.CONFLICT),
-    CLASSROOM_STORAGE_QUOTA_EXCEEDED(3009, "Lớp đã đạt giới hạn dung lượng tài liệu.", HttpStatus.PAYLOAD_TOO_LARGE),
+    CLASSROOM_STORAGE_QUOTA_EXCEEDED(3009, "Lớp đã đạt giới hạn dung lượng tài liệu.", HttpStatus.CONTENT_TOO_LARGE),
     TEST_HAS_HISTORY(3010, "Đề đã có lượt làm, giao dịch hoặc bài tập liên quan; chỉ được sửa tên, ảnh bìa hoặc trạng thái để bảo toàn lịch sử.", HttpStatus.CONFLICT),
+    COMMENT_NOT_FOUND(3015, "Không tìm thấy bình luận yêu cầu", HttpStatus.NOT_FOUND),
+    COMMENT_ACTION_FORBIDDEN(3016, "Bạn không có quyền thao tác trên bình luận này", HttpStatus.FORBIDDEN),
 
 
     // Đặt vào trong enum ErrorCode.java
