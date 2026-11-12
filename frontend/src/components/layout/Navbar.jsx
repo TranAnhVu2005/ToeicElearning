@@ -15,6 +15,7 @@ import {
   X,
   ChevronDown,
   Bell,
+  Clock,
 } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { userService } from '../../services/userService';
@@ -214,13 +215,6 @@ const Navbar = () => {
               Đề thi
             </NavLink>
 
-            <NavLink
-              to="/practice"
-              className={navLinkClass}
-            >
-              Luyện thi
-            </NavLink>
-
             {isAuthenticated && !isAdmin && (
               <NavLink
                 to="/classrooms"
@@ -373,6 +367,16 @@ const Navbar = () => {
                       >
                         <User size={16} />
                         Hồ sơ cá nhân
+                      </Link>
+
+                      <Link
+                        to="/profile?tab=history"
+                        role="menuitem"
+                        className={dropdownItemClass}
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <Clock size={16} />
+                        Lịch sử làm bài
                       </Link>
 
                       <Link
@@ -541,16 +545,7 @@ const Navbar = () => {
                 onClick={closeMobileMenu}
               >
                 <BookOpen size={17} />
-                Khóa học &amp; Đề thi
-              </NavLink>
-
-              <NavLink
-                to="/practice"
-                className={mobileLinkClass}
-                onClick={closeMobileMenu}
-              >
-                <Activity size={17} />
-                Luyện thi
+                Đề thi
               </NavLink>
 
               {isAuthenticated && !isAdmin && (
@@ -685,6 +680,15 @@ const Navbar = () => {
                   >
                     <User size={17} />
                     Hồ sơ cá nhân
+                  </Link>
+
+                  <Link
+                    to="/profile?tab=history"
+                    className="flex min-h-[44px] items-center gap-3 px-2 text-[14px] font-medium text-[#17131F] hover:bg-[#EEE9FF] hover:text-[#4D35C9]"
+                    onClick={closeMobileMenu}
+                  >
+                    <Clock size={17} />
+                    Lịch sử làm bài
                   </Link>
 
                   <button

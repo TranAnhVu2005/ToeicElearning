@@ -79,10 +79,10 @@ const HeroSection = () => {
             một công cụ hỗ trợ học tập linh hoạt, tiện lợi và dễ dàng sử dụng.
           </p>
           <div className="editorial-hero-actions">
-            <Link to={isAuthenticated ? '/practice' : '/register'} className="editorial-button editorial-button-primary">
-              {isAuthenticated ? 'Bắt đầu luyện tập' : 'Tạo tài khoản'} <ArrowRight size={18} />
+            <Link to={isAuthenticated ? '/courses' : '/register'} className="editorial-button editorial-button-primary">
+              {isAuthenticated ? 'Khám phá kho đề thi' : 'Tạo tài khoản ngay'} <ArrowRight size={18} />
             </Link>
-            <Link to="/courses" className="editorial-button editorial-button-secondary">Khám phá đề thi</Link>
+            <Link to="/courses" className="editorial-button editorial-button-secondary">Danh sách đề thi</Link>
           </div>
 
           <div className="home-hero-controls" aria-label="Điều khiển ảnh nền">

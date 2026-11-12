@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
 
@@ -12,7 +12,6 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 const HomePage = lazy(() => import('./pages/HomePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
-const PracticePage = lazy(() => import('./pages/PracticePage'));
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
 const ExamTakePage = lazy(() => import('./pages/ExamTakePage'));
@@ -53,7 +52,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
-              <Route path="/practice" element={<PracticePage />} />
+              <Route path="/practice" element={<Navigate to="/courses" replace />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:testId" element={<CourseDetailRoute />} />
               <Route path="/courses/:testId/take" element={<ProtectedRoute><ExamTakePage /></ProtectedRoute>} />

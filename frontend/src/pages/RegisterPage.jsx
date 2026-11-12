@@ -90,7 +90,7 @@ const RegisterPage = () => {
       const registerPayload = { ...formData };
       delete registerPayload.confirmPassword;
       await register(registerPayload);
-      navigate('/practice');
+      navigate('/courses');
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Đăng ký không thành công. Vui lòng thử lại!';
       setErrorMsg(msg);

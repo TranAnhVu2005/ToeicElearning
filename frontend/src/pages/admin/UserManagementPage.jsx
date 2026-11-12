@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -14,7 +13,6 @@ import {
   RefreshCw,
   Clock,
   ArrowUpDown,
-  BookOpen,
 } from 'lucide-react';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';

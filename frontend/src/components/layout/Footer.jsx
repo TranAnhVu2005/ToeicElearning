@@ -29,8 +29,8 @@ const Footer = () => {
             <h4 className="footer-heading">Liên kết nhanh</h4>
             <ul className="footer-links">
               <li><Link to="/"><ArrowRight size={14} /> Trang chủ</Link></li>
-              <li><Link to="/courses"><ArrowRight size={14} /> Khóa học & Đề thi</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Luyện tập theo Part</Link></li>
+              <li><Link to="/courses"><ArrowRight size={14} /> Kho đề thi TOEIC</Link></li>
+              <li><Link to="/classrooms"><ArrowRight size={14} /> Không gian Lớp học</Link></li>
               <li><Link to="/about"><ArrowRight size={14} /> Giới thiệu dự án</Link></li>
               <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ & Hỗ trợ</Link></li>
               <li><Link to="/login"><ArrowRight size={14} /> Đăng nhập hệ thống</Link></li>
@@ -43,10 +43,9 @@ const Footer = () => {
           <div className="footer-col">
             <h4 className="footer-heading">Bắt đầu học</h4>
             <p className="footer-desc">
-              Chọn một phần để luyện, mở đề đã phát hành hoặc gửi câu hỏi cho nhóm dự án.
+              Chọn đề thi phù hợp để làm full test hoặc luyện tập từng phần theo mục tiêu cá nhân.
             </p>
             <ul className="footer-links">
-              <li><Link to="/practice"><ArrowRight size={14} /> Luyện theo Part</Link></li>
               <li><Link to="/courses"><ArrowRight size={14} /> Khám phá đề thi</Link></li>
               <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ hỗ trợ</Link></li>
             </ul>

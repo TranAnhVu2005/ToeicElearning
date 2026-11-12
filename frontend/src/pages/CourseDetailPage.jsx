@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Clock,
   CheckCircle2,
-  PlayCircle,
   Headphones,
   FileText,
   ArrowLeft,
@@ -19,12 +18,14 @@ import {
   Info,
   Compass,
   LockKeyhole,
+  BookOpen,
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 import { vipPurchaseService } from '../services/vipPurchaseService';
+import oceanBg from '../assets/img/detailtest/ocean.jpg';
 
 // Dữ liệu chủ điểm tham khảo cho 7 Part TOEIC.
 const PART_METADATA = [
@@ -239,8 +240,15 @@ const CourseDetailPage = () => {
   const testHistory = historyState.key === historyRequestKey ? historyState.items : [];
   const historyError = historyState.key === historyRequestKey ? historyState.error : '';
 
-  // Comments stay local to this mounted test detail page.
+  // Test Comments from backend
   const [comments, setComments] = useState([]);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [commentUpdating, setCommentUpdating] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+  const [commentDeleting, setCommentDeleting] = useState(false);
   const [newComment, setNewComment] = useState('');
 
   const testContexts = Array.isArray(test?.contextQuestions) ? test.contextQuestions : [];
@@ -279,8 +287,10 @@ const CourseDetailPage = () => {
         if (cancelled) return;
         if (accessRes.code !== 1000 || !accessRes.data) throw new Error('Không tìm thấy đề thi.');
         if (accessRes.data.vip && !accessRes.data.hasAccess) {
-          setTest({ id: accessRes.data.testId, titleTest: accessRes.data.title,
-            status: accessRes.data.status, isVip: true, vipPriceVnd: accessRes.data.priceVnd });
+          setTest({
+            id: accessRes.data.testId, titleTest: accessRes.data.title,
+            status: accessRes.data.status, isVip: true, vipPriceVnd: accessRes.data.priceVnd
+          });
           setVipLocked(true);
           return;
         }
@@ -348,6 +358,49 @@ const CourseDetailPage = () => {
     return () => { cancelled = true; };
   }, [testId, isAuthenticated, historyRequestKey]);
 
+  // Load persisted comments for this test
+  useEffect(() => {
+    let cancelled = false;
+    const fetchComments = async () => {
+      try {
+        setCommentsLoading(true);
+        const res = await examService.getTestComments(testId);
+        if (!cancelled && res.code === 1000 && Array.isArray(res.data)) {
+          setComments(res.data);
+        }
+      } catch {
+        // Keep empty comments on network error
+      } finally {
+        if (!cancelled) setCommentsLoading(false);
+      }
+    };
+    if (testId) {
+      fetchComments();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [testId]);
+
+  const formatCommentDate = (dateString) => {
+    if (!dateString) return 'Vừa xong';
+    try {
+      const d = new Date(dateString);
+      const now = new Date();
+      const diffMs = now.getTime() - d.getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return 'Vừa xong';
+      if (diffMin < 60) return `${diffMin} phút trước`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return `${diffHour} giờ trước`;
+      const diffDay = Math.floor(diffHour / 24);
+      if (diffDay < 7) return `${diffDay} ngày trước`;
+      return d.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateString;
+    }
+  };
+
   // Toggle Part Selection
   const handleTogglePart = (partNum) => {
     setSelectedParts((prev) => {
@@ -395,20 +448,87 @@ const CourseDetailPage = () => {
     navigate(`/courses/${testId}/take?mode=fulltest&time=120`);
   };
 
-  // Add Comment
-  const handleAddComment = (e) => {
+  // Add Comment (Backend API)
+  const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    const item = {
-      id: 'c_' + Date.now(),
-      author: user?.userName || user?.userEmail || 'Học viên',
-      isOfficial: false,
-      date: 'Vừa xong',
-      content: newComment.trim(),
-      pinned: false,
-    };
-    setComments((current) => [item, ...current]);
-    setNewComment('');
+    const content = newComment.trim();
+    if (!content) return;
+    if (!isAuthenticated) {
+      setToast({ type: 'warning', message: 'Vui lòng đăng nhập để gửi bình luận.' });
+      navigate('/login', { state: { from: { pathname: `/courses/${testId}` } } });
+      return;
+    }
+    try {
+      setCommentSubmitting(true);
+      const res = await examService.createTestComment(testId, content);
+      if (res.code === 1000 && res.data) {
+        setComments((prev) => [res.data, ...prev]);
+        setNewComment('');
+        setToast({ type: 'success', message: 'Bình luận của bạn đã được đăng thành công.' });
+      } else {
+        setToast({ type: 'error', message: res.message || 'Không thể đăng bình luận.' });
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.response?.data?.message || 'Lỗi kết nối máy chủ khi gửi bình luận.' });
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  // Edit Comment Handlers
+  const handleStartEdit = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingContent('');
+  };
+
+  const handleUpdateComment = async (commentId) => {
+    const content = editingContent.trim();
+    if (!content) return;
+    try {
+      setCommentUpdating(true);
+      const res = await examService.updateTestComment(commentId, content);
+      if (res.code === 1000 && res.data) {
+        setComments((prev) => prev.map((c) => (c.id === commentId ? res.data : c)));
+        setEditingCommentId(null);
+        setEditingContent('');
+        setToast({ type: 'success', message: 'Cập nhật bình luận thành công.' });
+      } else {
+        setToast({ type: 'error', message: res.message || 'Không thể cập nhật bình luận.' });
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.response?.data?.message || 'Lỗi khi cập nhật bình luận.' });
+    } finally {
+      setCommentUpdating(false);
+    }
+  };
+
+  // Delete Comment Handlers (with Modal Confirmation)
+  const handleOpenDeleteComment = (comment) => {
+    setCommentToDelete(comment);
+  };
+
+  const handleConfirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    try {
+      setCommentDeleting(true);
+      const res = await examService.deleteTestComment(commentToDelete.id);
+      if (res.code === 1000) {
+        setComments((prev) => prev.filter((c) => c.id !== commentToDelete.id));
+        setCommentToDelete(null);
+        setToast({ type: 'success', message: 'Đã xóa bình luận thành công.' });
+      } else {
+        setToast({ type: 'error', message: res.message || 'Không thể xóa bình luận.' });
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.response?.data?.message || 'Lỗi khi xóa bình luận.' });
+    } finally {
+      setCommentDeleting(false);
+    }
   };
 
   const handleDeleteTest = async () => {
@@ -482,7 +602,7 @@ const CourseDetailPage = () => {
     return (
       <main className="course-detail-page min-h-[75vh] bg-white px-4 py-14 text-slate-900 sm:px-6">
         <section className="mx-auto max-w-3xl border border-slate-200 bg-white p-7 sm:p-10">
-          <span className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-bold uppercase text-[#1D4ED8]">
+          <span className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-1 text-xs font-bold uppercase text-[#1D4ED8]">
             <LockKeyhole size={14} /> Đề VIP
           </span>
           <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{test.titleTest}</h1>
@@ -519,106 +639,133 @@ const CourseDetailPage = () => {
     <div className="course-detail-page min-h-[100dvh] pb-20 text-slate-800">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      {/* TOP HEADER SECTION */}
-      <div className="course-detail-header pt-7 pb-6 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* TOP HEADER SECTION WITH OCEAN BACKGROUND */}
+      <div
+        className="course-detail-header relative pt-8 pb-7 border-b border-slate-200/90 overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0.58) 45%, rgba(248, 250, 252, 0.94) 100%), url("${oceanBg}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 45%',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Breadcrumbs */}
-          <div className="course-detail-breadcrumbs flex items-center gap-2 text-xs font-semibold mb-3.5">
-            <Link to="/">
+          <div className="course-detail-breadcrumbs flex items-center gap-2 text-xs font-semibold mb-4">
+            <Link to="/" className="text-slate-600 hover:text-[#1D4ED8] transition-colors">
               Trang chủ
             </Link>
-            <span aria-hidden="true">/</span>
-            <Link to="/courses">
-              Đề thi online
+            <span aria-hidden="true" className="text-slate-400">/</span>
+            <Link to="/courses" className="text-slate-600 hover:text-[#1D4ED8] transition-colors">
+              Đề thi
             </Link>
-            <span aria-hidden="true">/</span>
-            <span className="course-detail-current truncate max-w-xs" aria-current="page">{test.titleTest}</span>
+            <span aria-hidden="true" className="text-slate-400">/</span>
+            <span className="course-detail-current truncate max-w-xs text-slate-900 font-bold" aria-current="page">{test.titleTest}</span>
           </div>
 
-          {/* Tag, Title, Verified Check */}
-          <div className="flex items-center gap-2 mb-2.5">
-            <span className="course-detail-label">
-              BỘ ĐỀ TOEIC
-            </span>
-            {test.status === 'DRAFT' && (
-              <span className="course-detail-draft inline-flex items-center gap-1">
-                <Clock size={11} strokeWidth={1.5} /> DRAFT
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="course-detail-title text-2xl sm:text-3xl" style={{ textWrap: 'balance' }}>
-                {test.titleTest}
-              </h1>
-            </div>
-
-            {/* Quick Admin / Teacher Actions */}
-            <div className="flex items-center gap-2">
-              {test.status === 'DRAFT' && isAdmin && (
-                <button
-                  type="button"
-                  onClick={handlePublishTestNow}
-                  disabled={actionLoading}
-                  className="course-detail-action course-detail-publish px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <CheckCircle2 size={14} /> Xuất bản ngay
-                </button>
-              )}
-              {isAdmin && (
-                <Link
-                  to={`/admin/tests?editId=${test.id}`}
-                  className="course-detail-action course-detail-edit px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5"
-                >
-                  <Edit2 size={13} strokeWidth={1.5} /> Chỉnh sửa đề thi
-                </Link>
-              )}
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => setDeleteModalOpen(true)}
-                  className="course-detail-action course-detail-delete px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 size={13} strokeWidth={1.5} /> Xóa đề
-                </button>
+          <div className="flex flex-col sm:flex-row items-start gap-6">
+            {/* Test Cover Thumbnail */}
+            <div className="course-detail-cover relative w-[124px] h-[165px] sm:w-[136px] sm:h-[182px] shrink-0 border border-slate-200/90 bg-white/95 p-1.5 shadow-md rounded-sm flex items-center justify-center overflow-hidden backdrop-blur-xs">
+              {test.coverImageUrl ? (
+                <img
+                  src={test.coverImageUrl}
+                  alt={test.titleTest}
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center p-3 text-slate-400 w-full h-full bg-slate-50/80 border border-dashed border-slate-200">
+                  <BookOpen size={32} strokeWidth={1.5} className="text-slate-400 mb-1.5" />
+                  <span className="text-[11px] font-bold text-slate-600">TOEIC TEST</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">Chưa có ảnh bìa</span>
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Sub-buttons: Thông tin đề thi | Đáp án/transcript */}
-          <div className="course-detail-subnav flex items-center gap-2.5 mb-4">
-            <button
-              type="button"
-              onClick={() => setSubView('info')}
-              className={`course-detail-subtab px-4 py-1.5 text-xs font-bold cursor-pointer ${subView === 'info' ? 'is-selected' : ''}`}
-            >
-              Thông tin đề thi
-            </button>
-            <button
-              type="button"
-              onClick={() => setTranscriptModalOpen(true)}
-              className="course-detail-subtab inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <FileText size={13} strokeWidth={1.5} /> Đáp án/transcript
-            </button>
-          </div>
+            {/* Main Header Info */}
+            <div className="flex-1 min-w-0 space-y-3.5">
+              {/* Badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="course-detail-label shadow-2xs">
+                  BỘ ĐỀ TOEIC
+                </span>
+                {test.status === 'DRAFT' && (
+                  <span className="course-detail-draft inline-flex items-center gap-1 shadow-2xs">
+                    <Clock size={11} strokeWidth={1.5} /> DRAFT
+                  </span>
+                )}
+                <span
+                  className={`border px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-[2px] shadow-2xs backdrop-blur-xs ${test.isVip
+                    ? 'border-blue-300 bg-blue-50/90 text-[#1D4ED8]'
+                    : 'border-slate-300/90 bg-white/90 text-slate-700'
+                    }`}
+                >
+                  {test.isVip
+                    ? `VIP · ${new Intl.NumberFormat('vi-VN').format(Number(test.vipPriceVnd || 0))} ₫`
+                    : 'Miễn phí'}
+                </span>
+              </div>
 
-          {/* Meta text line */}
-          <div className="course-detail-metadata text-xs flex items-center gap-4 flex-wrap mb-3 tabular-nums">
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <Clock size={14} strokeWidth={1.5} /> Thời lượng: <strong className="tabular-nums">{isFullLengthTest ? '120 phút · full test' : 'Linh hoạt theo chế độ luyện'}</strong>
-            </span>
-            <span aria-hidden="true">|</span>
-            <span className="tabular-nums">{availableParts.length} phần có câu hỏi</span>
-            <span aria-hidden="true">|</span>
-            <span className="tabular-nums">{testQuestionCount} câu hỏi</span>
-            <span aria-hidden="true">|</span>
-            <span className="tabular-nums">{comments.length} bình luận</span>
+              {/* Title & Admin Actions */}
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <h1 className="course-detail-title text-2xl sm:text-3xl text-slate-900 font-extrabold" style={{ textWrap: 'balance' }}>
+                  {test.titleTest}
+                </h1>
+
+                {/* Quick Admin / Teacher Actions */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {test.status === 'DRAFT' && isAdmin && (
+                    <button
+                      type="button"
+                      onClick={handlePublishTestNow}
+                      disabled={actionLoading}
+                      className="course-detail-action course-detail-publish px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <CheckCircle2 size={14} /> Xuất bản ngay
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <Link
+                      to={`/admin/tests?editId=${test.id}`}
+                      className="course-detail-action course-detail-edit px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 bg-white/95 hover:bg-white border-slate-300 shadow-2xs backdrop-blur-xs"
+                    >
+                      <Edit2 size={13} strokeWidth={1.5} /> Chỉnh sửa đề thi
+                    </Link>
+                  )}
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteModalOpen(true)}
+                      className="course-detail-action course-detail-delete px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-2xs backdrop-blur-xs"
+                    >
+                      <Trash2 size={13} strokeWidth={1.5} /> Xóa đề
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sub-buttons: Thông tin đề thi | Đáp án/transcript */}
+              <div className="course-detail-subnav flex items-center gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setSubView('info')}
+                  className={`course-detail-subtab px-4 py-2 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${subView === 'info' ? 'is-selected shadow-xs' : 'bg-white/90 hover:bg-white backdrop-blur-xs'
+                    }`}
+                >
+                  Thông tin đề thi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTranscriptModalOpen(true)}
+                  className="course-detail-subtab px-4 py-2 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 bg-white/90 hover:bg-white backdrop-blur-xs shadow-2xs"
+                >
+                  <FileText size={13} strokeWidth={1.5} /> Đáp án/transcript
+                </button>
+              </div>
+
+              <p className="course-detail-score-note text-xs font-semibold leading-relaxed">
+                Điểm quy đổi hiển thị hiện là ước tính; kết quả có thể khác bảng scaled score chính thức của từng đề TOEIC.
+              </p>
+            </div>
           </div>
-          <p className="course-detail-score-note pl-3 text-xs font-semibold leading-relaxed">
-            Điểm quy đổi hiển thị hiện là ước tính; kết quả có thể khác bảng scaled score chính thức của từng đề TOEIC.
-          </p>
         </div>
       </div>
 
@@ -635,7 +782,7 @@ const CourseDetailPage = () => {
                 aria-pressed={activeTab === 'practice'}
                 className={`course-detail-tab py-3.5 px-5 text-sm font-bold cursor-pointer whitespace-nowrap ${activeTab === 'practice' ? 'is-active' : ''}`}
               >
-                Luyện tập
+                Luyện tập từng phần
               </button>
               <button
                 type="button"
@@ -714,7 +861,7 @@ const CourseDetailPage = () => {
                               <input id={`practice-part-${pm.partNumber}`} type="checkbox" checked={isChecked} onChange={() => handleTogglePart(pm.partNumber)} className="course-part-checkbox mt-1 w-4 h-4 cursor-pointer" />
                               <label htmlFor={`practice-part-${pm.partNumber}`} className="flex-1 space-y-2 cursor-pointer">
                                 <div className="flex items-center justify-between gap-2">
-                                   <span className="text-sm font-bold text-slate-900 tracking-tight">Part {pm.partNumber} ({partQuestionCounts[pm.partNumber]} câu)</span>
+                                  <span className="text-sm font-bold text-slate-900 tracking-tight">Part {pm.partNumber} ({partQuestionCounts[pm.partNumber]} câu)</span>
                                   <span className="course-detail-skill-tag text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5">{pm.skill}</span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
@@ -738,7 +885,7 @@ const CourseDetailPage = () => {
                   <select
                     value={timeLimit}
                     onChange={(e) => setTimeLimit(e.target.value)}
-                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-sm cursor-pointer tabular-nums"
+                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-sm cursor-pointer"
                   >
                     <option value="">-- Chọn thời gian (Không giới hạn) --</option>
                     <option value="5">5 phút</option>
@@ -747,10 +894,10 @@ const CourseDetailPage = () => {
                     <option value="20">20 phút</option>
                     <option value="30">30 phút</option>
                     <option value="45">45 phút</option>
-                    <option value="60">60 phút (1 tiếng)</option>
+                    <option value="60">60 phút</option>
                     <option value="75">75 phút</option>
                     <option value="90">90 phút</option>
-                    <option value="120">120 phút (Chuẩn 2 tiếng)</option>
+                    <option value="120">120 phút</option>
                   </select>
                 </div>
 
@@ -774,9 +921,7 @@ const CourseDetailPage = () => {
                     className="course-detail-cta group px-7 py-3.5 font-extrabold text-sm tracking-wide inline-flex items-center gap-3 cursor-pointer"
                   >
                     <span>LUYỆN TẬP ({selectedAvailableParts.length} phần đã chọn)</span>
-                    <span className="course-detail-cta-icon">
-                      <PlayCircle size={18} strokeWidth={1.5} />
-                    </span>
+
                   </button>
                 </div>
               </div>
@@ -789,21 +934,11 @@ const CourseDetailPage = () => {
                 <div className="course-detail-tip p-4 flex items-start gap-3">
                   <Info size={20} strokeWidth={1.5} className="shrink-0 mt-0.5" />
                   <p className="text-xs leading-relaxed font-medium">
-                    {isFullLengthTest ? <>Sẵn sàng để bắt đầu full test. Bạn cần dành ra <strong className="tabular-nums">120 phút</strong> cho bài thi 200 câu.</> : <>Đề hiện có {testQuestionCount}/200 câu hoặc số câu chưa liên tục; chỉ bật full test khi đề có đủ 200 câu theo thứ tự.</>}
+                    {isFullLengthTest ? <>Sẵn sàng để bắt đầu full test. Bạn cần dành ra <strong className="font-semibold text-slate-800">120 phút</strong> cho bài thi 200 câu.</> : <>Đề hiện có {testQuestionCount}/200 câu hoặc số câu chưa liên tục; chỉ bật full test khi đề có đủ 200 câu theo thứ tự.</>}
                   </p>
                 </div>
 
-                {/* Giao diện */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700">Giao diện</label>
-                  <select
-                    value={interfaceType}
-                    onChange={(e) => setInterfaceType(e.target.value)}
-                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-sm cursor-pointer"
-                  >
-                    <option value="default">Mặc định</option>
-                  </select>
-                </div>
+
 
                 {/* Action Button: BẮT ĐẦU THI FULL TEST (Button-in-Button Island CTA) */}
                 <div>
@@ -813,10 +948,8 @@ const CourseDetailPage = () => {
                     disabled={!isFullLengthTest}
                     className="course-detail-cta group px-8 py-3.5 font-extrabold text-sm tracking-wide inline-flex items-center gap-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
-                    <span>BẮT ĐẦU THI FULL TEST (120 PHÚT)</span>
-                    <span className="course-detail-cta-icon">
-                      <PlayCircle size={18} strokeWidth={1.5} />
-                    </span>
+                    <span>BẮT ĐẦU THI FULL TEST</span>
+
                   </button>
                 </div>
               </div>
@@ -829,10 +962,10 @@ const CourseDetailPage = () => {
                 <div className="course-detail-tip p-4 flex items-start gap-3.5">
                   <Headphones size={22} strokeWidth={1.5} className="shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h4 className="text-xs font-black text-[#111] uppercase tracking-wide">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
                       Phương pháp nghe chép chính tả (TOEIC Dictation Method)
                     </h4>
-                    <p className="text-xs font-medium text-[#222] leading-relaxed">
+                    <p className="text-xs font-medium text-slate-700 leading-relaxed">
                       Luyện tập nghe từng câu, gõ lại những gì bạn nghe được để rèn luyện khả năng bắt âm, nối âm, từ vựng và cấu trúc ngữ pháp. Hệ thống đối chiếu kết quả từng từ theo thời gian thực (Smart Diff Checker) giúp bạn phát hiện ngay các lỗi sai.
                     </p>
                   </div>
@@ -840,7 +973,7 @@ const CourseDetailPage = () => {
 
                 {/* 4 Listening Parts Selection Grid */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-black text-[#111] tracking-tight uppercase">
+                  <h4 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
                     Chọn phần nghe muốn chép chính tả:
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -879,7 +1012,7 @@ const CourseDetailPage = () => {
                             <span className="text-xs font-bold text-slate-900 tracking-tight">
                               {item.name}
                             </span>
-                            <span className="border border-blue-200 bg-[#EFF6FF] px-2 py-0.5 font-mono text-[10px] font-bold text-[#1D4ED8]">
+                            <span className="border border-blue-200 bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8]">
                               {item.count}
                             </span>
                           </div>
@@ -919,52 +1052,140 @@ const CourseDetailPage = () => {
             {activeTab === 'discussion' && (
               <div className="course-detail-panel p-6 space-y-6">
                 <div className="space-y-4">
-                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                    Thảo luận về đề thi này ({comments.length})
-                  </h3>
-                  <form onSubmit={handleAddComment} className="space-y-3">
-                    <p className="border border-slate-200 bg-[#F8FAFC] p-3 text-xs text-slate-600">
-                      Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.
-                    </p>
-                    <textarea
-                      rows={3}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Chia sẻ cảm nghĩ hoặc câu hỏi của bạn về đề thi..."
-                      className="course-detail-textarea w-full p-3 text-sm"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={!newComment.trim()}
-                        className="course-detail-action course-detail-submit px-5 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                      Thảo luận về đề thi này ({comments.length})
+                    </h3>
+                  </div>
+
+                  {!isAuthenticated ? (
+                    <div className="border border-blue-200 bg-[#EFF6FF] p-4 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
+                      <div className="flex items-center gap-2">
+                        <Info size={16} className="text-[#1D4ED8] shrink-0" />
+                        <span>Đăng nhập để tham gia thảo luận và đặt câu hỏi về đề thi này.</span>
+                      </div>
+                      <Link
+                        to="/login"
+                        state={{ from: { pathname: `/courses/${testId}` } }}
+                        className="editorial-button-primary px-3.5 py-1.5 text-xs font-semibold shrink-0"
                       >
-                        <Send size={13} /> Gửi bình luận
-                      </button>
+                        Đăng nhập
+                      </Link>
                     </div>
-                  </form>
+                  ) : (
+                    <form onSubmit={handleAddComment} className="space-y-3">
+                      <textarea
+                        rows={3}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Chia sẻ cảm nghĩ, câu hỏi hoặc kinh nghiệm giải đề của bạn..."
+                        className="course-detail-textarea w-full p-3 text-sm focus:outline-none"
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="submit"
+                          disabled={!newComment.trim() || commentSubmitting}
+                          className="course-detail-action course-detail-submit px-5 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        >
+                          <Send size={13} strokeWidth={1.5} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
                   {/* List of comments */}
                   <div className="divide-y divide-slate-100 pt-2">
-                    {comments.length === 0 ? (
-                      <p className="py-5 text-center text-sm text-slate-500">Chưa có bình luận trong phiên này.</p>
+                    {commentsLoading ? (
+                      <p className="py-6 text-center text-xs text-slate-500">Đang tải danh sách bình luận...</p>
+                    ) : comments.length === 0 ? (
+                      <p className="py-6 text-center text-xs text-slate-400">
+                        Chưa có bình luận nào cho đề thi này. Hãy là người đầu tiên chia sẻ cảm nghĩ!
+                      </p>
                     ) : (
                       comments.map((c) => (
-                        <div key={c.id} className="py-4 space-y-1.5">
-                          <div className="flex items-center gap-2 text-xs">
-                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">
-                              {c.author.substring(0, 2).toUpperCase()}
+                        <div key={c.id} className="py-4 space-y-1.5 group">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-xs flex-wrap">
+                              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px] overflow-hidden shrink-0 border border-blue-200">
+                                {c.userAvatar ? (
+                                  <img src={c.userAvatar} alt={c.userName} className="w-full h-full object-cover" />
+                                ) : (
+                                  (c.userName || 'U').substring(0, 2).toUpperCase()
+                                )}
+                              </div>
+                              <span className="font-bold text-slate-900">{c.userName}</span>
+                              {c.roleName === 'ADMIN' && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-blue-600 text-white font-bold">
+                                  Admin
+                                </span>
+                              )}
+                              {c.roleName === 'TEACHER' && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-emerald-600 text-white font-bold">
+                                  Giáo viên
+                                </span>
+                              )}
+                              <span className="text-slate-300">•</span>
+                              <span className="text-slate-400 font-medium text-[11px]">{formatCommentDate(c.createdAt)}</span>
+                              {c.updatedAt && c.updatedAt !== c.createdAt && (
+                                <span className="text-slate-400 text-[10px] italic">(đã chỉnh sửa)</span>
+                              )}
                             </div>
-                            <span className="font-bold text-slate-800">{c.author}</span>
-                            {c.isOfficial && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
-                                Admin
-                              </span>
-                            )}
-                            <span className="text-slate-400">•</span>
-                            <span className="text-slate-400">{c.date}</span>
+
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {user && user.id === c.userId && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEdit(c)}
+                                  className="text-slate-400 hover:text-blue-600 p-1 cursor-pointer"
+                                  title="Chỉnh sửa bình luận"
+                                >
+                                  <Edit2 size={13} strokeWidth={1.5} />
+                                </button>
+                              )}
+                              {(isAdmin || (user && user.id === c.userId)) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenDeleteComment(c)}
+                                  className="text-slate-400 hover:text-red-600 p-1 cursor-pointer"
+                                  title="Xóa bình luận"
+                                >
+                                  <Trash2 size={13} strokeWidth={1.5} />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-xs text-slate-700 pl-8 leading-relaxed">{c.content}</p>
+
+                          {editingCommentId === c.id ? (
+                            <div className="pl-8 pt-1 space-y-2">
+                              <textarea
+                                rows={2}
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                className="course-detail-textarea w-full p-2.5 text-xs focus:outline-none"
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCancelEdit}
+                                  disabled={commentUpdating}
+                                  className="editorial-button-secondary px-3 py-1 text-xs font-semibold"
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateComment(c.id)}
+                                  disabled={!editingContent.trim() || commentUpdating}
+                                  className="course-detail-action course-detail-submit px-3.5 py-1 text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                >
+                                  {commentUpdating ? 'Đang lưu…' : 'Lưu thay đổi'}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-700 pl-8 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                          )}
                         </div>
                       ))
                     )}
@@ -1010,11 +1231,11 @@ const CourseDetailPage = () => {
                           <th className="py-3 px-4 text-right">Chi tiết</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 tabular-nums">
+                      <tbody className="divide-y divide-slate-100">
                         {testHistory.map((h, idx) => (
                           <tr key={h.id || idx} className="hover:bg-blue-50/30 transition-colors">
                             <td className="py-3 px-4 font-medium text-slate-700">
-                              <div className="font-semibold tabular-nums text-slate-900">{h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : '—'}</div>
+                              <div className="font-semibold text-slate-900">{h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : '—'}</div>
                               <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
                                   {h.typePractice || 'Luyện tập'}
@@ -1026,11 +1247,11 @@ const CourseDetailPage = () => {
                                 )}
                               </div>
                             </td>
-                            <td className="py-3 px-4 font-extrabold text-slate-900 text-sm tabular-nums">
+                            <td className="py-3 px-4 font-extrabold text-slate-900 text-sm">
                               {h.totalScore} <span className="text-xs font-semibold text-slate-500">{h.scoreType === 'ESTIMATED_SCALED' ? '/ 990 (ước tính)' : `/${h.totalCount} câu`}</span>
                               <div className="text-[11px] font-medium text-slate-500">{h.correctCount}/{h.totalCount} câu đúng</div>
                             </td>
-                            <td className="py-3 px-4 font-mono text-slate-600 tabular-nums">{h.timeSpentFormatted}</td>
+                            <td className="py-3 px-4 font-mono text-slate-600">{h.timeSpentFormatted}</td>
                             <td className="py-3 px-4 text-right">
                               <button type="button" onClick={() => navigate(`/results/${h.id}`)} className="course-detail-history-link inline-flex items-center gap-1 font-bold cursor-pointer group">
                                 <span>Xem chi tiết</span>
@@ -1049,49 +1270,163 @@ const CourseDetailPage = () => {
             {/* BÌNH LUẬN SECTION (Khi ở tab khác vẫn có thể thấy bình luận) */}
             {activeTab !== 'discussion' && (
               <div className="course-detail-panel p-6 space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                  Bình luận
-                </h3>
-                <form onSubmit={handleAddComment} className="space-y-3">
-                  <p className="border border-slate-200 bg-[#F8FAFC] p-3 text-xs text-slate-600">
-                    Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.
-                  </p>
-                  <textarea
-                    rows={2}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Chia sẻ cảm nghĩ hoặc thắc mắc của bạn..."
-                    className="course-detail-textarea w-full p-3 text-sm"
-                  />
-                  <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                    Bình luận ({comments.length})
+                  </h3>
+                  {comments.length > 5 && (
                     <button
-                      type="submit"
-                      disabled={!newComment.trim()}
-                      className="course-detail-action course-detail-submit px-4 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      type="button"
+                      onClick={() => setActiveTab('discussion')}
+                      className="text-xs font-semibold text-[#1D4ED8] hover:underline cursor-pointer"
                     >
-                      <Send size={13} strokeWidth={1.5} /> Gửi bình luận
+                      Xem tất cả ({comments.length})
+                    </button>
+                  )}
+                </div>
+
+                {!isAuthenticated ? (
+                  <div className="border border-blue-200 bg-[#EFF6FF] p-3 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
+                    <div className="flex items-center gap-2">
+                      <Info size={15} className="text-[#1D4ED8] shrink-0" />
+                      <span>Đăng nhập để tham gia thảo luận.</span>
+                    </div>
+                    <Link
+                      to="/login"
+                      state={{ from: { pathname: `/courses/${testId}` } }}
+                      className="editorial-button-primary px-3 py-1 text-xs font-semibold shrink-0"
+                    >
+                      Đăng nhập
+                    </Link>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAddComment} className="space-y-3">
+                    <textarea
+                      rows={2}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Chia sẻ cảm nghĩ hoặc thắc mắc của bạn..."
+                      className="course-detail-textarea w-full p-3 text-sm focus:outline-none"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={!newComment.trim() || commentSubmitting}
+                        className="course-detail-action course-detail-submit px-4 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      >
+                        <Send size={13} strokeWidth={1.5} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* List of latest comments */}
+                <div className="divide-y divide-slate-100 pt-2">
+                  {commentsLoading ? (
+                    <p className="py-4 text-center text-xs text-slate-500">Đang tải bình luận...</p>
+                  ) : comments.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-slate-400">Chưa có bình luận nào cho đề thi này.</p>
+                  ) : (
+                    comments.slice(0, 5).map((c) => (
+                      <div key={c.id} className="py-3 space-y-1 group">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs flex-wrap">
+                            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[9px] overflow-hidden shrink-0 border border-blue-200">
+                              {c.userAvatar ? (
+                                <img src={c.userAvatar} alt={c.userName} className="w-full h-full object-cover" />
+                              ) : (
+                                (c.userName || 'U').substring(0, 2).toUpperCase()
+                              )}
+                            </div>
+                            <span className="font-bold text-slate-800">{c.userName}</span>
+                            {c.roleName === 'ADMIN' && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-blue-600 text-white font-bold">
+                                Admin
+                              </span>
+                            )}
+                            {c.roleName === 'TEACHER' && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-emerald-600 text-white font-bold">
+                                Giáo viên
+                              </span>
+                            )}
+                            <span className="text-slate-300">•</span>
+                            <span className="text-slate-400 text-[11px]">{formatCommentDate(c.createdAt)}</span>
+                            {c.updatedAt && c.updatedAt !== c.createdAt && (
+                              <span className="text-slate-400 text-[10px] italic">(đã chỉnh sửa)</span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {user && user.id === c.userId && (
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(c)}
+                                className="text-slate-400 hover:text-blue-600 p-1 cursor-pointer"
+                                title="Chỉnh sửa bình luận"
+                              >
+                                <Edit2 size={12} strokeWidth={1.5} />
+                              </button>
+                            )}
+                            {(isAdmin || (user && user.id === c.userId)) && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDeleteComment(c)}
+                                className="text-slate-400 hover:text-red-600 p-1 cursor-pointer"
+                                title="Xóa bình luận"
+                              >
+                                <Trash2 size={12} strokeWidth={1.5} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {editingCommentId === c.id ? (
+                          <div className="pl-7 pt-1 space-y-2">
+                            <textarea
+                              rows={2}
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              className="course-detail-textarea w-full p-2.5 text-xs focus:outline-none"
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                disabled={commentUpdating}
+                                className="editorial-button-secondary px-3 py-1 text-xs font-semibold"
+                              >
+                                Hủy
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateComment(c.id)}
+                                disabled={!editingContent.trim() || commentUpdating}
+                                className="course-detail-action course-detail-submit px-3 py-1 text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              >
+                                {commentUpdating ? 'Đang lưu…' : 'Lưu thay đổi'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-600 pl-7 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {comments.length > 5 && (
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('discussion')}
+                      className="editorial-button-secondary inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold"
+                    >
+                      Xem toàn bộ {comments.length} bình luận <ChevronRight size={13} />
                     </button>
                   </div>
-                </form>
-
-                {/* List of comments */}
-                <div className="divide-y divide-slate-100 pt-2">
-                  {comments.length === 0 ? <p className="py-4 text-sm text-slate-600">Chưa có bình luận trong phiên này.</p> : comments.slice(0, 5).map((c) => (
-                    <div key={c.id} className="py-3 space-y-1">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-bold text-slate-800">{c.author}</span>
-                        {c.isOfficial && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
-                            Admin
-                          </span>
-                        )}
-                        <span className="text-slate-400">•</span>
-                        <span className="text-slate-400">{c.date}</span>
-                      </div>
-                      <p className="text-xs text-slate-600 pl-7">{c.content}</p>
-                    </div>
-                  ))}
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -1134,14 +1469,14 @@ const CourseDetailPage = () => {
               onClick={handleStartPractice}
               className="course-detail-goal-cta w-full p-5 text-left"
             >
-              <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#1D4ED8]"><Compass size={17} /> Luyện theo mục tiêu</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]"><Compass size={17} /> Luyện theo mục tiêu</div>
               <h4 className="mt-2 text-lg font-bold text-slate-900">Chọn Part phù hợp</h4>
               <p className="mt-1 text-sm text-slate-600">Bắt đầu với phần bạn muốn cải thiện, rồi xem lại đáp án sau khi hoàn thành.</p>
               <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#1D4ED8]">Chọn Part <ChevronRight size={16} /></span>
             </button>
 
             <section className="space-y-2 border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-slate-500"><Award size={17} className="text-[#1D4ED8]" /> Cách đọc điểm</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><Award size={17} className="text-[#1D4ED8]" /> Cách đọc điểm</div>
               <h4 className="text-lg font-bold text-slate-900">Điểm luyện tập là ước tính</h4>
               <p className="text-sm leading-relaxed text-slate-600">Điểm full test được ước tính từ số câu đúng, không phải điểm TOEIC chính thức. ETS quy đổi điểm theo từng đề thi.</p>
             </section>
@@ -1239,6 +1574,43 @@ const CourseDetailPage = () => {
               disabled={actionLoading}
             >
               {actionLoading ? 'Đang gỡ...' : 'Gỡ đề'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* DELETE COMMENT CONFIRMATION MODAL */}
+      <Modal
+        isOpen={Boolean(commentToDelete)}
+        onClose={() => setCommentToDelete(null)}
+        title="Xóa bình luận"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="font-medium leading-relaxed text-slate-700">
+            Bạn có chắc chắn muốn xóa bình luận này không? Hành động này không thể hoàn tác.
+          </p>
+          {commentToDelete && (
+            <div className="p-3 bg-slate-50 border border-slate-200 text-slate-700 text-xs italic line-clamp-3">
+              "{commentToDelete.content}"
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              className="editorial-button-secondary min-h-9 px-4 py-1.5 font-semibold"
+              onClick={() => setCommentToDelete(null)}
+              disabled={commentDeleting}
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              className="min-h-9 border border-red-600 bg-red-600 px-4 py-1.5 font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+              onClick={handleConfirmDeleteComment}
+              disabled={commentDeleting}
+            >
+              {commentDeleting ? 'Đang xóa...' : 'Xác nhận xóa'}
             </button>
           </div>
         </div>

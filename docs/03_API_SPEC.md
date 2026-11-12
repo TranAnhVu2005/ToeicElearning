@@ -79,6 +79,13 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 - Liệt kê lịch sử user hiện tại; đọc result detail chỉ khi là owner hoặc admin theo policy.
 - Review trả lựa chọn user, đáp án đúng, đúng/sai, explanation và transcript cần thiết.
 
+### Bình luận đề thi (Test Comments)
+
+- `GET /api/exam/{testId}/comments`: Public (hoặc authenticated), trả danh sách bình luận mới nhất của đề thi kèm thông tin người đăng (tên, avatar, vai trò `ADMIN`/`TEACHER`/`USER`, thời điểm tạo và cập nhật).
+- `POST /api/exam/{testId}/comments`: Authenticated, người dùng gửi nội dung thảo luận (1–2000 ký tự), server lưu vào `test_comment` và ghi nhận timestamp. Kiểm tra tài khoản không bị khóa (`USER_ACCOUNT_LOCKED`), áp dụng rate limiting.
+- `PUT /api/exam/comments/{commentId}`: Authenticated, tác giả bình luận (hoặc admin) chỉnh sửa nội dung; cập nhật `content` và `updated_at`.
+- `DELETE /api/exam/comments/{commentId}`: Authenticated, tác giả bình luận hoặc tài khoản `ROLE_ADMIN` có quyền xóa bình luận.
+
 ### Đề VIP (đã nối code; cần kiểm chứng payment provider)
 
 - Admin quản lý giá riêng từng đề VIP, bằng VND; validate số nguyên dương và mức trần cấu hình ở server. Field/entity/form đã có; catalog hiển thị nhãn VIP và giá nhưng chưa có end-to-end/visual QA.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import vocabularyPhoto from '../../assets/img/home-optimized/lambai.jpg';
 
@@ -29,7 +29,7 @@ const HomeLearningSection = () => (
             <li>03 - Improve: Nhìn lại kết quả và tiến bộ</li>
           </ul>
           <div className="home-learning-actions">
-            <Link to="/practice" className="home-learning-primary">Bắt đầu luyện tập <ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link to="/courses" className="home-learning-primary">Bắt đầu làm bài ngay <ArrowRight size={17} aria-hidden="true" /></Link>
             <Link to="/courses" className="home-learning-secondary">Xem danh sách đề thi</Link>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import apiClient from '../api/apiClient';
 
 export const examService = {
-  // GET /api/exam/list?numberPage=1&sizeOfPage=10&keyWord=...&sortBy=createdAt&direction=DESC&status=...
-  getTests: async (numberPage = 1, sizeOfPage = 9, keyWord = '', sortBy = 'createdAt', direction = 'DESC', status = null, category = 'ALL') => {
+  // GET /api/exam/list?numberPage=1&sizeOfPage=10&keyWord=...&sortBy=createdAt&direction=DESC&status=...&isVip=...
+  getTests: async (numberPage = 1, sizeOfPage = 9, keyWord = '', sortBy = 'createdAt', direction = 'DESC', status = null, category = 'ALL', isVip = null) => {
     const params = {
       numberPage,
       sizeOfPage,
@@ -13,6 +13,9 @@ export const examService = {
     };
     if (status) {
       params.status = status;
+    }
+    if (isVip !== null && isVip !== undefined && isVip !== '' && isVip !== 'ALL') {
+      params.isVip = isVip === true || isVip === 'VIP' || isVip === 'true';
     }
     const response = await apiClient.get('/exam/list', { params });
     return response.data; // ApiResponse<PageResponse<Test>>
@@ -128,6 +131,27 @@ export const examService = {
   deleteTest: async (testId) => {
     const response = await apiClient.delete(`/exam/delete/${testId}`);
     return response.data; // ApiResponse<'DELETED' | 'ARCHIVED'>
+  },
+
+  // Test Comments
+  getTestComments: async (testId) => {
+    const response = await apiClient.get(`/exam/${testId}/comments`);
+    return response.data; // ApiResponse<CommentResponseDTO[]>
+  },
+
+  createTestComment: async (testId, content) => {
+    const response = await apiClient.post(`/exam/${testId}/comments`, { content });
+    return response.data; // ApiResponse<CommentResponseDTO>
+  },
+
+  updateTestComment: async (commentId, content) => {
+    const response = await apiClient.put(`/exam/comments/${commentId}`, { content });
+    return response.data; // ApiResponse<CommentResponseDTO>
+  },
+
+  deleteTestComment: async (commentId) => {
+    const response = await apiClient.delete(`/exam/comments/${commentId}`);
+    return response.data; // ApiResponse<String>
   },
 };
 

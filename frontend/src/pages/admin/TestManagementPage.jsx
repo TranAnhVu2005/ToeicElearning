@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   BookOpen,
-  Users,
   Search,
   Plus,
   Edit2,
@@ -46,7 +45,7 @@ import {
 } from '../../constants/etsDirections';
 
 // CẤU TRÚC ĐỀ THI TOEIC LISTENING & READING CHUẨN ETS MỚI NHẤT
-export const ETS_STRUCTURE_SPECS = {
+const ETS_STRUCTURE_SPECS = {
   1: {
     partNumber: 1,
     name: 'Part 1: Mô tả hình ảnh (Photographs)',
@@ -165,7 +164,7 @@ export const ETS_STRUCTURE_SPECS = {
 // - 10 Bài đọc đơn (Single Passages: Câu 147 - 175 = 29 câu)
 // - 2 Bài đọc kép (Double Passages: Câu 176 - 185 = 10 câu)
 // - 3 Bài đọc ba (Triple Passages: Câu 186 - 200 = 15 câu)
-export const ETS_PART7_STRUCTURE = [
+const ETS_PART7_STRUCTURE = [
   // 10 BÀI ĐỌC ĐƠN (SINGLE PASSAGES: 29 CÂU)
   { index: 0, startQ: 147, endQ: 148, qCount: 2, passageCount: 1, label: '147-148', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
   { index: 1, startQ: 149, endQ: 150, qCount: 2, passageCount: 1, label: '149-150', typeName: 'Đoạn đơn (Single)', theme: 'rose' },
@@ -260,7 +259,7 @@ const createFreshContextQuestion = (partNumber = 1) => {
 };
 
 // Khởi tạo Part 1 có sẵn đúng 6 câu trống chuẩn ETS (6 Audio, 6 Ảnh, 4 đáp án cố định A, B, C, D)
-export const createFreshPart1Blank = () => ({
+const createFreshPart1Blank = () => ({
   partNumber: 1,
   contextQuestions: Array.from({ length: 6 }, () => ({
     audioUrl: '',
@@ -283,7 +282,7 @@ export const createFreshPart1Blank = () => ({
 });
 
 // Khởi tạo Part 2 có sẵn đúng 25 câu trống chuẩn ETS (Câu 7 -> 31, mỗi câu 1 Audio lẻ, KHÔNG ẢNH, 3 đáp án cố định A, B, C)
-export const createFreshPart2Blank = () => ({
+const createFreshPart2Blank = () => ({
   partNumber: 2,
   contextQuestions: Array.from({ length: 25 }, () => ({
     audioUrl: '',
@@ -306,7 +305,7 @@ export const createFreshPart2Blank = () => ({
 });
 
 // Khởi tạo Part 3 có sẵn đúng 13 bài nghe (Câu 32 -> 70, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
-export const createFreshPart3Blank = () => ({
+const createFreshPart3Blank = () => ({
   partNumber: 3,
   contextQuestions: Array.from({ length: 13 }, () => ({
     audioUrl: '',
@@ -327,7 +326,7 @@ export const createFreshPart3Blank = () => ({
 });
 
 // Khởi tạo Part 4 có sẵn đúng 10 bài nghe (Câu 71 -> 100, mỗi bài 1 Audio chung + 3 câu hỏi có nội dung A, B, C, D)
-export const createFreshPart4Blank = () => ({
+const createFreshPart4Blank = () => ({
   partNumber: 4,
   contextQuestions: Array.from({ length: 10 }, () => ({
     audioUrl: '',
@@ -348,7 +347,7 @@ export const createFreshPart4Blank = () => ({
 });
 
 // Khởi tạo Part 5 có sẵn đúng 30 câu hỏi độc lập chuẩn ETS (Câu 101 -> 130)
-export const createFreshPart5Blank = () => ({
+const createFreshPart5Blank = () => ({
   partNumber: 5,
   contextQuestions: Array.from({ length: 30 }, () => ({
     audioUrl: '',
@@ -371,7 +370,7 @@ export const createFreshPart5Blank = () => ({
 });
 
 // Khởi tạo Part 6 có sẵn đúng 4 bài đọc điền khuyết chuẩn ETS (Câu 131 -> 146, 4 đoạn x 4 câu)
-export const createFreshPart6Blank = () => ({
+const createFreshPart6Blank = () => ({
   partNumber: 6,
   contextQuestions: Array.from({ length: 4 }, () => ({
     audioUrl: '',
@@ -392,7 +391,7 @@ export const createFreshPart6Blank = () => ({
 });
 
 // Khởi tạo Part 7 có sẵn đúng 15 bài đọc hiểu chuẩn ETS 2026 (Câu 147 -> 200: 10 bài đơn + 2 bài kép + 3 bài ba = 54 câu)
-export const createFreshPart7Blank = () => {
+const createFreshPart7Blank = () => {
   return {
     partNumber: 7,
     contextQuestions: ETS_PART7_STRUCTURE.map((spec) => ({
@@ -415,7 +414,7 @@ export const createFreshPart7Blank = () => {
 };
 
 // Khởi tạo trọn bộ 100 câu Listening (Part 1 -> Part 4) trống chuẩn ETS
-export const createFreshListening100Blank = () => [
+const createFreshListening100Blank = () => [
   createFreshPart1Blank(),
   createFreshPart2Blank(),
   createFreshPart3Blank(),
@@ -423,14 +422,14 @@ export const createFreshListening100Blank = () => [
 ];
 
 // Khởi tạo trọn bộ 100 câu Reading (Part 5 -> Part 7) trống chuẩn ETS (Câu 101 -> 200)
-export const createFreshReading100Blank = () => [
+const createFreshReading100Blank = () => [
   createFreshPart5Blank(),
   createFreshPart6Blank(),
   createFreshPart7Blank(),
 ];
 
 // Khởi tạo trọn bộ Full Test 200 câu (Part 1 -> Part 7) trống chuẩn ETS
-export const createFreshFull200Blank = () => [
+const createFreshFull200Blank = () => [
   createFreshPart1Blank(),
   createFreshPart2Blank(),
   createFreshPart3Blank(),
@@ -455,7 +454,7 @@ const createFreshPart = (partNumber = 1) => {
 };
 
 // Hàm tạo trọn bộ 1 Part theo số lượng câu chuẩn ETS
-export const createFullETSPart = (partNumber = 1) => {
+const createFullETSPart = (partNumber = 1) => {
   if (partNumber === 1) return createFreshPart1Blank();
   if (partNumber === 2) return createFreshPart2Blank();
   if (partNumber === 3) return createFreshPart3Blank();
@@ -467,12 +466,12 @@ export const createFullETSPart = (partNumber = 1) => {
 };
 
 // Hàm khởi tạo toàn bộ Full Test 200 câu chuẩn ETS mới nhất 100%
-export const createFull200QuestionETSTest = () => {
+const createFull200QuestionETSTest = () => {
   return createFreshFull200Blank();
 };
 
 // Hàm khởi tạo Mini Test rút gọn 50 câu theo đúng tỷ lệ chuẩn ETS (hoàn toàn trống sẵn sàng nhập)
-export const createMiniETSTest50Questions = () => {
+const createMiniETSTest50Questions = () => {
   return [
     {
       partNumber: 1,

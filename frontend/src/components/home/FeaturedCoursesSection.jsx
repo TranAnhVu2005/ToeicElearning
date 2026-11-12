@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Clock3, Layers, PlayCircle } from 'lucide-react';
+import { ArrowRight, Clock3, Layers } from 'lucide-react';
 import { examService } from '../../services/examService';
 
 const FeaturedCoursesSection = () => {
@@ -45,22 +45,37 @@ const FeaturedCoursesSection = () => {
               const date = test.createdAt ? new Date(test.createdAt).toLocaleDateString('vi-VN') : null;
               return (
                 <article key={test.id} className="news-test-card">
-                  <div className="news-test-image">
+                  <Link
+                    to={`/courses/${test.id}`}
+                    className="news-test-image"
+                    title={`Xem chi tiết đề: ${test.titleTest}`}
+                    style={{ textDecoration: 'none' }}
+                  >
                     {test.coverImageUrl ? (
                       <img src={test.coverImageUrl} alt={`Ảnh bìa: ${test.titleTest}`} loading="lazy" />
                     ) : (
                       <span>Chưa có ảnh</span>
                     )}
-                  </div>
+                  </Link>
                   <div className="news-test-content">
                     <div className="news-test-meta">
                       <span><Layers size={14} aria-hidden="true" /> Đề TOEIC</span>
                       {date && <span><Clock3 size={14} aria-hidden="true" /> {date}</span>}
                     </div>
-                    <h3>{test.titleTest}</h3>
+                    <h3>
+                      <Link
+                        to={`/courses/${test.id}`}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                        className="hover:text-[#1D4ED8] transition-colors"
+                      >
+                        {test.titleTest}
+                      </Link>
+                    </h3>
                     <div className="news-test-actions">
-                      <Link to={`/courses/${test.id}`} className="news-detail-link">Chi tiết đề</Link>
-                      <Link to={`/courses/${test.id}/take`} className="news-start-link">Làm bài <PlayCircle size={16} aria-hidden="true" /></Link>
+                      <span className="text-xs text-slate-500 font-medium">Luyện Part hoặc Full Test</span>
+                      <Link to={`/courses/${test.id}`} className="news-start-link">
+                        Chi tiết đề <ArrowRight size={15} aria-hidden="true" />
+                      </Link>
                     </div>
                   </div>
                 </article>

@@ -909,12 +909,11 @@ body,
 }
 
 /* Preserve plain, distraction-free study and exam surfaces. */
-.app-shell :where(.neo-brutal-exam, .neo-brutal-dictation, .neo-brutal-result) {
+.app-shell :where(.neo-brutal-dictation, .neo-brutal-result) {
   background: #fff !important;
   color: var(--editorial-text) !important;
 }
 
-.app-shell .neo-brutal-exam>header,
 .app-shell .neo-brutal-dictation>header {
   background: #fff !important;
   color: var(--editorial-text) !important;
@@ -2479,4 +2478,132 @@ body,
 @media (max-width: 560px) {
   .app-shell .home-page .news-header { gap: 14px 18px; margin-bottom: 20px; }
   .app-shell .home-page .news-title { font-size: 52px !important; }
+}
+
+
+
+/* Seamless dual-background blending for CoursesPage */
+.app-shell .courses-page {
+  background-color: #f8fafc !important;
+}
+
+.app-shell .courses-page .neo-courses-hero {
+  background-color: #f8fafc !important;
+  background-image: var(--courses-hero-bg) !important;
+  background-size: cover !important;
+  background-position: center 42% !important;
+  background-repeat: no-repeat !important;
+  border-bottom: none !important;
+}
+
+.app-shell .courses-page .neo-courses-title {
+  font-family: var(--editorial-font) !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: 0 2px 12px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(255, 255, 255, 0.9) !important;
+}
+
+.app-shell .courses-page .neo-courses-title span {
+  color: #1d4ed8 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 6px !important;
+  text-decoration-thickness: 2px !important;
+}
+
+.app-shell .courses-page .courses-middle-content {
+  background-color: #f8fafc !important;
+  background-image: var(--courses-catalog-bg) !important;
+  background-size: cover !important;
+  background-position: top center !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Animated Botanical Garland Divider for CoursesPage */
+.floral-garland-wrapper {
+  margin: -10px 0 10px 0;
+  transition: opacity 0.3s ease;
+}
+
+@keyframes flowerSpringBloom {
+  0% {
+    transform: scale(0) rotate(-25deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18) rotate(6deg);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes gentleFloralBreeze {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-1px);
+  }
+}
+
+@keyframes butterflyFlutter {
+  0%, 100% {
+    transform: scaleX(1) translateY(0);
+  }
+  15% {
+    transform: scaleX(0.2) translateY(-2px);
+  }
+  30% {
+    transform: scaleX(1) translateY(0);
+  }
+  45% {
+    transform: scaleX(0.25) translateY(-3px);
+  }
+  60% {
+    transform: scaleX(0.9) translateY(-1px);
+  }
+}
+
+.floral-bloom {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flowerSpringBloom 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.floral-bloom-1 { animation-delay: 0.12s; }
+.floral-bloom-2 { animation-delay: 0.25s; }
+.floral-bloom-3 { animation-delay: 0.38s; }
+.floral-bloom-4 { animation-delay: 0.52s; }
+.floral-bloom-center { animation-delay: 0.68s; }
+.floral-bloom-5 { animation-delay: 0.82s; }
+.floral-bloom-6 { animation-delay: 0.96s; }
+.floral-bloom-7 { animation-delay: 1.1s; }
+.floral-bloom-8 { animation-delay: 1.25s; }
+
+.floral-leaves-group {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: gentleFloralBreeze 6s ease-in-out infinite;
+}
+
+.floral-butterfly {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: butterflyFlutter 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floral-bloom,
+  .floral-leaves-group,
+  .floral-butterfly {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

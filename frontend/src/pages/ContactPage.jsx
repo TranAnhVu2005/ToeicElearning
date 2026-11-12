@@ -124,10 +124,10 @@ const ContactPage = () => {
                 Khám phá đề thi <ArrowRight size={15} />
               </Link>
               <Link
-                to="/practice"
+                to="/classrooms"
                 className="inline-flex min-h-[42px] items-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
               >
-                Luyện theo Part
+                Không gian lớp học
               </Link>
             </div>
           </aside>

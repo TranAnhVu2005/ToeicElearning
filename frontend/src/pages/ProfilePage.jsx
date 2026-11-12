@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { userService } from '../services/userService';
+import { examService } from '../services/examService';
 import UserAvatar from '../components/common/UserAvatar';
-import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Receipt, LoaderCircle, RefreshCw } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Save,
+  Shield,
+  Upload,
+  Camera,
+  Check,
+  Receipt,
+  LoaderCircle,
+  RefreshCw,
+  Clock,
+  ExternalLink,
+} from 'lucide-react';
 import Toast from '../components/common/Toast';
 import { teacherApplicationService } from '../services/teacherApplicationService';
 import { GoogleLogin } from '@react-oauth/google';
@@ -11,7 +27,10 @@ import { GoogleLogin } from '@react-oauth/google';
 const ProfilePage = () => {
   const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'payments' ? 'payments' : 'profile');
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    return tab === 'payments' || tab === 'history' || tab === 'password' ? tab : 'profile';
+  });
   const [paymentRows, setPaymentRows] = useState([]);
   const [paymentPage, setPaymentPage] = useState(1);
   const [paymentPages, setPaymentPages] = useState(0);
@@ -20,6 +39,13 @@ const ProfilePage = () => {
   const [paymentError, setPaymentError] = useState('');
   const [paymentRefresh, setPaymentRefresh] = useState(0);
   const fileInputRef = useRef(null);
+
+  // Test History State
+  const [testHistory, setTestHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState('');
+  const [historyRefresh, setHistoryRefresh] = useState(0);
+  const [historyFilter, setHistoryFilter] = useState('ALL'); // ALL | FULL | PART
 
   // Profile Edit State
   const [profileData, setProfileData] = useState({
@@ -63,6 +89,29 @@ const ProfilePage = () => {
       .finally(() => { if (active) setPaymentLoading(false); });
     return () => { active = false; };
   }, [activeTab, paymentPage, paymentRefresh]);
+
+  useEffect(() => {
+    if (activeTab !== 'history') return undefined;
+    let active = true;
+    setHistoryLoading(true);
+    setHistoryError('');
+    examService.getTestHistory()
+      .then((response) => {
+        if (!active) return;
+        if (response.code === 1000 && Array.isArray(response.data)) {
+          setTestHistory(response.data);
+        } else {
+          setTestHistory([]);
+        }
+      })
+      .catch((error) => {
+        if (active) setHistoryError(error.response?.data?.message || error.message || 'Không tải được lịch sử làm bài.');
+      })
+      .finally(() => {
+        if (active) setHistoryLoading(false);
+      });
+    return () => { active = false; };
+  }, [activeTab, historyRefresh]);
 
 
   // Fetch fresh profile on mount
@@ -348,19 +397,38 @@ const ProfilePage = () => {
             <div className="profile-nav-tabs">
               <button
                 className={`profile-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                onClick={() => setActiveTab('profile')}
+                onClick={() => {
+                  window.history.replaceState(null, '', '?tab=profile');
+                  setActiveTab('profile');
+                }}
               >
                 <User size={18} /> Thông tin cá nhân
               </button>
               <button
+                className={`profile-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => {
+                  window.history.replaceState(null, '', '?tab=history');
+                  setActiveTab('history');
+                }}
+              >
+                <Clock size={18} /> Lịch sử làm bài
+              </button>
+              <button
                 className={`profile-tab-btn ${activeTab === 'password' ? 'active' : ''}`}
-                onClick={() => setActiveTab('password')}
+                onClick={() => {
+                  window.history.replaceState(null, '', '?tab=password');
+                  setActiveTab('password');
+                }}
               >
                 <Lock size={18} /> Đổi mật khẩu
               </button>
               <button
                 className={`profile-tab-btn ${activeTab === 'payments' ? 'active' : ''}`}
-                onClick={() => { setPaymentPage(1); setActiveTab('payments'); }}
+                onClick={() => {
+                  window.history.replaceState(null, '', '?tab=payments');
+                  setPaymentPage(1);
+                  setActiveTab('payments');
+                }}
               >
                 <Receipt size={18} /> Thanh toán
               </button>
@@ -664,6 +732,186 @@ const ProfilePage = () => {
                 </form>
                 )}
               </div>
+            )}
+
+            {activeTab === 'history' && (
+              <section className="text-slate-900">
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-slate-900">Lịch sử làm bài thi</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Toàn bộ kết quả bài thi thử TOEIC và các lượt luyện tập bạn đã hoàn thành ({testHistory.length} lượt làm bài).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setHistoryRefresh((c) => c + 1)}
+                    disabled={historyLoading}
+                    className="inline-flex items-center gap-2 border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                  >
+                    <RefreshCw size={15} /> Làm mới
+                  </button>
+                </div>
+
+                {/* Filter Chips */}
+                {testHistory.length > 0 && (
+                  <div className="mb-5 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter('ALL')}
+                      className={`border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                        historyFilter === 'ALL'
+                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8]'
+                      }`}
+                    >
+                      Tất cả ({testHistory.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter('FULL')}
+                      className={`border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                        historyFilter === 'FULL'
+                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8]'
+                      }`}
+                    >
+                      Full Test ({testHistory.filter((item) => (item.partName || '').toLowerCase().includes('full')).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryFilter('PART')}
+                      className={`border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                        historyFilter === 'PART'
+                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8]'
+                      }`}
+                    >
+                      Luyện tập Part ({testHistory.filter((item) => !(item.partName || '').toLowerCase().includes('full')).length})
+                    </button>
+                  </div>
+                )}
+
+                {historyError && (
+                  <div role="alert" className="mb-4 border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
+                    {historyError}
+                  </div>
+                )}
+
+                {historyLoading ? (
+                  <div role="status" className="border border-slate-200 bg-slate-50 p-8 text-center text-sm font-medium text-slate-600">
+                    Đang nạp lịch sử làm bài...
+                  </div>
+                ) : testHistory.length === 0 ? (
+                  <div className="border border-slate-200 bg-white p-12 text-center shadow-sm">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center border border-slate-200 bg-slate-50 text-slate-400">
+                      <Clock size={28} />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-slate-900">Chưa có lịch sử làm bài</h3>
+                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+                      Bạn chưa hoàn thành bài thi thử hay bài luyện tập nào. Hãy thử sức ngay với kho đề thi TOEIC chuẩn ETS!
+                    </p>
+                    <div className="mt-6">
+                      <Link
+                        to="/courses"
+                        className="inline-flex items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#173ea8]"
+                      >
+                        Khám phá đề thi ngay
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {testHistory
+                      .filter((item) => {
+                        if (historyFilter === 'FULL') return (item.partName || '').toLowerCase().includes('full');
+                        if (historyFilter === 'PART') return !(item.partName || '').toLowerCase().includes('full');
+                        return true;
+                      })
+                      .map((attempt) => {
+                        const accuracy =
+                          attempt.totalCount > 0
+                            ? Math.round((attempt.correctCount / attempt.totalCount) * 100)
+                            : 0;
+                        const dateFormatted = attempt.createdAt
+                          ? new Date(attempt.createdAt).toLocaleString('vi-VN', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })
+                          : '—';
+
+                        return (
+                          <article
+                            key={attempt.id}
+                            className="flex flex-col justify-between gap-4 border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md sm:flex-row sm:items-center"
+                          >
+                            <div className="space-y-1.5 min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-[#1D4ED8]">
+                                  {attempt.partName || attempt.typePractice || 'Bài thi'}
+                                </span>
+                                {attempt.sourceResultId && (
+                                  <span className="border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-semibold text-purple-700">
+                                    Luyện lại câu sai
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-500">
+                                  {dateFormatted}
+                                </span>
+                              </div>
+
+                              <h3 className="truncate text-base font-semibold text-slate-900">
+                                {attempt.testTitleId || 'Đề thi TOEIC'}
+                              </h3>
+
+                              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+                                <span>
+                                  Thời gian:{' '}
+                                  <strong className="font-mono text-slate-900">
+                                    {attempt.timeSpentFormatted || `${Math.floor((attempt.totalTime || 0) / 60)} phút`}
+                                  </strong>
+                                </span>
+                                <span>
+                                  Đúng:{' '}
+                                  <strong className="font-mono text-slate-900">
+                                    {attempt.correctCount} / {attempt.totalCount}
+                                  </strong>{' '}
+                                  ({accuracy}%)
+                                </span>
+                                {attempt.scoreType === 'ESTIMATED_SCALED' && (
+                                  <span>
+                                    LC: <strong className="font-mono">{attempt.listeningScore}</strong> · RC:{' '}
+                                    <strong className="font-mono">{attempt.readingScore}</strong>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-4 border-t border-slate-100 pt-3 sm:border-t-0 sm:pt-0">
+                              <div className="text-right">
+                                <span className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                                  {attempt.scoreType === 'ESTIMATED_SCALED' ? 'Điểm ước tính' : 'Kết quả'}
+                                </span>
+                                <span className="font-mono text-xl font-bold text-[#1D4ED8]">
+                                  {attempt.scoreType === 'ESTIMATED_SCALED'
+                                    ? `${attempt.totalScore} / 990`
+                                    : `${attempt.correctCount} câu`}
+                                </span>
+                              </div>
+
+                              <Link
+                                to={`/results/${attempt.id}`}
+                                className="inline-flex min-h-[38px] items-center gap-1.5 border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                              >
+                                Xem lại bài <ExternalLink size={13} />
+                              </Link>
+                            </div>
+                          </article>
+                        );
+                      })}
+                  </div>
+                )}
+              </section>
             )}
 
             {activeTab === 'payments' && (

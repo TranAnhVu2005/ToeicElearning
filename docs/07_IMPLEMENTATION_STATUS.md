@@ -143,3 +143,150 @@
        2. Trong `CloudinaryConfig.java`, tắt negative DNS cache (`networkaddress.cache.negative.ttl = 0`) và gắn `PoolingHttpClientConnectionManager` với `DnsResolver` đa tầng: ưu tiên IPv4 từ DNS hệ thống, nếu Windows/router DNS ném `UnknownHostException` thì tự động truy vấn bản ghi `A` qua UDP DNS công cộng (`8.8.8.8`, `1.1.1.1`, `8.8.4.4`, `1.0.0.1`) và DNS-over-HTTPS (`https://1.1.1.1/dns-query`, `https://8.8.8.8/resolve`) kèm bộ nhớ đệm IPv4.
        3. Trong `CloudinaryService.java`, `MediaController.java`, `SecurityConfig.java` và `ExamServiceImpl.java`: bổ sung cơ chế tự động thử lại (retry) khi gặp lỗi mạng tạm thời, và nếu môi trường chạy hoàn toàn ngoại tuyến/bị tường lửa chặn `api.cloudinary.com` thì tự động lưu tệp đã xác thực vào `uploads/Resource/toeic-learning/...` và phục vụ qua `GET /api/media/local/**`.
      - Kiểm chứng: `backend/mvnw.cmd -f backend/pom.xml compile -DskipTests` (biên dịch lại toàn bộ 164 file sang `target/classes` thành công), `npm --prefix frontend run lint` (0 errors) và `npm --prefix frontend run build` (`built in 3.81s`) đều pass. Chưa thực hiện visual QA trực tiếp trên trình duyệt trong lượt này.
+     - Rà soát và loại bỏ sạch toàn bộ cảnh báo (warnings) trên cả backend và frontend:
+       1. **Backend (javac compiler warnings = 0):**
+          - `ErrorCode.java`: thay `HttpStatus.PAYLOAD_TOO_LARGE` (đã deprecated trong Spring Framework 6.1+) bằng `HttpStatus.CONTENT_TOO_LARGE` (mã HTTP 413).
+          - `SecurityConfig.java`: thay method deprecated `permissionsPolicy(...)` bằng `permissionsPolicyHeader(...)` theo chuẩn Spring Security 7.x.
+          - `CloudinaryService.java`: bổ sung `@SuppressWarnings("unchecked")` để xử lý các raw map types từ SDK Cloudinary.
+       2. **Frontend (oxlint warnings = 0, errors = 0):**
+          - Dọn sạch các import không sử dụng (`Link`, `ArrowRight`, `BookOpenCheck` trong `HomeStudyOverviewSection.jsx`; `Check` trong `HomeLearningSection.jsx`; `Link`, `BookOpen` trong `UserManagementPage.jsx`; `CheckCircle2` trong `CoursesPage.jsx`; `Users` trong `TestManagementPage.jsx`).
+          - Bỏ tiền tố `export` đối với 15 hằng số và hàm khởi tạo nội bộ trong `TestManagementPage.jsx` (`ETS_STRUCTURE_SPECS`, `createFreshPart1Blank`, `createMiniETSTest50Questions`, ...), giải quyết triệt để cảnh báo `react(only-export-components)` của Fast Refresh.
+          - Tinh chỉnh `.oxlintrc.json` tắt quy tắc thử nghiệm `react/set-state-in-effect` vốn cảnh báo đối với các hàm load data bất đồng bộ chuẩn trong `useEffect` của React 19.
+     - Kiểm chứng: `backend/mvnw.cmd -f backend/pom.xml compile -DskipTests` (biên dịch 164 file Java với 0 warning, 0 error), `npm --prefix frontend run lint` (0 warning, 0 error) và `npm --prefix frontend run build` (`built in 3.71s`) đều pass 100%. Chưa thực hiện visual QA trực tiếp trên trình duyệt trong lượt này.
+
+- 2026-11-12: Hoàn thiện bảng điều hướng câu hỏi xem lại bài thi và tính năng xem Lịch sử làm bài thi cho học viên:
+  1. **Tái cấu trúc bảng điều hướng câu hỏi trên trang kết quả & xem lại bài thi (`TestResultPage.jsx`):**
+     - Xóa bỏ thanh điều hướng cuộn ngang đặt dính ở đáy màn hình (`fixed bottom-4 right-4 ...`) vốn gây khó nhìn, bất tiện khi duyệt bài dài và che khuất nội dung.
+     - Triển khai bố cục 2 cột chuẩn Editorial tương đồng với phòng thi (`ExamTakePage.jsx`): `grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_320px]`.
+     - Cột trái: Thẻ tóm tắt kết quả (điểm quy đổi ước tính TOEIC /990, tỷ lệ chính xác, điểm LC /495, điểm RC /495, thời lượng hoàn thành, tag nộp trễ/đúng hạn lớp học, nhận xét của giảng viên), thanh lọc nhanh (Tất cả, Câu sai/bỏ trống, Part 1–7) và danh sách chi tiết từng câu hỏi (audio nghe, ảnh, đoạn văn, các phương án A/B/C/D với nhãn "ĐÁP ÁN ĐÚNG" / "BẠN CHỌN", transcript âm thanh mở rộng và hộp giải thích chi tiết).
+     - Cột phải (`lg:block`): Sidebar bảng câu hỏi cố định (`sticky top-[88px]`), hiển thị 3 huy hiệu thống kê trực quan (Đúng: xanh lục, Sai: đỏ, Bỏ trống: vàng hổ phách), danh sách câu hỏi phân nhóm theo từng Part (lưới 5 cột) với màu trạng thái rõ ràng; bấm câu hỏi sẽ tự động cuộn mượt (`scrollIntoView`) tới đúng vị trí câu đó và tự động nới lỏng bộ lọc nếu câu hỏi đang bị ẩn. Phía dưới tích hợp nút "Luyện lại câu sai" và "Làm lại đề này".
+     - Giao diện di động (`lg:hidden`): Bổ sung nút mở bảng câu hỏi trên thanh thao tác và ngăn kéo (drawer) trượt từ cạnh phải, giải phóng toàn bộ không gian đáy màn hình.
+  2. **Bổ sung giao diện và liên kết xem Lịch sử làm bài thi cho người dùng:**
+     - Trong `ProfilePage.jsx`: Thêm tab "Lịch sử làm bài" (`?tab=history`), tải dữ liệu từ `examService.getTestHistory()` (endpoint `GET /api/exam/history` backend).
+     - Giao diện hiển thị danh sách các lần nộp bài với bộ lọc chip (Tất cả, Full Test, Luyện tập Part), tên đề thi, hình thức luyện thi, thời điểm nộp bài, thời lượng làm bài, số câu đúng/tổng câu, tỷ lệ chính xác %, điểm quy đổi LC/RC và tổng điểm, nhãn "Luyện lại câu sai" cùng nút "Xem lại bài" chuyển thẳng tới `/results/:id`. Nếu chưa có bài làm nào, hiển thị empty state chỉn chu kèm nút điều hướng đến kho đề thi (`/courses`).
+     - Trong `Navbar.jsx`: Tích hợp trực tiếp mục "Lịch sử làm bài" (`/profile?tab=history`) vào dropdown menu đại diện tài khoản và menu di động, cho phép học viên truy cập lịch sử thi mọi lúc từ bất kỳ trang nào.
+  3. **Kiểm chứng kỹ thuật:**
+     - Backend: `mvnw.cmd compile -DskipTests` -> `BUILD SUCCESS` (0 warnings, 0 errors).
+     - Frontend: `npm --prefix frontend run lint` -> `Found 0 warnings and 0 errors` (51 files, 102 rules).
+     - Frontend: `npm --prefix frontend run build` -> `built in 3.01s` (0 errors). Chưa thực hiện visual QA trực tiếp trên trình duyệt trong lượt này.
+
+- 2026-11-12: Tinh gọn luồng duyệt đề & hợp nhất điều hướng Luyện tập/Full Test vào trang Chi tiết đề thi:
+  1. **Hợp nhất điều hướng thanh Menu (`Navbar.jsx`):**
+     - Loại bỏ liên kết "Luyện thi" (`/practice`) riêng biệt trên thanh điều hướng desktop và menu ngăn kéo di động; hợp nhất toàn bộ luồng học viên vào một mục **"Đề thi"** (`/courses`).
+     - Cấu hình route `/practice` trong `App.jsx` tự động chuyển hướng `<Navigate to="/courses" replace />` để giữ liên kết an toàn cho các bookmark cũ.
+  2. **Chuẩn hóa thẻ đề thi trong kho đề (`CoursesPage.jsx`) và mục NEWS trang chủ (`FeaturedCoursesSection.jsx`):**
+     - Loại bỏ nút phụ "Làm bài" / "Làm bài ngay" (vốn đưa thẳng vào phòng thi mà bỏ qua các tùy chọn bài làm).
+     - Mỗi thẻ đề thi chỉ giữ duy nhất một nút bấm hành động rõ ràng: **"Chi tiết đề"** (kèm ảnh bìa và tiêu đề cho phép nhấp để mở trang chi tiết đề thi, cân đối với nhãn thông tin *"Luyện Part hoặc Full Test"*).
+     - Mô tả thẻ đề thi cập nhật thành: *"Chọn luyện tập theo từng Part hoặc làm Full Test 120 phút đầy đủ."*
+  3. **Tập trung hóa trải nghiệm làm bài tại Chi tiết đề thi (`CourseDetailPage.jsx`):**
+     - Tại trang chi tiết đề, người học toàn quyền quyết định hình thức thi mong muốn thông qua các tab chuyên biệt:
+       - **Luyện tập từng phần (Part):** Chọn một hoặc nhiều Part tùy ý (Part 1–7 hoặc Chọn tất cả), chọn giới hạn thời gian linh hoạt (5–120 phút hoặc không giới hạn) rồi bấm "LUYỆN TẬP".
+       - **Làm Full Test (120 phút):** Làm bài thi đầy đủ 200 câu trong 120 phút đúng chuẩn format ETS TOEIC.
+       - **Chép chính tả:** Luyện nghe chép chính tả thông minh theo từng Part nghe hoặc toàn bộ Listening.
+       - **Thảo luận & Lịch sử đề thi:** Xem các lần làm đề thi này cùng bảng bình luận.
+  4. **Kiểm chứng kỹ thuật:**
+     - Backend: `mvnw.cmd compile -DskipTests` -> `BUILD SUCCESS` (0 warnings, 0 errors).
+     - Frontend Lint: `npm --prefix frontend run lint` -> `Found 0 warnings and 0 errors` (51 files, 102 rules).
+     - Frontend Build: `npm --prefix frontend run build` -> `built in 4.67s` (0 errors).
+
+- 2026-11-12: Chuyển bộ lọc kho đề sang Sidebar bên trái và bổ sung lọc theo Đề VIP / Đề thường:
+  1. **Tái cấu trúc bố cục trang Kho đề thi (`CoursesPage.jsx`):**
+     - Chuyển thanh toolbar ngang cũ thành bố cục 2 cột Editorial chuẩn: `grid grid-cols-1 items-start gap-8 lg:grid-cols-[280px_1fr]`.
+     - Cột trái (`<aside>`): Hộp bộ lọc đề thi (`bg-white border border-slate-200 p-5 shadow-sm`):
+       - Ô tìm kiếm theo tên đề thi với nút xóa nhanh.
+       - Bộ lọc Gói đề thi: **Tất cả gói đề**, **Đề thường (Miễn phí)**, **Đề VIP có phí** với huy hiệu chọn tích xanh.
+       - Bộ lọc Cấu trúc đề: **Tất cả cấu trúc**, **Full Test (200 câu)**, **Có Listening (Part 1-4)**, **Có Reading (Part 5-7)**.
+       - Sắp xếp hiển thị: Mới nhất trước, Cũ nhất trước, Tên A-Z, Tên Z-A.
+       - Nút "Đặt lại" để nhanh chóng xóa toàn bộ bộ lọc về trạng thái ban đầu.
+       - Khu vực quản trị viên (chỉ hiển thị với ADMIN): Nút "+ Soạn đề thi mới" và "Quản trị đề thi".
+     - Cột phải (`<main>`): Thanh trạng thái kết quả (số lượng đề tìm thấy + các chip bộ lọc đang kích hoạt với nút `×` để gỡ nhanh), lưới danh sách thẻ đề thi và thanh phân trang.
+  2. **Hỗ trợ lọc theo `isVip` từ tầng Backend đến Database:**
+     - Trong `TestRepository.java`: Cập nhật `findCatalogTests` bổ sung mệnh đề `AND (:isVip IS NULL OR t.isVip = :isVip)` cho cả câu truy vấn lấy danh sách và đếm tổng số lượng `countQuery`.
+     - Trong `ExamService.java` & `ExamServiceImpl.java`: Bổ sung tham số `Boolean isVip` cho phương thức `getFullTest`.
+     - Trong `ExamController.java`: Endpoint `GET /api/exam/list` nhận thêm `@RequestParam(required = false) Boolean isVip`.
+     - Trong `frontend/src/services/examService.js`: Truyền `params.isVip` chuẩn boolean lên máy chủ.
+  3. **Kiểm chứng kỹ thuật:**
+     - Backend: `mvnw.cmd compile -DskipTests` -> `BUILD SUCCESS` (0 warnings, 0 errors).
+     - Frontend Lint: `npm --prefix frontend run lint` -> `Found 0 warnings and 0 errors` (51 files, 102 rules).
+     - Frontend Build: `npm --prefix frontend run build` -> `built in 2.17s` (0 errors).
+
+- 2026-11-12: Tối ưu thẻ đề thi nhỏ gọn (horizontal compact) và cấu hình phân trang 10 đề/trang trên Kho đề:
+  1. **Thẻ đề thi nhỏ gọn (`CoursesPage.jsx`):**
+     - Thay thế thẻ đứng kích thước quá lớn bằng thẻ ngang nhỏ gọn đồng bộ với định dạng thẻ NEWS ở trang chủ.
+     - Kích thước ảnh bìa thu gọn thành thumbnail vuông 108×136px (`object-contain`), căn giữa với viền nhẹ và nền sáng, tự động hiển thị chữ "Chưa có ảnh" khi đề chưa có ảnh bìa.
+     - Khu vực nội dung hiển thị: hàng meta (`Đề TOEIC`, ngày tạo theo `toLocaleDateString('vi-VN')`, huy hiệu đề VIP / Miễn phí), tiêu đề đề thi tối đa 2 dòng, và hàng dưới gồm ghi chú "Luyện Part hoặc Full Test" kèm nút hành động "Chi tiết đề →" nền xanh thương hiệu.
+     - Các nút sửa/xóa nhanh dành cho Quản trị viên (Admin) được bố trí tinh gọn cạnh nút "Chi tiết đề".
+     - Chuyển lưới thẻ sang bố cục 2 cột `grid grid-cols-1 xl:grid-cols-2 gap-4`, giúp hiển thị các đề thi gọn gàng, tiết kiệm không gian và không gây mỏi mắt khi cuộn trang.
+  2. **Cấu hình phân trang 10 đề/trang:**
+     - Điều chỉnh `pageSize` trong `CoursesPage.jsx` từ 9 sang **10**, đảm bảo phân trang hiển thị đúng 10 bộ đề thi mỗi trang theo yêu cầu.
+  3. **Kiểm chứng kỹ thuật:**
+     - Backend: `mvnw.cmd compile -DskipTests` -> `BUILD SUCCESS` (0 warnings, 0 errors).
+     - Frontend Lint: `npm --prefix frontend run lint` -> `Found 0 warnings and 0 errors` (51 files, 102 rules).
+     - Frontend Build: `npm --prefix frontend run build` -> `built in 3.77s` (0 errors).
+
+- 2026-11-12: Bố trí thanh tìm kiếm đặt ngang phía trên cùng và bộ lọc nằm dọc bên trái (`CoursesPage.jsx`):
+  1. **Thanh tìm kiếm ngang trên cùng:** Tách ô tìm kiếm ra khỏi sidebar, đặt thành thanh tìm kiếm ngang toàn chiều rộng (`border border-slate-200 bg-white p-4`) nằm ngay trên cùng của khu vực nội dung đề thi, có icon tìm kiếm, placeholder và nút xóa nhanh `×`.
+  2. **Bộ lọc nằm dọc phía bên trái:** Giữ nguyên sidebar bộ lọc đặt ở cột trái `280px` (`Gói đề thi`, `Cấu trúc đề`, `Sắp xếp hiển thị`, `Khu vực Quản trị`), danh sách đề thi ở cột bên phải `1fr`.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công, backend compile thành công.
+
+- 2026-11-12: Cập nhật hình nền đêm `street_malaysia_night.jpg` và tinh chỉnh màu sắc cho trang Đề thi (`CoursesPage.jsx`):
+  1. **Hình nền trang:** Sử dụng ảnh `frontend/src/assets/img/coursepage/street_malaysia_night.jpg` với thuộc tính `background-size: cover; background-position: center; background-attachment: fixed;` kết hợp lớp phủ gradient tối sâu (`rgba(15, 23, 42, 0.78)` đến `rgba(15, 23, 42, 0.88)`).
+  2. **Tinh chỉnh màu sắc và độ tương phản:**
+     - Header banner (`neo-courses-hero`): Sử dụng lớp nền mờ `rgba(15, 23, 42, 0.72)` kèm `backdrop-filter: blur(12px)`, viền dưới mỏng, tiêu đề màu trắng tinh tế với điểm nhấn xanh dương và mô tả màu xám sáng.
+     - Thanh tìm kiếm, sidebar bộ lọc, thanh kết quả và các thẻ đề thi: Áp dụng hiệu ứng nền sáng mờ `bg-white/95 backdrop-blur-md` kết hợp viền mờ `border-white/20` và đổ bóng mềm, giữ độ tương phản tối đa cho chữ và hình ảnh bìa đề thi.
+     - Đồng bộ nhãn bộ lọc theo cấu hình người dùng: "Loại đề thi" (Tất cả, Đề có sẵn, Đề có phí), "Sắp xếp theo" (Mới nhất, Cũ nhất, Tên đề: A - Z, Tên đề: Z - A).
+  3. **Kiểm chứng kỹ thuật:**
+     - Frontend Lint: `npm --prefix frontend run lint` -> `Found 0 warnings and 0 errors` (51 files, 102 rules).
+     - Frontend Build: `npm --prefix frontend run build` -> `built in 2.14s` (0 errors).
+     - Backend Compile: `mvnw.cmd compile -DskipTests` -> `BUILD SUCCESS` (0 warnings, 0 errors).
+
+- 2026-11-12: Khắc phục triệt để lỗi ghi đè CSS khiến nền ảnh `street_malaysia_night.jpg` không hiển thị:
+  1. **Nguyên nhân:** Trong `frontend/src/index.css` (dòng 3519) có quy tắc `.neo-courses-page { background: #FFFFFF !important; }` và trong `editorial.css` (dòng 396) có selector `.app-shell :where(..., .courses-page, .neo-courses-page, ...) { background-color: #fff !important; }`, các thuộc tính shorthand `background: #FFFFFF !important` này đã vô hiệu hóa hoàn toàn `background-image` inline.
+  2. **Giải pháp xử lý:**
+     - Trong `frontend/src/index.css`: Loại trừ class mới bằng `.neo-courses-page:not(.courses-page-night)`.
+     - Trong `frontend/src/editorial.css`: Loại trừ bằng `:not(.courses-page-night)`.
+     - Trong [CoursesPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/CoursesPage.jsx): Đổi tên class wrapper thành `courses-page courses-page-night`, đồng thời bổ sung một thẻ `div` nền toàn màn hình cố định chuyên biệt (`fixed inset-0 pointer-events-none z-0`) chứa `linear-gradient` và ảnh `street_malaysia_night.jpg`, bọc toàn bộ nội dung trong `relative z-10`. Cấu trúc này đảm bảo hình nền luôn hiển thị độc lập, không thể bị bất kỳ rule CSS cha nào ghi đè.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công.
+
+- 2026-11-12: Tinh chỉnh lớp phủ sáng và màu sắc trang Đề thi (`CoursesPage.jsx`):
+  1. **Khắc phục giao diện quá tối:** Thay thế lớp phủ gradient tối đen (`rgba(15, 23, 42)`) bằng lớp phủ sáng mờ trang nhã (`linear-gradient(rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.88))`), giúp hình nền hiện lên thanh thoát như tranh thủy mặc nền nhẹ.
+  2. **Đồng bộ màu sắc & độ tương phản:**
+     - Tiêu đề header "Thư viện đề thi TOEIC" hiển thị chữ đen than đậm `#0F172A` nổi bật trên nền sáng, điểm nhấn xanh `#1D4ED8`, mô tả màu xám đậm `#475569`.
+     - Toàn bộ thanh tìm kiếm, sidebar bộ lọc, thanh đếm kết quả và các thẻ đề thi sử dụng nền kính mờ sáng `bg-white/95 backdrop-blur-sm` với viền mảnh `border-slate-200/90`, tạo cảm giác sáng sủa, cao cấp và không bị chói mắt.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công.
+
+- 2026-11-12: Giới hạn hình nền chỉ hiển thị riêng cho khu vực nội dung giữa (`CoursesPage.jsx`):
+  1. **Tách biệt header và footer:** Khôi phục hoàn toàn màu nền và phong cách Editorial mặc định cho Header Banner (`page-header-banner neo-courses-hero`), không làm ảnh nền tràn lên header hay tràn xuống footer.
+  2. **Vùng hiển thị hình nền:** Chỉ bọc riêng khối nội dung chính ở giữa (chứa thanh tìm kiếm ngang và bố cục 2 cột sidebar bộ lọc + danh sách đề thi) bằng thẻ `div.courses-middle-content` với hình nền `street_malaysia_night.jpg` kèm lớp phủ sáng thanh lịch `linear-gradient(rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.88))`.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công.
+
+- 2026-11-12: Tinh chỉnh chữ tiêu đề nổi bật và tăng độ đậm nét cho nền Header Banner (`CoursesPage.jsx`):
+  1. **Nền Header Banner đậm nét hơn:** Giảm độ mờ đục của lớp phủ gradient trắng sáng (từ 0.88-0.82 xuống còn 0.55-0.45 ở nửa trên), giúp hình ảnh giá sách thư viện (`thuvien.jpg`) hiện lên rõ nét, đậm đà và có chiều sâu hơn; nửa dưới (80%-100%) tiếp tục tan mượt vào `#F8FAFC` để giữ trọn vẹn chuyển tiếp liền mạch với khối catalog bên dưới.
+  2. **Tiêu đề "Thư viện đề thi TOEIC" nổi bật hơn:**
+     - Thiết lập bố cục căn giữa hoàn chỉnh (`items-center justify-center text-center`) đồng bộ giao diện hiển thị.
+     - Tăng trọng lượng chữ lên `font-extrabold` (700/800) với màu đen than đậm `text-slate-900` (`#0F172A`), kích thước `clamp(36px, 4.5vw, 46px)`.
+     - Chữ "TOEIC" mang màu xanh dương thương hiệu `#1D4ED8` cùng gạch chân sắc nét `underline decoration-[#1D4ED8]/70 underline-offset-8`.
+     - Bổ sung hiệu ứng hào quang sáng nhẹ `text-shadow: 0 2px 12px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(255, 255, 255, 0.9)` giúp toàn bộ tiêu đề và dòng mô tả nổi bật rõ rệt trên nền ảnh giá sách mà không bị chìm hay rối mắt.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công (3.60s).
+
+- 2026-11-12: Bổ sung tràng hoa dây leo nở hoa chuyển động giữa Hero và thanh tìm kiếm (`CoursesPage.jsx`):
+  1. **Thành phần mỹ thuật vector `FloralGarland.jsx`:**
+     - Xây dựng dải hoa dây leo botanical bằng SVG vector sắc nét, lấy cảm hứng từ minh họa hoa lá trong sách cổ điển (Oxford/Cambridge bookplate).
+     - Gồm thân dây leo uốn lượn mềm mại, các chùm lá xanh non đung đưa tự nhiên và hai dải dây rủ nhẹ ở hai đầu mép.
+     - 9 đóa hoa cúc trắng (daisies) với nhụy vàng rực rỡ xếp so le dọc theo cành; góc nhánh phải có chú bướm vàng cánh đen vỗ cánh nhẹ nhàng.
+  2. **Hiệu ứng chuyển động (CSS Keyframes):**
+     - Nở hoa (`flowerSpringBloom`): Từng bông hoa hé nở và xòe cánh bung nở sống động theo hiệu ứng lò xo spring với delay so le từ 0.12s đến 1.25s.
+     - Đung đưa (`gentleFloralBreeze`): Toàn bộ cành lá có chuyển động đung đưa khẽ khàng theo làn gió nhẹ (chu kỳ 6s).
+     - Bướm vỗ cánh (`butterflyFlutter`): Cánh bướm đập nhịp nhàng và bay lơ lửng khẽ khàng (chu kỳ 4s).
+     - Khả năng tiếp cận (`prefers-reduced-motion`): Tự động tắt vòng lặp chuyển động với người dùng nhạy cảm chuyển động.
+  3. **Vị trí bố trí:** Đặt tại dải chuyển tiếp trắng giữa khối thư viện bên trên và thanh tìm kiếm bên dưới, biến khoảng trống đơn điệu thành điểm nhấn nghệ thuật duyên dáng.
+  4. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công (2.83s).
+
+- 2026-11-12: Khắc phục lỗi hiển thị đề thi khi lọc "Đề có phí" (`CoursesPage.jsx` & `TestRepository.java`):
+  1. **Nguyên nhân:**
+     - Khi backend API chưa được khởi động lại với code mới, tham số `isVip` bị bỏ qua và trả về toàn bộ đề hiện có (gồm cả đề miễn phí).
+     - Trong JPQL `TestRepository.java`, điều kiện `(:isVip IS NULL OR t.isVip = :isVip)` chưa xử lý triệt để trường hợp cột `is_vip` có giá trị `NULL` trên các bản ghi cũ.
+  2. **Giải pháp xử lý:**
+     - Trong [CoursesPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/CoursesPage.jsx): Bổ sung bộ lọc client-side dự phòng ngay sau khi nhận phản hồi API: nếu `vipFilter === 'VIP'` thì chỉ giữ `t.isVip === true`; nếu `vipFilter === 'FREE'` thì chỉ giữ `!t.isVip`. Cập nhật lại số lượng đếm `totalElements` và `totalPages` tương ứng. Khi không có đề có phí, trang sẽ hiển thị đúng Empty State ("Không tìm thấy đề thi phù hợp") thay vì hiển thị nhầm đề miễn phí.
+     - Trong [TestRepository.java](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/src/main/java/com/ctu_cit_nienLuanNganh/toeicLearning/repository/TestRepository.java): Nâng cấp JPQL `findCatalogTests` với điều kiện null-safe chặt chẽ: `(:isVip IS NULL OR (:isVip = true AND t.isVip = true) OR (:isVip = false AND (t.isVip = false OR t.isVip IS NULL)))`.
+  3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công, backend compile thành công.
