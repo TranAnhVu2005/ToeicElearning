@@ -1,0 +1,701 @@
+/* Shared application screens. Home and auth keep their approved compositions. */
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) {
+  min-height: 70vh;
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) :where(h1, h2, h3, h4) {
+  color: var(--editorial-primary) !important;
+  font-family: var(--editorial-font) !important;
+  font-weight: 600 !important;
+  letter-spacing: normal !important;
+  text-wrap: balance;
+}
+
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) :where(h1, .page-title, .neo-courses-title, .neo-practice-title) {
+  font-size: clamp(30px, 4vw, 44px) !important;
+  line-height: 1.15 !important;
+}
+
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) :where(p, li) {
+  color: inherit;
+}
+
+/* Shared page introduction and navigation rhythm. */
+.app-shell :where(.page-header-banner, .neo-courses-hero, .editorial-page-header, .user-management-heading, .test-studio-header) {
+  padding: clamp(28px, 5vw, 56px) 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--editorial-line) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-shell :where(.page-header-banner, .neo-courses-hero, .editorial-page-header) .container,
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) > .container {
+  width: min(100% - 40px, 1200px);
+  margin-inline: auto;
+}
+
+.app-shell :where(.page-subtitle, .practice-page-subtitle, .editorial-page-header p) {
+  max-width: 680px;
+  margin-top: 12px;
+  color: var(--editorial-muted) !important;
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 400 !important;
+}
+
+/* Page-specific content width and spacing. */
+.app-shell .courses-page .container,
+.app-shell .practice-page .container,
+.app-shell .profile-page .container,
+.app-shell .user-management-page .container,
+.app-shell .editorial-about .container,
+.app-shell .contact-page .container {
+  max-width: 1200px;
+}
+
+.app-shell :where(.courses-page, .practice-page, .profile-page, .user-management-page) .section-padding {
+  padding-top: clamp(24px, 4vw, 40px) !important;
+  padding-bottom: clamp(32px, 5vw, 56px) !important;
+}
+
+.app-shell :where(.courses-page, .practice-page) :where(.neo-courses-hero, .page-header-banner) .container {
+  display: block !important;
+}
+
+.app-shell :where(.courses-page, .practice-page) :where(.neo-course-card, .practice-card) {
+  overflow: hidden;
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: rgb(255 255 255 / 94%) !important;
+  box-shadow: none !important;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.app-shell :where(.courses-page, .practice-page) :where(.neo-course-card, .practice-card):hover {
+  border-color: #9aa4b2 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.app-shell :where(.courses-page, .practice-page) :where(.neo-course-card h2, .neo-course-card h3, .practice-card h2, .practice-card h3) {
+  color: var(--editorial-primary) !important;
+  font-size: 21px !important;
+  line-height: 1.3 !important;
+}
+
+.app-shell :where(.courses-page, .practice-page) :where(.neo-course-card p, .practice-card p) {
+  color: var(--editorial-muted) !important;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Course detail and result pages: quiet surfaces for long-form review. */
+.app-shell .course-detail-page,
+.app-shell .neo-brutal-result {
+  padding-top: clamp(28px, 5vw, 56px) !important;
+  padding-bottom: clamp(40px, 6vw, 72px) !important;
+  background: #fff !important;
+}
+
+.app-shell .course-detail-page :where(section, .course-detail-card, .course-history-content),
+.app-shell .neo-brutal-result :where(section, article) {
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.app-shell .course-detail-page :where(.course-detail-breadcrumb, nav) {
+  color: var(--editorial-muted) !important;
+}
+
+.app-shell .course-detail-page :where(.course-detail-current, [aria-current="page"]) {
+  color: var(--editorial-accent) !important;
+}
+
+/* Form and account screens outside the approved login/register pair. */
+.app-shell .profile-page :where(.profile-sidebar-card, .profile-content-card, .profile-section, .profile-payment-section) {
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+.app-shell .profile-page :where(input:not([type="file"]):not([type="checkbox"]):not([type="radio"]), select, textarea),
+.app-shell .teacher-application-page :where(input:not([type="file"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell :where(.input-with-icon) {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.app-shell :where(.input-with-icon) > :where(.input-icon) {
+  position: absolute !important;
+  left: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--editorial-muted) !important;
+  pointer-events: none !important;
+}
+
+.app-shell :where(.input-with-icon) > :where(input, .form-control),
+.app-shell .profile-page :where(.input-with-icon) > :where(input, .form-control) {
+  padding-left: 44px !important;
+  padding-right: 14px !important;
+}
+
+.app-shell .profile-page .profile-avatar-large {
+  border: 2px solid var(--editorial-line) !important;
+}
+
+.app-shell .profile-page .profile-avatar-block > div > button {
+  border: 2px solid #fff !important;
+  border-radius: 2px !important;
+  background: var(--editorial-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgb(17 24 39 / 18%) !important;
+}
+
+.app-shell .profile-page .profile-avatar-block > div > button:hover {
+  background: #173ea8 !important;
+}
+
+.app-shell .profile-page .profile-card-header,
+.app-shell .profile-page .profile-nav-tabs {
+  border-color: var(--editorial-line) !important;
+  border-width: 1px !important;
+}
+
+.app-shell .profile-page :where(label, .profile-field-label),
+.app-shell .teacher-application-page label {
+  color: var(--editorial-text) !important;
+  font-size: 14px;
+  font-weight: 600 !important;
+}
+
+/* Classrooms, notifications, teacher/payment flows. */
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .not-found-page, .admin-page, .admin-page-wrapper, .test-management-page) {
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel, [role="tabpanel"]) {
+  border-color: var(--editorial-line) !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel) {
+  background-color: #fff;
+}
+
+.app-shell .classrooms-page > .max-w-6xl > header,
+.app-shell .notifications-page > .max-w-4xl > header,
+.app-shell .contact-page > .max-w-6xl > header,
+.app-shell .teacher-application-page > .max-w-3xl > header {
+  border: 0 !important;
+  border-bottom: 1px solid var(--editorial-line) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-shell .admin-page > .max-w-7xl > :where(.mb-6, header),
+.app-shell .user-management-page :where(.user-management-heading),
+.app-shell .test-management-page .test-studio-header {
+  border: 0 !important;
+  border-bottom: 1px solid var(--editorial-line) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(button:not(.toast-close), a[role="button"], input[type="button"], input[type="submit"]) {
+  min-height: 40px;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(.toolbar-search-input), select, textarea) {
+  min-height: 42px;
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell .toolbar-search-input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 6px 4px !important;
+  min-height: 34px !important;
+}
+
+.app-shell .test-studio-input {
+  padding: 10px 14px 10px 42px !important;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(th, td) {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--editorial-line) !important;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(thead th) {
+  background: #f1f1f1 !important;
+  color: var(--editorial-primary) !important;
+  font-size: 13px;
+  font-weight: 600 !important;
+}
+
+.app-shell :where(.admin-page, .admin-page-wrapper, .test-management-page) :where(.bg-slate-900, .bg-slate-950, .bg-slate-800) {
+  border-color: var(--editorial-line) !important;
+  background: #f7f8fa !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell :where(.admin-page, .admin-page-wrapper, .test-management-page) :where(.text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400) {
+  color: var(--editorial-text) !important;
+}
+
+/* Dedicated practice rooms retain focus, timer, and answer-state clarity. */
+.app-shell .neo-brutal-exam,
+.app-shell .neo-brutal-dictation {
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell .neo-brutal-exam :where(header, nav, aside, section),
+.app-shell .neo-brutal-dictation :where(header, nav, aside, section) {
+  border-color: var(--editorial-line) !important;
+  box-shadow: none !important;
+}
+
+.app-shell .neo-brutal-exam :where(button, [role="button"]),
+.app-shell .neo-brutal-dictation :where(button, [role="button"]) {
+  border-radius: 2px !important;
+  box-shadow: none !important;
+}
+
+.app-shell .neo-brutal-exam :where(audio),
+.app-shell .neo-brutal-dictation :where(audio) {
+  accent-color: var(--editorial-accent);
+}
+
+/* Shared loading, empty, success and error states across all non-auth routes. */
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([role="status"], [role="alert"]):not(.sr-only):not(.toast) {
+  border-radius: 2px;
+}
+
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([role="status"]):not(.toast) {
+  color: var(--editorial-muted);
+}
+
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([role="alert"]):not(.toast) {
+  border-color: #f0b4b4 !important;
+  background: #fff7f7 !important;
+  color: #991b1b !important;
+}
+
+/* Keep business states recognizable after legacy palette normalization. */
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([class~="bg-rose-200"], [class~="bg-rose-100"], [class~="bg-red-50"], [class~="bg-red-100"], [class~="bg-red-200"]) {
+  border-color: #fecaca !important;
+  background: #fff7f7 !important;
+  color: #991b1b !important;
+}
+
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([class~="bg-lime-200"], [class~="bg-green-50"], [class~="bg-green-100"], [class~="bg-green-200"]) {
+  border-color: #bbdec5 !important;
+  background: #f1faf3 !important;
+  color: #166534 !important;
+}
+
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([class~="bg-amber-100"], [class~="bg-amber-200"], [class~="bg-yellow-100"], [class~="bg-yellow-200"]) {
+  border-color: #ead5a1 !important;
+  background: #fffaf0 !important;
+  color: #854d0e !important;
+}
+
+.app-shell :where(.main-content > main:not(.auth-page-wrapper), .main-content > div:not(.home-page)) :where([class~="bg-sky-50"], [class~="bg-sky-100"]) {
+  border-color: #c9dafa !important;
+  background: #eff6ff !important;
+  color: #1e40af !important;
+}
+
+.app-shell .main-content :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--editorial-accent) !important;
+  outline-offset: 3px !important;
+}
+
+.app-shell :where(.pagination) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.app-shell .pagination .page-item {
+  display: inline-flex;
+  min-width: 40px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .pagination .page-item.active,
+.app-shell .pagination .page-item[aria-current="page"] {
+  border-color: var(--editorial-accent) !important;
+  background: var(--editorial-accent) !important;
+  color: #fff !important;
+}
+
+.app-shell .pagination .page-item:disabled {
+  color: var(--editorial-muted) !important;
+  background: #f1f1f1 !important;
+}
+
+.app-shell .modal-backdrop {
+  z-index: 1000;
+  padding: 20px;
+  background: rgb(17 24 39 / 48%) !important;
+  backdrop-filter: blur(2px);
+}
+
+.app-shell .modal-container {
+  width: min(100%, var(--modal-max-width, 720px));
+  border: 1px solid var(--editorial-line) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  box-shadow: 0 18px 50px rgb(17 24 39 / 18%) !important;
+}
+
+.app-shell :where(.modal-header, .modal-footer) {
+  border-color: var(--editorial-line) !important;
+  background: #fff !important;
+}
+
+.app-shell .modal-header {
+  display: flex;
+  min-height: 60px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--editorial-line);
+}
+
+.app-shell .modal-title {
+  margin: 0;
+  font-size: 21px;
+}
+
+.app-shell .modal-body {
+  padding: 20px;
+}
+
+.app-shell .modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--editorial-line);
+}
+
+.app-shell :where(.toast, [role="status"].toast, [role="alert"].toast) {
+  position: fixed !important;
+  top: 88px !important;
+  right: 24px !important;
+  z-index: 2200 !important;
+  width: max-content !important;
+  min-width: min(320px, calc(100vw - 32px)) !important;
+  max-width: min(440px, calc(100vw - 32px)) !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--editorial-line) !important;
+  border-left: 4px solid var(--editorial-accent) !important;
+  border-radius: 2px !important;
+  background: #fff !important;
+  color: var(--editorial-text) !important;
+  box-shadow: 0 10px 28px rgb(17 24 39 / 14%) !important;
+}
+
+.app-shell .toast-icon {
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin-top: 1px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 2px !important;
+  border: 1px solid var(--editorial-line) !important;
+  background: #f8fafc !important;
+  color: var(--editorial-accent) !important;
+}
+
+.app-shell .toast-body {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.app-shell .toast-kicker {
+  display: inline-block !important;
+  font-family: var(--editorial-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--editorial-muted) !important;
+}
+
+.app-shell .toast-message {
+  font-family: var(--editorial-font) !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  line-height: 1.5 !important;
+  color: var(--editorial-text) !important;
+  overflow-wrap: anywhere !important;
+}
+
+.app-shell .toast-close {
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  margin: -2px -4px 0 2px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: 2px !important;
+  color: var(--editorial-muted) !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+.app-shell .toast-close:hover {
+  background: #f1f5f9 !important;
+  border-color: var(--editorial-line) !important;
+  color: var(--editorial-primary) !important;
+}
+
+.app-shell .toast-success { border-left-color: var(--editorial-success) !important; }
+.app-shell .toast-success .toast-icon { border-color: #bbf7d0 !important; background: #f0fdf4 !important; color: var(--editorial-success) !important; }
+.app-shell .toast-success .toast-kicker { color: #15803d !important; }
+
+.app-shell .toast-error { border-left-color: var(--editorial-danger) !important; }
+.app-shell .toast-error .toast-icon { border-color: #fecaca !important; background: #fef2f2 !important; color: var(--editorial-danger) !important; }
+.app-shell .toast-error .toast-kicker { color: #b91c1c !important; }
+
+.app-shell .toast-warning { border-left-color: var(--editorial-warning) !important; }
+.app-shell .toast-warning .toast-icon { border-color: #fde68a !important; background: #fffbeb !important; color: var(--editorial-warning) !important; }
+.app-shell .toast-warning .toast-kicker { color: #b45309 !important; }
+
+.app-shell .toast-info { border-left-color: var(--editorial-accent) !important; }
+.app-shell .toast-info .toast-icon { border-color: #bfdbfe !important; background: #eff6ff !important; color: var(--editorial-accent) !important; }
+.app-shell .toast-info .toast-kicker { color: var(--editorial-accent) !important; }
+
+.app-shell :where(.auth-alert, .profile-content-card) :where(.toast, [role="status"].toast, [role="alert"].toast) {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 640px) {
+  .app-shell :where(.toast, [role="status"].toast, [role="alert"].toast) {
+    top: 78px !important;
+    right: 16px !important;
+    left: 16px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) {
+    min-height: 64vh;
+  }
+
+  .app-shell :where(.page-header-banner, .neo-courses-hero, .editorial-page-header, .user-management-heading, .test-studio-header) {
+    padding: 28px 0 !important;
+  }
+
+  .app-shell :where(.page-header-banner, .neo-courses-hero, .editorial-page-header) .container,
+  .app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) > .container {
+    width: min(100% - 28px, 1200px);
+  }
+
+  .app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(table) {
+    min-width: 640px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .main-content :where(*, *::before, *::after) {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+.app-shell .neo-courses-page .neo-course-art {
+  min-height: 184px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-bottom: 1px solid var(--editorial-line);
+  background: var(--editorial-secondary) !important;
+  color: var(--editorial-muted) !important;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.app-shell .neo-courses-page .neo-course-art.has-cover-image img {
+  width: 100%;
+  height: 100%;
+  min-height: 184px;
+  object-fit: cover;
+}
+
+.app-shell .neo-courses-page .neo-course-art.no-cover-image > span {
+  display: grid;
+  width: 100%;
+  min-height: 184px;
+  place-items: center;
+}
+
+/* Final override for the test builder, which is rendered inside the app shell. */
+.app-shell .test-builder-modal {
+  width: min(1120px, calc(100vw - 32px)) !important;
+  max-width: 1120px !important;
+  max-height: 94dvh !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  box-shadow: 0 18px 60px rgb(17 24 39 / 18%) !important;
+  background: #FFFFFF !important;
+}
+.app-shell .test-builder-modal .modal-header {
+  flex: 0 0 auto;
+  padding: 18px 24px !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  background: #FFFFFF !important;
+  color: #111827 !important;
+}
+.app-shell .test-builder-modal .modal-title {
+  color: #111827 !important;
+  font-family: var(--editorial-font) !important;
+  font-size: clamp(20px, 2.2vw, 27px) !important;
+  font-weight: 600 !important;
+}
+.app-shell .test-builder-modal .modal-body { padding: 0 24px 20px !important; background: #FFFFFF !important; }
+.app-shell .test-builder-modal .modal-footer { border-top: 1px solid #D1D5DB !important; background: #FFFFFF !important; }
+.app-shell .test-builder-modal .test-builder-form { gap: 16px !important; color: #111827 !important; }
+.app-shell .test-builder-modal .test-builder-toolbar {
+  position: sticky;
+  top: 0 !important;
+  z-index: 40;
+  margin: 0 -24px !important;
+  padding: 12px 24px !important;
+  border-top: 0 !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  border-radius: 0 !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 12px rgb(17 24 39 / 5%) !important;
+}
+.app-shell .test-builder-modal .test-cover-preview-img {
+  width: 100% !important;
+  height: 176px !important;
+  max-height: 176px !important;
+  object-fit: contain !important;
+  display: block;
+}
+.app-shell .test-builder-modal .test-builder-basic-info,
+.app-shell .test-builder-modal .test-builder-part-panel {
+  padding: 18px !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+}
+.app-shell .test-builder-modal .test-builder-form [class~="bg-[#fff6b8]"],
+.app-shell .test-builder-modal .test-builder-form [class~="bg-yellow-50"],
+.app-shell .test-builder-modal .test-builder-form [class~="bg-yellow-100"],
+.app-shell .test-builder-modal .test-builder-form [class~="bg-amber-50"] {
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  background: #F9FAFB !important;
+  box-shadow: none !important;
+}
+.app-shell .test-builder-modal .test-builder-form input:not([type="checkbox"]):not([type="radio"]),
+.app-shell .test-builder-modal .test-builder-form select,
+.app-shell .test-builder-modal .test-builder-form textarea {
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  background: #FFFFFF !important;
+  color: #111827 !important;
+}
+.app-shell .test-builder-modal .test-builder-form button:focus-visible,
+.app-shell .test-builder-modal .test-builder-form input:focus-visible,
+.app-shell .test-builder-modal .test-builder-form select:focus-visible,
+.app-shell .test-builder-modal .test-builder-form textarea:focus-visible {
+  outline: 2px solid #1D4ED8 !important;
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  .app-shell .test-builder-modal { width: calc(100vw - 16px) !important; max-height: 96dvh !important; }
+  .app-shell .test-builder-modal .modal-header,
+  .app-shell .test-builder-modal .modal-body { padding: 14px !important; }
+  .app-shell .test-builder-modal .test-builder-toolbar { position: static; }
+  .app-shell .test-builder-modal .test-builder-basic-info,
+  .app-shell .test-builder-modal .test-builder-part-panel { padding: 12px !important; }
+}

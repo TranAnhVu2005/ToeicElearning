@@ -7,6 +7,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TestCatalogCategory;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.TestMetadataRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.SubmitExamResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.TestHistoryResponseDTO;
@@ -39,6 +40,7 @@ public interface ExamService {
     PartForUserResponseDTO getPart(String testId, String partId, User currentUser);
     void createFullTest(User admin, CreateTestRequest request);
     void updateFullTest(User admin, String testID, CreateTestRequest request);
+    void updateFullTestMetadata(User admin, String testID, TestMetadataRequest request);
     void publishTest(User admin, String testID);
     void draftTest(User admin, String testID);
     boolean deleteFullTest(User admin, String testID);

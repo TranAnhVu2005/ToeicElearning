@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useId } from 'react';
 import { X } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', className = '' }) => {
+  const titleId = useId();
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
@@ -26,13 +27,18 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', c
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className={`modal-container ${className}`.trim()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
       >
         <div className="modal-header">
-          <h3 className="modal-title">{title}</h3>
+          <h3 id={titleId} className="modal-title">{title}</h3>
           <button
+            type="button"
             onClick={onClose}
+            aria-label="Đóng hộp thoại"
             style={{
               background: 'none',
               border: 'none',

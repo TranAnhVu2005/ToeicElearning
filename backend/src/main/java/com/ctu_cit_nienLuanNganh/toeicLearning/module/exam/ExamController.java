@@ -16,6 +16,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.DictationResponse
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.ExamSessionResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.CreateTestRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.TestMetadataRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.SubmitExamAnswer;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.StartExamSessionRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.request.SaveExamSessionAnswersRequest;
@@ -237,6 +238,16 @@ public class ExamController {
             @Valid @RequestBody CreateTestRequest request){
         examService.updateFullTest(admin, testID, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật đề thi thành công"));
+    }
+
+    @PatchMapping("/update/{testID}/metadata")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> updateTestMetadata(
+            @AuthenticationPrincipal User admin,
+            @PathVariable String testID,
+            @Valid @RequestBody TestMetadataRequest request) {
+        examService.updateFullTestMetadata(admin, testID, request);
+        return ResponseEntity.ok(ApiResponse.success("Đã cập nhật tên và ảnh bìa đề thi"));
     }
 
     @PatchMapping("/{testID}/publish")

@@ -5,6 +5,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -54,9 +55,9 @@ public class GlobalExceptionHandler {
     }
 
     // 2. Xử lý lỗi validate cho @RequestParam hoặc @PathVariable trên URL
-    @ExceptionHandler(ConstraintViolationException.class)
+    @ExceptionHandler({ConstraintViolationException.class, PropertyReferenceException.class})
     // Cú pháp của generic function, String thay cho T
-    public  ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(ConstraintViolationException ex)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(Exception ex)
     {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
         return ResponseEntity.status(errorCode.getStatusCode())

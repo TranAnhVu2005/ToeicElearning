@@ -119,9 +119,12 @@ CREATE TABLE IF NOT EXISTS audit_event (
     target_type VARCHAR(60) NOT NULL,
     target_id VARCHAR(36) NOT NULL,
     outcome VARCHAR(30) NOT NULL,
-    ip_hash CHAR(64) NULL,
+    details VARCHAR(300) NULL,
     PRIMARY KEY (id),
-    INDEX idx_audit_event_time (occurred_at_utc),
-    INDEX idx_audit_event_actor_time (actor_user_id, occurred_at_utc),
-    INDEX idx_audit_event_target (target_type, target_id)
+    INDEX idx_audit_occurred_utc (occurred_at_utc),
+    INDEX idx_audit_target (target_type, target_id)
 );
+
+SET @exist_audit_details := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'audit_event' AND COLUMN_NAME = 'details');
+SET @sql := IF(@exist_audit_details = 0, 'ALTER TABLE audit_event ADD COLUMN details VARCHAR(300) NULL AFTER outcome', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

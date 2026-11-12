@@ -38,13 +38,20 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public UserResponseDTO updateProfile(User currentUser, UserUpdateProfileRequest request) {
-        User user = userRepository.findByIdWithRole(currentUser.getId())
+        User user = userRepository.findByIdWithRoleForUpdate(currentUser.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (Boolean.TRUE.equals(user.getIsLocked())) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+        }
         String previousAvatarUrl = null;
 
         if(request.getUserName() != null)
         {
-            user.setUserName(request.getUserName());
+            String trimmedName = request.getUserName().trim();
+            if (trimmedName.isBlank()) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            user.setUserName(trimmedName);
         }
         if(request.getUserEmail() != null && !request.getUserEmail().isBlank())
         {
@@ -88,8 +95,11 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     public void changePassword(User currentUser, UserChangePasswordRequest request) {
-        User user = userRepository.findById(currentUser.getId())
+        User user = userRepository.findByIdWithRoleForUpdate(currentUser.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if (Boolean.TRUE.equals(user.getIsLocked())) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+        }
 
         if (user.getUserPassword() == null || user.getUserPassword().isBlank()) {
             throw new AppException(ErrorCode.LOCAL_PASSWORD_NOT_SET);

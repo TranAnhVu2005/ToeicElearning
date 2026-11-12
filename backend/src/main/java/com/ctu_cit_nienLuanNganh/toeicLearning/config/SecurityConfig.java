@@ -50,7 +50,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/exam/list",
                                 "/api/exam/*/access",
-                                "/api/exam/*/parts/*").permitAll()
+                                "/api/exam/*/parts/*",
+                                "/api/media/local/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exam/*/dictation").authenticated()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/payments/vnpay/ipn",

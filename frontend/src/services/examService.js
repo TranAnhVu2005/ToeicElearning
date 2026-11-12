@@ -107,6 +107,11 @@ export const examService = {
     return response.data; // ApiResponse<Void>
   },
 
+  updateTestMetadata: async (testId, requestData) => {
+    const response = await apiClient.patch(`/exam/update/${testId}/metadata`, requestData);
+    return response.data;
+  },
+
   // PATCH /api/exam/{testID}/publish - Xuất bản đề thi (chuyển sang PUBLISHED)
   publishTest: async (testId) => {
     const response = await apiClient.patch(`/exam/${testId}/publish`);

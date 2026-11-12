@@ -32,11 +32,17 @@ public class AuthServiceImpl implements AuthService{
     @Override
     @Transactional
     public AuthResponseDTO register(RegisterRequest request) {
-        if(userRepository.existsByUserEmail(request.getUserEmail()))
+        String normalizedName = request.getUserName() == null ? "" : request.getUserName().trim();
+        String normalizedEmail = request.getUserEmail() == null ? "" : request.getUserEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        String normalizedPhone = request.getUserNumberphone() == null ? "" : request.getUserNumberphone().trim();
+        if (normalizedName.isBlank() || normalizedEmail.isBlank() || normalizedPhone.isBlank()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        if(userRepository.existsByUserEmail(normalizedEmail))
         {
             throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
-        if(userRepository.existsByUserNumberphone(request.getUserNumberphone())) {
+        if(userRepository.existsByUserNumberphone(normalizedPhone)) {
             throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
         }
 
@@ -45,12 +51,16 @@ public class AuthServiceImpl implements AuthService{
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         User newUser = User.builder()
-                .userName(request.getUserName())
-                .userEmail(request.getUserEmail())
-                .userNumberphone(request.getUserNumberphone())
+                .userName(normalizedName)
+                .userEmail(normalizedEmail)
+                .userNumberphone(normalizedPhone)
                 .userPassword(passwordEncoder.encode(request.getUserPassword()))
+                .authProvider("LOCAL")
                 .role(defaultRole)
                 .isLocked(false)
+                .currentStreak(0)
+                .highestStreak(0)
+                .totalScore(0)
                 .build();
         User savedUser = userRepository.save(newUser);
         return authMapper.toDTO(savedUser, jwtService.generateToken(savedUser));
@@ -58,12 +68,12 @@ public class AuthServiceImpl implements AuthService{
 
     @Override
     public AuthResponseDTO login(LoginRequest request) {
-        String identifier = request.getEmailOrPhone();
+        String identifier = request.getEmailOrPhone() == null ? "" : request.getEmailOrPhone().trim();
         User user;
 
         if(identifier.contains("@"))
         {
-            user = userRepository.findByUserEmailWithRole(identifier)
+            user = userRepository.findByUserEmailWithRole(identifier.toLowerCase(java.util.Locale.ROOT))
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
         else {

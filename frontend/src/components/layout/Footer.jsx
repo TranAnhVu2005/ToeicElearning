@@ -19,7 +19,7 @@ const Footer = () => {
               </span>
             </div>
             <p className="footer-desc">
-              TOEIC Learning hỗ trợ luyện theo từng Part, làm full test và xem lại kết quả trên cùng một nền tảng.
+              TOEIC Learning hỗ trợ luyện theo từng phần, làm toàn bộ bài thi và xem lại kết quả làm bài.
             </p>
           </div>
 
@@ -38,18 +38,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 3: TOEIC Parts */}
-          <div className="footer-col">
-            <h4 className="footer-heading">Cấu trúc 7 Parts TOEIC</h4>
-            <ul className="footer-links">
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 1: Mô tả hình ảnh</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 2: Hỏi & Đáp</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 3: Đoạn hội thoại</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 4: Bài nói ngắn</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 5: Hoàn thành câu</Link></li>
-              <li><Link to="/practice"><ArrowRight size={14} /> Part 6 & 7: Đọc hiểu</Link></li>
-            </ul>
-          </div>
 
           {/* Col 4: Learning paths and support */}
           <div className="footer-col">
@@ -68,7 +56,7 @@ const Footer = () => {
         {/* Bottom copyright */}
         <div className="footer-bottom">
           <p>
-            © {new Date().getFullYear()} TOEIC Learning · Nền tảng luyện tập TOEIC.
+            © {new Date().getFullYear()} TOEIC Learning - Trần Anh Vũ - Zalo: 0359906510
           </p>
         </div>
       </div>

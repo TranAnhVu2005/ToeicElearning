@@ -135,13 +135,16 @@ public class TeacherApplicationService {
             throw new AppException(ErrorCode.TEACHER_APPLICATION_CONFLICT);
         }
         if (approve) {
-            if (Boolean.TRUE.equals(application.getUser().getIsLocked())) {
+            User applicant = userRepository.findByIdWithRoleForUpdate(application.getUser().getId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+            if (Boolean.TRUE.equals(applicant.getIsLocked())) {
                 throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
             }
             Role teacherRole = roleRepository.findByRoleName("ROLE_TEACHER")
                     .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
-            application.getUser().setRole(teacherRole);
-            userRepository.save(application.getUser());
+            applicant.setRole(teacherRole);
+            userRepository.save(applicant);
+            application.setUser(applicant);
             application.setStatus(TeacherApplicationStatus.APPROVED);
         } else {
             if (reason == null || reason.isBlank()) throw new AppException(ErrorCode.VALIDATION_ERROR);

@@ -19,6 +19,8 @@ import {
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
+import UserAvatar from '../../components/common/UserAvatar';
+import AdminNavTabs from '../../components/common/AdminNavTabs';
 
 const UserManagementPage = () => {
   const { user: currentUser } = useAuth();
@@ -191,11 +193,9 @@ const UserManagementPage = () => {
               <p className="user-management-description">Tra cứu tài khoản và kiểm soát quyền truy cập hệ thống.</p>
             </div>
           </div>
-          <nav className="user-management-tabs" aria-label="Điều hướng quản trị">
-            <Link to="/admin/tests"><BookOpen size={17} /> Quản lý đề thi</Link>
-            <span className="is-active" aria-current="page"><Users size={17} /> Người dùng <b>{totalElements}</b></span>
-          </nav>
         </header>
+
+        <AdminNavTabs />
 
         {/* Toast Alert */}
         {toast && (
@@ -337,14 +337,10 @@ const UserManagementPage = () => {
                       </td>
                       <td>
                         <div className="user-table-cell">
-                          <img
-                            src={item.userAvatar || '/images/default-avatar.svg'}
+                          <UserAvatar
+                            src={item.userAvatar}
                             alt={item.userName || 'User'}
                             className="user-avatar-small"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = '/images/default-avatar.svg';
-                            }}
                           />
                           <div>
                             <div className="user-table-name">
@@ -358,11 +354,13 @@ const UserManagementPage = () => {
                         <span className="user-table-phone">{item.userNumberphone || '-'}</span>
                       </td>
                       <td>
-                        <span className={`user-role-tag ${item.roleName === 'ROLE_ADMIN' ? 'is-admin' : 'is-learner'}`}>
+                        <span className={`user-role-tag ${item.roleName === 'ROLE_ADMIN' ? 'is-admin' : item.roleName === 'ROLE_TEACHER' ? 'is-teacher' : 'is-learner'}`}>
                           {item.roleName === 'ROLE_ADMIN' ? (
                             <span className="user-tag-content">
                               <Shield size={12} /> Admin
                             </span>
+                          ) : item.roleName === 'ROLE_TEACHER' ? (
+                            'Giảng viên'
                           ) : (
                             'Học viên'
                           )}

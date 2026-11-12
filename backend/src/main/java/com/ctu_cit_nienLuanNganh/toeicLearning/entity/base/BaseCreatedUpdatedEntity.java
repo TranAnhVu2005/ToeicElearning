@@ -1,5 +1,7 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.entity.base;
 
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiViews;
+import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 @SuperBuilder //Anotation giúp lớp con build được lớp cha
 public abstract class BaseCreatedUpdatedEntity extends BaseCreatedEntity {
     @UpdateTimestamp
+    @JsonView(ApiViews.Public.class)
     @Column(name="updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

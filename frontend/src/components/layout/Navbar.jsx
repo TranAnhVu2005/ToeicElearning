@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import myCustomIcon from '../../assets/img/logo1.png';
+import UserAvatar from '../common/UserAvatar';
 import {
   Activity,
   GraduationCap,
@@ -305,14 +306,9 @@ const Navbar = () => {
                   aria-label="Menu tài khoản"
                   className="flex min-h-[44px] items-center gap-2 border border-[#2A2433]/20 bg-white px-2.5 py-1.5 text-[#17131F] transition-colors hover:border-[#4D35C9] hover:bg-[#EEE9FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4D35C9] focus-visible:ring-offset-2 sm:gap-2.5 sm:px-3"
                 >
-                  <img
-                    src={user.userAvatar || '/images/default-avatar.svg'}
-                    alt=""
+                  <UserAvatar
+                    src={user.userAvatar}
                     className="h-8 w-8 rounded-full border border-[#E5E0ED] object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/images/default-avatar.svg';
-                    }}
                   />
 
                   <span className="hidden max-w-[120px] truncate text-[14px] font-semibold sm:block">
@@ -335,14 +331,9 @@ const Navbar = () => {
                     {/* Account information */}
                     <div className="border-b border-[#E5E0ED] bg-[#EEE9FF]/50 p-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={user.userAvatar || '/images/default-avatar.svg'}
-                          alt=""
+                        <UserAvatar
+                          src={user.userAvatar}
                           className="h-10 w-10 rounded-full border border-[#E5E0ED] object-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/images/default-avatar.svg';
-                          }}
                         />
 
                         <div className="min-w-0 flex-1">
@@ -672,14 +663,9 @@ const Navbar = () => {
               {isAuthenticated ? (
                 <>
                   <div className="mb-3 flex items-center gap-3 border-b border-[#E5E0ED] pb-3">
-                    <img
-                      src={user?.userAvatar || '/images/default-avatar.svg'}
-                      alt=""
+                    <UserAvatar
+                      src={user?.userAvatar}
                       className="h-10 w-10 rounded-full border border-[#E5E0ED] object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/images/default-avatar.svg';
-                      }}
                     />
 
                     <div className="min-w-0">

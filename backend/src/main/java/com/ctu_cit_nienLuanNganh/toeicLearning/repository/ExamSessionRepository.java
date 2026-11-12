@@ -26,6 +26,10 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, String
 
     boolean existsByTest_IdAndStatus(String testId, ExamSessionStatus status);
 
+    boolean existsByTest_IdAndStatusAndExpiresAtAfter(String testId, ExamSessionStatus status, LocalDateTime now);
+
+    void deleteByTest_Id(String testId);
+
     // Avoid Hibernate's "FOR UPDATE OF alias", which MariaDB rejects.
     @Query(value = "SELECT s.* FROM exam_session s WHERE s.id = :id AND s.user_id = :userId FOR UPDATE",
             nativeQuery = true)

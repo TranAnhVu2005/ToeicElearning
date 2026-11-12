@@ -45,6 +45,7 @@ import java.security.MessageDigest;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
@@ -133,13 +134,14 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public void createClassroomTest(User teacher, String classroomId, CreateTestRequest request) {
         Classroom classroom = requireTeacherClassroom(teacher, classroomId);
+        validateCoverImageUrl(request.getCoverImageUrl());
         validatePrivateAssets(teacher, request, null);
         TestStatus status = request.getStatus() == null ? TestStatus.DRAFT : request.getStatus();
         if (Boolean.TRUE.equals(request.getIsVip()) || request.getVipPriceVnd() != null || request.getClassroomId() != null) {
             throw new AppException(ErrorCode.VALIDATION_ERROR);
         }
         if (status == TestStatus.PUBLISHED) validatePublishableTest(request);
-        Test test = Test.builder().titleTest(request.getTitleTest()).status(status).isVip(false)
+        Test test = Test.builder().titleTest(request.getTitleTest()).coverImageUrl(request.getCoverImageUrl()).status(status).isVip(false)
                 .classroom(classroom).ownerTeacher(teacher).build();
         Test savedTest = testRepository.save(test);
         saveTestDetail(savedTest, request);
@@ -149,27 +151,25 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public void updateClassroomTest(User teacher, String classroomId, String testId, CreateTestRequest request) {
         Test test = requireOwnedClassroomTest(teacher, classroomId, testId);
+        validateCoverImageUrl(request.getCoverImageUrl());
         validatePrivateAssets(teacher, request, test);
-        if (testResultRepository.existsByTestId(testId) || assignmentRepository.existsByTest_Id(testId)
-                || paymentTransactionRepository.existsByTest_Id(testId)) {
-            throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
-        }
         if (Boolean.TRUE.equals(request.getIsVip()) || request.getVipPriceVnd() != null
                 || request.getClassroomId() != null) throw new AppException(ErrorCode.VALIDATION_ERROR);
         TestStatus previousStatus = test.getStatus();
         TestStatus targetStatus = request.getStatus() == null ? previousStatus : request.getStatus();
         if (targetStatus == TestStatus.PUBLISHED) {
-            validatePrivateAssets(teacher, request, null);
+            validatePrivateAssets(teacher, request, test);
             validatePublishableTest(request);
         }
+        String previousCoverImageUrl = test.getCoverImageUrl();
         test.setTitleTest(request.getTitleTest());
+        if (Boolean.TRUE.equals(request.getClearCoverImage()) || !isBlank(request.getCoverImageUrl())) {
+            test.setCoverImageUrl(Boolean.TRUE.equals(request.getClearCoverImage()) ? null : request.getCoverImageUrl().trim());
+        }
         test.setStatus(targetStatus);
         deleteUnuseMedia(test, request);
-        if (test.getContextQuestions() != null) {
-            test.getContextQuestions().clear();
-            testRepository.flush();
-        }
-        saveTestDetail(test, request);
+        deleteReplacedCoverImageIfUnused(test.getId(), previousCoverImageUrl, test.getCoverImageUrl());
+        upsertTestDetailInPlace(test, request);
         auditEventService.record(teacher, "CLASS_TEST_UPDATED", "TEST", test.getId(),
                 "status=" + previousStatus + "->" + targetStatus);
     }
@@ -188,10 +188,13 @@ public class ExamServiceImpl implements ExamService {
     public void deleteClassroomTest(User teacher, String classroomId, String testId) {
         Test test = requireOwnedClassroomTest(teacher, classroomId, testId);
         if (testResultRepository.existsByTestId(testId) || assignmentRepository.existsByTest_Id(testId)
-                || paymentTransactionRepository.existsByTest_Id(testId)) {
+                || paymentTransactionRepository.existsByTest_Id(testId)
+                || examSessionRepository.existsByTest_IdAndStatusAndExpiresAtAfter(
+                        testId, ExamSessionStatus.ACTIVE, LocalDateTime.now())) {
             throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
         }
-        deleteUnuseMedia(test, new CreateTestRequest());
+        examSessionRepository.deleteByTest_Id(testId);
+        deleteTestMediaIfUnreferenced(test);
         auditEventService.record(teacher, "CLASS_TEST_DELETED", "TEST", test.getId(), "status=" + test.getStatus());
         testRepository.delete(test);
     }
@@ -309,6 +312,7 @@ public class ExamServiceImpl implements ExamService {
     @Transactional(readOnly = true)
     public Test getAdminTestDetail(String testID) {
         Test test = testRepository.findById(testID).orElseThrow(() -> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
         signTestMedia(test);
         return test;
     }
@@ -350,12 +354,14 @@ public class ExamServiceImpl implements ExamService {
 
     @Transactional
     public void createFullTest(User admin, CreateTestRequest request){
+        validateCoverImageUrl(request.getCoverImageUrl());
         validatePrivateAssets(admin, request, null);
         TestStatus status = request.getStatus() != null ? request.getStatus() : TestStatus.DRAFT;
         validateVipPricing(request);
         if (status == TestStatus.PUBLISHED) validatePublishableTest(request);
         Test test = Test.builder()
                 .titleTest(request.getTitleTest())
+                .coverImageUrl(request.getCoverImageUrl())
                 .status(status)
                 .isVip(Boolean.TRUE.equals(request.getIsVip()))
                 .vipPriceVnd(Boolean.TRUE.equals(request.getIsVip()) ? request.getVipPriceVnd() : null)
@@ -368,19 +374,22 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public void updateFullTest(User admin, String testID,CreateTestRequest request)
     {
+        validateCoverImageUrl(request.getCoverImageUrl());
         Test test = testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
         validatePrivateAssets(admin, request, test);
-        if (testResultRepository.existsByTestId(testID)) {
-            throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
-        }
         TestStatus previousStatus = test.getStatus();
         TestStatus targetStatus = request.getStatus() != null ? request.getStatus() : previousStatus;
         validateVipPricing(request);
         if (targetStatus == TestStatus.PUBLISHED) {
-            validatePrivateAssets(admin, request, null);
+            validatePrivateAssets(admin, request, test);
             validatePublishableTest(request);
         }
+        String previousCoverImageUrl = test.getCoverImageUrl();
         test.setTitleTest(request.getTitleTest());
+        if (Boolean.TRUE.equals(request.getClearCoverImage()) || !isBlank(request.getCoverImageUrl())) {
+            test.setCoverImageUrl(Boolean.TRUE.equals(request.getClearCoverImage()) ? null : request.getCoverImageUrl().trim());
+        }
         test.setIsVip(Boolean.TRUE.equals(request.getIsVip()));
         test.setVipPriceVnd(Boolean.TRUE.equals(request.getIsVip()) ? request.getVipPriceVnd() : null);
         if(request.getStatus() != null) {
@@ -388,13 +397,69 @@ public class ExamServiceImpl implements ExamService {
         }
         testRepository.save(test);
         deleteUnuseMedia(test, request);
-        if(test.getContextQuestions()!=null) {
-            test.getContextQuestions().clear();
-            testRepository.flush();
-        }
-        saveTestDetail(test, request);
+        deleteReplacedCoverImageIfUnused(test.getId(), previousCoverImageUrl, test.getCoverImageUrl());
+        upsertTestDetailInPlace(test, request);
         auditEventService.record(admin, "SYSTEM_TEST_UPDATED", "TEST", test.getId(),
                 "status=" + previousStatus + "->" + targetStatus);
+    }
+
+    @Override
+    @Transactional
+    public void updateFullTestMetadata(User admin, String testID, TestMetadataRequest request) {
+        String title = request.getTitleTest() == null ? "" : request.getTitleTest().trim();
+        if (title.isBlank() || title.length() > 255) throw new AppException(ErrorCode.VALIDATION_ERROR);
+        validateCoverImageUrl(request.getCoverImageUrl());
+        Test test = testRepository.findForUpdateById(testID)
+                .orElseThrow(() -> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
+        if (request.getStatus() != null) {
+            validatePrivateAssets(admin, test);
+            if (request.getStatus() == TestStatus.PUBLISHED) validatePublishableTest(test);
+            test.setStatus(request.getStatus());
+        }
+        String previousCoverImageUrl = test.getCoverImageUrl();
+        test.setTitleTest(title);
+        if (Boolean.TRUE.equals(request.getClearCoverImage())) {
+            test.setCoverImageUrl(null);
+        } else if (!isBlank(request.getCoverImageUrl())) {
+            test.setCoverImageUrl(request.getCoverImageUrl().trim());
+        }
+        testRepository.save(test);
+        deleteReplacedCoverImageIfUnused(test.getId(), previousCoverImageUrl, test.getCoverImageUrl());
+        auditEventService.record(admin, "SYSTEM_TEST_METADATA_UPDATED", "TEST", test.getId(), "title/cover/status");
+    }
+
+    private void deleteReplacedCoverImageIfUnused(String testId, String previousCoverUrl, String currentCoverUrl) {
+        if (previousCoverUrl == null || previousCoverUrl.isBlank()
+                || Objects.equals(previousCoverUrl, currentCoverUrl)) {
+            return;
+        }
+        if (testId == null || !testRepository.existsByCoverImageUrlAndIdNot(previousCoverUrl, testId)) {
+            cloudinaryService.deleteFileByUrl(previousCoverUrl);
+        }
+    }
+
+    private void validateCoverImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) return;
+        try {
+            URI uri = URI.create(imageUrl.trim());
+            String path = uri.getPath();
+            if (uri.getUserInfo() != null || path == null) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            boolean validLocalCover = (uri.getScheme() == null
+                    || "http".equalsIgnoreCase(uri.getScheme())
+                    || "https".equalsIgnoreCase(uri.getScheme()))
+                    && path.matches("/api/media/local/Resource/toeic-learning/exams/[A-Za-z0-9_-]{1,100}/covers/[A-Za-z0-9_-]+\\.(jpg|png)");
+            boolean validCloudinaryCover = "https".equalsIgnoreCase(uri.getScheme())
+                    && "res.cloudinary.com".equalsIgnoreCase(uri.getHost())
+                    && path.matches("/[^/]+/image/upload/(?:v[0-9]+/)?(?:Resource/toeic-learning/exams/[A-Za-z0-9_-]{1,100}/covers/)?[A-Za-z0-9/_.-]+");
+            if (!validLocalCover && !validCloudinaryCover) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+        } catch (IllegalArgumentException exception) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
     }
 
     private void validateVipPricing(CreateTestRequest request) {
@@ -472,6 +537,7 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public void publishTest(User admin, String testID) {
         Test test = testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
         validatePrivateAssets(admin, test);
         validatePublishableTest(test);
         test.setStatus(TestStatus.PUBLISHED);
@@ -500,18 +566,15 @@ public class ExamServiceImpl implements ExamService {
                 if (context == null || context.getQuestions() == null || context.getQuestions().isEmpty()) {
                     throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
                 }
-                if (context.getOrderIndex() != null && context.getOrderIndex() > 0
-                        && context.getOrderIndex() != expectedQuestionNumber) {
-                    throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
+                if (partNumber == 7) {
+                    validatePart7Grouping(expectedQuestionNumber, context.getQuestions().size(), context.getParagraph());
                 }
-                validatePart7Grouping(expectedQuestionNumber, context.getQuestions().size(), context.getParagraph());
                 String audioUrl = isPrivateAsset(context.getAudioPublicId(), context.getAudioFormat(), context.getAudioDeliveryType())
                         ? "authenticated" : context.getAudioUrl();
                 String imageUrl = isPrivateAsset(context.getImagePublicId(), context.getImageFormat(), context.getImageDeliveryType())
                         ? "authenticated" : context.getImageUrl();
                 validatePublishableContext(partNumber, audioUrl, imageUrl,
                         context.getParagraph(), context.getQuestions().size());
-                if (Boolean.TRUE.equals(request.getIsVip())) validatePrivateMedia(context);
                 for (QuestionRequest question : context.getQuestions()) {
                     if (question == null) throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
                     if (expectedQuestionNumber > endingQuestionNumber) {
@@ -519,8 +582,7 @@ public class ExamServiceImpl implements ExamService {
                     }
                     int suppliedQuestionNumber = question.getQuestionNumber() == null || question.getQuestionNumber() <= 0
                             ? expectedQuestionNumber : question.getQuestionNumber();
-                    if (suppliedQuestionNumber != expectedQuestionNumber
-                            || !questionNumbers.add(suppliedQuestionNumber)) {
+                    if (!questionNumbers.add(suppliedQuestionNumber)) {
                         throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
                     }
                     validatePublishableQuestion(partNumber, question.getQuestionContent(), question.getOptionA(),
@@ -538,7 +600,7 @@ public class ExamServiceImpl implements ExamService {
         Map<Integer, List<ContextQuestion>> contextsByPart = new TreeMap<>();
         for (ContextQuestion context : contexts) {
             if (context == null) throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-            int partNumber = parsePartNumber(context.getPart() == null ? null : context.getPart().getNamePart());
+            int partNumber = contextPartNumber(context);
             if (partNumber < 1 || partNumber > 7) throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
             contextsByPart.computeIfAbsent(partNumber, ignored -> new ArrayList<>()).add(context);
         }
@@ -554,27 +616,21 @@ public class ExamServiceImpl implements ExamService {
             for (ContextQuestion context : partContexts) {
                 List<Question> questions = context.getQuestions();
                 if (questions == null || questions.isEmpty()) throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-                if (context.getOrderIndex() != null && context.getOrderIndex() > 0
-                        && context.getOrderIndex() != expectedQuestionNumber) {
-                    throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
+                if (partNumber == 7) {
+                    validatePart7Grouping(expectedQuestionNumber, questions.size(), context.getParagraph());
                 }
-                validatePart7Grouping(expectedQuestionNumber, questions.size(), context.getParagraph());
                 String audioUrl = isPrivateAsset(context.getAudioPublicId(), context.getAudioFormat(), context.getAudioDeliveryType())
                         ? "authenticated" : context.getAudioUrl();
                 String imageUrl = isPrivateAsset(context.getImagePublicId(), context.getImageFormat(), context.getImageDeliveryType())
                         ? "authenticated" : context.getImageUrl();
                 validatePublishableContext(partNumber, audioUrl, imageUrl,
                         context.getParagraph(), questions.size());
-                if (Boolean.TRUE.equals(test.getIsVip()) && !hasPrivateMedia(context)) {
-                    throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-                }
                 List<Question> orderedQuestions = new ArrayList<>(questions);
                 orderedQuestions.sort(Comparator.comparing(question -> question == null ? null : question.getQuestionNumber(),
                         Comparator.nullsLast(Comparator.naturalOrder())));
                 for (Question question : orderedQuestions) {
                     if (expectedQuestionNumber > endingQuestionNumber
                             || question == null || question.getQuestionNumber() == null
-                            || question.getQuestionNumber() != expectedQuestionNumber
                             || !questionNumbers.add(question.getQuestionNumber())) {
                         throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
                     }
@@ -588,55 +644,21 @@ public class ExamServiceImpl implements ExamService {
     }
 
     private void validatePart7Grouping(int startQuestionNumber, int questionCount, String paragraph) {
-        int expectedQuestionCount = switch (startQuestionNumber) {
-            case 147, 149, 151, 156 -> 2;
-            case 153, 158, 161 -> 3;
-            case 164, 168, 172 -> 4;
-            case 176, 181, 186, 191, 196 -> 5;
-            default -> throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-        };
-        if (questionCount != expectedQuestionCount || isBlank(paragraph)) {
+        if (questionCount < 1 || questionCount > 5 || isBlank(paragraph)) {
             throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
         }
-
-        int expectedPassageCount = switch (startQuestionNumber) {
-            case 176, 181 -> 2;
-            case 186, 191, 196 -> 3;
-            default -> 1;
-        };
         Pattern separator = Pattern.compile("(?im)^[ \\t]*---[ \\t]*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)[ \\t]*([0-9]+)[ \\t]*---[ \\t]*$");
         Matcher matcher = separator.matcher(paragraph);
-        int passageCount = 1;
-        int expectedMarker = 2;
         int contentStart = 0;
         while (matcher.find()) {
-            if (!matcher.group(1).equals(Integer.toString(expectedMarker))
-                    || paragraph.substring(contentStart, matcher.start()).isBlank()) {
+            if (paragraph.substring(contentStart, matcher.start()).isBlank()) {
                 throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
             }
-            passageCount++;
-            expectedMarker++;
             contentStart = matcher.end();
         }
-        if (paragraph.substring(contentStart).isBlank() || passageCount != expectedPassageCount) {
+        if (paragraph.substring(contentStart).isBlank()) {
             throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
         }
-    }
-
-    private void validatePrivateMedia(ContextQuestionRequest context) {
-        boolean audioValid = isBlank(context.getAudioUrl()) ||
-                (isPrivateAsset(context.getAudioPublicId(), context.getAudioFormat(), context.getAudioDeliveryType()));
-        boolean imageValid = isBlank(context.getImageUrl()) ||
-                (isPrivateAsset(context.getImagePublicId(), context.getImageFormat(), context.getImageDeliveryType()));
-        if (!audioValid || !imageValid) throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-    }
-
-    private boolean hasPrivateMedia(ContextQuestion context) {
-        boolean audioValid = isBlank(context.getAudioUrl()) || isPrivateAsset(
-                context.getAudioPublicId(), context.getAudioFormat(), context.getAudioDeliveryType());
-        boolean imageValid = isBlank(context.getImageUrl()) || isPrivateAsset(
-                context.getImagePublicId(), context.getImageFormat(), context.getImageDeliveryType());
-        return audioValid && imageValid;
     }
 
     private void validatePrivateAssets(User actor, CreateTestRequest request, Test existingTest) {
@@ -657,9 +679,9 @@ public class ExamServiceImpl implements ExamService {
         if (test.getContextQuestions() == null) return;
         for (ContextQuestion context : test.getContextQuestions()) {
             validatePrivateAsset(actor, context.getAudioPublicId(), context.getAudioFormat(),
-                    context.getAudioDeliveryType(), "video", null);
+                    context.getAudioDeliveryType(), "video", test);
             validatePrivateAsset(actor, context.getImagePublicId(), context.getImageFormat(),
-                    context.getImageDeliveryType(), "image", null);
+                    context.getImageDeliveryType(), "image", test);
         }
     }
 
@@ -699,10 +721,7 @@ public class ExamServiceImpl implements ExamService {
 
     private void validatePublishableContext(int partNumber, String audioUrl, String imageUrl,
                                              String paragraph, int questionCount) {
-        if (partNumber >= 1 && partNumber <= 4 && isBlank(audioUrl)) {
-            throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
-        }
-        if (partNumber == 1 && isBlank(imageUrl)) {
+        if (questionCount < 1) {
             throw new AppException(ErrorCode.TEST_CONTENT_INVALID);
         }
         if ((partNumber == 1 || partNumber == 2) && questionCount != 1) {
@@ -747,6 +766,7 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public void draftTest(User admin, String testID) {
         Test test = testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
         TestStatus previousStatus = test.getStatus();
         test.setStatus(TestStatus.DRAFT);
         testRepository.save(test);
@@ -757,10 +777,13 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public boolean deleteFullTest(User admin, String testID){
         Test test = testRepository.findById(testID).orElseThrow(()-> new AppException(ErrorCode.TEST_NOT_FOUND));
+        if (test.getClassroom() != null) throw new AppException(ErrorCode.TEST_NOT_FOUND);
         TestStatus previousStatus = test.getStatus();
         boolean hasReferences = testResultRepository.existsByTestId(testID)
                 || paymentTransactionRepository.existsByTest_Id(testID)
-                || assignmentRepository.existsByTest_Id(testID);
+                || assignmentRepository.existsByTest_Id(testID)
+                || examSessionRepository.existsByTest_IdAndStatusAndExpiresAtAfter(
+                        testID, ExamSessionStatus.ACTIVE, LocalDateTime.now());
         if (hasReferences) {
             test.setStatus(TestStatus.DRAFT);
             testRepository.save(test);
@@ -768,6 +791,7 @@ public class ExamServiceImpl implements ExamService {
                     "status=" + previousStatus + "->DRAFT; reason=referenced");
             return true;
         }
+        examSessionRepository.deleteByTest_Id(testID);
         deleteTestMediaIfUnreferenced(test);
         auditEventService.record(admin, "SYSTEM_TEST_DELETED", "TEST", test.getId(), "status=" + previousStatus);
         testRepository.delete(test);
@@ -775,6 +799,10 @@ public class ExamServiceImpl implements ExamService {
     }
 
     private void deleteTestMediaIfUnreferenced(Test test) {
+        if (test.getId() != null && test.getCoverImageUrl() != null && !test.getCoverImageUrl().isBlank()
+                && !testRepository.existsByCoverImageUrlAndIdNot(test.getCoverImageUrl(), test.getId())) {
+            cloudinaryService.deleteFileByUrl(test.getCoverImageUrl());
+        }
         if (test.getContextQuestions() == null || test.getId() == null) return;
         Set<String> handledAudio = new HashSet<>();
         Set<String> handledImages = new HashSet<>();
@@ -989,8 +1017,35 @@ public class ExamServiceImpl implements ExamService {
         session.setTargetQuestionIds("[]");
         answersToSave.forEach(answer -> answer.setTestResult(savedResult));
         userAnswerRepository.saveAll(answersToSave);
+        updateUserProgressAfterSubmit(lockedUser, submittedAt.toLocalDate(), fullLengthForm, totalScore);
 
         return toSubmitResponse(savedResult, lockedUser);
+    }
+
+    private void updateUserProgressAfterSubmit(User user, java.time.LocalDate today, boolean fullLengthForm, int totalScore) {
+        java.time.LocalDate lastActive = user.getLastActiveDate();
+        int currentStreak = user.getCurrentStreak() == null ? 0 : user.getCurrentStreak();
+        int highestStreak = user.getHighestStreak() == null ? 0 : user.getHighestStreak();
+        if (lastActive == null) {
+            currentStreak = 1;
+        } else if (lastActive.isEqual(today)) {
+            currentStreak = Math.max(1, currentStreak);
+        } else if (lastActive.plusDays(1).isEqual(today)) {
+            currentStreak = currentStreak + 1;
+        } else {
+            currentStreak = 1;
+        }
+        highestStreak = Math.max(highestStreak, currentStreak);
+        user.setCurrentStreak(currentStreak);
+        user.setHighestStreak(highestStreak);
+        user.setLastActiveDate(today);
+        int currentBestScore = user.getTotalScore() == null ? 0 : user.getTotalScore();
+        if (fullLengthForm && totalScore > currentBestScore) {
+            user.setTotalScore(totalScore);
+        } else if (user.getTotalScore() == null) {
+            user.setTotalScore(0);
+        }
+        userRepository.save(user);
     }
 
     @Override
@@ -1403,6 +1458,165 @@ public class ExamServiceImpl implements ExamService {
         int hours = safeSeconds / 3600, minutes = (safeSeconds % 3600) / 60, remainder = safeSeconds % 60;
         return hours > 0 ? String.format("%d:%02d:%02d", hours, minutes, remainder)
                 : String.format("%d:%02d", minutes, remainder);
+    }
+
+    private void upsertTestDetailInPlace(Test savedTest, CreateTestRequest request) {
+        if (request.getParts() == null) return;
+        List<ContextQuestion> existingContexts = savedTest.getContextQuestions() == null
+                ? new ArrayList<>() : new ArrayList<>(savedTest.getContextQuestions());
+        Map<Integer, List<ContextQuestion>> existingByPart = new HashMap<>();
+        for (ContextQuestion cq : existingContexts) {
+            if (cq == null) continue;
+            int pNum = contextPartNumber(cq);
+            existingByPart.computeIfAbsent(pNum, ignored -> new ArrayList<>()).add(cq);
+        }
+        for (List<ContextQuestion> list : existingByPart.values()) {
+            list.sort(Comparator.comparing(ContextQuestion::getOrderIndex,
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+        }
+
+        Set<String> retainedContextIds = new HashSet<>();
+        int globalQuestionCounter = 1;
+        for (TestPartRequest partRequest : request.getParts()) {
+            if (partRequest == null) continue;
+            String partName = "Part " + partRequest.getPartNumber();
+            Part part = partRepository.findByNamePart(partName)
+                    .orElseThrow(() -> new AppException(ErrorCode.PART_NOT_FOUND));
+            List<ContextQuestion> partExisting = existingByPart.getOrDefault(partRequest.getPartNumber(), List.of());
+            int questionCounter = getStartingQuestionNumber(partRequest.getPartNumber(), globalQuestionCounter);
+            if (partRequest.getContextQuestions() != null) {
+                int cqIdx = 0;
+                for (ContextQuestionRequest contextQuestionRequest : partRequest.getContextQuestions()) {
+                    if (contextQuestionRequest == null) continue;
+                    int startQuestionNumberOfContext = questionCounter;
+                    int finalOrderIndex = (contextQuestionRequest.getOrderIndex() != null && contextQuestionRequest.getOrderIndex() > 0)
+                            ? contextQuestionRequest.getOrderIndex() : startQuestionNumberOfContext;
+                    String resolvedAudioUrl = isPrivateAsset(contextQuestionRequest.getAudioPublicId(),
+                            contextQuestionRequest.getAudioFormat(), contextQuestionRequest.getAudioDeliveryType())
+                            ? null : contextQuestionRequest.getAudioUrl();
+                    String resolvedImageUrl = isPrivateAsset(contextQuestionRequest.getImagePublicId(),
+                            contextQuestionRequest.getImageFormat(), contextQuestionRequest.getImageDeliveryType())
+                            ? null : contextQuestionRequest.getImageUrl();
+
+                    ContextQuestion targetCq = cqIdx < partExisting.size() ? partExisting.get(cqIdx) : null;
+                    if (targetCq == null) {
+                        targetCq = ContextQuestion.builder()
+                                .audioUrl(resolvedAudioUrl)
+                                .imageUrl(resolvedImageUrl)
+                                .audioPublicId(contextQuestionRequest.getAudioPublicId())
+                                .imagePublicId(contextQuestionRequest.getImagePublicId())
+                                .audioFormat(contextQuestionRequest.getAudioFormat())
+                                .imageFormat(contextQuestionRequest.getImageFormat())
+                                .audioDeliveryType(contextQuestionRequest.getAudioDeliveryType())
+                                .imageDeliveryType(contextQuestionRequest.getImageDeliveryType())
+                                .paragraph(contextQuestionRequest.getParagraph())
+                                .transcript(contextQuestionRequest.getTranscript())
+                                .translation(contextQuestionRequest.getTranslation())
+                                .test(savedTest)
+                                .part(part)
+                                .orderIndex(finalOrderIndex)
+                                .questions(new ArrayList<>())
+                                .build();
+                        targetCq = contextQuestionRepository.save(targetCq);
+                        if (savedTest.getContextQuestions() != null) {
+                            savedTest.getContextQuestions().add(targetCq);
+                        }
+                    } else {
+                        targetCq.setAudioUrl(resolvedAudioUrl);
+                        targetCq.setImageUrl(resolvedImageUrl);
+                        targetCq.setAudioPublicId(contextQuestionRequest.getAudioPublicId());
+                        targetCq.setImagePublicId(contextQuestionRequest.getImagePublicId());
+                        targetCq.setAudioFormat(contextQuestionRequest.getAudioFormat());
+                        targetCq.setImageFormat(contextQuestionRequest.getImageFormat());
+                        targetCq.setAudioDeliveryType(contextQuestionRequest.getAudioDeliveryType());
+                        targetCq.setImageDeliveryType(contextQuestionRequest.getImageDeliveryType());
+                        targetCq.setParagraph(contextQuestionRequest.getParagraph());
+                        targetCq.setTranscript(contextQuestionRequest.getTranscript());
+                        targetCq.setTranslation(contextQuestionRequest.getTranslation());
+                        targetCq.setPart(part);
+                        targetCq.setOrderIndex(finalOrderIndex);
+                        targetCq = contextQuestionRepository.save(targetCq);
+                    }
+                    retainedContextIds.add(targetCq.getId());
+
+                    List<Question> existingQuestions = targetCq.getQuestions() == null
+                            ? new ArrayList<>() : new ArrayList<>(targetCq.getQuestions());
+                    existingQuestions.sort(Comparator.comparing(Question::getQuestionNumber,
+                            Comparator.nullsLast(Comparator.naturalOrder())));
+                    Set<String> retainedQuestionIds = new HashSet<>();
+
+                    if (contextQuestionRequest.getQuestions() != null) {
+                        int qIdx = 0;
+                        for (QuestionRequest questionRequest : contextQuestionRequest.getQuestions()) {
+                            if (questionRequest == null) continue;
+                            char correctAns = 'A';
+                            int questionNumber = (questionRequest.getQuestionNumber() != null && questionRequest.getQuestionNumber() > 0)
+                                    ? questionRequest.getQuestionNumber() : questionCounter;
+                            if (questionRequest.getCorrectAnswer() != null && !questionRequest.getCorrectAnswer().isEmpty()) {
+                                correctAns = questionRequest.getCorrectAnswer().toUpperCase().charAt(0);
+                            }
+                            Question targetQ = qIdx < existingQuestions.size() ? existingQuestions.get(qIdx) : null;
+                            if (targetQ == null) {
+                                targetQ = Question.builder()
+                                        .questionContent(questionRequest.getQuestionContent())
+                                        .optionA(questionRequest.getOptionA())
+                                        .optionB(questionRequest.getOptionB())
+                                        .optionC(questionRequest.getOptionC())
+                                        .optionD(questionRequest.getOptionD())
+                                        .correctAnswer(correctAns)
+                                        .explanation(questionRequest.getExplanation())
+                                        .contextQuestion(targetCq)
+                                        .questionNumber(questionNumber)
+                                        .build();
+                                targetQ = questionRepository.save(targetQ);
+                                if (targetCq.getQuestions() != null) {
+                                    targetCq.getQuestions().add(targetQ);
+                                }
+                            } else {
+                                targetQ.setQuestionContent(questionRequest.getQuestionContent());
+                                targetQ.setOptionA(questionRequest.getOptionA());
+                                targetQ.setOptionB(questionRequest.getOptionB());
+                                targetQ.setOptionC(questionRequest.getOptionC());
+                                targetQ.setOptionD(questionRequest.getOptionD());
+                                targetQ.setCorrectAnswer(correctAns);
+                                targetQ.setExplanation(questionRequest.getExplanation());
+                                targetQ.setQuestionNumber(questionNumber);
+                                targetQ = questionRepository.save(targetQ);
+                            }
+                            retainedQuestionIds.add(targetQ.getId());
+                            questionCounter++;
+                            globalQuestionCounter++;
+                            qIdx++;
+                        }
+                    }
+
+                    if (targetCq.getQuestions() != null) {
+                        Iterator<Question> qIter = targetCq.getQuestions().iterator();
+                        while (qIter.hasNext()) {
+                            Question oldQ = qIter.next();
+                            if (oldQ != null && oldQ.getId() != null && !retainedQuestionIds.contains(oldQ.getId())
+                                    && !userAnswerRepository.existsByQuestion_Id(oldQ.getId())) {
+                                qIter.remove();
+                                questionRepository.delete(oldQ);
+                            }
+                        }
+                    }
+                    cqIdx++;
+                }
+            }
+        }
+
+        if (savedTest.getContextQuestions() != null) {
+            Iterator<ContextQuestion> cqIter = savedTest.getContextQuestions().iterator();
+            while (cqIter.hasNext()) {
+                ContextQuestion oldCq = cqIter.next();
+                if (oldCq != null && oldCq.getId() != null && !retainedContextIds.contains(oldCq.getId())
+                        && !contextReferencedByTestResult(oldCq.getId())) {
+                    cqIter.remove();
+                    contextQuestionRepository.delete(oldCq);
+                }
+            }
+        }
     }
 
     public void saveTestDetail(Test savedTest, CreateTestRequest request)

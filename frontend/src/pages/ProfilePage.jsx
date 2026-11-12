@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
+import UserAvatar from '../components/common/UserAvatar';
 import { User, Mail, Phone, Lock, Save, Shield, Upload, Camera, Check, Receipt, LoaderCircle, RefreshCw } from 'lucide-react';
 import Toast from '../components/common/Toast';
 import { teacherApplicationService } from '../services/teacherApplicationService';
@@ -79,7 +80,7 @@ const ProfilePage = () => {
             userName: res.data.userName || '',
             userEmail: res.data.userEmail || '',
             userNumberphone: res.data.userNumberphone || '',
-            userAvatar: res.data.userAvatar || '/images/default-avatar.svg',
+            userAvatar: res.data.userAvatar || '',
           });
         }
       } catch {
@@ -97,7 +98,7 @@ const ProfilePage = () => {
         userName: user.userName || '',
         userEmail: user.userEmail || '',
         userNumberphone: user.userNumberphone || '',
-        userAvatar: user.userAvatar || '/images/default-avatar.svg',
+        userAvatar: user.userAvatar || '',
       });
     }
   }, [user]);
@@ -285,14 +286,10 @@ const ProfilePage = () => {
           <div className="profile-sidebar-card">
             <div className="profile-avatar-block">
               <div style={{ position: 'relative', display: 'inline-block' }}>
-                <img
-                  src={previewAvatarUrl || profileData.userAvatar || '/images/default-avatar.svg'}
-                  alt={user?.userName || 'User'}
+                <UserAvatar
+                  src={previewAvatarUrl || profileData.userAvatar}
+                  alt={user?.userName || 'Người dùng'}
                   className="profile-avatar-large"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/images/default-avatar.svg';
-                  }}
                 />
                 <button
                   type="button"
@@ -324,6 +321,28 @@ const ProfilePage = () => {
               <span className={`badge ${isAdmin ? 'badge-primary' : isTeacher ? 'badge-warning' : 'badge-neutral'}`} style={{ marginTop: 6 }}>
                 {roleLabel}
               </span>
+
+              {/* Learning Metrics Strip */}
+              <div className="mt-4 grid w-full grid-cols-3 gap-2 border-t border-slate-200 pt-4 text-center">
+                <div className="border border-slate-200 bg-slate-50/70 p-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Streak</span>
+                  <strong className="mt-0.5 block font-mono text-base font-bold text-[#1D4ED8]">
+                    {user?.currentStreak ?? 0} ngày
+                  </strong>
+                </div>
+                <div className="border border-slate-200 bg-slate-50/70 p-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Kỷ lục</span>
+                  <strong className="mt-0.5 block font-mono text-base font-bold text-slate-900">
+                    {user?.highestStreak ?? 0} ngày
+                  </strong>
+                </div>
+                <div className="border border-slate-200 bg-slate-50/70 p-2">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Điểm tích lũy</span>
+                  <strong className="mt-0.5 block font-mono text-base font-bold text-slate-900">
+                    {user?.totalScore ?? 0}
+                  </strong>
+                </div>
+              </div>
             </div>
 
             <div className="profile-nav-tabs">
@@ -504,11 +523,11 @@ const ProfilePage = () => {
 
                 {canSetLocalPassword === null ? (
                   passwordCapabilityError ? (
-                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-2 border-black bg-rose-100 p-4 font-bold shadow-[3px_3px_0_#111]">
+                    <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-4 font-semibold text-red-800">
                       <span>Không tải được trạng thái bảo mật tài khoản.</span>
                       <button
                         type="button"
-                        className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black"
+                        className="border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                         onClick={() => {
                           setCanSetLocalPassword(null);
                           setPasswordCapabilityError(false);
@@ -519,13 +538,13 @@ const ProfilePage = () => {
                       </button>
                     </div>
                   ) : (
-                    <div role="status" className="border-2 border-black bg-white p-4 font-bold shadow-[3px_3px_0_#111]">
+                    <div role="status" className="border border-slate-200 bg-slate-50 p-4 text-sm font-medium text-slate-600">
                       Đang tải trạng thái bảo mật tài khoản…
                     </div>
                   )
                 ) : canSetLocalPassword ? (
-                  <div className="max-w-xl border-2 border-black bg-[#FFFDF2] p-5 shadow-[4px_4px_0_#111]">
-                    <p className="mb-4 text-sm font-semibold text-[#222]">
+                  <div className="max-w-xl border border-slate-200 bg-slate-50/70 p-5">
+                    <p className="mb-4 text-sm text-slate-700">
                       Tài khoản này đăng nhập bằng Google và chưa có mật khẩu cục bộ. Nhập mật khẩu mới, sau đó xác minh lại Google để thiết lập.
                     </p>
                     <div className="form-group">
@@ -555,9 +574,9 @@ const ProfilePage = () => {
                       </div>
                     </div>
                     <div className="mt-5 flex flex-col items-start gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wide">Xác minh tài khoản Google</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">Xác minh tài khoản Google</span>
                       {passwordLoading ? (
-                        <span className="flex items-center gap-2 border-2 border-black bg-[#FFE600] px-4 py-2 font-black">
+                        <span className="flex items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
                           <LoaderCircle size={16} className="animate-spin" /> Đang thiết lập…
                         </span>
                       ) : (
@@ -648,23 +667,107 @@ const ProfilePage = () => {
             )}
 
             {activeTab === 'payments' && (
-              <section className="text-[#111]">
-                <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b-2 border-black pb-4">
-                  <div><h2 className="text-2xl font-black">Lịch sử thanh toán</h2><p className="mt-1 text-sm font-semibold">Giao dịch gắn với tài khoản này · {paymentTotal} giao dịch</p></div>
-                  <button type="button" onClick={() => setPaymentRefresh((current) => current + 1)} disabled={paymentLoading} className="inline-flex items-center gap-2 border-2 border-black bg-white px-3 py-2 text-sm font-black disabled:opacity-50"><RefreshCw size={15} /> Tải lại</button>
+              <section className="text-slate-900">
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-slate-900">Lịch sử thanh toán</h2>
+                    <p className="mt-1 text-sm text-slate-600">Giao dịch gắn với tài khoản này · {paymentTotal} giao dịch</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentRefresh((current) => current + 1)}
+                    disabled={paymentLoading}
+                    className="inline-flex items-center gap-2 border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                  >
+                    <RefreshCw size={15} /> Tải lại
+                  </button>
                 </div>
-                {paymentError && <div role="alert" className="mb-4 border-2 border-black bg-rose-200 p-3 font-bold">{paymentError}</div>}
-                {paymentLoading ? <div className="flex items-center justify-center gap-2 border-2 border-black bg-white p-8 font-bold"><LoaderCircle size={18} className="animate-spin" /> Đang tải giao dịch…</div>
-                  : paymentRows.length === 0 ? <div className="border-2 border-dashed border-black bg-white p-8 text-center font-bold">Bạn chưa có giao dịch thanh toán nào.</div>
-                    : <div className="overflow-x-auto border-2 border-black bg-white shadow-[3px_3px_0_#111]"><table className="w-full min-w-[650px] border-collapse text-left text-sm"><thead className="bg-black text-white"><tr><th className="p-3">Sản phẩm</th><th className="p-3">Số tiền</th><th className="p-3">Trạng thái</th><th className="p-3">Thời gian</th><th className="p-3">Mã giao dịch</th></tr></thead><tbody>{paymentRows.map((payment) => {
-                      const statusLabels = { PENDING: 'Đang xử lý', SUCCESS: 'Thành công', FAILED: 'Thất bại', CANCELLED: 'Đã hủy', EXPIRED: 'Hết hạn' };
-                      const statusColors = { PENDING: 'bg-amber-200', SUCCESS: 'bg-lime-200', FAILED: 'bg-rose-200', CANCELLED: 'bg-[#f1eedf]', EXPIRED: 'bg-rose-200' };
-                      const product = payment.productName || (payment.productType === 'TEACHER_APPLICATION' ? 'Đăng ký giáo viên' : payment.productType === 'TEST_VIP' ? 'Đề VIP' : 'Sản phẩm');
-                      const timestamp = payment.paidAt || payment.createdAt;
-                      const displayTime = timestamp ? new Date(`${timestamp}+07:00`).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—';
-                      return <tr key={payment.transactionReference} className="border-t border-black/20 align-top"><td className="p-3 font-bold">{product}{payment.productType === 'TEST_VIP' && <span className="mt-1 block text-xs font-semibold">Quyền truy cập vĩnh viễn</span>}</td><td className="p-3 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(payment.amount || 0))}</td><td className="p-3"><span className={`inline-block border border-black px-2 py-1 text-xs font-black ${statusColors[payment.status] || 'bg-white'}`}>{statusLabels[payment.status] || 'Chưa rõ'}</span></td><td className="p-3">{displayTime}</td><td className="max-w-40 break-all p-3 font-mono text-xs">{payment.transactionReference}</td></tr>;
-                    })}</tbody></table></div>}
-                {!paymentLoading && paymentPages > 1 && <nav className="mt-4 flex items-center justify-between gap-3 border-2 border-black bg-white p-3" aria-label="Phân trang lịch sử thanh toán"><button type="button" disabled={paymentPage <= 1} onClick={() => setPaymentPage((current) => current - 1)} className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black disabled:opacity-40">Trang trước</button><span className="text-sm font-bold" aria-live="polite">Trang {paymentPage} / {paymentPages}</span><button type="button" disabled={paymentPage >= paymentPages} onClick={() => setPaymentPage((current) => current + 1)} className="border-2 border-black bg-[#FFE600] px-3 py-2 text-sm font-black disabled:opacity-40">Trang sau</button></nav>}
+                {paymentError && (
+                  <div role="alert" className="mb-4 border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
+                    {paymentError}
+                  </div>
+                )}
+                {paymentLoading ? (
+                  <div className="flex items-center justify-center gap-2 border border-slate-200 bg-slate-50 p-8 text-sm font-medium text-slate-600">
+                    <LoaderCircle size={18} className="animate-spin" /> Đang tải giao dịch…
+                  </div>
+                ) : paymentRows.length === 0 ? (
+                  <div className="border border-slate-200 bg-slate-50/60 p-8 text-center text-sm text-slate-600">
+                    Bạn chưa có giao dịch thanh toán nào.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 bg-white">
+                    <table className="w-full min-w-[650px] border-collapse text-left text-sm">
+                      <thead className="border-b border-slate-200 bg-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        <tr>
+                          <th className="p-3.5">Sản phẩm</th>
+                          <th className="p-3.5">Số tiền</th>
+                          <th className="p-3.5">Trạng thái</th>
+                          <th className="p-3.5">Thời gian</th>
+                          <th className="p-3.5">Mã giao dịch</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {paymentRows.map((payment) => {
+                          const statusLabels = { PENDING: 'Đang xử lý', SUCCESS: 'Thành công', FAILED: 'Thất bại', CANCELLED: 'Đã hủy', EXPIRED: 'Hết hạn' };
+                          const statusColors = {
+                            PENDING: 'border-amber-200 bg-amber-50 text-amber-800',
+                            SUCCESS: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+                            FAILED: 'border-red-200 bg-red-50 text-red-800',
+                            CANCELLED: 'border-slate-300 bg-slate-100 text-slate-700',
+                            EXPIRED: 'border-slate-300 bg-slate-100 text-slate-700',
+                          };
+                          const product = payment.productName || (payment.productType === 'TEACHER_APPLICATION' ? 'Đăng ký giáo viên' : payment.productType === 'TEST_VIP' ? 'Đề VIP' : 'Sản phẩm');
+                          const timestamp = payment.paidAt || payment.createdAt;
+                          const displayTime = timestamp ? new Date(`${timestamp}+07:00`).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) : '—';
+                          return (
+                            <tr key={payment.transactionReference} className="align-top hover:bg-slate-50/80">
+                              <td className="p-3.5 font-semibold text-slate-900">
+                                {product}
+                                {payment.productType === 'TEST_VIP' && (
+                                  <span className="mt-0.5 block text-xs font-normal text-slate-500">Quyền truy cập vĩnh viễn</span>
+                                )}
+                              </td>
+                              <td className="p-3.5 font-mono font-semibold text-slate-900">
+                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(payment.amount || 0))}
+                              </td>
+                              <td className="p-3.5">
+                                <span className={`inline-block border px-2.5 py-0.5 text-xs font-semibold ${statusColors[payment.status] || 'border-slate-300 bg-white text-slate-700'}`}>
+                                  {statusLabels[payment.status] || 'Chưa rõ'}
+                                </span>
+                              </td>
+                              <td className="p-3.5 font-mono text-xs text-slate-600">{displayTime}</td>
+                              <td className="max-w-40 break-all p-3.5 font-mono text-xs text-slate-700">{payment.transactionReference}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {!paymentLoading && paymentPages > 1 && (
+                  <nav className="mt-4 flex items-center justify-between gap-3 border border-slate-200 bg-white p-3" aria-label="Phân trang lịch sử thanh toán">
+                    <button
+                      type="button"
+                      disabled={paymentPage <= 1}
+                      onClick={() => setPaymentPage((current) => current - 1)}
+                      className="border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40"
+                    >
+                      Trang trước
+                    </button>
+                    <span className="font-mono text-sm font-semibold text-slate-700" aria-live="polite">
+                      Trang {paymentPage} / {paymentPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={paymentPage >= paymentPages}
+                      onClick={() => setPaymentPage((current) => current + 1)}
+                      className="border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-40"
+                    >
+                      Trang sau
+                    </button>
+                  </nav>
+                )}
               </section>
             )}
           </div>

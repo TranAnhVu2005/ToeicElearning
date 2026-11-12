@@ -38,6 +38,7 @@ import { examService } from '../../services/examService';
 import { uploadMediaFile } from '../../services/uploadService';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
+import AdminNavTabs from '../../components/common/AdminNavTabs';
 
 import Toast from '../../components/common/Toast';
 import {
@@ -564,6 +565,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   const [builderMode, setBuilderMode] = useState('create'); // 'create' | 'edit'
   const [selectedTest, setSelectedTest] = useState(null);
   const [formTitle, setFormTitle] = useState('');
+  const [formCoverImageUrl, setFormCoverImageUrl] = useState('');
+  const [coverImagePreviewUrl, setCoverImagePreviewUrl] = useState('');
+  const [formClearCoverImage, setFormClearCoverImage] = useState(false);
+  const editPartsBaselineRef = useRef({ testId: null, serialized: null });
+  const saveInFlightRef = useRef(false);
+  const deleteInFlightRef = useRef(false);
   const [formStatus, setFormStatus] = useState('PUBLISHED'); // 'DRAFT' | 'PUBLISHED'
   const [formIsVip, setFormIsVip] = useState(false);
   const [formVipPriceVnd, setFormVipPriceVnd] = useState('');
@@ -583,6 +590,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
   // Modal phóng to xem ảnh sắc nét
   const [previewImageModalUrl, setPreviewImageModalUrl] = useState(null);
+
+  useEffect(() => () => {
+    if (coverImagePreviewUrl.startsWith('blob:')) URL.revokeObjectURL(coverImagePreviewUrl);
+  }, [coverImagePreviewUrl]);
 
   const [showUrlInputs, setShowUrlInputs] = useState({});
   const toggleShowUrl = (key) => {
@@ -617,6 +628,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   const handleRestoreDraft = () => {
     if (!recoverableDraft) return;
     if (recoverableDraft.formTitle) setFormTitle(recoverableDraft.formTitle);
+    if (recoverableDraft.formCoverImageUrl !== undefined) setFormCoverImageUrl(recoverableDraft.formCoverImageUrl || '');
+    if (recoverableDraft.formClearCoverImage !== undefined) setFormClearCoverImage(Boolean(recoverableDraft.formClearCoverImage));
     if (recoverableDraft.formStatus) setFormStatus(recoverableDraft.formStatus);
     if (recoverableDraft.formIsVip !== undefined) setFormIsVip(Boolean(recoverableDraft.formIsVip));
     if (recoverableDraft.formVipPriceVnd !== undefined) setFormVipPriceVnd(recoverableDraft.formVipPriceVnd);
@@ -1015,7 +1028,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     setAutoSaveState({ status: 'saving', savedAt: null });
     setBuilderMode('create');
     setSelectedTest(null);
+    editPartsBaselineRef.current = { testId: null, serialized: null };
     setFormTitle(classroomId ? 'Đề TOEIC riêng của lớp' : `ETS TOEIC 2026 - Test ${(totalElements + 1).toString().padStart(2, '0')}`);
+    setFormCoverImageUrl('');
+    setCoverImagePreviewUrl('');
+    setFormClearCoverImage(false);
     setFormStatus('PUBLISHED');
     setFormIsVip(false);
     setFormVipPriceVnd('');
@@ -1032,6 +1049,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           setRecoverableDraft(parsed);
           setFormParts(parsed.formParts);
           if (parsed.formTitle) setFormTitle(parsed.formTitle);
+          if (parsed.formCoverImageUrl !== undefined) setFormCoverImageUrl(parsed.formCoverImageUrl || '');
+          if (parsed.formClearCoverImage !== undefined) setFormClearCoverImage(Boolean(parsed.formClearCoverImage));
           if (parsed.formStatus) setFormStatus(parsed.formStatus);
           if (parsed.formIsVip !== undefined) setFormIsVip(Boolean(parsed.formIsVip));
           if (parsed.formVipPriceVnd !== undefined) setFormVipPriceVnd(parsed.formVipPriceVnd);
@@ -1060,7 +1079,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     setBuilderMode('edit');
     setAutoSaveState({ status: 'saving', savedAt: null });
     setSelectedTest(test);
+    editPartsBaselineRef.current = { testId: test.id, serialized: null };
     setFormTitle(test.titleTest || '');
+    setFormCoverImageUrl(test.coverImageUrl || '');
+    setCoverImagePreviewUrl('');
+    setFormClearCoverImage(false);
     setFormStatus(test.status || 'PUBLISHED');
     setFormIsVip(Boolean(test.isVip));
     setFormVipPriceVnd(test.vipPriceVnd == null ? '' : String(test.vipPriceVnd));
@@ -1094,7 +1117,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       if (requestId !== editLoadRequestRef.current) return false;
       if (res.code === 1000 && res.data) {
         const fullTest = res.data;
+        setSelectedTest(fullTest);
         setFormTitle(fullTest.titleTest || test.titleTest || '');
+        setFormCoverImageUrl(fullTest.coverImageUrl || test.coverImageUrl || '');
+        setCoverImagePreviewUrl('');
+        setFormClearCoverImage(false);
         if (fullTest.status) {
           setFormStatus(fullTest.status);
         }
@@ -1259,6 +1286,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
           // LUÔN LUÔN ƯU TIÊN NẠP DỮ LIỆU GỐC MỚI NHẤT TỪ MÁY CHỦ CSDL (Server Database Single Source of Truth)
           setFormParts(partsArr);
+          editPartsBaselineRef.current = { testId: test.id, serialized: JSON.stringify(partsArr) };
           isDirtyRef.current = false;
 
           // Nếu có bản nháp trên trình duyệt, chỉ bật banner thông báo để người dùng chủ động khôi phục nếu muốn
@@ -1272,7 +1300,9 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             setRecoverableDraft(null);
           }
         } else {
-          setFormParts([createFreshPart(1), createFreshPart(5)]);
+          const emptyParts = [createFreshPart(1), createFreshPart(5)];
+          setFormParts(emptyParts);
+          editPartsBaselineRef.current = { testId: null, serialized: null };
         }
         return true;
       }
@@ -1390,6 +1420,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           testId: selectedTest?.id || null,
           builderMode,
           formTitle,
+          formCoverImageUrl,
+          formClearCoverImage,
           formStatus,
           formIsVip,
           formVipPriceVnd,
@@ -1407,7 +1439,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [AUTOSAVE_STORAGE_KEY, formTitle, formStatus, formIsVip, formVipPriceVnd, formParts, builderMode, selectedTest?.id, builderOpen]);
+  }, [AUTOSAVE_STORAGE_KEY, formTitle, formCoverImageUrl, formClearCoverImage, formStatus, formIsVip, formVipPriceVnd, formParts, builderMode, selectedTest?.id, builderOpen]);
 
   // Đóng modal an toàn: Cảnh báo người dùng nếu có thay đổi chưa lưu lên máy chủ CSDL
   const handleCloseBuilder = async () => {
@@ -1437,6 +1469,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   // isSilent: boolean - nếu true thì không bắn Toast (dùng cho Auto-Sync ngầm máy chủ)
   const handleSaveExam = useCallback(async (e, forcedStatus = null, keepOpen = false, isSilent = false) => {
     if (e && e.preventDefault) e.preventDefault();
+
+    if (saveInFlightRef.current) return;
+    if (uploadingKey) {
+      if (!isSilent) setToast({ type: 'info', message: 'Vui lòng đợi tải tệp lên hoàn tất rồi lưu đề.' });
+      return;
+    }
+    if (builderMode === 'edit' && !selectedTest?.id) {
+      if (!isSilent) setToast({ type: 'error', message: 'Chưa nạp được mã đề thi. Hãy đóng hộp thoại và mở lại đề.' });
+      return;
+    }
 
     let targetStatus = forcedStatus || formStatus;
 
@@ -1490,6 +1532,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       }
     }
 
+    saveInFlightRef.current = true;
     try {
       setActionLoading(true);
       // Clean payload: Đảm bảo Part 2 không mang theo dữ liệu thừa của Option D
@@ -1587,6 +1630,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
       const payload = {
         titleTest: formTitle.trim(),
+        coverImageUrl: formCoverImageUrl.trim() || null,
+        clearCoverImage: formClearCoverImage,
         status: targetStatus,
         isVip: formIsVip,
         vipPriceVnd: formIsVip && !classroomId ? Number(formVipPriceVnd) : null,
@@ -1623,12 +1668,15 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               const matchedTest = updatedRes.data.content.find((t) => t.titleTest === formTitle.trim()) || updatedRes.data.content[0];
               setSelectedTest(matchedTest);
               setBuilderMode('edit');
+              editPartsBaselineRef.current = { testId: matchedTest.id, serialized: JSON.stringify(formParts) };
               // Cập nhật lại testId vào draftData để các lần tự lưu tiếp theo chuẩn ID
               try {
                 const currentDraft = {
                   testId: matchedTest.id,
                   builderMode: 'edit',
                   formTitle,
+                  formCoverImageUrl,
+                  formClearCoverImage,
                   formStatus: targetStatus,
                   formIsVip,
                   formVipPriceVnd,
@@ -1648,9 +1696,22 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể tạo đề thi.' });
         }
       } else {
+        const baseline = editPartsBaselineRef.current;
+        const contentUnchanged = !classroomId && baseline.testId === selectedTest.id
+          && baseline.serialized === JSON.stringify(formParts);
+        const metadataOnly = contentUnchanged
+          && formIsVip === Boolean(selectedTest.isVip)
+          && String(formVipPriceVnd ?? '') === String(selectedTest.vipPriceVnd ?? '');
         const res = classroomId
           ? await examService.updateClassroomTest(classroomId, selectedTest.id, payload)
-          : await examService.updateTest(selectedTest.id, payload);
+          : metadataOnly
+            ? await examService.updateTestMetadata(selectedTest.id, {
+                titleTest: formTitle.trim(),
+                coverImageUrl: formCoverImageUrl.trim() || null,
+                clearCoverImage: formClearCoverImage,
+                status: targetStatus,
+              })
+            : await examService.updateTest(selectedTest.id, payload);
         if (res.code === 1000) {
           if (!keepOpen && targetStatus === 'PUBLISHED') {
             clearAutosaveDraft();
@@ -1659,13 +1720,25 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           if (!isSilent) {
             setToast({
               type: 'success',
-              message: `Cập nhật toàn bộ đề thi "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+              message: `${metadataOnly ? 'Cập nhật thông tin đề' : 'Cập nhật nội dung đề'} "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
             });
           }
           setAutoSaveState({
             status: 'synced_server',
             savedAt: new Date(),
           });
+          isDirtyRef.current = false;
+          if (metadataOnly) {
+            setSelectedTest((current) => current ? {
+              ...current,
+              titleTest: formTitle.trim(),
+              coverImageUrl: formClearCoverImage ? null : (formCoverImageUrl.trim() || current.coverImageUrl),
+              status: targetStatus,
+            } : current);
+          } else {
+            editPartsBaselineRef.current = { testId: selectedTest.id, serialized: JSON.stringify(formParts) };
+          }
+          setFormClearCoverImage(false);
           setFormStatus(targetStatus);
           if (!keepOpen) {
             setBuilderOpen(false);
@@ -1678,13 +1751,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     } catch (err) {
       const msg =
         err.response?.data?.message ||
-        'Máy chủ báo lỗi khi lưu đề thi. Vui lòng kiểm tra ràng buộc dữ liệu backend.';
+        (Number(err.response?.data?.code) === 3010
+          ? 'Đề đã có lịch sử nên không thể thay đổi câu hỏi hoặc giá VIP; bạn vẫn có thể đổi tên, ảnh bìa và trạng thái.'
+          : 'Máy chủ không lưu được đề. Dữ liệu chưa bị xóa; hãy kiểm tra thông báo lỗi và thử lại.');
       if (!isSilent) setToast({ type: 'error', message: msg });
     } finally {
+      saveInFlightRef.current = false;
       setActionLoading(false);
     }
-  }, [AUTOSAVE_STORAGE_KEY, builderMode, classroomId, clearAutosaveDraft, fetchTests, formIsVip,
-    formParts, formStatus, formTitle, formVipPriceVnd, selectedTest]);
+  }, [AUTOSAVE_STORAGE_KEY, builderMode, classroomId, clearAutosaveDraft, fetchTests, formClearCoverImage, formCoverImageUrl, formIsVip,
+    formParts, formStatus, formTitle, formVipPriceVnd, selectedTest, uploadingKey]);
 
   // TẦNG 2: Đồng bộ ngầm thông minh lên máy chủ sau mỗi 30s (Chỉ chạy khi có thay đổi thực sự isDirty)
   useEffect(() => {
@@ -1693,7 +1769,6 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     const syncTimer = setInterval(() => {
       if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
         handleSaveExam(null, formStatus, true, true);
-        isDirtyRef.current = false;
       }
     }, 30000);
 
@@ -1706,7 +1781,6 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S') && builderOpen) {
         e.preventDefault();
         handleSaveExam(null, formStatus, true, false);
-        isDirtyRef.current = false;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1716,7 +1790,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   // Confirm Delete Test
 
   const handleConfirmDelete = async () => {
-    if (!selectedTest) return;
+    if (!selectedTest || deleteInFlightRef.current) return;
+    deleteInFlightRef.current = true;
     try {
       setActionLoading(true);
       const res = classroomId
@@ -1741,6 +1816,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         'Lỗi khóa ngoại MySQL: Đề thi có chứa câu hỏi, cần cấu hình ON DELETE CASCADE trong backend để xóa toàn bộ.';
       setToast({ type: 'error', message: msg });
     } finally {
+      deleteInFlightRef.current = false;
       setActionLoading(false);
     }
   };
@@ -1882,6 +1958,43 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     } finally {
       setUploadingKey(null);
       e.target.value = ''; // Reset input để có thể chọn lại cùng 1 file
+    }
+  };
+
+  const handleCoverImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setToast({ type: 'error', message: 'Ảnh bìa cần là tệp JPEG hoặc PNG.' });
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({ type: 'error', message: 'Ảnh bìa không được vượt quá 5 MB.' });
+      event.target.value = '';
+      return;
+    }
+    const localPreviewUrl = URL.createObjectURL(file);
+    setCoverImagePreviewUrl(localPreviewUrl);
+    setUploadingKey('test-cover');
+    try {
+      const uploaded = await uploadMediaFile(file, formTitle || 'TOEIC Test', 'cover');
+      setFormCoverImageUrl(uploaded.url);
+      URL.revokeObjectURL(localPreviewUrl);
+      setCoverImagePreviewUrl('');
+      setFormClearCoverImage(false);
+      markDirty();
+      setToast({ type: 'success', message: 'Đã tải ảnh bìa đề thi lên.' });
+    } catch (error) {
+      URL.revokeObjectURL(localPreviewUrl);
+      setCoverImagePreviewUrl('');
+      setToast({
+        type: 'error',
+        message: error.response?.data?.message || error.message || 'Không thể tải ảnh bìa lên.',
+      });
+    } finally {
+      setUploadingKey(null);
+      event.target.value = '';
     }
   };
 
@@ -5405,31 +5518,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             {!classroomId && <Link to="/courses" className="btn btn-outline btn-sm inline-flex items-center gap-1.5">
               <ExternalLink size={15} /> Xem thư viện học viên
             </Link>}
-            {!classroomId && <button
+            <button
               type="button"
               className="test-studio-create btn btn-sm inline-flex items-center gap-1.5 font-bold"
               onClick={handleOpenCreateModal}
             >
               <Plus size={16} /> Soạn đề {classroomId ? 'riêng' : 'thi mới'}
-            </button>}
+            </button>
           </div>
         </div>
 
         {/* Admin Navigation Tabs */}
-        {!classroomId && <div className="test-studio-nav flex gap-2 mb-6">
-          <div className="is-active inline-flex items-center gap-2 px-5 py-3 font-bold text-sm -mb-0.5 cursor-default">
-            <BookOpen size={18} /> Quản lý Đề thi
-            <span className="test-studio-count px-2 py-0.5 text-xs font-black">
-              {totalElements}
-            </span>
-          </div>
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center gap-2 px-5 py-3 font-semibold text-sm"
-          >
-            <Users size={18} /> Quản lý Người dùng
-          </Link>
-        </div>}
+        {!classroomId && <AdminNavTabs />}
 
         {/* Filter & Search Bar */}
         <div className="test-studio-filters space-y-3 mb-6">
@@ -5693,45 +5793,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           title={
           builderMode === 'create'
             ? (classroomId ? 'Soạn đề TOEIC riêng cho lớp' : 'Soạn thảo & Khởi tạo Đề thi TOEIC mới')
-            : `Chỉnh sửa toàn bộ Đề thi: "${selectedTest?.titleTest}"`
+            : `Chỉnh sửa đề thi: "${formTitle || selectedTest?.titleTest || 'Đang tải đề…'}"`
         }
         maxWidth="980px"
       >
         <form onSubmit={handleSaveExam} noValidate className="test-builder-form flex flex-col gap-5">
-          {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
-          {recoverableDraft && (
-            <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-xl flex items-center justify-between flex-wrap gap-2 animate-fadeIn shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <Sparkles size={18} className="text-amber-600 shrink-0" />
-                <div className="text-xs">
-                  <span className="font-bold">Phát hiện phiên làm việc chưa lưu trước đó:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
-                  <span className="font-semibold">
-                    {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
-                  </span>{' '}
-                  ngày {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleDateString('vi-VN') : ''}.
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleRestoreDraft}
-                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
-                >
-                  Khôi phục bản nháp này
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDismissDraft}
-                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-all cursor-pointer"
-                >
-                  Bỏ qua & Xóa
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* STICKY QUICK ACTION & AUTOSAVE STATUS BAR */}
-          <div className="test-builder-toolbar sticky -top-4 z-30 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+          <div className="test-builder-toolbar sticky top-0 z-40 px-4 py-3 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="text-xs font-extrabold text-slate-800 truncate max-w-[260px]">
                 {formTitle || 'Chưa đặt tên đề thi'}
@@ -5798,13 +5866,46 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleSaveExam(null, 'PUBLISHED', false)}
                 disabled={actionLoading}
                 title="Kiểm tra và Xuất bản đề thi lên hệ thống"
-                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                className="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-blue-700 hover:bg-blue-800 text-white transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
               >
                 <CheckCircle2 size={13} />
                 Xuất bản đề thi
               </button>
             </div>
           </div>
+
+          {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
+          {recoverableDraft && (
+            <div className="bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 rounded-sm flex items-center justify-between flex-wrap gap-2 animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <Sparkles size={18} className="text-amber-600 shrink-0" />
+                <div className="text-xs">
+                  <span className="font-bold">Phát hiện phiên làm việc chưa lưu trước đó:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
+                  <span className="font-semibold">
+                    {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
+                  </span>{' '}
+                  ngày {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleDateString('vi-VN') : ''}.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRestoreDraft}
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-sm transition-all cursor-pointer"
+                >
+                  Khôi phục bản nháp này
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissDraft}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-sm border border-slate-300 transition-all cursor-pointer"
+                >
+                  Bỏ qua & Xóa
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Test Basic Info & Status */}
           <div className="test-builder-basic-info p-4 space-y-4">
             <div>
@@ -5820,44 +5921,91 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   setFormTitle(e.target.value);
                   markDirty();
                 }}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-base font-bold text-slate-900 bg-white outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="w-full px-4 py-2.5 rounded-sm border border-slate-300 text-base font-bold text-slate-900 bg-white outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               />
             </div>
 
-            {!classroomId && <div className="grid gap-4 border-2 border-black bg-[#fff6b8] p-4 md:grid-cols-[1fr_1fr]">
-              <label className="flex cursor-pointer items-center gap-3 font-black">
-                <input
-                  type="checkbox"
-                  checked={formIsVip}
-                  onChange={(event) => {
-                    setFormIsVip(event.target.checked);
-                    if (!event.target.checked) setFormVipPriceVnd('');
-                    markDirty();
-                  }}
-                  className="h-5 w-5 accent-black"
-                />
-                Đề VIP có thu phí
-              </label>
-              <label className="block text-xs font-bold uppercase tracking-wider">
-                Giá riêng (VND)
-                <input
-                  type="number"
-                  min="1"
-                  max="99999999"
-                  step="1"
-                  required={formIsVip}
-                  disabled={!formIsVip}
-                  value={formVipPriceVnd}
-                  onChange={(event) => {
-                    setFormVipPriceVnd(event.target.value);
-                    markDirty();
-                  }}
-                  placeholder={formIsVip ? 'Ví dụ: 49000' : 'Chỉ dùng cho đề VIP'}
-                  className="mt-2 w-full border-2 border-black bg-white px-3 py-2 text-sm font-bold disabled:bg-stone-200"
-                />
-                <span className="mt-1 block normal-case tracking-normal text-slate-600">Giá được máy chủ kiểm tra và lưu theo từng đề.</span>
-              </label>
-            </div>}
+            <div className="grid gap-4 border border-slate-200 bg-white p-4 md:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="min-w-0 space-y-3">
+                <div>
+                  <p className="mb-1.5 text-sm font-semibold text-slate-900">Ảnh bìa đề thi</p>
+                  <p className="text-sm text-slate-600">{formCoverImageUrl ? 'Đã có ảnh bìa. Tải ảnh mới để thay thế hoặc gỡ ảnh.' : 'Chưa có ảnh bìa. Ảnh này dùng ở NEWS và danh sách đề; không bắt buộc.'}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex min-h-11 cursor-pointer items-center justify-center border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 focus-within:outline focus-within:outline-2 focus-within:outline-blue-700">
+                    <ImageIcon size={16} className="mr-2" aria-hidden="true" />
+                    {uploadingKey === 'test-cover' ? 'Đang tải ảnh…' : 'Chọn ảnh từ máy'}
+                    <input type="file" accept="image/jpeg,image/png" className="sr-only" onChange={handleCoverImageUpload} disabled={uploadingKey === 'test-cover'} />
+                  </label>
+                  {formCoverImageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormCoverImageUrl('');
+                        setCoverImagePreviewUrl('');
+                        setFormClearCoverImage(true);
+                        markDirty();
+                      }}
+                      className="min-h-11 px-3 text-sm font-semibold text-red-700 underline underline-offset-2 hover:text-red-800"
+                    >
+                      Gỡ ảnh bìa
+                    </button>
+                  )}
+                  <span className="text-xs text-slate-600">JPEG hoặc PNG · tối đa 5 MB</span>
+                </div>
+              </div>
+              <div className="flex h-44 max-h-44 items-center justify-center overflow-hidden border border-slate-200 bg-slate-50 p-2">
+                {coverImagePreviewUrl || formCoverImageUrl ? (
+                  <img src={coverImagePreviewUrl || formCoverImageUrl} alt="Xem trước ảnh bìa đề thi" className="test-cover-preview-img h-40 max-h-40 w-full object-contain" />
+                ) : (
+                  <span className="text-sm text-slate-500">Chưa có ảnh bìa</span>
+                )}
+              </div>
+            </div>
+
+            {!classroomId && (
+              <div className="grid gap-4 border border-slate-200 bg-slate-50/80 p-4 md:grid-cols-[1fr_1fr]">
+                <div className="flex flex-col justify-center gap-1">
+                  <label className="flex cursor-pointer items-center gap-3 text-sm font-bold text-slate-900">
+                    <input
+                      type="checkbox"
+                      checked={formIsVip}
+                      onChange={(event) => {
+                        setFormIsVip(event.target.checked);
+                        if (!event.target.checked) setFormVipPriceVnd('');
+                        markDirty();
+                      }}
+                      className="h-4 w-4 accent-blue-700"
+                    />
+                    Đề VIP có thu phí
+                  </label>
+                  <span className="text-xs text-slate-600 pl-7">
+                    Bật tùy chọn này nếu đề yêu cầu mở khóa quyền truy cập riêng.
+                  </span>
+                </div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Giá riêng (VND)
+                  <input
+                    type="number"
+                    min="1"
+                    max="99999999"
+                    step="1"
+                    required={formIsVip}
+                    disabled={!formIsVip}
+                    value={formVipPriceVnd}
+                    onChange={(event) => {
+                      setFormVipPriceVnd(event.target.value);
+                      markDirty();
+                    }}
+                    placeholder={formIsVip ? 'Ví dụ: 49000' : 'Chỉ dùng cho đề VIP'}
+                    className="mt-1.5 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900 disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                  <span className="mt-1 block normal-case tracking-normal text-slate-500 font-normal">
+                    Giá được máy chủ kiểm tra và lưu theo từng đề.
+                  </span>
+                </label>
+              </div>
+            )}
 
             <div className="pt-3 border-t border-slate-200 flex items-center justify-between flex-wrap gap-3">
               <div>
@@ -5871,12 +6019,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 </p>
               </div>
 
-              <div className="inline-flex rounded-lg p-1 bg-slate-200 border border-slate-300">
+              <div className="inline-flex rounded-sm p-1 bg-slate-100 border border-slate-300">
                 <button
                   type="button"
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-sm transition-all ${
                     formStatus === 'PUBLISHED'
-                      ? 'bg-emerald-600 text-white shadow-xs'
+                      ? 'bg-blue-700 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                   onClick={() => {
@@ -5888,9 +6036,9 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 </button>
                 <button
                   type="button"
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-sm transition-all ${
                     formStatus === 'DRAFT'
-                      ? 'bg-amber-600 text-white shadow-xs'
+                      ? 'bg-slate-800 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                   onClick={() => {
@@ -5907,69 +6055,69 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           {/* ========================================================================= */}
           {/* BẢNG ĐỐI CHIẾU TIẾN ĐỘ & CẤU TRÚC THAM KHẢO TOEIC    */}
           {/* ========================================================================= */}
-          <div className="test-builder-guide p-4 space-y-3">
+          <div className="test-builder-guide p-4 space-y-3 border border-slate-200 bg-slate-50">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <span className="test-builder-guide-label text-[11px] font-black px-2 py-0.5 uppercase tracking-wider">
+                <span className="test-builder-guide-label text-[11px] font-bold px-2 py-0.5 uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
                   Cấu trúc tham khảo
                 </span>
-                <span className="test-builder-guide-summary font-extrabold text-sm">
+                <span className="test-builder-guide-summary font-bold text-sm text-slate-900">
                   TOEIC Listening & Reading: 200 câu • 120 phút • điểm quy đổi cần đối chiếu theo từng đề
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setEtsGuideOpen(true)}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 text-emerald-200 border border-emerald-500/30 transition-all inline-flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-sm text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all inline-flex items-center gap-1.5"
                 >
                   <BookOpen size={13} /> Xem cẩm nang ETS
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyFullETSTest}
-                  className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all inline-flex items-center gap-1.5 shadow-sm"
+                  className="px-3 py-1.5 rounded-sm text-xs font-semibold bg-blue-700 hover:bg-blue-800 text-white transition-all inline-flex items-center gap-1.5"
                   title="Tự động sinh khung đầy đủ 7 Part với 200 câu hỏi chuẩn ETS (100 câu Listening + 100 câu Reading)"
                 >
-                  <Sparkles size={13} /> ⚡ Tạo Full Test 200 câu chuẩn
+                  <Sparkles size={13} /> Tạo Full Test 200 câu chuẩn
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyMiniETSTest}
-                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all inline-flex items-center gap-1.5"
+                  className="px-2.5 py-1.5 rounded-sm text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-all inline-flex items-center gap-1.5"
                   title="Tạo khung Mini Test 50 câu rút gọn theo đúng tỷ lệ các Part"
                 >
-                  ⚡ Mini Test (50 câu)
+                  Mini Test (50 câu)
                 </button>
               </div>
             </div>
 
             {/* Live Progress Bar */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
                 <span>
-                  Tiến độ soạn đề: <strong className="text-white text-sm">{etsMetrics.totalCount}</strong> / 200 câu
+                  Tiến độ soạn đề: <strong className="text-slate-900 text-sm">{etsMetrics.totalCount}</strong> / 200 câu
                   {etsMetrics.isFullETS ? (
-                    <span className="text-emerald-400 ml-2 font-black">✓ ĐẠT CHUẨN ETS 100% (200 câu)</span>
+                    <span className="text-emerald-700 ml-2 font-bold">✓ ĐẠT CHUẨN ETS 100% (200 câu)</span>
                   ) : (
-                    <span className="text-amber-300 ml-2 font-normal">
+                    <span className="text-slate-600 ml-2 font-normal">
                       (Listening: {etsMetrics.listeningCount}/100 • Reading: {etsMetrics.readingCount}/100)
                     </span>
                   )}
                 </span>
-                <span className="text-emerald-400 font-mono">
+                <span className="text-blue-700 font-mono font-bold">
                   {Math.min(100, Math.round((etsMetrics.totalCount / 200) * 100))}%
                 </span>
               </div>
-              <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden flex">
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden flex">
                 <div
-                  className="bg-emerald-400 h-full transition-all duration-300"
+                  className="bg-emerald-600 h-full transition-all duration-300"
                   style={{ width: `${Math.min(50, (etsMetrics.listeningCount / 200) * 100)}%` }}
                   title={`Listening: ${etsMetrics.listeningCount}/100 câu`}
                 />
                 <div
-                  className="bg-blue-400 h-full transition-all duration-300"
+                  className="bg-blue-600 h-full transition-all duration-300"
                   style={{ width: `${Math.min(50, (etsMetrics.readingCount / 200) * 100)}%` }}
                   title={`Reading: ${etsMetrics.readingCount}/100 câu`}
                 />
@@ -5988,19 +6136,19 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 return (
                   <div
                     key={pNum}
-                    className={`p-1.5 rounded-lg border text-center text-[11px] transition-all ${
+                    className={`p-1.5 rounded-sm border text-center text-[11px] transition-all ${
                       isExact
-                        ? 'bg-emerald-900/60 border-emerald-500/50 text-emerald-200'
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                         : isOver
-                        ? 'bg-red-950/60 border-red-500/50 text-red-200'
+                        ? 'bg-red-50 border-red-300 text-red-800'
                         : currentCount > 0
-                        ? 'bg-amber-950/60 border-amber-500/40 text-amber-200'
-                        : 'bg-slate-900/60 border-slate-700/50 text-slate-400'
+                        ? 'bg-amber-50 border-amber-300 text-amber-800'
+                        : 'bg-white border-slate-200 text-slate-500'
                     }`}
                   >
                     <div className="font-bold flex items-center justify-center gap-1">
                       <span>P{pNum}</span>
-                      {pNum === 2 && <span className="text-[9px] bg-sky-500 text-slate-950 px-1 rounded font-black">3 opts</span>}
+                      {pNum === 2 && <span className="text-[9px] bg-blue-100 text-blue-800 px-1 rounded-sm font-bold">3 opts</span>}
                     </div>
                     <div className="font-mono text-[10px] mt-0.5">
                       {currentCount}/{standard} {isExact ? '✓' : ''}

@@ -143,30 +143,62 @@ const PracticePage = () => {
 
       <div className="container section-padding">
         {/* Select the published test used by direct Part practice */}
-        <section className="mb-8 border-2 border-black bg-[#FFE600] p-5 shadow-[5px_5px_0_#111]" aria-labelledby="practice-test-heading">
+        <section className="mb-8 border border-slate-200 bg-[#F8FAFC] p-5 sm:p-6" aria-labelledby="practice-test-heading">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em]">Bắt đầu luyện tập</p>
-              <h2 id="practice-test-heading" className="mt-1 text-2xl font-black">Chọn đề thi để luyện theo Part</h2>
-              <p className="mt-1 max-w-2xl text-sm font-semibold">Chọn đề đã xuất bản, sau đó bắt đầu trực tiếp phần bạn muốn luyện. Quyền truy cập đề VIP vẫn được xác thực ở máy chủ.</p>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">Bắt đầu luyện tập</p>
+              <h2 id="practice-test-heading" className="mt-1 text-2xl font-bold text-slate-900">Chọn đề thi để luyện theo Part</h2>
+              <p className="mt-1 max-w-2xl text-sm text-slate-600">
+                Chọn đề đã xuất bản, sau đó bắt đầu trực tiếp phần bạn muốn luyện. Quyền truy cập đề VIP vẫn được xác thực ở máy chủ.
+              </p>
             </div>
-            <Link to="/courses" className="inline-flex min-h-11 items-center border-2 border-black bg-[#fffef5] px-4 font-black shadow-[3px_3px_0_#111]">Xem toàn bộ catalog</Link>
+            <Link to="/courses" className="editorial-button-secondary inline-flex min-h-10 items-center px-4 text-sm font-semibold">
+              Xem toàn bộ catalog
+            </Link>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-            <label className="block text-sm font-black" htmlFor="practice-test-search">
-              <span className="mb-1 flex items-center gap-2"><Search size={16} /> Tìm đề</span>
-              <input id="practice-test-search" value={testSearch} onChange={(event) => setTestSearch(event.target.value)} placeholder="Nhập tên đề thi" className="min-h-11 w-full border-2 border-black bg-[#fffef5] px-3 font-semibold outline-none focus-visible:ring-4 focus-visible:ring-[#ff5b93]" />
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700" htmlFor="practice-test-search">
+              <span className="mb-1.5 flex items-center gap-2"><Search size={15} className="text-[#1D4ED8]" /> Tìm đề</span>
+              <input
+                id="practice-test-search"
+                value={testSearch}
+                onChange={(event) => setTestSearch(event.target.value)}
+                placeholder="Nhập tên đề thi"
+                className="min-h-10 w-full border border-slate-300 bg-white px-3.5 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+              />
             </label>
-            <label className="block text-sm font-black" htmlFor="practice-test-select">
-              <span className="mb-1 block">Đề đang chọn</span>
-              <select id="practice-test-select" value={selectedTestId} onChange={(event) => setSelectedTestId(event.target.value)} disabled={loadingTests || matchingTests.length === 0} className="min-h-11 w-full border-2 border-black bg-[#fffef5] px-3 font-semibold outline-none focus-visible:ring-4 focus-visible:ring-[#ff5b93] disabled:opacity-60">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700" htmlFor="practice-test-select">
+              <span className="mb-1.5 block">Đề đang chọn</span>
+              <select
+                id="practice-test-select"
+                value={selectedTestId}
+                onChange={(event) => setSelectedTestId(event.target.value)}
+                disabled={loadingTests || matchingTests.length === 0}
+                className="min-h-10 w-full border border-slate-300 bg-white px-3.5 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8] disabled:opacity-60"
+              >
                 {matchingTests.length === 0 && <option value="">{loadingTests ? 'Đang tải đề thi…' : 'Không tìm thấy đề phù hợp'}</option>}
                 {matchingTests.map((test) => <option key={test.id} value={test.id}>{test.titleTest}{test.isVip ? ' · VIP' : ''}</option>)}
               </select>
             </label>
           </div>
-          {testsError && <p role="alert" className="mt-3 flex items-center gap-2 border-2 border-black bg-[#ff5b93] p-3 text-sm font-bold"><AlertCircle size={17} />{testsError}<button type="button" className="ml-auto underline" onClick={() => { setLoadingTests(true); setTestsError(''); loadTests(); }}>Thử lại</button></p>}
-          {!loadingTests && !testsError && tests.length === 0 && <p className="mt-3 border-2 border-black bg-[#fffef5] p-3 text-sm font-semibold">Chưa có đề đã xuất bản để luyện. Hãy quay lại sau hoặc xem catalog.</p>}
+          {testsError && (
+            <p role="alert" className="mt-3 flex items-center gap-2 border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+              <AlertCircle size={17} />
+              {testsError}
+              <button
+                type="button"
+                className="ml-auto font-semibold underline"
+                onClick={() => { setLoadingTests(true); setTestsError(''); loadTests(); }}
+              >
+                Thử lại
+              </button>
+            </p>
+          )}
+          {!loadingTests && !testsError && tests.length === 0 && (
+            <p className="mt-3 border border-slate-200 bg-white p-3 text-sm text-slate-600">
+              Chưa có đề đã xuất bản để luyện. Hãy quay lại sau hoặc xem catalog.
+            </p>
+          )}
         </section>
 
         {/* Banner to Full Test Catalog */}

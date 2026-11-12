@@ -5,8 +5,6 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.base.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import jakarta.persistence.LockModeType;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TestCatalogCategory;
@@ -45,7 +43,10 @@ public interface TestRepository extends BaseRepository<Test, String>{
     Page<Test> findByTitleTestContainingIgnoreCaseAndStatus(String titleTest, TestStatus status, Pageable pageable);
     Page<Test> findByTitleTestContainingIgnoreCaseAndStatusAndClassroomIsNull(String titleTest, TestStatus status, Pageable pageable);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT t FROM Test t WHERE t.id = :id")
+    // Use an explicit MariaDB-compatible row lock. Hibernate's generated
+    // "FOR UPDATE OF alias" syntax is rejected by the project's MariaDB setup.
+    @Query(value = "SELECT t.* FROM test t WHERE t.id = :id FOR UPDATE", nativeQuery = true)
     java.util.Optional<Test> findForUpdateById(@Param("id") String id);
+
+    boolean existsByCoverImageUrlAndIdNot(String coverImageUrl, String id);
 }

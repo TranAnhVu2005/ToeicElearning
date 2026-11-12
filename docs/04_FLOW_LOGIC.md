@@ -29,6 +29,12 @@
 3. Nếu chưa có kết quả/giao dịch/assignment, backend xóa cứng đề. Trước đó, media đề private/public chỉ bị xóa khỏi Cloudinary khi không còn được context của đề khác tham chiếu; registry private được dọn cùng asset.
 4. UI hiển thị kết quả thực tế từ backend, không khẳng định xóa vĩnh viễn cho trường hợp archive.
 
+### Cập nhật đề hệ thống đã được sử dụng
+
+- Nếu đề chưa có lượt làm, giao dịch hoặc assignment, admin có thể cập nhật metadata và toàn bộ nội dung.
+- Nếu đã có tham chiếu, API cập nhật toàn bộ từ chối để giữ nguyên câu hỏi/đáp án mà bài review lịch sử trỏ tới. UI dùng endpoint riêng cho tên, ảnh bìa và trạng thái; khi publish, backend vẫn kiểm tra nội dung và quyền media. Metadata endpoint không sửa giá VIP hay nội dung.
+- Nếu admin thay câu hỏi ở đề có tham chiếu, UI hiển thị rõ `TEST_HAS_HISTORY` và đề nghị chỉ sửa tên/ảnh bìa. Muốn thay nội dung, cần tạo đề mới; không sửa dữ liệu mà kết quả cũ đang tham chiếu.
+
 ## 1.1. Đăng ký giáo viên, thanh toán và duyệt
 
 1. Người dùng gửi hồ sơ đăng ký giáo viên; hồ sơ bắt đầu ở `PENDING_PAYMENT` hoặc trạng thái tương đương.
@@ -80,6 +86,7 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 ## 6. Submit, history và review
 
 - Server chấm từ answer key DB, không tin score client.
+- Mỗi lần làm mới (không phải replay idempotent) lưu `TestResult`/`UserAnswer` và cập nhật tiến độ học tập trên dòng `User` đã khóa: tính `currentStreak` (tăng 1 nếu `lastActiveDate` là hôm qua, giữ nguyên nếu cùng ngày, đặt lại 1 nếu cách ngày), cập nhật `highestStreak`, `lastActiveDate` và `totalScore` (lưu điểm ước tính cao nhất của các lượt Full Test 200 câu).
 - Mỗi lần làm lưu user, test, optional part, thời lượng, tổng câu, số đúng/điểm và timestamp.
 - User chỉ xem history/review của mình; quyền admin cần policy riêng.
 - Review cho thấy lựa chọn đã chọn, đáp án đúng, đúng/sai, explanation và transcript/translation nếu phù hợp.

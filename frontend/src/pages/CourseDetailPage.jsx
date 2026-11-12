@@ -451,10 +451,10 @@ const CourseDetailPage = () => {
 
   if (loading) {
     return (
-      <main className="flex min-h-[75vh] items-center justify-center bg-[#fffdf2] px-4 text-[#111]">
-        <div role="status" className="border-2 border-black bg-white p-8 text-center shadow-[5px_5px_0_#111]">
-          <div aria-hidden="true" className="mx-auto mb-4 h-11 w-11 animate-spin border-4 border-black border-t-[#FFE600]" />
-          <p className="font-bold">Đang tải dữ liệu đề thi TOEIC...</p>
+      <main className="course-detail-page flex min-h-[75vh] items-center justify-center bg-white px-4 text-slate-900">
+        <div role="status" className="border border-slate-200 bg-white p-8 text-center">
+          <div aria-hidden="true" className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-slate-200 border-t-[#1D4ED8]" />
+          <p className="text-sm font-semibold text-slate-700">Đang tải dữ liệu đề thi TOEIC...</p>
         </div>
       </main>
     );
@@ -462,14 +462,17 @@ const CourseDetailPage = () => {
 
   if (error || !test) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#fffdf2] px-4 py-16 text-center text-[#111]">
-        <section role="alert" className="max-w-2xl border-2 border-black bg-white p-7 shadow-[5px_5px_0_#111] sm:p-10">
-        <AlertCircle size={42} aria-hidden="true" className="mx-auto mb-4 text-[#B42318]" />
-        <h2 className="mb-2 text-xl font-black">Không tìm thấy đề thi</h2>
-        <p className="mb-6 font-medium">{error || 'Đề thi không tồn tại hoặc đã bị gỡ bỏ.'}</p>
-        <Link to="/courses" className="inline-flex min-h-11 items-center gap-2 border-2 border-black bg-[#FFE600] px-4 py-2 font-black shadow-[3px_3px_0_#111] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#FF5B93]">
-          <ArrowLeft size={16} /> Quay lại danh sách đề thi
-        </Link>
+      <main className="course-detail-page flex min-h-[60vh] items-center justify-center bg-white px-4 py-16 text-center text-slate-900">
+        <section role="alert" className="max-w-2xl border border-slate-200 bg-white p-7 sm:p-10">
+          <AlertCircle size={40} aria-hidden="true" className="mx-auto mb-4 text-red-600" />
+          <h2 className="mb-2 text-xl font-bold text-slate-900">Không tìm thấy đề thi</h2>
+          <p className="mb-6 text-sm text-slate-600">{error || 'Đề thi không tồn tại hoặc đã bị gỡ bỏ.'}</p>
+          <Link
+            to="/courses"
+            className="editorial-button-primary inline-flex min-h-10 items-center gap-2 px-4 py-2 text-sm font-semibold"
+          >
+            <ArrowLeft size={16} /> Quay lại danh sách đề thi
+          </Link>
         </section>
       </main>
     );
@@ -477,17 +480,36 @@ const CourseDetailPage = () => {
 
   if (vipLocked) {
     return (
-      <main className="min-h-[75vh] bg-[#fffdf2] px-4 py-14 text-[#111] sm:px-6">
-        <section className="mx-auto max-w-3xl border-2 border-black bg-white p-7 shadow-[6px_6px_0_#111] sm:p-10">
-          <span className="inline-flex items-center gap-2 border-2 border-black bg-[#FF5B93] px-3 py-1 text-xs font-black uppercase"><LockKeyhole size={15} /> Đề VIP</span>
-          <h1 className="mt-5 text-3xl font-black sm:text-4xl">{test.titleTest}</h1>
-          <p className="mt-3 max-w-2xl font-semibold">Mua một lần, mở quyền truy cập đề này vĩnh viễn. Nội dung bài thi chỉ được tải sau khi máy chủ xác nhận thanh toán.</p>
-          <p className="mt-6 inline-block border-2 border-black bg-[#FFE600] px-4 py-3 text-2xl font-black">{Number(test.vipPriceVnd || 0).toLocaleString('vi-VN')} ₫</p>
+      <main className="course-detail-page min-h-[75vh] bg-white px-4 py-14 text-slate-900 sm:px-6">
+        <section className="mx-auto max-w-3xl border border-slate-200 bg-white p-7 sm:p-10">
+          <span className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-bold uppercase text-[#1D4ED8]">
+            <LockKeyhole size={14} /> Đề VIP
+          </span>
+          <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{test.titleTest}</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Mua một lần, mở quyền truy cập đề này vĩnh viễn. Nội dung bài thi chỉ được tải sau khi máy chủ xác nhận thanh toán.
+          </p>
+          <p className="mt-6 inline-block border border-slate-200 bg-[#F8FAFC] px-5 py-3 font-mono text-2xl font-bold text-slate-900">
+            {Number(test.vipPriceVnd || 0).toLocaleString('vi-VN')} ₫
+          </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <button type="button" onClick={handleBuyVipTest} disabled={purchaseLoading} className="border-2 border-black bg-[#FFE600] px-5 py-3 font-black shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5 disabled:opacity-60">{purchaseLoading ? 'Đang tạo giao dịch…' : 'Mua đề qua VNPAY'}</button>
-            <Link to="/courses" className="border-2 border-black bg-white px-5 py-3 font-black">Quay lại danh sách đề</Link>
+            <button
+              type="button"
+              onClick={handleBuyVipTest}
+              disabled={purchaseLoading}
+              className="editorial-button-primary px-5 py-3 text-sm font-semibold disabled:opacity-60"
+            >
+              {purchaseLoading ? 'Đang tạo giao dịch…' : 'Mua đề qua VNPAY'}
+            </button>
+            <Link to="/courses" className="editorial-button-secondary px-5 py-3 text-sm font-semibold">
+              Quay lại danh sách đề
+            </Link>
           </div>
-          {toast && <p role="alert" className="mt-5 border-2 border-black bg-rose-200 p-3 font-bold">{toast.message}</p>}
+          {toast && (
+            <p role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+              {toast.message}
+            </p>
+          )}
         </section>
       </main>
     );
@@ -854,21 +876,21 @@ const CourseDetailPage = () => {
                       >
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-[#111] tracking-tight">
+                            <span className="text-xs font-bold text-slate-900 tracking-tight">
                               {item.name}
                             </span>
-                            <span className="border-2 border-black bg-[#FFE600] px-2 py-0.5 text-[10px] font-black">
+                            <span className="border border-blue-200 bg-[#EFF6FF] px-2 py-0.5 font-mono text-[10px] font-bold text-[#1D4ED8]">
                               {item.count}
                             </span>
                           </div>
-                          <p className="text-xs font-medium text-[#333] leading-relaxed">{item.desc}</p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
                         </div>
 
-                        <div className="flex items-center justify-between border-t-2 border-black pt-2">
-                          <span className="text-[11px] font-semibold text-[#444]">Audio đề</span>
+                        <div className="flex items-center justify-between border-t border-slate-200 pt-2.5">
+                          <span className="text-[11px] font-medium text-slate-500">Audio đề</span>
                           <Link
                             to={`/courses/${testId}/dictation?part=${item.part}`}
-                            className="inline-flex min-h-10 items-center gap-1.5 border-2 border-black bg-white px-3 py-1.5 text-xs font-black shadow-[2px_2px_0_#111] transition active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:bg-[#FF5B93] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#FFE600]"
+                            className="editorial-button-secondary inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
                           >
                             Bắt đầu chép <ChevronRight size={13} />
                           </Link>
@@ -878,7 +900,7 @@ const CourseDetailPage = () => {
                   </div>
                 </div>
 
-                {/* Master Action CTA (Double-Bezel Button-in-Button) */}
+                {/* Master Action CTA */}
                 <div className="pt-2">
                   <Link
                     to={`/courses/${testId}/dictation?part=all`}
@@ -901,19 +923,21 @@ const CourseDetailPage = () => {
                     Thảo luận về đề thi này ({comments.length})
                   </h3>
                   <form onSubmit={handleAddComment} className="space-y-3">
-                    <p className="border-2 border-black bg-amber-100 p-3 text-xs font-semibold">Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.</p>
-                  <textarea
+                    <p className="border border-slate-200 bg-[#F8FAFC] p-3 text-xs text-slate-600">
+                      Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.
+                    </p>
+                    <textarea
                       rows={3}
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Chia sẻ cảm nghĩ hoặc câu hỏi của bạn về đề thi..."
-                    className="course-detail-textarea w-full p-3 text-sm"
+                      className="course-detail-textarea w-full p-3 text-sm"
                     />
                     <div className="flex justify-end">
-                    <button
+                      <button
                         type="submit"
                         disabled={!newComment.trim()}
-                      className="course-detail-action course-detail-submit px-5 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
+                        className="course-detail-action course-detail-submit px-5 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
                       >
                         <Send size={13} /> Gửi bình luận
                       </button>
@@ -922,31 +946,35 @@ const CourseDetailPage = () => {
 
                   {/* List of comments */}
                   <div className="divide-y divide-slate-100 pt-2">
-                    {comments.length === 0 ? <p className="py-5 text-center text-sm font-semibold text-slate-600">Chưa có bình luận trong phiên này.</p> : comments.map((c) => (
-                      <div key={c.id} className="py-4 space-y-1.5">
-                        <div className="flex items-center gap-2 text-xs">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">
-                            {c.author.substring(0, 2).toUpperCase()}
+                    {comments.length === 0 ? (
+                      <p className="py-5 text-center text-sm text-slate-500">Chưa có bình luận trong phiên này.</p>
+                    ) : (
+                      comments.map((c) => (
+                        <div key={c.id} className="py-4 space-y-1.5">
+                          <div className="flex items-center gap-2 text-xs">
+                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">
+                              {c.author.substring(0, 2).toUpperCase()}
+                            </div>
+                            <span className="font-bold text-slate-800">{c.author}</span>
+                            {c.isOfficial && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
+                                Admin
+                              </span>
+                            )}
+                            <span className="text-slate-400">•</span>
+                            <span className="text-slate-400">{c.date}</span>
                           </div>
-                          <span className="font-bold text-slate-800">{c.author}</span>
-                          {c.isOfficial && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-600 text-white font-bold">
-                              Admin
-                            </span>
-                          )}
-                          <span className="text-slate-400">•</span>
-                          <span className="text-slate-400">{c.date}</span>
+                          <p className="text-xs text-slate-700 pl-8 leading-relaxed">{c.content}</p>
                         </div>
-                        <p className="text-xs text-slate-700 pl-8 leading-relaxed">{c.content}</p>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN (Ảnh 1 - Double-Bezel Architecture) */}
-              <div className="course-history-card">
+            {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN */}
+            <div className="course-history-card">
               <div className="course-history-content space-y-4">
                 <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
                   Kết quả làm bài của bạn:
@@ -957,9 +985,15 @@ const CourseDetailPage = () => {
                 ) : historyLoading ? (
                   <div className="py-8 text-center text-xs text-slate-500">Đang tải lịch sử bài làm...</div>
                 ) : historyError ? (
-                  <div role="alert" className="flex flex-wrap items-center justify-center gap-3 border-2 border-black bg-rose-100 p-4 text-sm font-bold">
+                  <div role="alert" className="flex flex-wrap items-center justify-center gap-3 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
                     <span>{historyError}</span>
-                    <button type="button" onClick={() => setHistoryRetry((retry) => retry + 1)} className="min-h-10 border-2 border-black bg-[#FFE600] px-3 font-black shadow-[2px_2px_0_#111]">Thử tải lại</button>
+                    <button
+                      type="button"
+                      onClick={() => setHistoryRetry((retry) => retry + 1)}
+                      className="editorial-button-secondary min-h-9 px-3 text-xs font-semibold"
+                    >
+                      Thử tải lại
+                    </button>
                   </div>
                 ) : testHistory.length === 0 ? (
                   <div className="text-center py-8 text-slate-400 text-xs">
@@ -1019,7 +1053,9 @@ const CourseDetailPage = () => {
                   Bình luận
                 </h3>
                 <form onSubmit={handleAddComment} className="space-y-3">
-                  <p className="border-2 border-black bg-amber-100 p-3 text-xs font-semibold">Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.</p>
+                  <p className="border border-slate-200 bg-[#F8FAFC] p-3 text-xs text-slate-600">
+                    Thảo luận hiện chỉ lưu trong phiên trình duyệt này, chưa đồng bộ lên máy chủ.
+                  </p>
                   <textarea
                     rows={2}
                     value={newComment}
@@ -1062,7 +1098,7 @@ const CourseDetailPage = () => {
 
           {/* RIGHT SIDEBAR COLUMN: USER CARD & BANNERS (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
-            {/* User Profile Card (Ảnh 1 - Double-Bezel Architecture) */}
+            {/* User Profile Card */}
             <div className="course-profile-card">
               <div className="course-profile-content text-center space-y-3">
                 <div className="course-profile-avatar flex items-center justify-center mx-auto overflow-hidden">
@@ -1098,29 +1134,35 @@ const CourseDetailPage = () => {
               onClick={handleStartPractice}
               className="course-detail-goal-cta w-full p-5 text-left"
             >
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider"><Compass size={17} /> Luyện theo mục tiêu</div>
-              <h4 className="mt-2 text-lg font-black">Chọn Part phù hợp</h4>
-              <p className="mt-1 text-sm font-medium">Bắt đầu với phần bạn muốn cải thiện, rồi xem lại đáp án sau khi hoàn thành.</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-black">Chọn Part <ChevronRight size={16} /></span>
+              <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#1D4ED8]"><Compass size={17} /> Luyện theo mục tiêu</div>
+              <h4 className="mt-2 text-lg font-bold text-slate-900">Chọn Part phù hợp</h4>
+              <p className="mt-1 text-sm text-slate-600">Bắt đầu với phần bạn muốn cải thiện, rồi xem lại đáp án sau khi hoàn thành.</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#1D4ED8]">Chọn Part <ChevronRight size={16} /></span>
             </button>
 
-            <section className="space-y-2 border-2 border-black bg-white p-5 shadow-[4px_4px_0_#111]">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider"><Award size={17} /> Cách đọc điểm</div>
-              <h4 className="text-lg font-black">Điểm luyện tập là ước tính</h4>
-              <p className="text-sm leading-relaxed">Điểm full test được ước tính từ số câu đúng, không phải điểm TOEIC chính thức. ETS quy đổi điểm theo từng đề thi.</p>
+            <section className="space-y-2 border border-slate-200 bg-white p-5">
+              <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-slate-500"><Award size={17} className="text-[#1D4ED8]" /> Cách đọc điểm</div>
+              <h4 className="text-lg font-bold text-slate-900">Điểm luyện tập là ước tính</h4>
+              <p className="text-sm leading-relaxed text-slate-600">Điểm full test được ước tính từ số câu đúng, không phải điểm TOEIC chính thức. ETS quy đổi điểm theo từng đề thi.</p>
             </section>
 
             <button
               type="button"
               onClick={() => setTranscriptModalOpen(true)}
-              className="flex w-full items-start gap-3 border-2 border-black bg-[#FFE600] p-5 text-left text-[#111] shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#FF5B93]"
+              className="flex w-full items-start gap-3 border border-slate-200 bg-[#F8FAFC] p-5 text-left text-slate-900 transition hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
             >
-              <Headphones size={21} className="mt-0.5 shrink-0" />
-              <span><span className="block font-black">Nghe lại và xem lời giải</span><span className="mt-1 block text-sm font-medium">Mở lịch sử để xem đáp án, giải thích và transcript sau lượt làm.</span></span>
+              <Headphones size={20} className="mt-0.5 shrink-0 text-[#1D4ED8]" />
+              <span>
+                <span className="block font-bold text-slate-900">Nghe lại và xem lời giải</span>
+                <span className="mt-1 block text-sm text-slate-600">Mở lịch sử để xem đáp án, giải thích và transcript sau lượt làm.</span>
+              </span>
             </button>
 
-            <Link to="/profile" className="flex items-center justify-between gap-3 border-2 border-black bg-white p-5 font-black shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#FF5B93]">
-              <span className="flex items-center gap-2"><BarChart3 size={18} /> Theo dõi lịch sử học</span>
+            <Link
+              to="/profile"
+              className="flex items-center justify-between gap-3 border border-slate-200 bg-white p-5 font-bold text-slate-900 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+            >
+              <span className="flex items-center gap-2"><BarChart3 size={18} className="text-[#1D4ED8]" /> Theo dõi lịch sử học</span>
               <ChevronRight size={17} />
             </Link>
           </div>
@@ -1139,18 +1181,23 @@ const CourseDetailPage = () => {
             Đáp án và transcript chỉ được mở sau khi bạn hoàn thành một lượt luyện đề này.
           </p>
 
-          <div className="space-y-4">
-                {historyLoading ? (
-                  <p className="border-2 border-black bg-yellow-100 p-4 text-sm">Đang tải lịch sử bài làm…</p>
-                ) : historyError ? (
-                  <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border-2 border-black bg-rose-100 p-4 text-sm font-bold"><span>{historyError}</span><button type="button" onClick={() => setHistoryRetry((retry) => retry + 1)} className="border-2 border-black bg-[#FFE600] px-3 py-2 font-black">Thử lại</button></div>
-                ) : isAuthenticated && testHistory.length > 0 ? testHistory.slice(0, 15).map((attempt) => (
-              <div key={attempt.id} className="flex items-center justify-between gap-4 border-2 border-black bg-yellow-100 p-4 text-sm">
-                <span><strong>{attempt.typePractice}</strong> · {attempt.correctCount}/{attempt.totalCount} câu đúng</span>
-                <button type="button" onClick={() => { setTranscriptModalOpen(false); navigate(`/results/${attempt.id}`); }} className="border-2 border-black bg-white px-3 py-2 font-black shadow-[3px_3px_0_#111]">Xem lời giải</button>
+          <div className="space-y-3">
+            {historyLoading ? (
+              <p className="border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Đang tải lịch sử bài làm…</p>
+            ) : historyError ? (
+              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+                <span>{historyError}</span>
+                <button type="button" onClick={() => setHistoryRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
+              </div>
+            ) : isAuthenticated && testHistory.length > 0 ? testHistory.slice(0, 15).map((attempt) => (
+              <div key={attempt.id} className="flex items-center justify-between gap-4 border border-slate-200 bg-white p-4 text-sm">
+                <span><strong className="text-slate-900">{attempt.typePractice}</strong> · <span className="font-mono">{attempt.correctCount}/{attempt.totalCount}</span> câu đúng</span>
+                <button type="button" onClick={() => { setTranscriptModalOpen(false); navigate(`/results/${attempt.id}`); }} className="editorial-button-primary px-3 py-1.5 text-xs font-semibold">Xem lời giải</button>
               </div>
             )) : (
-              <p className="border-2 border-black bg-yellow-100 p-4 text-sm">{isAuthenticated ? 'Bạn chưa có lượt làm để xem đáp án.' : 'Đăng nhập và hoàn thành một lượt làm để xem đáp án và lời giải.'}</p>
+              <p className="border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                {isAuthenticated ? 'Bạn chưa có lượt làm để xem đáp án.' : 'Đăng nhập và hoàn thành một lượt làm để xem đáp án và lời giải.'}
+              </p>
             )}
           </div>
 
@@ -1158,7 +1205,7 @@ const CourseDetailPage = () => {
             <button
               type="button"
               onClick={() => setTranscriptModalOpen(false)}
-              className="px-5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold"
+              className="editorial-button-secondary px-5 py-2 text-xs font-semibold"
             >
               Đóng
             </button>
@@ -1174,20 +1221,20 @@ const CourseDetailPage = () => {
         maxWidth="max-w-md"
       >
         <div className="space-y-4 text-xs">
-          <p className="font-medium leading-relaxed">
+          <p className="font-medium leading-relaxed text-slate-700">
             Bạn có chắc muốn gỡ đề <strong>"{test?.titleTest}"</strong> khỏi danh sách không? Nếu đề đã có kết quả, giao dịch hoặc bài tập tham chiếu, hệ thống sẽ chuyển đề về bản nháp để giữ lịch sử liên quan. Chỉ đề chưa được sử dụng mới bị xóa vĩnh viễn.
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              className="min-h-11 border-2 border-black bg-white px-4 py-2 font-black shadow-[3px_3px_0_#111] hover:bg-[#f1eedf] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#FF5B93]"
+              className="editorial-button-secondary min-h-10 px-4 py-2 font-semibold"
               onClick={() => setDeleteModalOpen(false)}
             >
               Hủy
             </button>
             <button
               type="button"
-              className="min-h-11 border-2 border-black bg-[#FF5B93] px-4 py-2 font-black shadow-[3px_3px_0_#111] hover:bg-[#ff78a6] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#FFE600] disabled:opacity-60"
+              className="min-h-10 border border-red-600 bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               onClick={handleDeleteTest}
               disabled={actionLoading}
             >

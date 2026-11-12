@@ -18,6 +18,10 @@ public class UserMapper {
                 .userNumberphone(u.getUserNumberphone())
                 .userAvatar(u.getUserAvatar())
                 .role(u.getRole() != null ? u.getRole().getRoleName() : "ROLE_USER")
+                .currentStreak(u.getCurrentStreak() == null ? 0 : u.getCurrentStreak())
+                .highestStreak(u.getHighestStreak() == null ? 0 : u.getHighestStreak())
+                .totalScore(u.getTotalScore() == null ? 0 : u.getTotalScore())
+                .lastActiveDate(u.getLastActiveDate())
                 .hasLocalPassword(hasLocalPassword)
                 .canSetLocalPassword(!hasLocalPassword && u.getGoogleSub() != null && !u.getGoogleSub().isBlank())
                 .build();

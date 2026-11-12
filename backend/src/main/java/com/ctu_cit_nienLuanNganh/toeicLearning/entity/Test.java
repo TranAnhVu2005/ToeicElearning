@@ -28,6 +28,10 @@ public class Test extends BaseCreatedUpdatedEntity {
     @JsonView(ApiViews.Public.class)
     private String titleTest;
 
+    @Column(name = "cover_image_url", length = 2048)
+    @JsonView(ApiViews.Public.class)
+    private String coverImageUrl;
+
     @Enumerated(EnumType.STRING) //Nếu không dùng hibernate sẽ lưu số tự tự của enum
     @Column(name = "status", length = 20)
     @Builder.Default //Thiết lập giá trị mặc định

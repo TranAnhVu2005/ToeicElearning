@@ -23,7 +23,6 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.repository.NotificationRepository
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestResultRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -187,9 +186,12 @@ public class AssignmentService {
             }
         }
         if (!eligibleStudentIds.isEmpty()) {
-            Object[] scoreSummary = testResultRepository.summarizeReviewedScores(assignmentId, eligibleStudentIds);
-            scoreTotal = scoreSummary[0] == null ? 0L : ((Number) scoreSummary[0]).longValue();
-            scoreCount = ((Number) scoreSummary[1]).intValue();
+            List<Object[]> scoreSummaryRows = testResultRepository.summarizeReviewedScores(assignmentId, eligibleStudentIds);
+            Object[] scoreSummary = scoreSummaryRows.isEmpty() ? null : scoreSummaryRows.get(0);
+            scoreTotal = scoreSummary == null || scoreSummary.length < 1 || scoreSummary[0] == null
+                    ? 0L : ((Number) scoreSummary[0]).longValue();
+            scoreCount = scoreSummary == null || scoreSummary.length < 2 || scoreSummary[1] == null
+                    ? 0 : ((Number) scoreSummary[1]).intValue();
         }
         return AssignmentSummaryResponse.builder()
                 .eligibleStudents(rows.size())
@@ -210,8 +212,8 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.findByIdForUpdate(assignmentId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         // The assignment may already be managed from session validation earlier in this transaction.
-        // Refresh after acquiring the lock so deadline and late policy use the latest committed values.
-        entityManager.refresh(assignment, LockModeType.PESSIMISTIC_WRITE);
+        // Refresh after acquiring the native FOR UPDATE row lock so deadline and late policy use the latest committed values.
+        entityManager.refresh(assignment);
         if (!Boolean.TRUE.equals(assignment.getIsActive())
                 || assignment.getTest() == null || assignment.getTest().getStatus() != TestStatus.PUBLISHED
                 || !assignment.getClassroom().getId().equals(
@@ -280,7 +282,7 @@ public class AssignmentService {
         Assignment assignment = assignmentRepository.findByIdForUpdate(assignmentId)
                 .filter(candidate -> candidate.getClassroom().getTeacher().getId().equals(teacher.getId()))
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        entityManager.refresh(assignment, LockModeType.PESSIMISTIC_WRITE);
+        entityManager.refresh(assignment);
         return assignment;
     }
 

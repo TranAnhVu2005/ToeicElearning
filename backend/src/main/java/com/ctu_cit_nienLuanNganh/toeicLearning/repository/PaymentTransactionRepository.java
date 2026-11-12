@@ -6,15 +6,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.jpa.repository.Lock;
-import jakarta.persistence.LockModeType;
 import java.util.Optional;
 
 import java.time.LocalDateTime;
 
 public interface PaymentTransactionRepository extends BaseRepository<PaymentTransaction, String> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM PaymentTransaction p JOIN FETCH p.user WHERE p.vnpTxnRef = :txnRef")
+    // Use native FOR UPDATE so MariaDB does not fail on Hibernate's generated "FOR UPDATE OF alias".
+    @Query(value = "SELECT p.* FROM payment_transaction p WHERE p.vnp_txn_ref = :txnRef FOR UPDATE", nativeQuery = true)
     Optional<PaymentTransaction> findForUpdateByVnpTxnRef(@Param("txnRef") String txnRef);
 
     Optional<PaymentTransaction> findByVnpTxnRefAndUser_Id(String txnRef, String userId);

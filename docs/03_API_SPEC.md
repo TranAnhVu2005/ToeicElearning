@@ -8,7 +8,7 @@
 
 - Base URL local: `http://localhost:8080/api`.
 - Response thành công thường là `ApiResponse<T>`: `code`, `message`, `data`, `timestamp`.
-- Phân trang dùng `numberPage` (1-based), `sizeOfPage`, `keyWord`, `sortBy`, `direction`; xem `PageParams` để biết giới hạn.
+- Phân trang dùng `numberPage` (1-based, giới hạn 1–10.000), `sizeOfPage` (1–100, mặc định 10), `keyWord`, `sortBy` (chỉ nhận allowlist: `id`, `createdAt`, `updatedAt`, `userName`, `userEmail`, `isLocked`, `totalScore`, `currentStreak`, `highestStreak`, `titleTest`, `status`; ngoài danh sách tự động lùi về `createdAt`), `direction` (`ASC`/`DESC`); `GlobalExceptionHandler` đồng thời bắt `PropertyReferenceException` trả `400 VALIDATION_ERROR`.
 - `PageResponse` trả `content`, `pageNumber`, `pageSize`, `totalElements`, `totalPages`, `isFirst` và `isLast`; giữ nguyên tên hai field boolean này để client khóa đúng nút phân trang.
 - Auth hiện gửi `Authorization: Bearer <token>`.
 - Không trả stack trace, credential, đáp án hoặc quyền VIP chưa được cấp.
@@ -27,16 +27,17 @@
 | Exam | `GET /exam/{testID}/dictation` | Authenticated; kiểm tra quyền đề trước khi trả transcript; giới hạn 60/IP và 30/user mỗi 15 phút. |
 | Exam | `POST /exam/submit`, `POST /exam/sessions` | Authenticated; giới hạn 30/IP và 15/user mỗi 15 phút. |
 | Exam | `PATCH /exam/sessions/{sessionId}/answers` | Authenticated; autosave giới hạn 600/IP và 600/user mỗi 15 phút để hỗ trợ thao tác làm bài liên tục. |
-| Exam | `POST /exam/create`, `PUT /exam/update/{testID}` | ADMIN quản lý đề hệ thống; TEACHER dùng routes scope riêng dưới `/exam/classrooms/{id}/tests`. |
-| Exam | `PATCH /exam/{testID}/publish`, `/draft` | ADMIN quản lý đề hệ thống; TEACHER publish đề riêng qua route classroom. |
-| Exam | `DELETE /exam/delete/{testID}` | ADMIN; nếu có lượt làm, giao dịch hoặc assignment tham chiếu thì chuyển về DRAFT và trả `ARCHIVED`; nếu chưa có tham chiếu thì xóa đề, nội dung và media không còn được đề khác dùng, trả `DELETED`. |
-| User | `GET /user/me` | Authenticated. |
-| User | `PATCH /user/updateprofile` | Authenticated; form model/multipart; uploaded avatar uses the same decoded JPEG/PNG validation and size limit. |
+| Exam | `POST /exam/create`, `PUT /exam/update/{testID}` | ADMIN quản lý đề hệ thống (từ chối đề thuộc lớp với `TEST_NOT_FOUND`); TEACHER dùng routes scope riêng dưới `/exam/classrooms/{id}/tests`. Đề chưa có kết quả/giao dịch/assignment mới được thay nội dung; nếu đã được tham chiếu, backend trả `TEST_HAS_HISTORY` (3010), giữ nội dung và review cũ. |
+| Exam | `PATCH /exam/update/{testID}/metadata` | ADMIN; chỉ áp dụng cho đề hệ thống (`classroom == null`), cập nhật tên/ảnh bìa và trạng thái. Được phép khi đề đã có lịch sử vì không thay nội dung/giá VIP; khi chuyển sang PUBLISHED, backend vẫn kiểm tra quyền media và nội dung đề. Request allowlist `titleTest`, `coverImageUrl`, `clearCoverImage`, `status`. |
+| Exam | `PATCH /exam/{testID}/publish`, `/draft` | ADMIN quản lý đề hệ thống (`classroom == null`); TEACHER publish đề riêng qua route classroom. |
+| Exam | `DELETE /exam/delete/{testID}` | ADMIN (chỉ đề hệ thống); nếu có lượt làm, giao dịch, assignment hoặc phiên thi đang active tham chiếu thì chuyển về DRAFT và trả `ARCHIVED`; nếu chưa có tham chiếu thì xóa các phiên hết hạn/hủy, xóa đề, nội dung và media/ảnh bìa không còn được đề khác dùng, trả `DELETED`. |
+| User | `GET /user/me` | Authenticated; trả thông tin hồ sơ kèm `currentStreak`, `highestStreak`, `totalScore`, `lastActiveDate`, `hasLocalPassword`, `canSetLocalPassword`. |
+| User | `PATCH /user/updateprofile` | Authenticated; khóa dòng user khi cập nhật, kiểm tra tài khoản không bị khóa, chuẩn hóa tên/email/số điện thoại, multipart avatar dùng cùng kiểm tra decode JPEG/PNG ≤5 MiB. |
 | User | `POST /user/changepassword` | Authenticated; xác minh mật khẩu cũ, đổi hash, tăng `authVersion` để thu hồi JWT cũ; người dùng đăng nhập lại. Google-only account chưa đặt mật khẩu cục bộ cần dùng route bên dưới. |
 | User | `POST /user/setpassword` | Authenticated; chỉ tài khoản có `google_sub` và chưa có mật khẩu cục bộ. Request gồm `googleIdToken` còn mới (iat không quá 5 phút) và `newUserPassword` 6–100 ký tự. Server xác minh chữ ký/audience/issuer/thời hạn, subject phải trùng tài khoản hiện tại; lưu BCrypt, tăng `authVersion` và yêu cầu đăng nhập lại. Không nhận email làm bằng chứng liên kết. |
 | Admin | `GET /admin/users` | ADMIN; phân trang. |
 | Admin | `PATCH /admin/changestatus` | ADMIN; khóa/mở khóa. |
-| Media | `POST /media/upload` | ADMIN/TEACHER; multipart file/folder; JPEG/PNG decoded before upload (≤5 MiB), MP3/WAV/M4A signature checked (≤20 MiB), app namespace only; max 30 requests/IP and 20/user per 15 minutes. Private exam upload registers server-returned public ID/format/resource/delivery type with the uploader; TEACHER may attach only their own registered media. Client cannot request deletion of an old URL. |
+| Media | `POST /media/upload` | ADMIN/TEACHER; multipart file/folder; JPEG/PNG decoded before upload (≤5 MiB), MP3/WAV/M4A signature checked (≤20 MiB), app namespace only; max 30 requests/IP and 20/user per 15 minutes. Cover ảnh công khai lưu tại `Resource/toeic-learning/exams/{slug}/covers`; private exam upload registers server-returned public ID/format/resource/delivery type with the uploader; TEACHER may attach only their own registered private media. Client cannot request deletion of an old URL. |
 | Media | `DELETE /media/delete?url=...` | Disabled/removed: client-supplied URL cannot prove asset ownership. Server cleanup only accepts HTTPS assets on the configured Cloudinary account under the app namespace. |
 
 `SecurityConfig` chỉ allowlist public các method/route cần thiết; mọi request không khớp route public đều cần xác thực. Endpoint mới phải được phân loại public/authenticated/role rõ ràng và thêm authorization ở controller/service khi cần; không mở rộng wildcard `permitAll`.

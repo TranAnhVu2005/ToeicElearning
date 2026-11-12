@@ -21,9 +21,10 @@
 
 Các tên dưới đây là miền dữ liệu cần đáp ứng, không buộc giữ nguyên tên bảng. Mỗi entity cần ID, audit fields, khóa ngoại, unique/index, validation và trạng thái rõ.
 
-- **TeacherApplication (đã có)**: user, statement, trạng thái `PENDING_PAYMENT` / `PENDING_REVIEW` / `APPROVED` / `REJECTED`, admin/thời điểm duyệt và lý do. Chỉ cấp role giáo viên sau khi duyệt.
-- **PaymentTransaction (đã mở rộng)**: user, amount VND, `productType`, teacher application tùy chọn, mã `vnpTxnRef`, trạng thái, mã phản hồi/giao dịch provider và `paidAt`. Checkout và xác nhận thanh toán là hai trạng thái riêng.
+- **TeacherApplication (đã có)**: user, statement, trạng thái `PENDING_PAYMENT` / `PENDING_REVIEW` / `APPROVED` / `REJECTED`, admin/thời điểm duyệt và lý do. Chỉ cấp role giáo viên sau khi duyệt; khi duyệt, backend khóa cả dòng `teacher_application` và dòng `user` bằng native `SELECT ... FOR UPDATE` để tránh xung đột với trạng thái khóa tài khoản.
+- **PaymentTransaction (đã mở rộng)**: user, amount VND, `productType`, teacher application tùy chọn, mã `vnpTxnRef`, trạng thái, mã phản hồi/giao dịch provider và `paidAt`. Checkout và xác nhận thanh toán là hai trạng thái riêng; IPN và thao tác đánh dấu hết hạn đều khóa dòng giao dịch bằng native `SELECT ... FOR UPDATE`.
 - **ExamMediaAsset (đã có)**: public ID duy nhất, format, Cloudinary resource/delivery type, người tải lên và thời điểm. Chỉ metadata do upload endpoint đăng ký mới được teacher gắn vào đề; teacher chỉ được dùng media mình tải lên. Admin giữ quyền quản trị nội dung toàn hệ thống.
+- **Test ảnh bìa**: `Test.coverImageUrl` nullable, lưu URL ảnh bìa công khai thuộc Cloudinary namespace của ứng dụng. Upload qua media endpoint trong thư mục `exams/{slug}/covers`; ảnh chỉ dùng cho catalog/NEWS, không thay thế media câu hỏi. Khi thay thế hoặc xóa ảnh bìa/xóa đề, ảnh bìa cũ trên Cloudinary chỉ bị xóa nếu không còn đề nào khác tham chiếu. Database cũ thêm cột bằng migration `V20261111_01__add_test_cover_image.sql`.
 - **TestEntitlement (đã có)**: user được quyền xem/làm test, nguồn `PAYMENT`, gắn payment transaction; unique (user,test), cấp một lần và không hết hạn.
 - **Giá đề VIP (đã có)**: mỗi `Test` có `isVip` và giá VND riêng do admin cấu hình; backend kiểm tra số nguyên dương tối đa 99,999,999 VND. Payment lưu amount/tên sản phẩm snapshot và test ID.
 - **Classroom**: giáo viên owner, tên, mô tả (`description`, nullable), join code/invitation, trạng thái và timestamps. Entity/bootstrap DDL đã có cột mô tả; database cũ cần áp dụng `backend/migrations/V20261031_01__add_classroom_description.sql` đúng một lần.
@@ -49,7 +50,8 @@ Các tên dưới đây là miền dữ liệu cần đáp ứng, không buộc 
 
 - Catalog không cần cột phân loại đề mới: `FULL` suy ra từ tổng 200 `Question`; `LISTENING`/`READING` suy ra từ context gắn `Part 1–4`/`Part 5–7`. Các filter phải chạy ở truy vấn trước phân trang, không dựa trên tập đề của trang hiện tại.
 
-- ID entity kế thừa `BaseEntity` là UUID dạng chuỗi 36 ký tự.
+- ID entity kế thừa `BaseEntity` là UUID dạng chuỗi 36 ký tự; `BaseCreatedEntity.createdAt` và `BaseCreatedUpdatedEntity.updatedAt` gắn `@JsonView(ApiViews.Public.class)` để mọi phản hồi đề thi/phần thi có dùng JSON view vẫn giữ nguyên dấu thời gian tạo/cập nhật.
+- Toàn bộ truy vấn khóa bi quan (pessimistic write lock) trên `user`, `test`, `exam_session`, `assignment`, `classroom`, `class_member`, `payment_transaction` và `teacher_application` đều dùng native SQL `SELECT ... FOR UPDATE` thay cho `@Lock(LockModeType.PESSIMISTIC_WRITE)` trên JPQL hoặc `entityManager.refresh(..., LockModeType.PESSIMISTIC_WRITE)` nhằm tương thích hoàn toàn với cả MySQL 8+ và MariaDB (tránh lỗi cú pháp `FOR UPDATE OF <alias>` do Hibernate 7.4 sinh ra).
 - `orderIndex` của context là số câu đầu tiên trong context; sắp context theo nó.
 - `questionNumber` là số global của câu trong bài; sắp câu trong context theo nó.
 - Ranh giới passage Part 7 phải được bảo toàn khi một cụm có 2 hoặc 3 bài đọc. Nếu schema chỉ có một `paragraph` cho context, cần thiết kế mở rộng/migration thay vì ghép mất cấu trúc.

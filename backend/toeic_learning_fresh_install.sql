@@ -5,10 +5,13 @@
 -- thay đổi đã được đưa vào bootstrap từ migrations (classroom.description,
 -- auth/login rate limits, private media, presence, VIP entitlement, exam session,
 -- audit). Không nối lại seed_ets_2026_test02_to_test10.sql hoặc
--- seed_ybm_2025_tests.sql: các bản sao đó đã được bao gồm ở dạng local draft.
--- Các seed copy đều sao chép nội dung Test 01; chúng không phải đề ETS/YBM độc lập.
+-- seed_ybm_2025_tests.sql: các bản sao đó đã được bao gồm bên dưới ở dạng local.
+-- Test 02-04 là bản sao local từ nội dung Test 01, để PUBLISHED phục vụ kiểm thử UI/API với nhiều đề.
+-- Test 05-10 và các bản YBM tiếp tục là DRAFT. Các bản sao giữ nguyên URL media của Test 01;
+-- chúng không phải nội dung ETS/YBM độc lập và không được coi là đề thương mại.
 -- Kiểm tra độ chính xác answer key, giấy phép nội dung/media và quyền thương mại
--- trước khi publish hoặc đưa dữ liệu lên production.
+-- trước khi publish cho người học thật hoặc đưa dữ liệu lên production; các clone
+-- Test 02-04 chỉ phục vụ kiểm thử giao diện/chức năng trong môi trường local.
 -- Không tạo tài khoản admin/password mặc định. Đăng ký tài khoản tin cậy trước,
 -- rồi DBA có thể gán role ROLE_ADMIN theo email đã xác minh, ví dụ:
 -- UPDATE `user` SET role_id=(SELECT id FROM role WHERE role_name='ROLE_ADMIN')
@@ -20,7 +23,6 @@
 -- Nội dung đề là seed hiện có trong repository; cần xác minh answer key và quyền phân phối trước khi xuất bản/thương mại hóa.
 -- ==============================================================================
 -- Non-destructive fresh install: không DROP database hoặc bảng.
--- DROP DATABASE IF EXISTS toeiclearning;  
 CREATE DATABASE IF NOT EXISTS toeiclearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE toeiclearning;
 
@@ -58,6 +60,7 @@ INSERT INTO part (id, name_part) VALUES
 CREATE TABLE test (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title_test VARCHAR(255) NOT NULL,
+    cover_image_url VARCHAR(2048),
     status VARCHAR(20) DEFAULT 'DRAFT',
     is_vip BOOLEAN NOT NULL DEFAULT FALSE,
     vip_price_vnd DECIMAL(10, 0),
@@ -68,6 +71,7 @@ CREATE TABLE test (
     INDEX idx_test_classroom (classroom_id),
     INDEX idx_test_owner_teacher (owner_teacher_id)
 );
+
 
 -- ==============================================================================
 -- 2. BẢNG NGƯỜI DÙNG (USER)
@@ -4886,13 +4890,13 @@ Giải thích: Thông báo nêu "Erica has been a valuable member of the Wilson 
  'c7000196-8d39-4669-9e60-6c9de8270c00', 200, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 -- ==============================================================================
--- 8. NHÂN BẢN DỮ LIỆU MẪU: ETS TOEIC 2026 TỪ TEST 02 ĐẾN TEST 10 (TRỌN BỘ 10 ĐỀ THI)
+-- 8. BẢN SAO LOCAL TEST 02-10: TEST 02-04 PUBLISHED CHO KIỂM THỬ; TEST 05-10 DRAFT
 
 -- ------------------------------------------------------------------------------
 -- [TEST 02]: ETS TOEIC 2026 - Test 02 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c02)
 -- ------------------------------------------------------------------------------
 INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c02', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 02)', 'DRAFT', NOW(), NOW());
+('ddaaa16f-8d39-4669-9e60-6c9de8270c02', 'ETS TOEIC 2026 - Test 02', 'PUBLISHED', NOW(), NOW());
 
 -- Nhân bản toàn bộ Context Questions cho Test 02
 INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
@@ -4952,7 +4956,7 @@ WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 -- [TEST 03]: ETS TOEIC 2026 - Test 03 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c03)
 -- ------------------------------------------------------------------------------
 INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c03', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 03)', 'DRAFT', NOW(), NOW());
+('ddaaa16f-8d39-4669-9e60-6c9de8270c03', 'ETS TOEIC 2026 - Test 03', 'PUBLISHED', NOW(), NOW());
 
 -- Nhân bản toàn bộ Context Questions cho Test 03
 INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
@@ -5012,7 +5016,7 @@ WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 -- [TEST 04]: ETS TOEIC 2026 - Test 04 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c04)
 -- ------------------------------------------------------------------------------
 INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c04', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 04)', 'DRAFT', NOW(), NOW());
+('ddaaa16f-8d39-4669-9e60-6c9de8270c04', 'ETS TOEIC 2026 - Test 04', 'PUBLISHED', NOW(), NOW());
 
 -- Nhân bản toàn bộ Context Questions cho Test 04
 INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)

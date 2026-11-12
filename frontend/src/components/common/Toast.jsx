@@ -1,34 +1,52 @@
 import React from 'react';
-import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
+
+const TOAST_META = {
+  success: {
+    label: 'Thành công',
+    icon: CheckCircle2,
+  },
+  error: {
+    label: 'Báo lỗi',
+    icon: AlertCircle,
+  },
+  warning: {
+    label: 'Cảnh báo',
+    icon: AlertTriangle,
+  },
+  info: {
+    label: 'Thông báo',
+    icon: Info,
+  },
+};
 
 const Toast = ({ type = 'info', message, onClose }) => {
   if (!message) return null;
 
-  const icons = {
-    success: <CheckCircle size={20} color="var(--success)" />,
-    error: <AlertCircle size={20} color="var(--danger)" />,
-    info: <Info size={20} color="var(--primary)" />,
-  };
+  const normalizedType = TOAST_META[type] ? type : 'info';
+  const { label, icon: IconComponent } = TOAST_META[normalizedType];
 
   return (
-    <div className={`toast toast-${type}`}>
-      <div className="toast-icon">{icons[type]}</div>
-      <div className="toast-message" style={{ flex: 1, fontSize: '0.9rem', color: 'var(--gray-800)' }}>
-        {message}
+    <div
+      className={`toast toast-${normalizedType}`}
+      role={normalizedType === 'error' ? 'alert' : 'status'}
+      aria-live={normalizedType === 'error' ? 'assertive' : 'polite'}
+    >
+      <div className="toast-icon" aria-hidden="true">
+        <IconComponent size={18} strokeWidth={2} />
+      </div>
+      <div className="toast-body">
+        <span className="toast-kicker">{label}</span>
+        <div className="toast-message">{message}</div>
       </div>
       {onClose && (
         <button
+          type="button"
+          className="toast-close"
           onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--gray-400)',
-            display: 'flex',
-            alignItems: 'center',
-          }}
+          aria-label="Đóng thông báo"
         >
-          <X size={16} />
+          <X size={16} strokeWidth={2} />
         </button>
       )}
     </div>

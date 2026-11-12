@@ -6,7 +6,7 @@ import apiClient from '../api/apiClient';
  * 
  * @param {File} file - File nhị phân từ input máy tính
  * @param {string} testTitle - Tiêu đề bài thi để tự động gom nhóm thư mục
- * @param {'audio' | 'image'} type - Phân loại tệp tin
+ * @param {'audio' | 'image' | 'cover'} type - Phân loại tệp tin
  * @returns {Promise<string>} - Đường link URL hoàn chỉnh của file trên Cloudinary
  */
 export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio', privateExamMedia = false) => {
@@ -20,7 +20,9 @@ export const uploadMediaFile = async (file, testTitle = 'general', type = 'audio
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 100)
+    .replace(/-+$/g, '');
 
   const folder = `Resource/toeic-learning/exams/${safeFolderName || 'common'}/${type}s`;
 

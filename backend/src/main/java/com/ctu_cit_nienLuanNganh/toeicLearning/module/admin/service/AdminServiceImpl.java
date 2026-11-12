@@ -35,7 +35,7 @@ public class AdminServiceImpl implements AdminService{
 
     @Override
     public AdminResponseDTO lockUser(User currentUser, LockUserRequest request) {
-        User targetUser = userRepository.findByIdWithRole(request.getUserId())
+        User targetUser = userRepository.findByIdWithRoleForUpdate(request.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (currentUser.getId().equals(targetUser.getId())) {

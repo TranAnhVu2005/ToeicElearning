@@ -13,10 +13,19 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,6 +38,7 @@ import java.util.regex.Pattern;
 public class CloudinaryService {
     private static final Pattern VERSION_SEGMENT = Pattern.compile("v[0-9]+");
     private static final String APP_FOLDER_PREFIX = "Resource/toeic-learning/";
+    private static final Path LOCAL_UPLOAD_ROOT = Paths.get("uploads").toAbsolutePath().normalize();
     private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
     private static final long MAX_AUDIO_BYTES = 20L * 1024 * 1024;
     private static final long MAX_CLASS_PDF_BYTES = 10L * 1024 * 1024;
@@ -39,11 +49,18 @@ public class CloudinaryService {
     @Value("${cloudinary.cloud-name}")
     private String cloudName;
 
+    @Value("${cloudinary.api-key}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret}")
+    private String apiSecret;
+
     public String uploadFile(MultipartFile file, String folder) {
+        requireCloudinaryConfiguration();
         if(file == null || file.isEmpty()){
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
-        validateUpload(file, folder);
+        byte[] bytes = validateUpload(file, folder);
 
         try{
             Map<?,?> params = ObjectUtils.asMap(
@@ -51,7 +68,7 @@ public class CloudinaryService {
                     "resource_type", folder.endsWith("/audios") ? "video" : "image"
             );
 
-            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+            Map<?, ?> uploadResult = uploadWithRetry(bytes, params);
             Object secureUrlValue = uploadResult.get("secure_url");
             if (!(secureUrlValue instanceof String secureUrl)
                     || !secureUrl.startsWith("https://res.cloudinary.com/")) {
@@ -63,13 +80,151 @@ public class CloudinaryService {
             throw exception;
         }
         catch (Exception exception){
-            // Do not log SDK response bodies: they can contain account/request details.
-            log.warn("Cloudinary upload failed (exceptionType={}).", exception.getClass().getSimpleName());
+            String failureReason = classifyCloudinaryFailure(exception);
+            log.warn("Cloudinary upload failed (folder={}, exceptionType={}, causeType={}, configComplete={}, reason={}).",
+                    folder,
+                    exception.getClass().getSimpleName(),
+                    exception.getCause() == null ? "none" : exception.getCause().getClass().getSimpleName(),
+                    hasCloudinaryConfiguration(), failureReason);
+            if (isNetworkOrDnsFailure(exception)) {
+                return saveLocalMediaFallback(bytes, folder);
+            }
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
+    private Map<?, ?> uploadWithRetry(byte[] bytes, Map<?, ?> params) throws Exception {
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                return cloudinary.uploader().upload(bytes, params);
+            } catch (Exception exception) {
+                lastException = exception;
+                if (!isNetworkOrDnsFailure(exception) || attempt == 2) {
+                    throw exception;
+                }
+            }
+        }
+        throw lastException;
+    }
+
+    private boolean isNetworkOrDnsFailure(Throwable throwable) {
+        Throwable current = throwable;
+        for (int depth = 0; current != null && depth < 5; depth++, current = current.getCause()) {
+            if (current instanceof UnknownHostException
+                    || current instanceof ConnectException
+                    || current instanceof NoRouteToHostException
+                    || current instanceof SocketTimeoutException
+                    || current instanceof SocketException) {
+                return true;
+            }
+            String reason = classifyCloudinaryFailure(current instanceof Exception ex ? ex : new Exception(current));
+            if ("network_connection".equals(reason) || "provider_timeout".equals(reason)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String saveLocalMediaFallback(byte[] bytes, String folder) {
+        try {
+            String ext = detectExtension(bytes, folder.endsWith("/audios"));
+            String relativePath = folder + "/" + UUID.randomUUID() + "." + ext;
+            Path targetFile = LOCAL_UPLOAD_ROOT.resolve(relativePath).normalize();
+            if (!targetFile.startsWith(LOCAL_UPLOAD_ROOT)) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            Files.createDirectories(targetFile.getParent());
+            Files.write(targetFile, bytes);
+            String url = buildLocalMediaUrl(relativePath);
+            log.info("Stored media via local fallback due to network/DNS outage (path={}).", relativePath);
+            return url;
+        } catch (AppException exception) {
+            throw exception;
+        } catch (IOException exception) {
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    private String detectExtension(byte[] bytes, boolean audio) {
+        if (audio) {
+            if (isWav(bytes)) return "wav";
+            if (isM4a(bytes)) return "m4a";
+            return "mp3";
+        }
+        if (startsWith(bytes, 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A)) {
+            return "png";
+        }
+        return "jpg";
+    }
+
+    public String buildLocalMediaUrl(String relativePath) {
+        try {
+            return ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/media/local/")
+                    .path(relativePath)
+                    .toUriString();
+        } catch (Exception ignored) {
+            return "http://localhost:8080/api/media/local/" + relativePath;
+        }
+    }
+
+    public Path resolveLocalMediaFile(String relativePath) {
+        if (relativePath == null || !relativePath.startsWith(APP_FOLDER_PREFIX)
+                || !relativePath.matches("Resource/toeic-learning/[A-Za-z0-9/_-]+\\.(jpg|png|mp3|wav|m4a)")
+                || relativePath.contains("..") || relativePath.contains("//")) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        Path target = LOCAL_UPLOAD_ROOT.resolve(relativePath).normalize();
+        if (!target.startsWith(LOCAL_UPLOAD_ROOT) || !Files.isRegularFile(target)) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        return target;
+    }
+
+    private void requireCloudinaryConfiguration() {
+        if (!hasCloudinaryConfiguration()) {
+            log.error("Cloudinary upload unavailable: required server configuration is incomplete (cloudNameSet={}, apiKeySet={}, apiSecretSet={}).",
+                    isConfigured(cloudName), isConfigured(apiKey), isConfigured(apiSecret));
+            throw new AppException(ErrorCode.MEDIA_STORAGE_NOT_CONFIGURED);
+        }
+    }
+
+    private boolean hasCloudinaryConfiguration() {
+        return isConfigured(cloudName) && isConfigured(apiKey) && isConfigured(apiSecret);
+    }
+
+    private boolean isConfigured(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private String classifyCloudinaryFailure(Exception exception) {
+        Throwable current = exception;
+        for (int depth = 0; current != null && depth < 4; depth++, current = current.getCause()) {
+            if (current instanceof UnknownHostException
+                    || current instanceof ConnectException
+                    || current instanceof NoRouteToHostException
+                    || current instanceof SocketException) {
+                return "network_connection";
+            }
+            if (current instanceof SocketTimeoutException) {
+                return "provider_timeout";
+            }
+            String message = current.getMessage();
+            if (message == null) continue;
+            String normalized = message.toLowerCase(java.util.Locale.ROOT);
+            if (normalized.contains("invalid signature") || normalized.contains("signature mismatch")) return "invalid_credentials_or_signature";
+            if (normalized.contains("api_key") || normalized.contains("api key")) return "api_key_rejected";
+            if (normalized.contains("cloud name") || normalized.contains("cloud_name")) return "cloud_name_rejected";
+            if (normalized.contains("timeout") || normalized.contains("timed out")) return "provider_timeout";
+            if (normalized.contains("connect") || normalized.contains("unknownhost") || normalized.contains("unreachable")) return "network_connection";
+            if (normalized.contains("unauthorized") || normalized.contains("forbidden")) return "provider_auth_rejected";
+        }
+        return "provider_or_network_error";
+    }
+
     public PrivatePdfUpload uploadPrivateClassPdf(MultipartFile file, String folder) {
+        requireCloudinaryConfiguration();
         byte[] bytes = readAndValidateClassPdf(file, folder);
         String publicId = folder + "/" + UUID.randomUUID() + ".pdf";
         try {
@@ -92,7 +247,11 @@ public class CloudinaryService {
             }
             return new PrivatePdfUpload(secureUrl, storedPublicId, bytes.length,
                     sanitizeFileName(file.getOriginalFilename()));
-        } catch (IOException exception) {
+        } catch (AppException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.warn("Cloudinary private PDF upload failed (exceptionType={}, reason={}).",
+                    exception.getClass().getSimpleName(), classifyCloudinaryFailure(exception));
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
@@ -106,15 +265,24 @@ public class CloudinaryService {
     }
 
     public PrivateMediaUpload uploadPrivateExamMedia(MultipartFile file, String folder) {
-        validateUpload(file, folder);
+        requireCloudinaryConfiguration();
+        if (file == null || file.isEmpty()) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        byte[] bytes = validateUpload(file, folder);
         if (!folder.matches("Resource/toeic-learning/exams/[A-Za-z0-9_-]{1,100}/(audios|images)")) {
             throw new AppException(ErrorCode.VALIDATION_ERROR);
         }
         String resourceType = folder.endsWith("/audios") ? "video" : "image";
+        String requestedPublicId = folder + "/" + UUID.randomUUID();
         try {
-            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
-                    "folder", folder, "resource_type", resourceType, "type", "authenticated",
-                    "use_filename", false, "unique_filename", true, "overwrite", false
+            Map<?, ?> result = uploadWithRetry(bytes, ObjectUtils.asMap(
+                    "public_id", requestedPublicId,
+                    "resource_type", resourceType,
+                    "type", "authenticated",
+                    "use_filename", false,
+                    "unique_filename", false,
+                    "overwrite", false
             ));
             String publicId = String.valueOf(result.get("public_id"));
             String format = String.valueOf(result.get("format"));
@@ -125,18 +293,44 @@ public class CloudinaryService {
             }
             PrivateDownload preview = createPrivateExamMediaDownload(publicId, format, resourceType);
             return new PrivateMediaUpload(preview.url(), publicId, format, deliveryType);
-        } catch (IOException exception) {
+        } catch (AppException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.warn("Cloudinary private exam media upload failed (folder={}, exceptionType={}, reason={}).",
+                    folder, exception.getClass().getSimpleName(), classifyCloudinaryFailure(exception));
+            if (isNetworkOrDnsFailure(exception)) {
+                String ext = detectExtension(bytes, folder.endsWith("/audios"));
+                String relativePath = requestedPublicId + "." + ext;
+                try {
+                    Path targetFile = LOCAL_UPLOAD_ROOT.resolve(relativePath).normalize();
+                    if (!targetFile.startsWith(LOCAL_UPLOAD_ROOT)) {
+                        throw new AppException(ErrorCode.VALIDATION_ERROR);
+                    }
+                    Files.createDirectories(targetFile.getParent());
+                    Files.write(targetFile, bytes);
+                    String url = buildLocalMediaUrl(relativePath);
+                    return new PrivateMediaUpload(url, requestedPublicId, ext, "authenticated");
+                } catch (IOException ioException) {
+                    throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+                }
+            }
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
     public PrivateDownload createPrivateExamMediaDownload(String publicId, String format, String resourceType) {
+        requireCloudinaryConfiguration();
         if (publicId == null || !publicId.matches("Resource/toeic-learning/exams/[A-Za-z0-9/_-]{1,180}")
                 || format == null || !format.matches("[A-Za-z0-9]{1,12}")
                 || !("image".equals(resourceType) || "video".equals(resourceType))) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
         long expiresAt = Instant.now().getEpochSecond() + EXAM_MEDIA_DOWNLOAD_TTL_SECONDS;
+        String localRelativePath = publicId + "." + format;
+        Path localTarget = LOCAL_UPLOAD_ROOT.resolve(localRelativePath).normalize();
+        if (localTarget.startsWith(LOCAL_UPLOAD_ROOT) && Files.isRegularFile(localTarget)) {
+            return new PrivateDownload(buildLocalMediaUrl(localRelativePath), expiresAt);
+        }
         try {
             String url = cloudinary.privateDownload(publicId, format, ObjectUtils.asMap(
                     "resource_type", resourceType, "type", "authenticated", "attachment", false, "expires_at", expiresAt
@@ -152,6 +346,12 @@ public class CloudinaryService {
                 || !("image".equals(resourceType) || "video".equals(resourceType))) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
+        for (String ext : new String[]{"jpg", "png", "mp3", "wav", "m4a"}) {
+            Path candidate = LOCAL_UPLOAD_ROOT.resolve(publicId + "." + ext).normalize();
+            if (candidate.startsWith(LOCAL_UPLOAD_ROOT)) {
+                try { Files.deleteIfExists(candidate); } catch (IOException ignored) { }
+            }
+        }
         destroyAsset(publicId, resourceType, "authenticated");
     }
 
@@ -164,6 +364,7 @@ public class CloudinaryService {
     public record PrivateMediaUpload(String url, String publicId, String format, String deliveryType) { }
 
     public PrivateDownload createPrivateRawDownload(String publicId, String format) {
+        requireCloudinaryConfiguration();
         if (publicId == null || publicId.isBlank() || publicId.length() > 512 || !"pdf".equalsIgnoreCase(format)) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
@@ -219,7 +420,7 @@ public class CloudinaryService {
     public record PrivatePdfUpload(String secureUrl, String publicId, long sizeBytes, String originalFileName) { }
     public record PrivateDownload(String url, long expiresAt) { }
 
-    private void validateUpload(MultipartFile file, String folder) {
+    private byte[] validateUpload(MultipartFile file, String folder) {
         if (folder == null || folder.length() > 240 || !folder.startsWith(APP_FOLDER_PREFIX)
                 || !folder.matches("[A-Za-z0-9/_-]+") || folder.contains("..")
                 || folder.contains("//") || folder.endsWith("/")) {
@@ -227,7 +428,8 @@ public class CloudinaryService {
         }
 
         boolean audio = folder.endsWith("/audios");
-        boolean image = folder.endsWith("/images") || folder.equals(APP_FOLDER_PREFIX + "avatars");
+        boolean image = folder.endsWith("/images") || folder.endsWith("/covers")
+                || folder.equals(APP_FOLDER_PREFIX + "avatars");
         if (audio == image) throw new AppException(ErrorCode.VALIDATION_ERROR);
         long sizeLimit = audio ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
         if (file.getSize() > sizeLimit) throw new AppException(ErrorCode.VALIDATION_ERROR);
@@ -241,6 +443,7 @@ public class CloudinaryService {
             } else if (!isDecodableJpegOrPng(bytes)) {
                 throw new AppException(ErrorCode.VALIDATION_ERROR);
             }
+            return bytes;
         } catch (IOException exception) {
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
@@ -352,6 +555,22 @@ public class CloudinaryService {
     }
 
     public boolean deleteFileByUrl(String fileUrl) {
+        if (fileUrl != null && fileUrl.contains("/api/media/local/Resource/toeic-learning/")) {
+            int marker = fileUrl.indexOf("/api/media/local/");
+            String relativePath = fileUrl.substring(marker + "/api/media/local/".length());
+            if (relativePath.matches("Resource/toeic-learning/[A-Za-z0-9/_-]+\\.(jpg|png|mp3|wav|m4a)")
+                    && !relativePath.contains("..")) {
+                Path target = LOCAL_UPLOAD_ROOT.resolve(relativePath).normalize();
+                if (target.startsWith(LOCAL_UPLOAD_ROOT)) {
+                    try {
+                        return Files.deleteIfExists(target);
+                    } catch (IOException ignored) {
+                        return false;
+                    }
+                }
+            }
+            return false;
+        }
         String publicId = extractOwnedPublicId(fileUrl);
         if (publicId == null) return false;
         try {

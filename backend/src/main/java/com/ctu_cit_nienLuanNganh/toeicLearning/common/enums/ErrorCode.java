@@ -33,6 +33,7 @@ public enum ErrorCode {
     LOCAL_PASSWORD_NOT_SET(2014, "Tài khoản này chưa có mật khẩu đăng nhập cục bộ để thay đổi", HttpStatus.BAD_REQUEST),
     LOCAL_PASSWORD_ALREADY_SET(2015, "Tài khoản đã có mật khẩu cục bộ; hãy dùng chức năng đổi mật khẩu", HttpStatus.CONFLICT),
     AUTH_RATE_LIMITED(2016, "Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.", HttpStatus.TOO_MANY_REQUESTS),
+    MEDIA_STORAGE_NOT_CONFIGURED(2017, "Dịch vụ lưu trữ tệp chưa được cấu hình đầy đủ. Vui lòng kiểm tra cấu hình Cloudinary của máy chủ.", HttpStatus.SERVICE_UNAVAILABLE),
 
 
 
@@ -46,6 +47,7 @@ public enum ErrorCode {
     TEST_ACCESS_REQUIRED(3007, "Bạn chưa có quyền truy cập đề thi này", HttpStatus.FORBIDDEN),
     TEST_ALREADY_OWNED(3008, "Bạn đã có quyền truy cập đề thi này", HttpStatus.CONFLICT),
     CLASSROOM_STORAGE_QUOTA_EXCEEDED(3009, "Lớp đã đạt giới hạn dung lượng tài liệu.", HttpStatus.PAYLOAD_TOO_LARGE),
+    TEST_HAS_HISTORY(3010, "Đề đã có lượt làm, giao dịch hoặc bài tập liên quan; chỉ được sửa tên, ảnh bìa hoặc trạng thái để bảo toàn lịch sử.", HttpStatus.CONFLICT),
 
 
     // Đặt vào trong enum ErrorCode.java

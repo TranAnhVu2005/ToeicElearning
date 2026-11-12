@@ -135,14 +135,10 @@ const CoursesPage = () => {
         <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="neo-courses-kicker">TOEIC LEARNING · CTU</span>
             </div>
             <h1 className="neo-courses-title">
-              Kho đề thi <span>TOEIC</span>
+              Thư viện đề thi <span>TOEIC</span>
             </h1>
-            <p className="neo-courses-subtitle">
-              Tìm đề phù hợp, xem thông tin truy cập và bắt đầu luyện tập theo mục tiêu của bạn.
-            </p>
           </div>
           {isAdmin && (
             <Link
@@ -182,7 +178,7 @@ const CoursesPage = () => {
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
-              placeholder="Tìm kiếm theo tên bài thi, bộ đề..."
+              placeholder="Tìm kiếm theo tên đề thi"
               style={{
                 width: '100%',
                 padding: '10px 16px 10px 42px',
@@ -205,30 +201,6 @@ const CoursesPage = () => {
               onClick={() => { setActiveFilter('all'); setCurrentPage(1); }}
             >
               Tất cả ({totalElements})
-            </button>
-            <button
-              type="button"
-              className={`neo-button ${activeFilter === 'full' ? 'neo-button-primary' : 'neo-button-light'}`}
-              aria-pressed={activeFilter === 'full'}
-              onClick={() => { setActiveFilter('full'); setCurrentPage(1); }}
-            >
-              Full Test (120p)
-            </button>
-            <button
-              type="button"
-              className={`neo-button ${activeFilter === 'listening' ? 'neo-button-primary' : 'neo-button-light'}`}
-              aria-pressed={activeFilter === 'listening'}
-              onClick={() => { setActiveFilter('listening'); setCurrentPage(1); }}
-            >
-              Phần Nghe (Part 1-4)
-            </button>
-            <button
-              type="button"
-              className={`neo-button ${activeFilter === 'reading' ? 'neo-button-primary' : 'neo-button-light'}`}
-              aria-pressed={activeFilter === 'reading'}
-              onClick={() => { setActiveFilter('reading'); setCurrentPage(1); }}
-            >
-              Phần Đọc (Part 5-7)
             </button>
           </div>
 
@@ -261,14 +233,14 @@ const CoursesPage = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/admin/tests?action=create"
-                className="neo-button neo-button-primary inline-flex items-center gap-1.5"
+                  className="neo-button neo-button-primary inline-flex items-center gap-1.5"
                 >
                   <Plus size={15} /> Soạn đề thi mới
                 </Link>
 
                 <Link
                   to="/admin/tests"
-                className="neo-button neo-button-light inline-flex items-center gap-1.5"
+                  className="neo-button neo-button-light inline-flex items-center gap-1.5"
                 >
                   <Settings size={15} /> Quản trị đề thi
                 </Link>
@@ -376,10 +348,12 @@ const CoursesPage = () => {
                     flexDirection: 'column',
                   }}
                 >
-                  <div className="neo-course-art" aria-hidden="true">
-                    <span>TOEIC<br />PRACTICE</span>
-                    <strong>{String(index + 1).padStart(2, '0')}</strong>
-                    <span className="neo-course-access">{test.isVip ? 'VIP' : 'FREE'}</span>
+                  <div className={`neo-course-art${test.coverImageUrl ? ' has-cover-image' : ' no-cover-image'}`}>
+                    {test.coverImageUrl ? (
+                      <img src={test.coverImageUrl} alt={`Ảnh bìa: ${test.titleTest}`} loading="lazy" />
+                    ) : (
+                      <span>Chưa có ảnh</span>
+                    )}
                   </div>
 
                   {/* Card Body */}
@@ -387,7 +361,13 @@ const CoursesPage = () => {
                     {/* Category Tags */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                       <span className="neo-course-type">BÀI THI TOEIC</span>
-                      <span className={`border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase ${test.isVip ? 'bg-[#FF5B93]' : 'bg-[#FFE600]'}`}>
+                      <span
+                        className={`border px-2 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                          test.isVip
+                            ? 'border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]'
+                            : 'border-slate-300 bg-slate-100 text-slate-700'
+                        }`}
+                      >
                         {test.isVip ? `VIP · ${new Intl.NumberFormat('vi-VN').format(Number(test.vipPriceVnd || 0))} ₫` : 'Miễn phí'}
                       </span>
                     </div>
@@ -418,25 +398,6 @@ const CoursesPage = () => {
                       Xem chi tiết cấu trúc và quyền truy cập trước khi bắt đầu làm bài.
                     </p>
 
-                    {/* Metrics Row */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px 0',
-                        borderTop: '2px solid var(--neo-ink)',
-                        borderBottom: '2px solid var(--neo-ink)',
-                        marginBottom: 20,
-                        fontSize: '0.82rem',
-                        color: 'var(--gray-600)',
-                        fontWeight: 600,
-                      }}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <CheckCircle2 size={15} color="var(--neo-ink)" /> Đề đã phát hành
-                      </span>
-                    </div>
 
                     {/* Action Buttons Footer */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
@@ -541,49 +502,47 @@ const CoursesPage = () => {
       {isAdmin && (
         <>
           {/* DELETE TEST MODAL */}
-      <Modal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Xác nhận xóa hoặc gỡ đề thi"
-      >
-        <div style={{ textAlign: 'center', padding: '10px 0' }}>
-          <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 12px' }} />
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#0f172a' }}>
-            Bạn có chắc chắn muốn gỡ đề thi này khỏi catalog?
-          </h4>
-          <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#64748b' }}>
-            Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ không còn xuất hiện trong catalog. Nếu đã có lượt làm hoặc giao dịch, hệ thống chuyển đề về bản nháp để giữ lịch sử; nếu chưa có, đề sẽ bị xóa cùng nội dung.
-          </p>
+          <Modal
+            isOpen={deleteModalOpen}
+            onClose={() => setDeleteModalOpen(false)}
+            title="Xác nhận xóa hoặc gỡ đề thi"
+          >
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 12px' }} />
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#0f172a' }}>
+                Bạn có chắc chắn muốn gỡ đề thi này khỏi catalog?
+              </h4>
+              <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#64748b' }}>
+                Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ không còn xuất hiện trong catalog. Nếu đã có lượt làm hoặc giao dịch, hệ thống chuyển đề về bản nháp để giữ lịch sử; nếu chưa có, đề sẽ bị xóa cùng nội dung.
+              </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
-            <button
-              type="button"
-            className="neo-button neo-button-light"
-              disabled={actionLoading}
-              onClick={() => setDeleteModalOpen(false)}
-            >
-              Hủy bỏ
-            </button>
-            <button
-              type="button"
-              className="neo-button neo-button-danger"
-              disabled={actionLoading}
-              onClick={handleConfirmDelete}
-              style={{ gap: 6 }}
-            >
-              <Trash2 size={16} /> {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
-            </button>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+                <button
+                  type="button"
+                  className="neo-button neo-button-light"
+                  disabled={actionLoading}
+                  onClick={() => setDeleteModalOpen(false)}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  className="neo-button neo-button-danger"
+                  disabled={actionLoading}
+                  onClick={handleConfirmDelete}
+                  style={{ gap: 6 }}
+                >
+                  <Trash2 size={16} /> {actionLoading ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+              </div>
             </div>
-          </div>
-        </Modal>
-      </>
-    )}
+          </Modal>
+        </>
+      )}
 
       {/* Toast Notification */}
       {toast && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000 }}>
-          <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
-        </div>
+        <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
       )}
     </div>
   );

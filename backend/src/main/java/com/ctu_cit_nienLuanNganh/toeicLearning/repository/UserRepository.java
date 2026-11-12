@@ -41,10 +41,15 @@ public interface UserRepository extends BaseRepository<User, String> {
     boolean existsByUserNumberphone(String userNumberphone);
 
     // Phục vụ Admin xem danh sách User có tìm kiếm, trong danh sách sẽ có vai trò,
-    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE " +
+    @Query(value = "SELECT u FROM User u JOIN FETCH u.role WHERE " +
             "(:keyword IS NULL OR :keyword = '' OR " + //Nếu mà không gõ gì thì trả về true, where được bỏ ra, lấy hết user
             "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "u.userNumberphone LIKE CONCAT('%', :keyword, '%'))")
+            "u.userNumberphone LIKE CONCAT('%', :keyword, '%'))",
+            countQuery = "SELECT COUNT(u) FROM User u WHERE " +
+                    "(:keyword IS NULL OR :keyword = '' OR " +
+                    "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "u.userNumberphone LIKE CONCAT('%', :keyword, '%'))")
     Page<User> findAllUsersWithRole(@Param("keyword") String keyword, Pageable pageable);
 }

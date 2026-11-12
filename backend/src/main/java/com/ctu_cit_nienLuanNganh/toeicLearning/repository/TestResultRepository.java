@@ -26,8 +26,8 @@ public interface TestResultRepository extends BaseRepository<TestResult, String>
     @Query("SELECT SUM(r.totalScore), COUNT(r) FROM TestResult r " +
             "WHERE r.assignment.id = :assignmentId AND r.user.id IN :studentIds " +
             "AND r.teacherComment IS NOT NULL AND TRIM(r.teacherComment) <> '' AND r.totalScore IS NOT NULL")
-    Object[] summarizeReviewedScores(@Param("assignmentId") String assignmentId,
-                                     @Param("studentIds") java.util.Collection<String> studentIds);
+    List<Object[]> summarizeReviewedScores(@Param("assignmentId") String assignmentId,
+                                           @Param("studentIds") java.util.Collection<String> studentIds);
 
     @Query("SELECT COUNT(r) FROM TestResult r WHERE r.createdAt >= :from AND r.createdAt < :to")
     long countSubmittedBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
