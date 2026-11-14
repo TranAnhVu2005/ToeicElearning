@@ -1,5 +1,5 @@
 /* Shared application screens. Home and auth keep their approved compositions. */
-.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) {
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper):not(.neo-brutal-exam):not(.neo-brutal-dictation) {
   min-height: 70vh;
   background: #fff !important;
   color: var(--editorial-text) !important;
@@ -13,7 +13,7 @@
   text-wrap: balance;
 }
 
-.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) :where(h1, .page-title, .neo-courses-title, .neo-practice-title) {
+.app-shell .main-content > :where(main, div):not(.home-page):not(.auth-page-wrapper) :where(h1:not(.exam-room-title), .page-title, .neo-courses-title, .neo-practice-title) {
   font-size: clamp(30px, 4vw, 44px) !important;
   line-height: 1.15 !important;
 }
@@ -216,8 +216,7 @@
 }
 
 .app-shell .admin-page > .max-w-7xl > :where(.mb-6, header),
-.app-shell .user-management-page :where(.user-management-heading),
-.app-shell .test-management-page .test-studio-header {
+.app-shell .user-management-page :where(.user-management-heading) {
   border: 0 !important;
   border-bottom: 1px solid var(--editorial-line) !important;
   background: transparent !important;
@@ -273,31 +272,22 @@
   font-weight: 600 !important;
 }
 
-.app-shell :where(.admin-page, .admin-page-wrapper, .test-management-page) :where(.bg-slate-900, .bg-slate-950, .bg-slate-800) {
+.app-shell :where(.admin-page, .admin-page-wrapper) :where(.bg-slate-900, .bg-slate-950, .bg-slate-800) {
   border-color: var(--editorial-line) !important;
   background: #f7f8fa !important;
   color: var(--editorial-text) !important;
 }
 
-.app-shell :where(.admin-page, .admin-page-wrapper, .test-management-page) :where(.text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400) {
+.app-shell :where(.admin-page, .admin-page-wrapper) :where(.text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400) {
   color: var(--editorial-text) !important;
 }
 
 /* Dedicated practice rooms retain focus, timer, and answer-state clarity. */
-.app-shell .neo-brutal-exam,
-.app-shell .neo-brutal-dictation {
-  background: #fff !important;
+.app-shell :where(.neo-brutal-exam, .neo-brutal-dictation) {
   color: var(--editorial-text) !important;
 }
 
-.app-shell .neo-brutal-exam :where(header, nav, aside, section),
-.app-shell .neo-brutal-dictation :where(header, nav, aside, section) {
-  border-color: var(--editorial-line) !important;
-  box-shadow: none !important;
-}
-
-.app-shell .neo-brutal-exam :where(button, [role="button"]),
-.app-shell .neo-brutal-dictation :where(button, [role="button"]) {
+.app-shell :where(.neo-brutal-exam, .neo-brutal-dictation) :where(button, [role="button"]) {
   border-radius: 2px !important;
   box-shadow: none !important;
 }
@@ -612,46 +602,103 @@
   place-items: center;
 }
 
-/* Final override for the test builder, which is rendered inside the app shell. */
-.app-shell .test-builder-modal {
-  width: min(1120px, calc(100vw - 32px)) !important;
-  max-width: 1120px !important;
-  max-height: 94dvh !important;
-  border: 1px solid #D1D5DB !important;
-  border-radius: 2px !important;
-  box-shadow: 0 18px 60px rgb(17 24 39 / 18%) !important;
-  background: #FFFFFF !important;
+/* Final override for the test studio page and test builder modal rendered inside the app shell. */
+.app-shell .test-management-page,
+.app-shell .test-management-page *,
+.app-shell .test-builder-modal,
+.app-shell .test-builder-modal *,
+.app-shell .test-structure-reference-modal,
+.app-shell .test-structure-reference-modal * {
+  font-family: 'Gelasio', Georgia, serif !important;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
+
+.app-shell .test-management-page {
+  background: #F8FAFC !important;
+}
+
+.app-shell .test-management-page .test-studio-header {
+  position: relative;
+  overflow: hidden;
+  padding: 28px 32px !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  background-image:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.90) 48%, rgba(248, 250, 252, 0.78) 78%, rgba(15, 23, 42, 0.25) 100%),
+    url('./assets/img/coursepage/biasach.jpg') !important;
+  background-size: cover !important;
+  background-position: center 36% !important;
+  box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.1) !important;
+}
+
+.app-shell .test-builder-modal {
+  width: min(1160px, calc(100vw - 32px)) !important;
+  max-width: 1160px !important;
+  max-height: 94dvh !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24) !important;
+  background: #FFFFFF !important;
+  overflow: hidden;
+}
+
 .app-shell .test-builder-modal .modal-header {
   flex: 0 0 auto;
-  padding: 18px 24px !important;
-  border-bottom: 1px solid #D1D5DB !important;
-  background: #FFFFFF !important;
-  color: #111827 !important;
+  padding: 20px 28px !important;
+  border-bottom: 1px solid #CBD5E1 !important;
+  background-image:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.91) 50%, rgba(248, 250, 252, 0.78) 80%, rgba(15, 23, 42, 0.22) 100%),
+    url('./assets/img/coursepage/biasach.jpg') !important;
+  background-size: cover !important;
+  background-position: center 38% !important;
+  color: #0F172A !important;
 }
+
 .app-shell .test-builder-modal .modal-title {
-  color: #111827 !important;
-  font-family: var(--editorial-font) !important;
-  font-size: clamp(20px, 2.2vw, 27px) !important;
-  font-weight: 600 !important;
+  color: #0F172A !important;
+  font-family: 'Gelasio', Georgia, serif !important;
+  font-size: clamp(20px, 2.1vw, 26px) !important;
+  font-weight: 700 !important;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
-.app-shell .test-builder-modal .modal-body { padding: 0 24px 20px !important; background: #FFFFFF !important; }
-.app-shell .test-builder-modal .modal-footer { border-top: 1px solid #D1D5DB !important; background: #FFFFFF !important; }
-.app-shell .test-builder-modal .test-builder-form { gap: 16px !important; color: #111827 !important; }
+
+.app-shell .test-builder-modal .modal-body {
+  padding: 0 28px 28px !important;
+  background-image:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.94) 0%, rgba(241, 245, 249, 0.96) 100%),
+    url('./assets/img/coursepage/biasach.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.app-shell .test-builder-modal .modal-footer {
+  border-top: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+}
+
+.app-shell .test-builder-modal .test-builder-form {
+  gap: 20px !important;
+  color: #0F172A !important;
+}
+
 .app-shell .test-builder-modal .test-builder-toolbar {
   position: sticky;
   top: 0 !important;
   z-index: 40;
-  margin: 0 -24px !important;
-  padding: 12px 24px !important;
+  margin: 0 -28px !important;
+  padding: 14px 28px !important;
   border-top: 0 !important;
   border-left: 0 !important;
   border-right: 0 !important;
-  border-bottom: 1px solid #D1D5DB !important;
+  border-bottom: 1px solid #CBD5E1 !important;
   border-radius: 0 !important;
-  background: #FFFFFF !important;
-  box-shadow: 0 4px 12px rgb(17 24 39 / 5%) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
 }
+
 .app-shell .test-builder-modal .test-cover-preview-img {
   width: 100% !important;
   height: 176px !important;
@@ -659,31 +706,45 @@
   object-fit: contain !important;
   display: block;
 }
+
 .app-shell .test-builder-modal .test-builder-basic-info,
 .app-shell .test-builder-modal .test-builder-part-panel {
-  padding: 18px !important;
-  border: 1px solid #D1D5DB !important;
-  border-radius: 2px !important;
-  background: #FFFFFF !important;
-  box-shadow: none !important;
+  padding: 24px !important;
+  border: 1px solid #DCE3EC !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04) !important;
 }
-.app-shell .test-builder-modal .test-builder-form [class~="bg-[#fff6b8]"],
-.app-shell .test-builder-modal .test-builder-form [class~="bg-yellow-50"],
-.app-shell .test-builder-modal .test-builder-form [class~="bg-yellow-100"],
-.app-shell .test-builder-modal .test-builder-form [class~="bg-amber-50"] {
-  border: 1px solid #D1D5DB !important;
-  border-radius: 2px !important;
-  background: #F9FAFB !important;
-  box-shadow: none !important;
+
+.app-shell .test-builder-modal .test-builder-guide {
+  padding: 20px 24px !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px !important;
+  background-image:
+    linear-gradient(100deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.92) 65%, rgba(239, 246, 255, 0.88) 100%),
+    url('./assets/img/coursepage/biasach.jpg') !important;
+  background-size: cover !important;
+  background-position: center 60% !important;
+  color: #0F172A !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
 }
-.app-shell .test-builder-modal .test-builder-form input:not([type="checkbox"]):not([type="radio"]),
+
+.app-shell .test-builder-modal .test-builder-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 .app-shell .test-builder-modal .test-builder-form select,
 .app-shell .test-builder-modal .test-builder-form textarea {
-  border: 1px solid #D1D5DB !important;
-  border-radius: 2px !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 6px !important;
   background: #FFFFFF !important;
-  color: #111827 !important;
+  color: #0F172A !important;
 }
+
+.app-shell .test-builder-modal .test-builder-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.app-shell .test-builder-modal .test-builder-form select:focus,
+.app-shell .test-builder-modal .test-builder-form textarea:focus {
+  border-color: #1D4ED8 !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12) !important;
+}
+
 .app-shell .test-builder-modal .test-builder-form button:focus-visible,
 .app-shell .test-builder-modal .test-builder-form input:focus-visible,
 .app-shell .test-builder-modal .test-builder-form select:focus-visible,
@@ -691,11 +752,22 @@
   outline: 2px solid #1D4ED8 !important;
   outline-offset: 2px;
 }
+
+.app-shell .test-management-page :where([class~="bg-blue-600"], [class~="bg-blue-700"], [class~="bg-[#1D4ED8]"], [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-amber-600"], [class~="bg-amber-700"], [class~="bg-teal-600"], [class~="bg-indigo-600"], [class~="bg-purple-600"], [class~="bg-rose-600"], [class~="bg-red-600"], .btn-primary, .test-studio-create),
+.app-shell .test-builder-modal :where([class~="bg-blue-600"], [class~="bg-blue-700"], [class~="bg-[#1D4ED8]"], [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-amber-600"], [class~="bg-amber-700"], [class~="bg-teal-600"], [class~="bg-indigo-600"], [class~="bg-purple-600"], [class~="bg-rose-600"], [class~="bg-red-600"], .btn-primary) {
+  color: #FFFFFF !important;
+}
+
+.app-shell .test-management-page :where([class~="bg-blue-600"], [class~="bg-blue-700"], [class~="bg-[#1D4ED8]"], [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-amber-600"], [class~="bg-amber-700"], [class~="bg-teal-600"], [class~="bg-indigo-600"], [class~="bg-purple-600"], [class~="bg-rose-600"], [class~="bg-red-600"], .btn-primary, .test-studio-create) :where(span, svg, strong),
+.app-shell .test-builder-modal :where([class~="bg-blue-600"], [class~="bg-blue-700"], [class~="bg-[#1D4ED8]"], [class~="bg-emerald-600"], [class~="bg-emerald-700"], [class~="bg-amber-600"], [class~="bg-amber-700"], [class~="bg-teal-600"], [class~="bg-indigo-600"], [class~="bg-purple-600"], [class~="bg-rose-600"], [class~="bg-red-600"], .btn-primary) :where(span, svg, strong) {
+  color: #FFFFFF !important;
+}
+
 @media (max-width: 700px) {
   .app-shell .test-builder-modal { width: calc(100vw - 16px) !important; max-height: 96dvh !important; }
   .app-shell .test-builder-modal .modal-header,
   .app-shell .test-builder-modal .modal-body { padding: 14px !important; }
-  .app-shell .test-builder-modal .test-builder-toolbar { position: static; }
+  .app-shell .test-builder-modal .test-builder-toolbar { position: static; margin: 0 -14px !important; padding: 12px 14px !important; }
   .app-shell .test-builder-modal .test-builder-basic-info,
-  .app-shell .test-builder-modal .test-builder-part-panel { padding: 12px !important; }
+  .app-shell .test-builder-modal .test-builder-part-panel { padding: 14px !important; }
 }

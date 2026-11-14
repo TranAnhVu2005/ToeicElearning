@@ -16,7 +16,6 @@ import {
   Award,
   BarChart3,
   Info,
-  Compass,
   LockKeyhole,
   BookOpen,
 } from 'lucide-react';
@@ -220,6 +219,9 @@ const CourseDetailPage = () => {
 
   // Selected Time Limit for Practice in minutes (0 = không giới hạn)
   const [timeLimit, setTimeLimit] = useState('');
+
+  // Default Audio Playback Speed for Listening questions ('0.5' | '1.0' | '1.1' | '1.5' | '2')
+  const [audioSpeed, setAudioSpeed] = useState('1.0');
 
   // Interface view: 'default'
   const [interfaceType, setInterfaceType] = useState('default');
@@ -432,7 +434,7 @@ const CourseDetailPage = () => {
     }
     const partsParam = selectedAvailableParts.join(',');
     const timeParam = timeLimit ? parseInt(timeLimit, 10) : 0;
-    navigate(`/courses/${testId}/take?mode=practice&parts=${partsParam}&time=${timeParam}`);
+    navigate(`/courses/${testId}/take?mode=practice&parts=${partsParam}&time=${timeParam}&speed=${encodeURIComponent(audioSpeed)}`);
   };
 
   // Start Full Test
@@ -445,7 +447,7 @@ const CourseDetailPage = () => {
       setToast({ type: 'error', message: 'Đề này chưa có đủ 200 câu liên tục để làm full test.' });
       return;
     }
-    navigate(`/courses/${testId}/take?mode=fulltest&time=120`);
+    navigate(`/courses/${testId}/take?mode=fulltest&time=120&speed=${encodeURIComponent(audioSpeed)}`);
   };
 
   // Add Comment (Backend API)
@@ -602,14 +604,14 @@ const CourseDetailPage = () => {
     return (
       <main className="course-detail-page min-h-[75vh] bg-white px-4 py-14 text-slate-900 sm:px-6">
         <section className="mx-auto max-w-3xl border border-slate-200 bg-white p-7 sm:p-10">
-          <span className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-1 text-xs font-bold uppercase text-[#1D4ED8]">
+          <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-blue-200 bg-[#EFF6FF] px-3 py-1 text-[13px] font-medium text-[#1D4ED8]">
             <LockKeyhole size={14} /> Đề VIP
           </span>
-          <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{test.titleTest}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
+          <h1 className="mt-5 text-2xl font-semibold tracking-tight text-slate-800 sm:text-3xl">{test.titleTest}</h1>
+          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600">
             Mua một lần, mở quyền truy cập đề này vĩnh viễn. Nội dung bài thi chỉ được tải sau khi máy chủ xác nhận thanh toán.
           </p>
-          <p className="mt-6 inline-block border border-slate-200 bg-[#F8FAFC] px-5 py-3 font-mono text-2xl font-bold text-slate-900">
+          <p className="mt-6 inline-block rounded-[3px] border border-slate-200 bg-[#F8FAFC] px-5 py-3 text-2xl font-semibold text-[#1D4ED8]">
             {Number(test.vipPriceVnd || 0).toLocaleString('vi-VN')} ₫
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
@@ -617,16 +619,16 @@ const CourseDetailPage = () => {
               type="button"
               onClick={handleBuyVipTest}
               disabled={purchaseLoading}
-              className="editorial-button-primary px-5 py-3 text-sm font-semibold disabled:opacity-60"
+              className="editorial-button-primary px-5 py-3 text-[14px] font-medium disabled:opacity-60"
             >
               {purchaseLoading ? 'Đang tạo giao dịch…' : 'Mua đề qua VNPAY'}
             </button>
-            <Link to="/courses" className="editorial-button-secondary px-5 py-3 text-sm font-semibold">
+            <Link to="/courses" className="editorial-button-secondary px-5 py-3 text-[14px] font-medium">
               Quay lại danh sách đề
             </Link>
           </div>
           {toast && (
-            <p role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+            <p role="alert" className="mt-5 border border-red-200 bg-red-50 p-3 text-[14px] font-medium text-red-800">
               {toast.message}
             </p>
           )}
@@ -650,7 +652,7 @@ const CourseDetailPage = () => {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Breadcrumbs */}
-          <div className="course-detail-breadcrumbs flex items-center gap-2 text-xs font-semibold mb-4">
+          <div className="course-detail-breadcrumbs flex items-center gap-2 text-[14px] font-medium mb-4">
             <Link to="/" className="text-slate-600 hover:text-[#1D4ED8] transition-colors">
               Trang chủ
             </Link>
@@ -659,7 +661,7 @@ const CourseDetailPage = () => {
               Đề thi
             </Link>
             <span aria-hidden="true" className="text-slate-400">/</span>
-            <span className="course-detail-current truncate max-w-xs text-slate-900 font-bold" aria-current="page">{test.titleTest}</span>
+            <span className="course-detail-current truncate max-w-xs text-slate-800 font-semibold" aria-current="page">{test.titleTest}</span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start gap-6">
@@ -673,9 +675,9 @@ const CourseDetailPage = () => {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center text-center p-3 text-slate-400 w-full h-full bg-slate-50/80 border border-dashed border-slate-200">
-                  <BookOpen size={32} strokeWidth={1.5} className="text-slate-400 mb-1.5" />
-                  <span className="text-[11px] font-bold text-slate-600">TOEIC TEST</span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">Chưa có ảnh bìa</span>
+                  <BookOpen size={30} strokeWidth={1.5} className="text-slate-400 mb-1.5" />
+                  <span className="text-[13px] font-semibold text-slate-600">Đề thi TOEIC</span>
+                  <span className="text-[12px] text-slate-400 mt-0.5">Chưa có ảnh bìa</span>
                 </div>
               )}
             </div>
@@ -684,18 +686,18 @@ const CourseDetailPage = () => {
             <div className="flex-1 min-w-0 space-y-3.5">
               {/* Badges */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="course-detail-label shadow-2xs">
-                  BỘ ĐỀ TOEIC
+                <span className="inline-flex items-center rounded-[2px] border border-blue-200 bg-[#EFF6FF]/95 px-2.5 py-0.5 text-[13px] font-medium text-[#1D4ED8] backdrop-blur-xs">
+                  Bộ đề TOEIC
                 </span>
                 {test.status === 'DRAFT' && (
-                  <span className="course-detail-draft inline-flex items-center gap-1 shadow-2xs">
-                    <Clock size={11} strokeWidth={1.5} /> DRAFT
+                  <span className="inline-flex items-center gap-1 rounded-[2px] border border-amber-200 bg-amber-50/95 px-2.5 py-0.5 text-[13px] font-medium text-amber-800 backdrop-blur-xs">
+                    <Clock size={12} strokeWidth={1.6} /> Bản nháp
                   </span>
                 )}
                 <span
-                  className={`border px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-[2px] shadow-2xs backdrop-blur-xs ${test.isVip
-                    ? 'border-blue-300 bg-blue-50/90 text-[#1D4ED8]'
-                    : 'border-slate-300/90 bg-white/90 text-slate-700'
+                  className={`inline-flex items-center border px-2.5 py-0.5 text-[13px] font-medium rounded-[2px] backdrop-blur-xs ${test.isVip
+                    ? 'border-blue-200 bg-[#EFF6FF]/95 text-[#1D4ED8]'
+                    : 'border-slate-200 bg-white/95 text-slate-700'
                     }`}
                 >
                   {test.isVip
@@ -706,7 +708,7 @@ const CourseDetailPage = () => {
 
               {/* Title & Admin Actions */}
               <div className="flex items-start justify-between gap-4 flex-wrap">
-                <h1 className="course-detail-title text-2xl sm:text-3xl text-slate-900 font-extrabold" style={{ textWrap: 'balance' }}>
+                <h1 className="course-detail-title text-2xl sm:text-3xl text-slate-800 font-semibold tracking-tight" style={{ textWrap: 'balance' }}>
                   {test.titleTest}
                 </h1>
 
@@ -717,7 +719,7 @@ const CourseDetailPage = () => {
                       type="button"
                       onClick={handlePublishTestNow}
                       disabled={actionLoading}
-                      className="course-detail-action course-detail-publish px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="course-detail-action course-detail-publish px-3.5 py-1.5 font-medium text-[14px] inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <CheckCircle2 size={14} /> Xuất bản ngay
                     </button>
@@ -725,18 +727,18 @@ const CourseDetailPage = () => {
                   {isAdmin && (
                     <Link
                       to={`/admin/tests?editId=${test.id}`}
-                      className="course-detail-action course-detail-edit px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 bg-white/95 hover:bg-white border-slate-300 shadow-2xs backdrop-blur-xs"
+                      className="course-detail-action course-detail-edit px-3.5 py-1.5 font-medium text-[14px] inline-flex items-center gap-1.5 bg-white/95 hover:bg-white border-slate-300 backdrop-blur-xs"
                     >
-                      <Edit2 size={13} strokeWidth={1.5} /> Chỉnh sửa đề thi
+                      <Edit2 size={14} strokeWidth={1.6} /> Chỉnh sửa đề thi
                     </Link>
                   )}
                   {isAdmin && (
                     <button
                       type="button"
                       onClick={() => setDeleteModalOpen(true)}
-                      className="course-detail-action course-detail-delete px-3.5 py-1.5 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-2xs backdrop-blur-xs"
+                      className="course-detail-action course-detail-delete px-3.5 py-1.5 font-medium text-[14px] inline-flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
                     >
-                      <Trash2 size={13} strokeWidth={1.5} /> Xóa đề
+                      <Trash2 size={14} strokeWidth={1.6} /> Xóa đề
                     </button>
                   )}
                 </div>
@@ -747,7 +749,7 @@ const CourseDetailPage = () => {
                 <button
                   type="button"
                   onClick={() => setSubView('info')}
-                  className={`course-detail-subtab px-4 py-2 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs ${subView === 'info' ? 'is-selected shadow-xs' : 'bg-white/90 hover:bg-white backdrop-blur-xs'
+                  className={`course-detail-subtab px-4 py-2 text-[14px] font-medium cursor-pointer inline-flex items-center gap-1.5 ${subView === 'info' ? 'is-selected' : 'bg-white/95 hover:bg-white backdrop-blur-xs'
                     }`}
                 >
                   Thông tin đề thi
@@ -755,13 +757,13 @@ const CourseDetailPage = () => {
                 <button
                   type="button"
                   onClick={() => setTranscriptModalOpen(true)}
-                  className="course-detail-subtab px-4 py-2 text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 bg-white/90 hover:bg-white backdrop-blur-xs shadow-2xs"
+                  className="course-detail-subtab px-4 py-2 text-[14px] font-medium cursor-pointer inline-flex items-center gap-1.5 bg-white/95 hover:bg-white backdrop-blur-xs"
                 >
-                  <FileText size={13} strokeWidth={1.5} /> Đáp án/transcript
+                  <FileText size={14} strokeWidth={1.6} /> Đáp án &amp; Transcript
                 </button>
               </div>
 
-              <p className="course-detail-score-note text-xs font-semibold leading-relaxed">
+              <p className="course-detail-score-note text-[14px] font-normal text-slate-700 leading-relaxed">
                 Điểm quy đổi hiển thị hiện là ước tính; kết quả có thể khác bảng scaled score chính thức của từng đề TOEIC.
               </p>
             </div>
@@ -780,7 +782,7 @@ const CourseDetailPage = () => {
                 type="button"
                 onClick={() => setActiveTab('practice')}
                 aria-pressed={activeTab === 'practice'}
-                className={`course-detail-tab py-3.5 px-5 text-sm font-bold cursor-pointer whitespace-nowrap ${activeTab === 'practice' ? 'is-active' : ''}`}
+                className={`course-detail-tab py-3.5 px-5 text-[15px] font-medium cursor-pointer whitespace-nowrap ${activeTab === 'practice' ? 'is-active' : ''}`}
               >
                 Luyện tập từng phần
               </button>
@@ -788,7 +790,7 @@ const CourseDetailPage = () => {
                 type="button"
                 onClick={() => setActiveTab('fulltest')}
                 aria-pressed={activeTab === 'fulltest'}
-                className={`course-detail-tab py-3.5 px-5 text-sm font-bold cursor-pointer whitespace-nowrap ${activeTab === 'fulltest' ? 'is-active' : ''}`}
+                className={`course-detail-tab py-3.5 px-5 text-[15px] font-medium cursor-pointer whitespace-nowrap ${activeTab === 'fulltest' ? 'is-active' : ''}`}
               >
                 Làm full test
               </button>
@@ -796,46 +798,43 @@ const CourseDetailPage = () => {
                 type="button"
                 onClick={() => setActiveTab('dictation')}
                 aria-pressed={activeTab === 'dictation'}
-                className={`course-detail-tab py-3.5 px-5 text-sm font-bold cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'dictation' ? 'is-active' : ''}`}
+                className={`course-detail-tab py-3.5 px-5 text-[15px] font-medium cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'dictation' ? 'is-active' : ''}`}
               >
-                <Headphones size={15} strokeWidth={1.5} />
+                <Headphones size={15} strokeWidth={1.6} />
                 <span>Chép chính tả</span>
-                <span className="course-detail-new-tag px-1.5 py-0.2 text-[10px] font-black uppercase tracking-wider">
-                  Mới
-                </span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('discussion')}
                 aria-pressed={activeTab === 'discussion'}
-                className={`course-detail-tab py-3.5 px-5 text-sm font-bold cursor-pointer whitespace-nowrap ${activeTab === 'discussion' ? 'is-active' : ''}`}
+                className={`course-detail-tab py-3.5 px-5 text-[15px] font-medium cursor-pointer whitespace-nowrap ${activeTab === 'discussion' ? 'is-active' : ''}`}
               >
                 Thảo luận ({comments.length})
               </button>
             </div>
 
-            {/* TAB CONTENT: LUYỆN TẬP (Ảnh 2, 3, 4) */}
+            {/* TAB CONTENT: LUYỆN TẬP */}
             {activeTab === 'practice' && (
               <div className="course-detail-panel p-6 space-y-6">
                 {/* Pro Tips Banner */}
                 <div className="course-detail-tip p-4 flex items-start gap-3">
-                  <Lightbulb size={20} strokeWidth={1.5} className="shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed font-medium">
-                    <strong>Pro tips:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực hoàn thành bài thi.
+                  <Lightbulb size={20} strokeWidth={1.6} className="shrink-0 mt-0.5" />
+                  <p className="text-[14px] leading-relaxed font-normal text-amber-900">
+                    <strong className="font-semibold">Mẹo luyện tập:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực hoàn thành bài thi.
                   </p>
                 </div>
 
                 {/* Chọn phần thi */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-100">
-                    <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100">
+                    <h3 className="text-[18px] font-semibold text-slate-800 tracking-tight leading-snug">
                       Chọn phần thi bạn muốn làm
                     </h3>
-                    <div className="flex items-center gap-3 text-xs">
+                    <div className="flex items-center gap-3 text-[14px]">
                       <button
                         type="button"
                         onClick={handleSelectAllParts}
-                        className="text-blue-600 hover:text-blue-800 font-bold hover:underline"
+                        className="text-[#1D4ED8] hover:text-blue-800 font-medium hover:underline cursor-pointer"
                       >
                         Chọn tất cả
                       </button>
@@ -843,14 +842,14 @@ const CourseDetailPage = () => {
                       <button
                         type="button"
                         onClick={handleDeselectAllParts}
-                        className="text-slate-500 hover:text-slate-700 font-medium hover:underline"
+                        className="text-slate-500 hover:text-slate-700 font-normal hover:underline cursor-pointer"
                       >
                         Bỏ chọn
                       </button>
                     </div>
                   </div>
 
-                  {/* 7 Parts List with Checkboxes and Tag Chips (Double-Bezel Architecture) */}
+                  {/* 7 Parts List with Checkboxes and Tag Chips */}
                   <div className="space-y-3">
                     {availableParts.map((pm) => {
                       const isChecked = selectedParts.includes(pm.partNumber);
@@ -858,17 +857,34 @@ const CourseDetailPage = () => {
                         <div key={pm.partNumber} className={`course-part-option p-1.5 select-none ${isChecked ? 'is-selected' : ''}`}>
                           <div className={`course-part-option-inner p-4 ${isChecked ? 'is-selected' : ''}`}>
                             <div className="flex items-start gap-3.5">
-                              <input id={`practice-part-${pm.partNumber}`} type="checkbox" checked={isChecked} onChange={() => handleTogglePart(pm.partNumber)} className="course-part-checkbox mt-1 w-4 h-4 cursor-pointer" />
-                              <label htmlFor={`practice-part-${pm.partNumber}`} className="flex-1 space-y-2 cursor-pointer">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-sm font-bold text-slate-900 tracking-tight">Part {pm.partNumber} ({partQuestionCounts[pm.partNumber]} câu)</span>
-                                  <span className="course-detail-skill-tag text-[11px] font-semibold uppercase tracking-wider px-2.5 py-0.5">{pm.skill}</span>
+                              <input id={`practice-part-${pm.partNumber}`} type="checkbox" checked={isChecked} onChange={() => handleTogglePart(pm.partNumber)} className="course-part-checkbox mt-1.5 w-4 h-4 cursor-pointer" />
+                              <label htmlFor={`practice-part-${pm.partNumber}`} className="flex-1 space-y-2.5 cursor-pointer">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <span className="text-[16px] font-semibold text-slate-800 tracking-tight">
+                                    Part {pm.partNumber} ({partQuestionCounts[pm.partNumber]} câu)
+                                  </span>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 text-[12px] font-medium rounded-[2px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+                                    {pm.skill}
+                                  </span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {pm.tags.map((tag) => <span key={tag} className="course-detail-topic-tag text-[11px] font-medium px-2 py-0.5">{tag}</span>)}
+                                  {pm.tags.map((tag) => (
+                                    <span key={tag} className="course-detail-topic-tag text-[13px] font-normal text-slate-600 px-2.5 py-0.5">
+                                      {tag}
+                                    </span>
+                                  ))}
                                 </div>
                               </label>
-                              {pm.skill === 'Listening' && <Link to={`/courses/${testId}/dictation?part=${pm.partNumber}`} className="course-detail-dictation-link shrink-0 px-2.5 py-1 font-bold text-[10px] inline-flex items-center gap-1" title={`Luyện nghe chép chính tả ${pm.name}`}><Headphones size={11} strokeWidth={1.5} /> Chép chính tả</Link>}
+                              {pm.skill === 'Listening' && (
+                                <Link
+                                  to={`/courses/${testId}/dictation?part=${pm.partNumber}`}
+                                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-3 py-1.5 text-[13px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF] shrink-0"
+                                  title={`Luyện nghe chép chính tả ${pm.name}`}
+                                >
+                                  <Headphones size={13} strokeWidth={1.7} />
+                                  <span>Chép chính tả</span>
+                                </Link>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -877,79 +893,120 @@ const CourseDetailPage = () => {
                   </div>
                 </div>
 
-                {/* Giới hạn thời gian (Dropdown) */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Giới hạn thời gian (Để trống để làm bài không giới hạn)
-                  </label>
-                  <select
-                    value={timeLimit}
-                    onChange={(e) => setTimeLimit(e.target.value)}
-                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-sm cursor-pointer"
-                  >
-                    <option value="">-- Chọn thời gian (Không giới hạn) --</option>
-                    <option value="5">5 phút</option>
-                    <option value="10">10 phút</option>
-                    <option value="15">15 phút</option>
-                    <option value="20">20 phút</option>
-                    <option value="30">30 phút</option>
-                    <option value="45">45 phút</option>
-                    <option value="60">60 phút</option>
-                    <option value="75">75 phút</option>
-                    <option value="90">90 phút</option>
-                    <option value="120">120 phút</option>
-                  </select>
+                {/* Giới hạn thời gian & Tốc độ âm thanh mặc định */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                  <div className="space-y-2">
+                    <label className="block text-[14px] font-semibold text-slate-700">
+                      Giới hạn thời gian <span className="font-normal text-slate-500">(Để trống để làm không giới hạn)</span>
+                    </label>
+                    <select
+                      value={timeLimit}
+                      onChange={(e) => setTimeLimit(e.target.value)}
+                      className="course-detail-select w-full px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
+                    >
+                      <option value="">-- Chọn thời gian (Không giới hạn) --</option>
+                      <option value="5">5 phút</option>
+                      <option value="10">10 phút</option>
+                      <option value="15">15 phút</option>
+                      <option value="20">20 phút</option>
+                      <option value="30">30 phút</option>
+                      <option value="45">45 phút</option>
+                      <option value="60">60 phút</option>
+                      <option value="75">75 phút</option>
+                      <option value="90">90 phút</option>
+                      <option value="120">120 phút</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-[14px] font-semibold text-slate-700">
+                      Tốc độ phát âm thanh mặc định <span className="font-normal text-slate-500">(Đổi được từng câu)</span>
+                    </label>
+                    <select
+                      value={audioSpeed}
+                      onChange={(e) => setAudioSpeed(e.target.value)}
+                      className="course-detail-select w-full px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
+                    >
+                      <option value="0.5">0.5×</option>
+                      <option value="0.75">0.75×</option>
+                      <option value="0.9">0.9×</option>
+                      <option value="1.0">Normal (1.0×)</option>
+                      <option value="1.1">1.1×</option>
+                      <option value="1.25">1.25×</option>
+                      <option value="1.5">1.5×</option>
+                      <option value="2">2×</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Giao diện */}
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold text-slate-700">Giao diện</label>
+                  <label className="block text-[14px] font-semibold text-slate-700">Giao diện phòng thi</label>
                   <select
                     value={interfaceType}
                     onChange={(e) => setInterfaceType(e.target.value)}
-                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-sm cursor-pointer"
+                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
                   >
                     <option value="default">Mặc định</option>
                   </select>
                 </div>
 
-                {/* Action Button: LUYỆN TẬP (Button-in-Button Island CTA) */}
+                {/* Action Button: LUYỆN TẬP */}
                 <div className="pt-2">
                   <button
                     type="button"
                     onClick={handleStartPractice}
-                    className="course-detail-cta group px-7 py-3.5 font-extrabold text-sm tracking-wide inline-flex items-center gap-3 cursor-pointer"
+                    className="course-detail-cta group px-7 py-3 font-semibold text-[15px] inline-flex items-center gap-2.5 cursor-pointer"
                   >
-                    <span>LUYỆN TẬP ({selectedAvailableParts.length} phần đã chọn)</span>
-
+                    <span>Bắt đầu luyện tập ({selectedAvailableParts.length} phần đã chọn)</span>
+                    <ChevronRight size={16} strokeWidth={1.8} className="group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* TAB CONTENT: LÀM FULL TEST (Ảnh 5) */}
+            {/* TAB CONTENT: LÀM FULL TEST */}
             {activeTab === 'fulltest' && (
               <div className="course-detail-panel p-6 space-y-6">
                 {/* Yellow Warning Notice Box */}
                 <div className="course-detail-tip p-4 flex items-start gap-3">
-                  <Info size={20} strokeWidth={1.5} className="shrink-0 mt-0.5" />
-                  <p className="text-xs leading-relaxed font-medium">
-                    {isFullLengthTest ? <>Sẵn sàng để bắt đầu full test. Bạn cần dành ra <strong className="font-semibold text-slate-800">120 phút</strong> cho bài thi 200 câu.</> : <>Đề hiện có {testQuestionCount}/200 câu hoặc số câu chưa liên tục; chỉ bật full test khi đề có đủ 200 câu theo thứ tự.</>}
+                  <Info size={20} strokeWidth={1.6} className="shrink-0 mt-0.5" />
+                  <p className="text-[14px] leading-relaxed font-normal text-amber-900">
+                    {isFullLengthTest ? <>Sẵn sàng để bắt đầu Full Test. Bạn cần dành ra <strong className="font-semibold text-slate-800">120 phút</strong> cho bài thi 200 câu.</> : <>Đề hiện có {testQuestionCount}/200 câu hoặc số câu chưa liên tục; chỉ bật Full Test khi đề có đủ 200 câu theo thứ tự.</>}
                   </p>
                 </div>
 
+                {/* Tốc độ âm thanh mặc định cho Full Test */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <label className="block text-[14px] font-semibold text-slate-700">
+                    Tốc độ phát âm thanh mặc định <span className="font-normal text-slate-500">(Có thể đổi từng câu khi làm bài)</span>
+                  </label>
+                  <select
+                    value={audioSpeed}
+                    onChange={(e) => setAudioSpeed(e.target.value)}
+                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
+                  >
+                    <option value="0.5">0.5×</option>
+                    <option value="0.75">0.75×</option>
+                    <option value="0.9">0.9×</option>
+                    <option value="1.0">Normal (1.0×)</option>
+                    <option value="1.1">1.1×</option>
+                    <option value="1.25">1.25×</option>
+                    <option value="1.5">1.5×</option>
+                    <option value="2">2×</option>
+                  </select>
+                </div>
 
-
-                {/* Action Button: BẮT ĐẦU THI FULL TEST (Button-in-Button Island CTA) */}
+                {/* Action Button: BẮT ĐẦU THI FULL TEST */}
                 <div>
                   <button
                     type="button"
                     onClick={handleStartFullTest}
                     disabled={!isFullLengthTest}
-                    className="course-detail-cta group px-8 py-3.5 font-extrabold text-sm tracking-wide inline-flex items-center gap-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                    className="course-detail-cta group px-7 py-3 font-semibold text-[15px] inline-flex items-center gap-2.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
-                    <span>BẮT ĐẦU THI FULL TEST</span>
-
+                    <span>Bắt đầu làm Full Test (200 câu)</span>
+                    <ChevronRight size={16} strokeWidth={1.8} className="group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
@@ -960,23 +1017,23 @@ const CourseDetailPage = () => {
               <div className="course-detail-panel p-6 space-y-6">
                 {/* Intro Banner */}
                 <div className="course-detail-tip p-4 flex items-start gap-3.5">
-                  <Headphones size={22} strokeWidth={1.5} className="shrink-0 mt-0.5" />
+                  <Headphones size={22} strokeWidth={1.6} className="shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wide">
-                      Phương pháp nghe chép chính tả (TOEIC Dictation Method)
+                    <h4 className="text-[15px] font-semibold text-slate-800">
+                      Phương pháp nghe chép chính tả (TOEIC Dictation)
                     </h4>
-                    <p className="text-xs font-medium text-slate-700 leading-relaxed">
-                      Luyện tập nghe từng câu, gõ lại những gì bạn nghe được để rèn luyện khả năng bắt âm, nối âm, từ vựng và cấu trúc ngữ pháp. Hệ thống đối chiếu kết quả từng từ theo thời gian thực (Smart Diff Checker) giúp bạn phát hiện ngay các lỗi sai.
+                    <p className="text-[14px] font-normal text-slate-700 leading-relaxed">
+                      Luyện tập nghe từng câu, gõ lại những gì bạn nghe được để rèn luyện khả năng bắt âm, nối âm, từ vựng và cấu trúc ngữ pháp. Hệ thống đối chiếu kết quả từng vế câu giúp bạn phát hiện ngay các lỗi sai.
                     </p>
                   </div>
                 </div>
 
                 {/* 4 Listening Parts Selection Grid */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-900 tracking-tight uppercase">
-                    Chọn phần nghe muốn chép chính tả:
+                <div className="space-y-3.5">
+                  <h4 className="text-[18px] font-semibold text-slate-800 tracking-tight">
+                    Chọn phần nghe muốn chép chính tả
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
                       {
                         part: 1,
@@ -1005,27 +1062,28 @@ const CourseDetailPage = () => {
                     ].map((item) => (
                       <div
                         key={item.part}
-                        className="course-dictation-option p-4 flex flex-col justify-between gap-3 group"
+                        className="course-dictation-option p-4 flex flex-col justify-between gap-3.5 group"
                       >
                         <div className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-900 tracking-tight">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[16px] font-semibold text-slate-800 tracking-tight">
                               {item.name}
                             </span>
-                            <span className="border border-blue-200 bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8]">
+                            <span className="inline-flex items-center rounded-[2px] border border-blue-200 bg-[#EFF6FF] px-2.5 py-0.5 text-[12px] font-medium text-[#1D4ED8] whitespace-nowrap">
                               {item.count}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
+                          <p className="text-[14px] text-slate-600 leading-relaxed">{item.desc}</p>
                         </div>
 
-                        <div className="flex items-center justify-between border-t border-slate-200 pt-2.5">
-                          <span className="text-[11px] font-medium text-slate-500">Audio đề</span>
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                          <span className="text-[13px] font-normal text-slate-500">Audio theo từng câu</span>
                           <Link
-                            to={`/courses/${testId}/dictation?part=${item.part}`}
-                            className="editorial-button-secondary inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                            to={`/courses/${testId}/dictation?part=${item.part}${audioSpeed !== 1 ? `&speed=${audioSpeed}` : ''}`}
+                            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
                           >
-                            Bắt đầu chép <ChevronRight size={13} />
+                            <span>Bắt đầu chép</span>
+                            <ChevronRight size={14} strokeWidth={1.8} />
                           </Link>
                         </div>
                       </div>
@@ -1036,12 +1094,12 @@ const CourseDetailPage = () => {
                 {/* Master Action CTA */}
                 <div className="pt-2">
                   <Link
-                    to={`/courses/${testId}/dictation?part=all`}
-                    className="course-detail-cta group px-8 py-3.5 font-extrabold text-sm tracking-wide inline-flex items-center gap-3 cursor-pointer"
+                    to={`/courses/${testId}/dictation?part=all${audioSpeed !== 1 ? `&speed=${audioSpeed}` : ''}`}
+                    className="course-detail-cta group px-7 py-3 font-semibold text-[15px] inline-flex items-center gap-3 cursor-pointer"
                   >
-                    <span>CHÉP CHÍNH TẢ TOÀN BỘ PHẦN NGHE (PART 1 - 4)</span>
+                    <span>Chép chính tả toàn bộ phần nghe (Part 1 – 4)</span>
                     <span className="course-detail-cta-icon">
-                      <Headphones size={18} strokeWidth={1.5} />
+                      <Headphones size={17} strokeWidth={1.6} />
                     </span>
                   </Link>
                 </div>
@@ -1052,14 +1110,14 @@ const CourseDetailPage = () => {
             {activeTab === 'discussion' && (
               <div className="course-detail-panel p-6 space-y-6">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h3 className="text-[18px] font-semibold text-slate-800 tracking-tight">
                       Thảo luận về đề thi này ({comments.length})
                     </h3>
                   </div>
 
                   {!isAuthenticated ? (
-                    <div className="border border-blue-200 bg-[#EFF6FF] p-4 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
+                    <div className="border border-blue-200 bg-[#EFF6FF] p-4 text-[14px] text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
                       <div className="flex items-center gap-2">
                         <Info size={16} className="text-[#1D4ED8] shrink-0" />
                         <span>Đăng nhập để tham gia thảo luận và đặt câu hỏi về đề thi này.</span>
@@ -1067,7 +1125,7 @@ const CourseDetailPage = () => {
                       <Link
                         to="/login"
                         state={{ from: { pathname: `/courses/${testId}` } }}
-                        className="editorial-button-primary px-3.5 py-1.5 text-xs font-semibold shrink-0"
+                        className="editorial-button-primary px-3.5 py-1.5 text-[13px] font-medium shrink-0"
                       >
                         Đăng nhập
                       </Link>
@@ -1079,15 +1137,15 @@ const CourseDetailPage = () => {
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Chia sẻ cảm nghĩ, câu hỏi hoặc kinh nghiệm giải đề của bạn..."
-                        className="course-detail-textarea w-full p-3 text-sm focus:outline-none"
+                        className="course-detail-textarea w-full p-3 text-[14px] focus:outline-none"
                       />
                       <div className="flex justify-end">
                         <button
                           type="submit"
                           disabled={!newComment.trim() || commentSubmitting}
-                          className="course-detail-action course-detail-submit px-5 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                          className="course-detail-action course-detail-submit px-5 py-2 font-medium text-[14px] inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                         >
-                          <Send size={13} strokeWidth={1.5} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
+                          <Send size={14} strokeWidth={1.6} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
                         </button>
                       </div>
                     </form>
@@ -1096,38 +1154,38 @@ const CourseDetailPage = () => {
                   {/* List of comments */}
                   <div className="divide-y divide-slate-100 pt-2">
                     {commentsLoading ? (
-                      <p className="py-6 text-center text-xs text-slate-500">Đang tải danh sách bình luận...</p>
+                      <p className="py-6 text-center text-[14px] text-slate-500">Đang tải danh sách bình luận...</p>
                     ) : comments.length === 0 ? (
-                      <p className="py-6 text-center text-xs text-slate-400">
+                      <p className="py-6 text-center text-[14px] text-slate-500">
                         Chưa có bình luận nào cho đề thi này. Hãy là người đầu tiên chia sẻ cảm nghĩ!
                       </p>
                     ) : (
                       comments.map((c) => (
                         <div key={c.id} className="py-4 space-y-1.5 group">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 text-xs flex-wrap">
-                              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px] overflow-hidden shrink-0 border border-blue-200">
+                            <div className="flex items-center gap-2 text-[14px] flex-wrap">
+                              <div className="w-6 h-6 rounded-full bg-[#EFF6FF] text-[#1D4ED8] font-semibold flex items-center justify-center text-[11px] overflow-hidden shrink-0 border border-blue-200">
                                 {c.userAvatar ? (
                                   <img src={c.userAvatar} alt={c.userName} className="w-full h-full object-cover" />
                                 ) : (
                                   (c.userName || 'U').substring(0, 2).toUpperCase()
                                 )}
                               </div>
-                              <span className="font-bold text-slate-900">{c.userName}</span>
+                              <span className="font-semibold text-slate-800">{c.userName}</span>
                               {c.roleName === 'ADMIN' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-blue-600 text-white font-bold">
-                                  Admin
+                                <span className="text-[12px] px-2 py-0.5 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-blue-200 font-medium">
+                                  Quản trị viên
                                 </span>
                               )}
                               {c.roleName === 'TEACHER' && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-emerald-600 text-white font-bold">
+                                <span className="text-[12px] px-2 py-0.5 rounded-[2px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                                   Giáo viên
                                 </span>
                               )}
                               <span className="text-slate-300">•</span>
-                              <span className="text-slate-400 font-medium text-[11px]">{formatCommentDate(c.createdAt)}</span>
+                              <span className="text-slate-500 font-normal text-[13px]">{formatCommentDate(c.createdAt)}</span>
                               {c.updatedAt && c.updatedAt !== c.createdAt && (
-                                <span className="text-slate-400 text-[10px] italic">(đã chỉnh sửa)</span>
+                                <span className="text-slate-400 text-[12px] italic">(đã chỉnh sửa)</span>
                               )}
                             </div>
 
@@ -1136,10 +1194,10 @@ const CourseDetailPage = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleStartEdit(c)}
-                                  className="text-slate-400 hover:text-blue-600 p-1 cursor-pointer"
+                                  className="text-slate-400 hover:text-[#1D4ED8] p-1 cursor-pointer"
                                   title="Chỉnh sửa bình luận"
                                 >
-                                  <Edit2 size={13} strokeWidth={1.5} />
+                                  <Edit2 size={14} strokeWidth={1.6} />
                                 </button>
                               )}
                               {(isAdmin || (user && user.id === c.userId)) && (
@@ -1149,7 +1207,7 @@ const CourseDetailPage = () => {
                                   className="text-slate-400 hover:text-red-600 p-1 cursor-pointer"
                                   title="Xóa bình luận"
                                 >
-                                  <Trash2 size={13} strokeWidth={1.5} />
+                                  <Trash2 size={14} strokeWidth={1.6} />
                                 </button>
                               )}
                             </div>
@@ -1161,7 +1219,7 @@ const CourseDetailPage = () => {
                                 rows={2}
                                 value={editingContent}
                                 onChange={(e) => setEditingContent(e.target.value)}
-                                className="course-detail-textarea w-full p-2.5 text-xs focus:outline-none"
+                                className="course-detail-textarea w-full p-2.5 text-[14px] focus:outline-none"
                                 autoFocus
                               />
                               <div className="flex items-center justify-end gap-2">
@@ -1169,7 +1227,7 @@ const CourseDetailPage = () => {
                                   type="button"
                                   onClick={handleCancelEdit}
                                   disabled={commentUpdating}
-                                  className="editorial-button-secondary px-3 py-1 text-xs font-semibold"
+                                  className="editorial-button-secondary px-3 py-1 text-[13px] font-medium"
                                 >
                                   Hủy
                                 </button>
@@ -1177,14 +1235,14 @@ const CourseDetailPage = () => {
                                   type="button"
                                   onClick={() => handleUpdateComment(c.id)}
                                   disabled={!editingContent.trim() || commentUpdating}
-                                  className="course-detail-action course-detail-submit px-3.5 py-1 text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                  className="course-detail-action course-detail-submit px-3.5 py-1 text-[13px] font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                 >
                                   {commentUpdating ? 'Đang lưu…' : 'Lưu thay đổi'}
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <p className="text-xs text-slate-700 pl-8 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                            <p className="text-[14px] text-slate-700 pl-8 leading-relaxed whitespace-pre-wrap">{c.content}</p>
                           )}
                         </div>
                       ))
@@ -1197,69 +1255,120 @@ const CourseDetailPage = () => {
             {/* BẢNG: KẾT QUẢ LÀM BÀI CỦA BẠN */}
             <div className="course-history-card">
               <div className="course-history-content space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                  Kết quả làm bài của bạn:
-                </h3>
+                <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-[3px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+                      <Award size={16} strokeWidth={1.8} />
+                    </span>
+                    <div>
+                      <h3 className="text-[18px] font-semibold text-slate-800 tracking-tight leading-snug">
+                        Kết quả làm bài của bạn
+                      </h3>
+                    </div>
+                  </div>
+                  {isAuthenticated && testHistory.length > 0 && (
+                    <span className="inline-flex items-center rounded-[3px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-medium text-slate-600">
+                      {testHistory.length} lượt làm bài
+                    </span>
+                  )}
+                </div>
 
                 {!isAuthenticated ? (
-                  <div className="text-center py-8 text-slate-500 text-xs">Đăng nhập để xem lịch sử làm bài của bạn.</div>
+                  <div className="text-center py-8 text-slate-500 text-[14px]">Đăng nhập để xem lịch sử làm bài của bạn.</div>
                 ) : historyLoading ? (
-                  <div className="py-8 text-center text-xs text-slate-500">Đang tải lịch sử bài làm...</div>
+                  <div className="py-8 text-center text-[14px] text-slate-500">Đang tải lịch sử bài làm...</div>
                 ) : historyError ? (
-                  <div role="alert" className="flex flex-wrap items-center justify-center gap-3 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+                  <div role="alert" className="flex flex-wrap items-center justify-center gap-3 border border-red-200 bg-red-50 p-4 text-[14px] font-medium text-red-800">
                     <span>{historyError}</span>
                     <button
                       type="button"
                       onClick={() => setHistoryRetry((retry) => retry + 1)}
-                      className="editorial-button-secondary min-h-9 px-3 text-xs font-semibold"
+                      className="editorial-button-secondary min-h-9 px-3 text-[13px] font-semibold"
                     >
                       Thử tải lại
                     </button>
                   </div>
                 ) : testHistory.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400 text-xs">
-                    Bạn chưa làm đề thi này lần nào. Hãy chọn "Luyện tập" hoặc "Làm full test" ở trên để bắt đầu!
+                  <div className="text-center py-8 text-slate-500 text-[14px]">
+                    Bạn chưa làm đề thi này lần nào. Hãy chọn &ldquo;Luyện tập từng phần&rdquo; hoặc &ldquo;Làm full test&rdquo; ở trên để bắt đầu!
                   </div>
                 ) : (
-                  <div className="course-history-table overflow-x-auto">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-slate-50/90 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200 tracking-wider">
-                        <tr>
-                          <th className="py-3 px-4">Ngày làm</th>
-                          <th className="py-3 px-4">Kết quả</th>
-                          <th className="py-3 px-4">Thời gian làm bài</th>
-                          <th className="py-3 px-4 text-right">Chi tiết</th>
+                  <div className="course-history-table overflow-x-auto rounded-[3px] border border-slate-200">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-[#F8FAFC] text-[14px] font-semibold text-slate-600">
+                          <th className="py-3.5 px-4 whitespace-nowrap">Ngày làm bài</th>
+                          <th className="py-3.5 px-4 whitespace-nowrap">Kết quả đạt được</th>
+                          <th className="py-3.5 px-4 whitespace-nowrap">Thời gian làm bài</th>
+                          <th className="py-3.5 px-4 text-right whitespace-nowrap">Chi tiết</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {testHistory.map((h, idx) => (
-                          <tr key={h.id || idx} className="hover:bg-blue-50/30 transition-colors">
-                            <td className="py-3 px-4 font-medium text-slate-700">
-                              <div className="font-semibold text-slate-900">{h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : '—'}</div>
-                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
-                                  {h.typePractice || 'Luyện tập'}
-                                </span>
-                                {h.partName && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200/80">
-                                    {h.partName}
+                      <tbody className="divide-y divide-slate-200/80 bg-white text-[14px]">
+                        {testHistory.map((h, idx) => {
+                          const isFullTestAttempt = h.scoreType === 'ESTIMATED_SCALED' || h.totalCount === 200;
+                          const badgeLabel = isFullTestAttempt
+                            ? 'Full Test (200 câu)'
+                            : (h.partName && h.partName !== 'Full Test / nhiều Part'
+                              ? h.partName
+                              : (h.typePractice || 'Luyện tập theo phần'));
+
+                          return (
+                            <tr key={h.id || idx} className="hover:bg-[#F8FAFC] transition-colors">
+                              <td className="py-4 px-4 align-middle">
+                                <div className="text-[15px] font-semibold text-slate-800 whitespace-nowrap">
+                                  {h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : '—'}
+                                </div>
+                                <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                  <span
+                                    className={`inline-flex items-center px-2.5 py-0.5 text-[12px] font-medium rounded-[2px] border whitespace-nowrap ${
+                                      isFullTestAttempt
+                                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-blue-200'
+                                        : 'bg-amber-50/90 text-amber-800 border-amber-200'
+                                    }`}
+                                  >
+                                    {badgeLabel}
                                   </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 font-extrabold text-slate-900 text-sm">
-                              {h.totalScore} <span className="text-xs font-semibold text-slate-500">{h.scoreType === 'ESTIMATED_SCALED' ? '/ 990 (ước tính)' : `/${h.totalCount} câu`}</span>
-                              <div className="text-[11px] font-medium text-slate-500">{h.correctCount}/{h.totalCount} câu đúng</div>
-                            </td>
-                            <td className="py-3 px-4 font-mono text-slate-600">{h.timeSpentFormatted}</td>
-                            <td className="py-3 px-4 text-right">
-                              <button type="button" onClick={() => navigate(`/results/${h.id}`)} className="course-detail-history-link inline-flex items-center gap-1 font-bold cursor-pointer group">
-                                <span>Xem chi tiết</span>
-                                <ChevronRight size={13} strokeWidth={1.5} className="group-hover:translate-x-0.5 transition-transform" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4 align-middle">
+                                <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+                                  <span className="text-[18px] font-semibold text-[#1D4ED8]">
+                                    {h.totalScore}
+                                  </span>
+                                  <span className="text-[14px] font-normal text-slate-500">
+                                    {h.scoreType === 'ESTIMATED_SCALED' ? '/ 990 điểm (ước tính)' : `/ ${h.totalCount} câu`}
+                                  </span>
+                                </div>
+                                <div className="mt-1 flex items-center gap-2 text-[13px] text-slate-500 whitespace-nowrap">
+                                  <span>
+                                    Đúng <strong className="font-semibold text-slate-700">{h.correctCount}/{h.totalCount}</strong> câu
+                                  </span>
+                                  {h.scoreType === 'ESTIMATED_SCALED' && h.listeningScore != null && h.readingScore != null && (
+                                    <span className="text-slate-400">
+                                      · Nghe: <strong className="font-medium text-slate-600">{h.listeningScore}</strong> · Đọc: <strong className="font-medium text-slate-600">{h.readingScore}</strong>
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-4 px-4 align-middle whitespace-nowrap">
+                                <span className="inline-flex items-center gap-1.5 text-[14px] font-medium text-slate-700">
+                                  <Clock size={14} strokeWidth={1.6} className="text-slate-400 shrink-0" />
+                                  <span>{h.timeSpentFormatted || '—'}</span>
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 align-middle text-right whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => navigate(`/results/${h.id}`)}
+                                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF] cursor-pointer group"
+                                >
+                                  <span>Xem chi tiết</span>
+                                  <ChevronRight size={14} strokeWidth={1.8} className="group-hover:translate-x-0.5 transition-transform" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1270,31 +1379,41 @@ const CourseDetailPage = () => {
             {/* BÌNH LUẬN SECTION (Khi ở tab khác vẫn có thể thấy bình luận) */}
             {activeTab !== 'discussion' && (
               <div className="course-detail-panel p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                    Bình luận ({comments.length})
-                  </h3>
-                  {comments.length > 5 && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('discussion')}
-                      className="text-xs font-semibold text-[#1D4ED8] hover:underline cursor-pointer"
-                    >
-                      Xem tất cả ({comments.length})
-                    </button>
-                  )}
+                <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-[3px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+                      <Send size={15} strokeWidth={1.8} />
+                    </span>
+                    <h3 className="text-[18px] font-semibold text-slate-800 tracking-tight leading-snug">
+                      Bình luận về đề thi
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center rounded-[3px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-medium text-slate-600">
+                      {comments.length} bình luận
+                    </span>
+                    {comments.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('discussion')}
+                        className="text-[14px] font-medium text-[#1D4ED8] hover:underline cursor-pointer"
+                      >
+                        Xem tất cả
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {!isAuthenticated ? (
-                  <div className="border border-blue-200 bg-[#EFF6FF] p-3 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
+                  <div className="border border-blue-200 bg-[#EFF6FF] p-3.5 text-[14px] text-slate-700 flex flex-wrap items-center justify-between gap-3 rounded-[2px]">
                     <div className="flex items-center gap-2">
-                      <Info size={15} className="text-[#1D4ED8] shrink-0" />
+                      <Info size={16} className="text-[#1D4ED8] shrink-0" />
                       <span>Đăng nhập để tham gia thảo luận.</span>
                     </div>
                     <Link
                       to="/login"
                       state={{ from: { pathname: `/courses/${testId}` } }}
-                      className="editorial-button-primary px-3 py-1 text-xs font-semibold shrink-0"
+                      className="editorial-button-primary px-3.5 py-1.5 text-[13px] font-medium shrink-0"
                     >
                       Đăng nhập
                     </Link>
@@ -1306,15 +1425,15 @@ const CourseDetailPage = () => {
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Chia sẻ cảm nghĩ hoặc thắc mắc của bạn..."
-                      className="course-detail-textarea w-full p-3 text-sm focus:outline-none"
+                      className="course-detail-textarea w-full p-3 text-[14px] focus:outline-none"
                     />
                     <div className="flex justify-end">
                       <button
                         type="submit"
                         disabled={!newComment.trim() || commentSubmitting}
-                        className="course-detail-action course-detail-submit px-4 py-2 font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        className="course-detail-action course-detail-submit px-4 py-2 font-medium text-[14px] inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                       >
-                        <Send size={13} strokeWidth={1.5} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
+                        <Send size={14} strokeWidth={1.6} /> {commentSubmitting ? 'Đang gửi…' : 'Gửi bình luận'}
                       </button>
                     </div>
                   </form>
@@ -1323,36 +1442,36 @@ const CourseDetailPage = () => {
                 {/* List of latest comments */}
                 <div className="divide-y divide-slate-100 pt-2">
                   {commentsLoading ? (
-                    <p className="py-4 text-center text-xs text-slate-500">Đang tải bình luận...</p>
+                    <p className="py-4 text-center text-[14px] text-slate-500">Đang tải bình luận...</p>
                   ) : comments.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-slate-400">Chưa có bình luận nào cho đề thi này.</p>
+                    <p className="py-4 text-center text-[14px] text-slate-500">Chưa có bình luận nào cho đề thi này.</p>
                   ) : (
                     comments.slice(0, 5).map((c) => (
-                      <div key={c.id} className="py-3 space-y-1 group">
+                      <div key={c.id} className="py-3.5 space-y-1.5 group">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 text-xs flex-wrap">
-                            <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[9px] overflow-hidden shrink-0 border border-blue-200">
+                          <div className="flex items-center gap-2 text-[14px] flex-wrap">
+                            <div className="w-6 h-6 rounded-full bg-[#EFF6FF] text-[#1D4ED8] font-semibold flex items-center justify-center text-[11px] overflow-hidden shrink-0 border border-blue-200">
                               {c.userAvatar ? (
                                 <img src={c.userAvatar} alt={c.userName} className="w-full h-full object-cover" />
                               ) : (
                                 (c.userName || 'U').substring(0, 2).toUpperCase()
                               )}
                             </div>
-                            <span className="font-bold text-slate-800">{c.userName}</span>
+                            <span className="font-semibold text-slate-800">{c.userName}</span>
                             {c.roleName === 'ADMIN' && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-blue-600 text-white font-bold">
-                                Admin
+                              <span className="text-[12px] px-2 py-0.5 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-blue-200 font-medium">
+                                Quản trị viên
                               </span>
                             )}
                             {c.roleName === 'TEACHER' && (
-                              <span className="text-[10px] px-1.5 py-0.2 rounded-[2px] bg-emerald-600 text-white font-bold">
+                              <span className="text-[12px] px-2 py-0.5 rounded-[2px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
                                 Giáo viên
                               </span>
                             )}
                             <span className="text-slate-300">•</span>
-                            <span className="text-slate-400 text-[11px]">{formatCommentDate(c.createdAt)}</span>
+                            <span className="text-slate-500 text-[13px]">{formatCommentDate(c.createdAt)}</span>
                             {c.updatedAt && c.updatedAt !== c.createdAt && (
-                              <span className="text-slate-400 text-[10px] italic">(đã chỉnh sửa)</span>
+                              <span className="text-slate-400 text-[12px] italic">(đã chỉnh sửa)</span>
                             )}
                           </div>
 
@@ -1361,10 +1480,10 @@ const CourseDetailPage = () => {
                               <button
                                 type="button"
                                 onClick={() => handleStartEdit(c)}
-                                className="text-slate-400 hover:text-blue-600 p-1 cursor-pointer"
+                                className="text-slate-400 hover:text-[#1D4ED8] p-1 cursor-pointer"
                                 title="Chỉnh sửa bình luận"
                               >
-                                <Edit2 size={12} strokeWidth={1.5} />
+                                <Edit2 size={14} strokeWidth={1.6} />
                               </button>
                             )}
                             {(isAdmin || (user && user.id === c.userId)) && (
@@ -1374,19 +1493,19 @@ const CourseDetailPage = () => {
                                 className="text-slate-400 hover:text-red-600 p-1 cursor-pointer"
                                 title="Xóa bình luận"
                               >
-                                <Trash2 size={12} strokeWidth={1.5} />
+                                <Trash2 size={14} strokeWidth={1.6} />
                               </button>
                             )}
                           </div>
                         </div>
 
                         {editingCommentId === c.id ? (
-                          <div className="pl-7 pt-1 space-y-2">
+                          <div className="pl-8 pt-1 space-y-2">
                             <textarea
                               rows={2}
                               value={editingContent}
                               onChange={(e) => setEditingContent(e.target.value)}
-                              className="course-detail-textarea w-full p-2.5 text-xs focus:outline-none"
+                              className="course-detail-textarea w-full p-2.5 text-[14px] focus:outline-none"
                               autoFocus
                             />
                             <div className="flex items-center justify-end gap-2">
@@ -1394,7 +1513,7 @@ const CourseDetailPage = () => {
                                 type="button"
                                 onClick={handleCancelEdit}
                                 disabled={commentUpdating}
-                                className="editorial-button-secondary px-3 py-1 text-xs font-semibold"
+                                className="editorial-button-secondary px-3 py-1 text-[13px] font-medium"
                               >
                                 Hủy
                               </button>
@@ -1402,14 +1521,14 @@ const CourseDetailPage = () => {
                                 type="button"
                                 onClick={() => handleUpdateComment(c.id)}
                                 disabled={!editingContent.trim() || commentUpdating}
-                                className="course-detail-action course-detail-submit px-3 py-1 text-xs font-bold inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                className="course-detail-action course-detail-submit px-3 py-1 text-[13px] font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                               >
                                 {commentUpdating ? 'Đang lưu…' : 'Lưu thay đổi'}
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-600 pl-7 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                          <p className="text-[14px] text-slate-700 pl-8 leading-relaxed whitespace-pre-wrap">{c.content}</p>
                         )}
                       </div>
                     ))
@@ -1421,9 +1540,10 @@ const CourseDetailPage = () => {
                     <button
                       type="button"
                       onClick={() => setActiveTab('discussion')}
-                      className="editorial-button-secondary inline-flex items-center gap-1 px-4 py-1.5 text-xs font-semibold"
+                      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-4 py-1.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF] cursor-pointer"
                     >
-                      Xem toàn bộ {comments.length} bình luận <ChevronRight size={13} />
+                      <span>Xem toàn bộ {comments.length} bình luận</span>
+                      <ChevronRight size={14} strokeWidth={1.8} />
                     </button>
                   </div>
                 )}
@@ -1435,70 +1555,76 @@ const CourseDetailPage = () => {
           <div className="lg:col-span-4 space-y-6">
             {/* User Profile Card */}
             <div className="course-profile-card">
-              <div className="course-profile-content text-center space-y-3">
+              <div className="course-profile-content text-center space-y-3.5">
                 <div className="course-profile-avatar flex items-center justify-center mx-auto overflow-hidden">
                   {user?.userAvatar ? (
                     <img src={user.userAvatar} alt="avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <User size={32} strokeWidth={1.5} />
+                    <User size={30} strokeWidth={1.6} />
                   )}
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-slate-800 truncate">
+                  <h4 className="font-semibold text-[17px] text-slate-800 truncate">
                     {user?.userName || user?.userEmail || 'Tài khoản học viên'}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    ⓘ Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
-                    <Link to="/profile" className="course-detail-profile-link font-bold">
-                      Tạo ngay.
+                  <p className="text-[14px] text-slate-500 mt-1.5 leading-relaxed">
+                    Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
+                    <Link to="/profile" className="course-detail-profile-link font-semibold text-[#1D4ED8] hover:underline">
+                      Tạo ngay
                     </Link>
                   </p>
                 </div>
 
                 <Link
                   to="/profile"
-                  className="course-detail-action w-full py-2.5 font-bold text-xs inline-flex items-center justify-center gap-2"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-[3px] border border-slate-200 bg-white py-2.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
                 >
-                  <BarChart3 size={15} strokeWidth={1.5} /> Thống kê kết quả
+                  <BarChart3 size={15} strokeWidth={1.7} />
+                  <span>Thống kê kết quả</span>
                 </Link>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleStartPractice}
-              className="course-detail-goal-cta w-full p-5 text-left"
-            >
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]"><Compass size={17} /> Luyện theo mục tiêu</div>
-              <h4 className="mt-2 text-lg font-bold text-slate-900">Chọn Part phù hợp</h4>
-              <p className="mt-1 text-sm text-slate-600">Bắt đầu với phần bạn muốn cải thiện, rồi xem lại đáp án sau khi hoàn thành.</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#1D4ED8]">Chọn Part <ChevronRight size={16} /></span>
-            </button>
-
-            <section className="space-y-2 border border-slate-200 bg-white p-5">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><Award size={17} className="text-[#1D4ED8]" /> Cách đọc điểm</div>
-              <h4 className="text-lg font-bold text-slate-900">Điểm luyện tập là ước tính</h4>
-              <p className="text-sm leading-relaxed text-slate-600">Điểm full test được ước tính từ số câu đúng, không phải điểm TOEIC chính thức. ETS quy đổi điểm theo từng đề thi.</p>
+            <section className="space-y-3 border border-slate-200 bg-white p-5 rounded-[2px]">
+              <div className="flex items-center gap-2.5 border-b border-slate-100 pb-2.5">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-[3px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+                  <Award size={15} strokeWidth={1.8} />
+                </span>
+                <span className="text-[15px] font-semibold text-slate-800">Cách đọc điểm</span>
+              </div>
+              <h4 className="text-[16px] font-semibold text-slate-800">Điểm luyện tập là ước tính</h4>
+              <p className="text-[14px] leading-relaxed text-slate-600">
+                Điểm Full Test được quy đổi ước tính từ số câu đúng phần Nghe và Đọc theo thang 5–495 mỗi kỹ năng.
+              </p>
             </section>
 
             <button
               type="button"
               onClick={() => setTranscriptModalOpen(true)}
-              className="flex w-full items-start gap-3 border border-slate-200 bg-[#F8FAFC] p-5 text-left text-slate-900 transition hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
+              className="flex w-full items-start gap-3 border border-slate-200 bg-[#F8FAFC] p-5 text-left text-slate-800 transition hover:border-[#1D4ED8] hover:bg-[#EFF6FF] rounded-[2px] cursor-pointer"
             >
-              <Headphones size={20} className="mt-0.5 shrink-0 text-[#1D4ED8]" />
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[3px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8] mt-0.5">
+                <Headphones size={16} strokeWidth={1.8} />
+              </span>
               <span>
-                <span className="block font-bold text-slate-900">Nghe lại và xem lời giải</span>
-                <span className="mt-1 block text-sm text-slate-600">Mở lịch sử để xem đáp án, giải thích và transcript sau lượt làm.</span>
+                <span className="block text-[16px] font-semibold text-slate-800">Nghe lại và xem lời giải</span>
+                <span className="mt-1 block text-[14px] text-slate-600 leading-relaxed">
+                  Mở lịch sử để xem đáp án, giải thích và transcript sau lượt làm.
+                </span>
               </span>
             </button>
 
             <Link
               to="/profile"
-              className="flex items-center justify-between gap-3 border border-slate-200 bg-white p-5 font-bold text-slate-900 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+              className="flex items-center justify-between gap-3 border border-slate-200 bg-white p-5 text-[15px] font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8] rounded-[2px]"
             >
-              <span className="flex items-center gap-2"><BarChart3 size={18} className="text-[#1D4ED8]" /> Theo dõi lịch sử học</span>
-              <ChevronRight size={17} />
+              <span className="flex items-center gap-2.5">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-[3px] border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+                  <BarChart3 size={15} strokeWidth={1.8} />
+                </span>
+                <span>Theo dõi lịch sử học</span>
+              </span>
+              <ChevronRight size={16} strokeWidth={1.8} className="text-[#1D4ED8]" />
             </Link>
           </div>
         </div>
@@ -1512,25 +1638,32 @@ const CourseDetailPage = () => {
         maxWidth="max-w-4xl"
       >
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-          <p className="text-xs text-slate-500">
+          <p className="text-[14px] text-slate-600">
             Đáp án và transcript chỉ được mở sau khi bạn hoàn thành một lượt luyện đề này.
           </p>
 
           <div className="space-y-3">
             {historyLoading ? (
-              <p className="border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Đang tải lịch sử bài làm…</p>
+              <p className="border border-slate-200 bg-slate-50 p-4 text-[14px] text-slate-600">Đang tải lịch sử bài làm…</p>
             ) : historyError ? (
-              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-200 bg-red-50 p-4 text-[14px] font-medium text-red-800">
                 <span>{historyError}</span>
-                <button type="button" onClick={() => setHistoryRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
+                <button type="button" onClick={() => setHistoryRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-[13px] font-medium">Thử lại</button>
               </div>
             ) : isAuthenticated && testHistory.length > 0 ? testHistory.slice(0, 15).map((attempt) => (
-              <div key={attempt.id} className="flex items-center justify-between gap-4 border border-slate-200 bg-white p-4 text-sm">
-                <span><strong className="text-slate-900">{attempt.typePractice}</strong> · <span className="font-mono">{attempt.correctCount}/{attempt.totalCount}</span> câu đúng</span>
-                <button type="button" onClick={() => { setTranscriptModalOpen(false); navigate(`/results/${attempt.id}`); }} className="editorial-button-primary px-3 py-1.5 text-xs font-semibold">Xem lời giải</button>
+              <div key={attempt.id} className="flex items-center justify-between gap-4 border border-slate-200 bg-white p-4 text-[14px]">
+                <span><strong className="font-semibold text-slate-800">{attempt.typePractice}</strong> · <span className="font-medium text-slate-700">{attempt.correctCount}/{attempt.totalCount}</span> câu đúng</span>
+                <button
+                  type="button"
+                  onClick={() => { setTranscriptModalOpen(false); navigate(`/results/${attempt.id}`); }}
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF] cursor-pointer"
+                >
+                  <span>Xem lời giải</span>
+                  <ChevronRight size={14} strokeWidth={1.8} />
+                </button>
               </div>
             )) : (
-              <p className="border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <p className="border border-slate-200 bg-slate-50 p-4 text-[14px] text-slate-600">
                 {isAuthenticated ? 'Bạn chưa có lượt làm để xem đáp án.' : 'Đăng nhập và hoàn thành một lượt làm để xem đáp án và lời giải.'}
               </p>
             )}
@@ -1540,7 +1673,7 @@ const CourseDetailPage = () => {
             <button
               type="button"
               onClick={() => setTranscriptModalOpen(false)}
-              className="editorial-button-secondary px-5 py-2 text-xs font-semibold"
+              className="editorial-button-secondary px-5 py-2 text-[14px] font-medium"
             >
               Đóng
             </button>
@@ -1555,21 +1688,21 @@ const CourseDetailPage = () => {
         title="Gỡ đề khỏi danh sách"
         maxWidth="max-w-md"
       >
-        <div className="space-y-4 text-xs">
-          <p className="font-medium leading-relaxed text-slate-700">
-            Bạn có chắc muốn gỡ đề <strong>"{test?.titleTest}"</strong> khỏi danh sách không? Nếu đề đã có kết quả, giao dịch hoặc bài tập tham chiếu, hệ thống sẽ chuyển đề về bản nháp để giữ lịch sử liên quan. Chỉ đề chưa được sử dụng mới bị xóa vĩnh viễn.
+        <div className="space-y-4 text-[14px]">
+          <p className="font-normal leading-relaxed text-slate-700">
+            Bạn có chắc muốn gỡ đề <strong className="font-semibold text-slate-800">"{test?.titleTest}"</strong> khỏi danh sách không? Nếu đề đã có kết quả, giao dịch hoặc bài tập tham chiếu, hệ thống sẽ chuyển đề về bản nháp để giữ lịch sử liên quan. Chỉ đề chưa được sử dụng mới bị xóa vĩnh viễn.
           </p>
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              className="editorial-button-secondary min-h-10 px-4 py-2 font-semibold"
+              className="editorial-button-secondary min-h-10 px-4 py-2 font-medium"
               onClick={() => setDeleteModalOpen(false)}
             >
               Hủy
             </button>
             <button
               type="button"
-              className="min-h-10 border border-red-600 bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              className="min-h-10 border border-red-600 bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-60"
               onClick={handleDeleteTest}
               disabled={actionLoading}
             >
@@ -1586,19 +1719,19 @@ const CourseDetailPage = () => {
         title="Xóa bình luận"
         maxWidth="max-w-md"
       >
-        <div className="space-y-4 text-xs">
-          <p className="font-medium leading-relaxed text-slate-700">
+        <div className="space-y-4 text-[14px]">
+          <p className="font-normal leading-relaxed text-slate-700">
             Bạn có chắc chắn muốn xóa bình luận này không? Hành động này không thể hoàn tác.
           </p>
           {commentToDelete && (
-            <div className="p-3 bg-slate-50 border border-slate-200 text-slate-700 text-xs italic line-clamp-3">
+            <div className="p-3 bg-slate-50 border border-slate-200 text-slate-700 text-[14px] italic line-clamp-3">
               "{commentToDelete.content}"
             </div>
           )}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"
-              className="editorial-button-secondary min-h-9 px-4 py-1.5 font-semibold"
+              className="editorial-button-secondary min-h-9 px-4 py-1.5 font-medium"
               onClick={() => setCommentToDelete(null)}
               disabled={commentDeleting}
             >
@@ -1606,7 +1739,7 @@ const CourseDetailPage = () => {
             </button>
             <button
               type="button"
-              className="min-h-9 border border-red-600 bg-red-600 px-4 py-1.5 font-semibold text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
+              className="min-h-9 border border-red-600 bg-red-600 px-4 py-1.5 font-medium text-white hover:bg-red-700 disabled:opacity-60 cursor-pointer"
               onClick={handleConfirmDeleteComment}
               disabled={commentDeleting}
             >

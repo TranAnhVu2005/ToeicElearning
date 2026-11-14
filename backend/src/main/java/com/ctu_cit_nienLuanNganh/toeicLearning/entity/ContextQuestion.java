@@ -2,11 +2,13 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedUpdatedEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiViews;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.Hibernate;
 
 import java.util.List;
 
@@ -81,4 +83,35 @@ public class ContextQuestion extends BaseCreatedUpdatedEntity {
     @OrderBy("questionNumber ASC") //Lấy câu hỏi theo số thứ tự tăng dần
     @JsonView(ApiViews.ExamDetail.class)
     private List<Question> questions;
+
+    @JsonProperty("partNumber")
+    @JsonView(ApiViews.ExamDetail.class)
+    public Integer getPartNumber() {
+        if (part != null && Hibernate.isInitialized(part) && part.getNamePart() != null) {
+            String digits = part.getNamePart().replaceAll("\\D+", "");
+            if (!digits.isEmpty()) {
+                try {
+                    return Integer.parseInt(digits);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        Integer refNum = (orderIndex != null && orderIndex > 0) ? orderIndex : null;
+        if (refNum == null && questions != null && Hibernate.isInitialized(questions) && !questions.isEmpty()) {
+            Question firstQuestion = questions.get(0);
+            if (firstQuestion != null && firstQuestion.getQuestionNumber() != null && firstQuestion.getQuestionNumber() > 0) {
+                refNum = firstQuestion.getQuestionNumber();
+            }
+        }
+        if (refNum != null && refNum > 0) {
+            if (refNum <= 6) return 1;
+            if (refNum <= 31) return 2;
+            if (refNum <= 70) return 3;
+            if (refNum <= 100) return 4;
+            if (refNum <= 130) return 5;
+            if (refNum <= 146) return 6;
+            return 7;
+        }
+        return null;
+    }
 }

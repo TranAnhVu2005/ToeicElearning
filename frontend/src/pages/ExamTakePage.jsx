@@ -23,6 +23,7 @@ import {
   Send,
   Eye,
   Highlighter,
+  Settings,
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import { ETS_PART_DIRECTIONS } from '../constants/etsDirections';
@@ -49,22 +50,44 @@ const QuestionImage = ({ src, partNumber }) => {
   );
 };
 
+const AUDIO_SPEED_OPTIONS = [
+  { value: 0.5, label: '0.5×' },
+  { value: 0.75, label: '0.75×' },
+  { value: 0.9, label: '0.9×' },
+  { value: 1.0, label: 'Normal' },
+  { value: 1.1, label: '1.1×' },
+  { value: 1.25, label: '1.25×' },
+  { value: 1.5, label: '1.5×' },
+  { value: 2, label: '2×' },
+];
+const ALLOWED_AUDIO_SPEEDS = AUDIO_SPEED_OPTIONS.map((opt) => opt.value);
+
 // Compact custom audio player for the exam room
-const AudioPlayerBar = ({ src }) => {
+const AudioPlayerBar = ({ src, defaultPlaybackRate = 1.0 }) => {
   const audioRef = useRef(null);
+  const speedMenuRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [speedMenuOpen, setSpeedMenuOpen] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(() => {
+    const parsed = Number(defaultPlaybackRate);
+    return ALLOWED_AUDIO_SPEEDS.includes(parsed) ? parsed : 1.0;
+  });
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    audio.playbackRate = playbackRate;
+
     const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration || 0);
+    const updateDuration = () => {
+      setDuration(audio.duration || 0);
+      audio.playbackRate = playbackRate;
+    };
     const handleEnded = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', updateTime);
@@ -76,7 +99,29 @@ const AudioPlayerBar = ({ src }) => {
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [playbackRate, src]);
+
+  useEffect(() => {
+    if (!speedMenuOpen) return undefined;
+
+    const handleClickOutside = (event) => {
+      if (speedMenuRef.current && !speedMenuRef.current.contains(event.target)) {
+        setSpeedMenuOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setSpeedMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [speedMenuOpen]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -84,6 +129,7 @@ const AudioPlayerBar = ({ src }) => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      audioRef.current.playbackRate = playbackRate;
       audioRef.current.play().catch(() => { });
       setIsPlaying(true);
     }
@@ -117,12 +163,22 @@ const AudioPlayerBar = ({ src }) => {
     }
   };
 
-  const cyclePlaybackRate = () => {
-    if (!audioRef.current) return;
-    const rates = [1.0, 1.2, 0.8];
-    const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length];
+  const handleSelectPlaybackRate = (nextRate) => {
+    if (!ALLOWED_AUDIO_SPEEDS.includes(nextRate)) return;
     setPlaybackRate(nextRate);
-    audioRef.current.playbackRate = nextRate;
+    if (audioRef.current) {
+      audioRef.current.playbackRate = nextRate;
+    }
+  };
+
+  const handleReloadAudio = () => {
+    if (!audioRef.current) return;
+    audioRef.current.pause();
+    setIsPlaying(false);
+    setCurrentTime(0);
+    audioRef.current.load();
+    audioRef.current.playbackRate = playbackRate;
+    setSpeedMenuOpen(false);
   };
 
   const formatAudioTime = (seconds) => {
@@ -135,22 +191,22 @@ const AudioPlayerBar = ({ src }) => {
   if (!src) return null;
 
   return (
-    <div className="mb-3 flex w-full select-none items-center gap-3 border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900">
+    <div className="relative mb-3 flex w-full select-none items-center gap-3.5 border border-slate-200/90 bg-[#F8FAFC] px-4 py-2.5 text-sm text-slate-700 rounded-[2px]">
       <audio ref={audioRef} src={src} preload="metadata" />
 
       {/* Play/Pause Button */}
       <button
         type="button"
         onClick={togglePlay}
-        className="flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center border border-[#1D4ED8] bg-[#1D4ED8] text-white transition hover:bg-[#173ea8]"
+        className="flex h-9 w-9 flex-shrink-0 cursor-pointer items-center justify-center border border-[#1D4ED8] bg-[#1D4ED8] text-white transition hover:bg-[#173ea8] rounded-[2px]"
         title={isPlaying ? 'Tạm dừng' : 'Phát âm thanh'}
       >
-        {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
+        {isPlaying ? <Pause size={15} /> : <Play size={15} className="ml-0.5" />}
       </button>
 
       {/* Scrubber / Progress Bar */}
-      <div className="flex flex-1 items-center gap-2">
-        <span className="w-11 text-right font-mono text-xs text-slate-600">
+      <div className="flex flex-1 items-center gap-3">
+        <span className="w-11 text-right text-[13px] font-semibold text-slate-600 tabular-nums">
           {formatAudioTime(currentTime)}
         </span>
         <input
@@ -160,21 +216,21 @@ const AudioPlayerBar = ({ src }) => {
           step="0.1"
           value={currentTime}
           onChange={handleSeek}
-          className="h-2 flex-1 cursor-pointer appearance-none border border-slate-300 bg-white accent-[#1D4ED8]"
+          className="exam-audio-range h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-[#1D4ED8]"
         />
-        <span className="w-11 font-mono text-xs text-slate-500">
+        <span className="w-11 text-[13px] font-medium text-slate-500 tabular-nums">
           {formatAudioTime(duration)}
         </span>
       </div>
 
       {/* Volume Control */}
-      <div className="hidden items-center gap-1.5 sm:flex">
+      <div className="hidden items-center gap-2 sm:flex">
         <button
           type="button"
           onClick={toggleMute}
-          className="p-1 text-slate-600 hover:text-slate-900"
+          className="p-1 text-slate-600 hover:text-[#1D4ED8] cursor-pointer"
         >
-          {isMuted || volume === 0 ? <VolumeX size={15} /> : <Volume2 size={15} />}
+          {isMuted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
         <input
           type="range"
@@ -183,19 +239,82 @@ const AudioPlayerBar = ({ src }) => {
           step="0.05"
           value={isMuted ? 0 : volume}
           onChange={handleVolumeChange}
-          className="h-2 w-16 cursor-pointer appearance-none border border-slate-300 bg-white accent-[#1D4ED8]"
+          className="exam-audio-range h-1.5 w-16 cursor-pointer appearance-none rounded-full bg-slate-200 accent-[#1D4ED8]"
         />
       </div>
 
-      {/* Playback speed control */}
-      <button
-        type="button"
-        onClick={cyclePlaybackRate}
-        className="border border-slate-300 bg-white px-2.5 py-1 font-mono text-xs font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-        title="Tốc độ phát"
-      >
-        {playbackRate}x
-      </button>
+      {/* Playback Speed Settings Gear & Floating Popover */}
+      <div ref={speedMenuRef} className="relative flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setSpeedMenuOpen((prev) => !prev)}
+          aria-expanded={speedMenuOpen}
+          aria-haspopup="menu"
+          title={`Tốc độ phát: ${playbackRate === 1 ? 'Normal (1.0×)' : `${playbackRate}×`}`}
+          className={`flex h-9 w-9 cursor-pointer items-center justify-center border transition rounded-[2px] ${
+            speedMenuOpen || playbackRate !== 1
+              ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+              : 'border-slate-200/90 bg-white text-slate-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+          }`}
+        >
+          <Settings size={17} />
+        </button>
+
+        {speedMenuOpen && (
+          <div
+            role="menu"
+            aria-label="Chọn tốc độ phát âm thanh"
+            className="exam-audio-speed-popover absolute right-0 top-[calc(100%+8px)] z-40 w-[148px] border border-slate-200/90 bg-white py-2.5 px-3 text-slate-700"
+          >
+            {/* Header: ◂ Speed */}
+            <div className="mb-2 flex items-center gap-2 border-b border-slate-200 pb-2 text-[14px] font-semibold text-slate-700">
+              <span className="text-[11px] text-slate-500">◂</span>
+              <span>Speed</span>
+            </div>
+
+            {/* Radio Options */}
+            <div className="flex flex-col gap-1">
+              {AUDIO_SPEED_OPTIONS.map((opt) => {
+                const isSelected = playbackRate === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={isSelected}
+                    onClick={() => handleSelectPlaybackRate(opt.value)}
+                    className="group flex w-full cursor-pointer items-center gap-3 border-0 bg-transparent px-1 py-1.5 text-left text-[14px] font-medium text-slate-700 transition hover:text-[#1D4ED8]"
+                  >
+                    <span
+                      className={`flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full transition ${
+                        isSelected
+                          ? 'bg-[#1D4ED8]'
+                          : 'bg-slate-200/90 group-hover:bg-slate-300'
+                      }`}
+                    >
+                      {isSelected && <span className="h-[6px] w-[6px] rounded-full bg-white" />}
+                    </span>
+                    <span className={`tabular-nums ${isSelected ? 'font-semibold text-slate-800' : ''}`}>
+                      {opt.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Reload File Action */}
+            <div className="mt-1.5 border-t border-slate-100 pt-2 text-center">
+              <button
+                type="button"
+                onClick={handleReloadAudio}
+                className="w-full cursor-pointer border-0 bg-transparent py-1 text-[13px] font-semibold text-slate-600 transition hover:text-[#1D4ED8]"
+              >
+                Reload File
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -209,6 +328,11 @@ const ExamTakePage = () => {
   const mode = searchParams.get('mode') || 'fulltest';
   const partsParam = searchParams.get('parts');
   const timeParam = searchParams.get('time');
+  const speedParam = searchParams.get('speed');
+  const initialAudioSpeed = useMemo(() => {
+    const parsed = parseFloat(speedParam || '1.0');
+    return ALLOWED_AUDIO_SPEEDS.includes(parsed) ? parsed : 1.0;
+  }, [speedParam]);
   const sourceResultId = searchParams.get('sourceResultId');
   const questionIdsParam = searchParams.get('questionIds');
   const practiceQuestionIds = useMemo(() => questionIdsParam
@@ -804,77 +928,171 @@ const ExamTakePage = () => {
         backgroundPosition: 'center',
       }}
     >
-      {/* 1. Editorial exam room header */}
-      <header
-        className="sticky top-0 z-50 border-b border-slate-200/90 px-4 py-3 text-slate-900 shadow-2xs sm:px-8 relative overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(255, 255, 255, 0.76) 0%, rgba(248, 250, 252, 0.60) 45%, rgba(255, 255, 255, 0.88) 100%), url("${libraryBg}")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 42%',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-2 sm:gap-4 relative z-10">
-          {/* Left: Brand & Test Name */}
-          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
-            <button
-              type="button"
-              onClick={() => {
-                if (isSubmitted) {
-                  navigate(`/courses/${testId}`);
-                } else {
-                  setExitModalOpen(true);
-                }
-              }}
-              className="inline-flex flex-shrink-0 items-center gap-1.5 border border-slate-300 bg-white/95 backdrop-blur-xs px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-red-500 hover:text-red-600 cursor-pointer rounded-[2px] shadow-2xs"
-            >
-              <ArrowLeft size={14} /> Thoát phòng thi
-            </button>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2.5">
-                <span className="font-mono text-xs font-bold uppercase tracking-widest text-[#1D4ED8] bg-white/95 backdrop-blur-xs border border-blue-200/90 px-2.5 py-0.5 rounded-[2px] shadow-2xs">
-                  PHÒNG THI TOEIC
+      {/* 1. Unified Sticky Top Header & Part Navigation */}
+      <div className="sticky top-0 z-50">
+        <header
+          className="border-b border-slate-200/90 px-4 py-3.5 text-slate-800 sm:px-8 relative overflow-hidden"
+          style={{
+            backgroundImage: `linear-gradient(90deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.89) 34%, rgba(248, 250, 252, 0.48) 64%, rgba(15, 23, 42, 0.16) 100%), linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(248, 250, 252, 0.08) 55%, rgba(248, 250, 252, 0.78) 100%), url("${libraryBg}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 36%',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
+          <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 sm:gap-4 relative z-10">
+            {/* Left: Exit Button, Kicker & Test Name */}
+            <div className="flex min-w-0 items-center gap-2.5 sm:gap-3.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSubmitted) {
+                    navigate(`/courses/${testId}`);
+                  } else {
+                    setExitModalOpen(true);
+                  }
+                }}
+                className="inline-flex flex-shrink-0 items-center gap-1.5 border border-slate-300/90 bg-white px-3.5 py-2 text-[14px] font-semibold text-slate-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 cursor-pointer rounded-[2px]"
+              >
+                <ArrowLeft size={14} /> Thoát phòng thi
+              </button>
+
+              <span className="hidden h-5 w-[1px] bg-slate-300/80 sm:inline-block" />
+
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="hidden sm:inline-flex flex-shrink-0 items-center border border-blue-200 bg-[#EFF6FF] px-3 py-1 text-[13px] font-semibold text-[#1D4ED8] rounded-[2px]">
+                  Phòng thi TOEIC
                 </span>
-                <span className="hidden h-4 w-[1px] bg-slate-300 sm:inline-block" />
-                <h1
-                  className="max-w-[220px] sm:max-w-md md:max-w-xl truncate text-sm font-bold text-slate-900 sm:text-base tracking-tight"
-                  style={{
-                    textShadow: '0 1px 4px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.85)',
-                  }}
-                >
+                <h1 className="exam-room-title max-w-[200px] sm:max-w-md md:max-w-xl truncate text-[19px] sm:text-[21px] font-semibold text-slate-800">
                   {test?.titleTest || 'ETS TOEIC Practice Test'}
                 </h1>
               </div>
             </div>
-          </div>
 
-          {/* Right Mobile: Button open questions palette drawer */}
-          <div className="flex flex-shrink-0 items-center gap-1.5 lg:hidden">
-            <span
-              className="border border-slate-300 bg-white/95 backdrop-blur-xs px-2 py-1 font-mono text-xs font-bold text-slate-900 shadow-2xs"
-              aria-label="Thời gian làm bài"
-            >
-              {formatTime(isSubmitted ? scoreResults?.timeSpent || 0 : timeRemaining)}
-            </span>
-            <button
-              type="button"
-              onClick={() => setMobilePaletteOpen(true)}
-              aria-label={`Mở bảng câu hỏi, đã trả lời ${answeredCount} trên ${totalQuestionsCount} câu`}
-              className="flex items-center gap-1 border border-slate-300 bg-white/95 backdrop-blur-xs px-2.5 py-1.5 font-mono text-xs font-semibold text-slate-800 shadow-2xs cursor-pointer"
-            >
-              <Layers size={14} /> {answeredCount}/{totalQuestionsCount}
-            </button>
-            <button
-              type="button"
-              onClick={() => setSubmitModalOpen(true)}
-              disabled={isSubmitted || isSubmitting}
-              className="border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 cursor-pointer shadow-2xs"
-            >
-              Nộp bài
-            </button>
+            {/* Right Desktop: Compact Status Pill */}
+            <div className="hidden lg:flex items-center gap-3 border border-slate-200/90 bg-white/95 px-3.5 py-1.5 rounded-[2px] text-[14px]">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                <BookOpen size={14} className="text-[#1D4ED8]" />
+                {mode === 'fulltest' ? 'Full Test · 120 phút' : 'Luyện tập theo Part'}
+              </span>
+              <span className="h-3.5 w-[1px] bg-slate-200" />
+              <span className="font-medium text-slate-600">
+                Đã chọn:{' '}
+                <strong className="font-semibold text-[#1D4ED8] tabular-nums">
+                  {answeredCount}/{totalQuestionsCount}
+                </strong>
+              </span>
+            </div>
+
+            {/* Right Mobile: Button open questions palette drawer */}
+            <div className="flex flex-shrink-0 items-center gap-1.5 lg:hidden">
+              <span
+                className="border border-slate-300 bg-white/95 px-2.5 py-1.5 text-[13px] font-semibold text-slate-800 tabular-nums rounded-[2px]"
+                aria-label="Thời gian làm bài"
+              >
+                {formatTime(isSubmitted ? scoreResults?.timeSpent || 0 : timeRemaining)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobilePaletteOpen(true)}
+                aria-label={`Mở bảng câu hỏi, đã trả lời ${answeredCount} trên ${totalQuestionsCount} câu`}
+                className="flex items-center gap-1 border border-slate-300 bg-white/95 px-2.5 py-1.5 text-[13px] font-semibold text-slate-700 tabular-nums rounded-[2px] cursor-pointer"
+              >
+                <Layers size={14} /> {answeredCount}/{totalQuestionsCount}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSubmitModalOpen(true)}
+                disabled={isSubmitted || isSubmitting}
+                className="border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-1.5 text-[13px] font-semibold text-white rounded-[2px] disabled:opacity-50 cursor-pointer"
+              >
+                Nộp bài
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Part navigation bar */}
+        <div className="border-b border-slate-200/90 bg-white/95 px-4 py-2.5 sm:px-8">
+          <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3">
+            {/* Editorial Part tabs matching Navbar link typography */}
+            <div className="scrollbar-none flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+              {availableParts.map((pNum) => {
+                const isActive = activePart === pNum;
+                const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
+                const partAnswered = partQuestions.filter((q) => !!userAnswers[q.id]).length;
+                const isPartComplete = partQuestions.length > 0 && partAnswered === partQuestions.length;
+
+                return (
+                  <button
+                    key={pNum}
+                    type="button"
+                    onClick={() => {
+                      setActivePart(pNum);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`flex cursor-pointer items-center gap-2 whitespace-nowrap border px-3.5 py-1.5 text-[14px] font-semibold transition-colors rounded-[2px] ${
+                      isActive
+                        ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                        : isPartComplete
+                        ? 'border-emerald-200 bg-emerald-50/70 text-emerald-800 hover:border-emerald-400'
+                        : 'border-slate-200/90 bg-white text-slate-700 hover:border-[#1D4ED8]/60 hover:bg-[#EFF6FF]/60 hover:text-[#1D4ED8]'
+                    }`}
+                  >
+                    <span>Part {pNum}</span>
+                    <span
+                      className={`rounded-[2px] px-1.5 py-0.5 text-[13px] font-semibold tabular-nums ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : isPartComplete
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {partAnswered}/{partQuestions.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Toolbar (Highlight toggle / Directions) */}
+            <div className="ml-auto flex items-center gap-2.5 text-[14px] font-semibold text-slate-700">
+              <label
+                className={`flex cursor-pointer select-none items-center gap-2 border px-3 py-1.5 rounded-[2px] transition-colors ${
+                  highlightContent
+                    ? 'border-blue-200 bg-[#EFF6FF] text-[#1D4ED8] font-semibold'
+                    : 'border-slate-200/90 bg-white text-slate-700 hover:border-slate-300 hover:text-[#1D4ED8]'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={highlightContent}
+                  onChange={(e) => setHighlightContent(e.target.checked)}
+                  className="h-3.5 w-3.5 cursor-pointer accent-[#1D4ED8]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Highlighter size={13} className="text-[#1D4ED8]" /> Cỡ chữ lớn khi đọc
+                </span>
+              </label>
+
+              {ETS_PART_DIRECTIONS[activePart] && (
+                <button
+                  type="button"
+                  onClick={() => setShowDirections(!showDirections)}
+                  className={`inline-flex cursor-pointer items-center gap-1.5 border px-3 py-1.5 text-[14px] font-semibold rounded-[2px] transition-colors ${
+                    showDirections
+                      ? 'border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]'
+                      : 'border-slate-200/90 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                  }`}
+                >
+                  <span>Hướng dẫn Part {activePart}</span>
+                  {showDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {submitError && (
         <div className="mx-auto w-full max-w-[1500px] px-4 pt-4 sm:px-8">
@@ -884,707 +1102,642 @@ const ExamTakePage = () => {
         </div>
       )}
 
-{/* 2. POST-SUBMISSION SCORE CARD (If Submitted) */ }
-{
-  isSubmitted && scoreResults && (
-    <div className="mx-auto w-full max-w-[1500px] px-4 pt-4 sm:px-8">
-      <div className="border border-slate-200 bg-white p-6">
-        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center border border-blue-200 bg-[#EFF6FF] font-bold text-[#1D4ED8]">
-              <Award size={30} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="border border-blue-200 bg-[#EFF6FF] px-2.5 py-0.5 font-mono text-xs font-semibold text-[#1D4ED8]">
-                  KẾT QUẢ BÀI THI
-                </span>
-                <span className="font-mono text-xs text-slate-500">
-                  Thời gian: {Math.floor(scoreResults.timeSpent / 60)}p {scoreResults.timeSpent % 60}s
-                </span>
-              </div>
-              <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                Chúc mừng bạn đã hoàn thành bài thi!
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6">
-            <div className="border border-blue-200 bg-[#EFF6FF] px-6 py-2.5 text-center">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8]">
-                {scoreResults.scoreType === 'ESTIMATED_SCALED' ? 'Điểm ước tính' : 'Số câu đúng'}
-              </div>
-              <div className="font-mono text-3xl font-bold text-[#1D4ED8]">
-                {scoreResults.scoreType === 'ESTIMATED_SCALED' ? scoreResults.estimatedTotal : scoreResults.correctCount}{' '}
-                <span className="text-xs font-normal text-slate-600">
-                  {scoreResults.scoreType === 'ESTIMATED_SCALED' ? '/ 990 (ước tính)' : `/ ${scoreResults.totalQuestions}`}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5 text-xs font-medium text-slate-700">
-              <div className="flex items-center gap-2">
-                <Headphones size={14} className="text-[#1D4ED8]" />
-                <span>
-                  Listening:{' '}
-                  <strong className="font-mono">
-                    {scoreResults.scoreType === 'ESTIMATED_SCALED'
-                      ? `${scoreResults.estimatedListening} / 495`
-                      : `${scoreResults.listeningCorrect} câu đúng`}
-                  </strong>{' '}
-                  ({scoreResults.listeningCorrect}/{scoreResults.listeningTotal} câu)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <BookOpen size={14} className="text-emerald-600" />
-                <span>
-                  Reading:{' '}
-                  <strong className="font-mono">
-                    {scoreResults.scoreType === 'ESTIMATED_SCALED'
-                      ? `${scoreResults.estimatedReading} / 495`
-                      : `${scoreResults.readingCorrect} câu đúng`}
-                  </strong>{' '}
-                  ({scoreResults.readingCorrect}/{scoreResults.readingTotal} câu)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={14} className="text-amber-600" />
-                <span>
-                  Độ chính xác: <strong className="font-mono">{scoreResults.accuracy}%</strong> ({scoreResults.correctCount}/
-                  {scoreResults.totalQuestions} câu)
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowExplanation(!showExplanation)}
-              className="flex cursor-pointer items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-            >
-              <Eye size={15} /> {showExplanation ? 'Ẩn lời giải' : 'Xem chi tiết lời giải'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-{/* 3. Part navigation */ }
-<div className="sticky top-[57px] z-40 border-b border-slate-200 bg-slate-50/90 px-4 py-2.5 backdrop-blur-xs sm:px-8">
-  <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-4">
-    {/* Editorial Part tabs */}
-    <div className="scrollbar-none flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-      {availableParts.map((pNum) => {
-        const isActive = activePart === pNum;
-        const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
-        const partAnswered = partQuestions.filter((q) => !!userAnswers[q.id]).length;
-
-        return (
-          <button
-            key={pNum}
-            type="button"
-            onClick={() => {
-              setActivePart(pNum);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className={`flex cursor-pointer items-center gap-2 whitespace-nowrap border px-3.5 py-1.5 text-xs font-semibold transition-colors ${isActive
-              ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-              : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-              }`}
-          >
-            <span>Part {pNum}</span>
-            <span
-              className={`border px-1.5 py-0.5 font-mono text-[11px] ${isActive
-                ? 'border-blue-400 bg-blue-800 text-white'
-                : 'border-slate-200 bg-slate-100 text-slate-600'
-                }`}
-            >
-              {partAnswered}/{partQuestions.length}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-
-    {/* Quick Toolbar (Highlight toggle / Directions) */}
-    <div className="ml-auto flex items-center gap-4 text-xs font-medium text-slate-600">
-      <label className="flex cursor-pointer select-none items-center gap-1.5">
-        <input
-          type="checkbox"
-          checked={highlightContent}
-          onChange={(e) => setHighlightContent(e.target.checked)}
-          className="h-4 w-4 cursor-pointer accent-[#1D4ED8]"
-        />
-        <span className="flex items-center gap-1">
-          <Highlighter size={13} className="text-[#1D4ED8]" /> Cỡ chữ lớn khi đọc
-        </span>
-      </label>
-
-      {ETS_PART_DIRECTIONS[activePart] && (
-        <button
-          type="button"
-          onClick={() => setShowDirections(!showDirections)}
-          className="flex cursor-pointer items-center gap-1 border-b border-slate-400 text-xs font-semibold text-slate-800 hover:text-[#1D4ED8]"
-        >
-          <span>Hướng dẫn Part {activePart}</span>
-          {showDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
-
-{/* ETS DIRECTIONS COLLAPSIBLE */ }
-{
-  showDirections && ETS_PART_DIRECTIONS[activePart] && (
-    <div className="mx-auto mt-3 w-full max-w-[1500px] px-4 sm:px-8">
-      <div className="border border-slate-200 bg-slate-50 p-4 text-xs leading-relaxed text-slate-800">
-        <div className="mb-1 font-mono font-semibold uppercase tracking-wider text-[#1D4ED8]">
-          {ETS_PART_DIRECTIONS[activePart].name}
-        </div>
-        <p className="mb-2 text-slate-700">{ETS_PART_DIRECTIONS[activePart].directions}</p>
-        {ETS_PART_DIRECTIONS[activePart].sampleStatement && (
-          <div className="border border-slate-200 bg-white p-2.5 text-slate-800">
-            <span className="font-semibold">Ví dụ: </span>
-            {ETS_PART_DIRECTIONS[activePart].sampleStatement}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-{/* 4. Main test area */ }
-<div className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-5 sm:px-8">
-  <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_320px]">
-    {/* ================= LEFT MAIN WORKSPACE ================= */}
-    <main className="flex flex-col gap-6">
-      {activePart === 1 && (
-        <div className="border border-slate-200 bg-slate-50 px-5 py-3.5 text-base font-semibold text-slate-900">
-          Part 1: Quan sát hình ảnh và nghe 4 lựa chọn A, B, C, D để chọn mô tả đúng nhất.
-        </div>
-      )}
-      {currentPartContexts.length === 0 ? (
-        <div className="border border-slate-200 bg-white p-8 text-center text-slate-600">
-          Không tìm thấy câu hỏi nào cho Part {activePart}.
-        </div>
-      ) : (
-        currentPartContexts.map((cq, cqIdx) => {
-          const reviewContext = Object.values(reviewById).find((review) => review.contextQuestionId === cq.id);
-          const isPart1 = cq.partNumber === 1;
-          const isPart2 = cq.partNumber === 2;
-          const isPart6Or7 = cq.partNumber === 6 || cq.partNumber === 7;
-
-          return (
-            <div
-              key={cq.id || `cq-${cqIdx}`}
-              className="relative border border-slate-200 bg-white p-5 transition-all sm:p-7"
-            >
-              {/* Context Audio Player (If listening part) */}
-              {cq.audioUrl && (
-                <div className="mb-4">
-                  <AudioPlayerBar src={cq.audioUrl} id={`audio-${cq.id}`} />
+      {/* 2. POST-SUBMISSION SCORE CARD (If Submitted) */}
+      {isSubmitted && scoreResults && (
+        <div className="mx-auto w-full max-w-[1500px] px-4 pt-4 sm:px-8">
+          <div className="border border-slate-200 bg-white p-6">
+            <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center border border-blue-200 bg-[#EFF6FF] font-semibold text-[#1D4ED8]">
+                  <Award size={30} />
                 </div>
-              )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="border border-blue-200 bg-[#EFF6FF] px-2.5 py-0.5 text-[13px] font-semibold text-[#1D4ED8]">
+                      Kết quả bài thi
+                    </span>
+                    <span className="text-[13px] font-medium text-slate-600 tabular-nums">
+                      Thời gian: {Math.floor(scoreResults.timeSpent / 60)}p {scoreResults.timeSpent % 60}s
+                    </span>
+                  </div>
+                  <h2 className="mt-1 text-xl font-semibold text-slate-800">
+                    Chúc mừng bạn đã hoàn thành bài thi!
+                  </h2>
+                </div>
+              </div>
 
-              {/* Context image (Part 1 and any other part with an image) */}
-              {cq.imageUrl && (
-                <div
-                  className={`mx-auto mb-5 w-full ${isPart1 ? 'max-w-xl' : 'max-w-3xl'
-                    } overflow-hidden border border-slate-200 bg-slate-50/40 p-2 text-center`}
+              <div className="flex flex-wrap items-center justify-center gap-6">
+                <div className="border border-blue-200 bg-[#EFF6FF] px-6 py-2.5 text-center">
+                  <div className="text-[13px] font-semibold text-[#1D4ED8]">
+                    {scoreResults.scoreType === 'ESTIMATED_SCALED' ? 'Điểm ước tính' : 'Số câu đúng'}
+                  </div>
+                  <div className="text-3xl font-semibold text-[#1D4ED8] tabular-nums">
+                    {scoreResults.scoreType === 'ESTIMATED_SCALED' ? scoreResults.estimatedTotal : scoreResults.correctCount}{' '}
+                    <span className="text-[13px] font-normal text-slate-600">
+                      {scoreResults.scoreType === 'ESTIMATED_SCALED' ? '/ 990 (ước tính)' : `/ ${scoreResults.totalQuestions}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 text-[14px] font-medium text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <Headphones size={14} className="text-[#1D4ED8]" />
+                    <span>
+                      Listening:{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {scoreResults.scoreType === 'ESTIMATED_SCALED'
+                          ? `${scoreResults.estimatedListening} / 495`
+                          : `${scoreResults.listeningCorrect} câu đúng`}
+                      </strong>{' '}
+                      ({scoreResults.listeningCorrect}/{scoreResults.listeningTotal} câu)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <BookOpen size={14} className="text-emerald-600" />
+                    <span>
+                      Reading:{' '}
+                      <strong className="font-semibold tabular-nums">
+                        {scoreResults.scoreType === 'ESTIMATED_SCALED'
+                          ? `${scoreResults.estimatedReading} / 495`
+                          : `${scoreResults.readingCorrect} câu đúng`}
+                      </strong>{' '}
+                      ({scoreResults.readingCorrect}/{scoreResults.readingTotal} câu)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-amber-600" />
+                    <span>
+                      Độ chính xác: <strong className="font-semibold tabular-nums">{scoreResults.accuracy}%</strong> ({scoreResults.correctCount}/
+                      {scoreResults.totalQuestions} câu)
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowExplanation(!showExplanation)}
+                  className="flex cursor-pointer items-center gap-2 border border-slate-300 bg-white px-4 py-2 text-[14px] font-semibold text-slate-700 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                 >
-                  <QuestionImage src={cq.imageUrl} partNumber={cq.partNumber} />
-                </div>
+                  <Eye size={15} /> {showExplanation ? 'Ẩn lời giải' : 'Xem chi tiết lời giải'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ETS DIRECTIONS COLLAPSIBLE */}
+      {showDirections && ETS_PART_DIRECTIONS[activePart] && (
+        <div className="mx-auto mt-3 w-full max-w-[1500px] px-4 sm:px-8">
+          <div className="border border-slate-200 bg-white p-4 text-[14px] leading-relaxed text-slate-700">
+            <div className="mb-1 font-semibold text-[#1D4ED8]">
+              {ETS_PART_DIRECTIONS[activePart].name}
+            </div>
+            <p className="mb-2 text-slate-700">{ETS_PART_DIRECTIONS[activePart].directions}</p>
+            {ETS_PART_DIRECTIONS[activePart].sampleStatement && (
+              <div className="border border-slate-200 bg-[#F8FAFC] p-2.5 text-slate-700">
+                <span className="font-semibold">Ví dụ: </span>
+                {ETS_PART_DIRECTIONS[activePart].sampleStatement}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Main test area */}
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-5 sm:px-8">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_320px]">
+          {/* ================= LEFT MAIN WORKSPACE ================= */}
+          <main className="flex flex-col gap-6">
+            {activePart === 1 && (
+              <div className="border border-slate-200/90 bg-white px-5 py-3.5 text-[15px] font-semibold text-slate-700">
+                Part 1: Quan sát hình ảnh và nghe 4 lựa chọn A, B, C, D để chọn mô tả đúng nhất.
+              </div>
+            )}
+            {currentPartContexts.length === 0 ? (
+              <div className="border border-slate-200 bg-white p-8 text-center text-slate-600">
+                Không tìm thấy câu hỏi nào cho Part {activePart}.
+              </div>
+            ) : (
+              currentPartContexts.map((cq, cqIdx) => {
+                const reviewContext = Object.values(reviewById).find((review) => review.contextQuestionId === cq.id);
+                const isPart1 = cq.partNumber === 1;
+                const isPart2 = cq.partNumber === 2;
+                const isPart6Or7 = cq.partNumber === 6 || cq.partNumber === 7;
+
+                return (
+                  <div
+                    key={cq.id || `cq-${cqIdx}`}
+                    className="relative border border-slate-200 bg-white p-5 transition-all sm:p-7"
+                  >
+                    {/* Context Audio Player (If listening part) */}
+                    {cq.audioUrl && (
+                      <div className="mb-4">
+                        <AudioPlayerBar src={cq.audioUrl} id={`audio-${cq.id}`} defaultPlaybackRate={initialAudioSpeed} />
+                      </div>
+                    )}
+
+                    {/* Context image (Part 1 and any other part with an image) */}
+                    {cq.imageUrl && (
+                      <div
+                        className={`mx-auto mb-5 w-full ${
+                          isPart1 ? 'max-w-xl' : 'max-w-3xl'
+                        } overflow-hidden border border-slate-200 bg-[#F8FAFC] p-2 text-center`}
+                      >
+                        <QuestionImage src={cq.imageUrl} partNumber={cq.partNumber} />
+                      </div>
+                    )}
+
+                    {/* Part 6 & 7 Reading Passages (Single / Double / Triple) */}
+                    {isPart6Or7 &&
+                      cq.paragraph &&
+                      (() => {
+                        const rawP = cq.paragraph;
+                        const hasSep2 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i.test(rawP);
+                        const hasSep3 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i.test(rawP);
+
+                        if (!hasSep2) {
+                          return (
+                            <div
+                              className={`mb-5 select-text whitespace-pre-wrap border border-slate-200 border-l-4 border-l-[#1D4ED8] bg-[#F8FAFC] p-4 leading-relaxed text-slate-800 sm:p-5 ${
+                                highlightContent ? 'text-base leading-loose' : 'text-[15px]'
+                              }`}
+                            >
+                              {rawP}
+                            </div>
+                          );
+                        }
+
+                        // Render Double or Triple Passages
+                        const sep2Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i;
+                        const sep3Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i;
+                        const p1 = rawP.split(sep2Regex)[0]?.trim() || '';
+                        const rest = rawP.split(sep2Regex)[1] || '';
+                        let p2 = rest.trim();
+                        let p3 = '';
+                        if (hasSep3 && sep3Regex.test(rest)) {
+                          p2 = rest.split(sep3Regex)[0]?.trim() || '';
+                          p3 = rest.split(sep3Regex)[1]?.trim() || '';
+                        }
+
+                        const passages = [
+                          { label: 'Văn bản 1', text: p1 },
+                          { label: 'Văn bản 2', text: p2 },
+                        ];
+                        if (p3) {
+                          passages.push({ label: 'Văn bản 3', text: p3 });
+                        }
+
+                        return (
+                          <div className="mb-5 flex flex-col gap-3.5">
+                            {passages.map((psg, pIdx) => (
+                              <div
+                                key={pIdx}
+                                className={`whitespace-pre-wrap border border-slate-200 border-l-4 border-l-[#1D4ED8] bg-[#F8FAFC] p-4 leading-relaxed text-slate-800 ${
+                                  highlightContent ? 'text-base leading-loose' : 'text-[15px]'
+                                }`}
+                              >
+                                <span className="mb-2 inline-block border border-blue-200 bg-[#EFF6FF] px-2.5 py-0.5 text-[13px] font-semibold text-[#1D4ED8]">
+                                  {psg.label}
+                                </span>
+                                <div>{psg.text}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+
+                    {/* Questions belonging to this context */}
+                    <div className="flex flex-col gap-5">
+                      {cq.questions.map((q) => {
+                        const selectedOption = userAnswers[q.id];
+                        const isFlagged = flaggedQuestions.has(q.id);
+                        const review = reviewById[q.id];
+
+                        return (
+                          <div
+                            key={q.id}
+                            id={`q-${q.id}`}
+                            className={`border p-3.5 transition-all ${
+                              isFlagged ? 'border-amber-300 bg-amber-50/50' : 'border-transparent'
+                            }`}
+                          >
+                            {/* Question title and number badge */}
+                            <div className="mb-3 flex items-start justify-between gap-3">
+                              <div className="flex flex-1 items-start gap-2.5">
+                                <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center border border-blue-200 bg-[#EFF6FF] text-[14px] font-semibold text-[#1D4ED8] tabular-nums">
+                                  {q.questionNumber}
+                                </span>
+                                {!isPart1 && !isPart2 && (
+                                  <div className="pt-0.5 text-[15px] font-semibold leading-relaxed text-slate-800">
+                                    {q.questionContent}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Flag / Review button */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFlag(q.id)}
+                                className={`flex cursor-pointer items-center gap-1 border px-2 py-1.5 text-xs transition ${
+                                  isFlagged
+                                    ? 'border-amber-400 bg-amber-100 font-semibold text-amber-900'
+                                    : 'border-slate-300 bg-white text-slate-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                                }`}
+                                title="Đánh dấu câu hỏi để xem lại"
+                              >
+                                <Flag size={13} fill={isFlagged ? '#d97706' : 'none'} />
+                              </button>
+                            </div>
+
+                            {/* Radio Options List (A, B, C, D) */}
+                            <div
+                              className="flex flex-col gap-2 pl-9"
+                              role="radiogroup"
+                              aria-label={`Câu ${q.questionNumber}, chọn đáp án`}
+                            >
+                              {['A', 'B', 'C', 'D'].map((optKey) => {
+                                if (isPart2 && optKey === 'D') return null; // Part 2 only has A, B, C
+
+                                const optText = q[`option${optKey}`];
+                                const isSelected = selectedOption === optKey;
+                                const isOptionCorrect = review?.correctAnswer === optKey;
+
+                                let itemBorder = 'border-slate-200';
+                                let itemBg = 'bg-white hover:bg-[#F8FAFC]';
+                                let circleBg = 'border border-slate-300 bg-white text-slate-700';
+
+                                if (isSubmitted) {
+                                  if (isOptionCorrect) {
+                                    itemBorder = 'border-emerald-300 bg-emerald-50 text-emerald-950 font-semibold';
+                                    circleBg = 'border border-emerald-700 bg-emerald-700 text-white';
+                                  } else if (isSelected && !isOptionCorrect) {
+                                    itemBorder = 'border-red-300 bg-red-50 text-red-900';
+                                    circleBg = 'border border-red-700 bg-red-700 text-white';
+                                  }
+                                } else if (isSelected) {
+                                  itemBorder = 'border-[#1D4ED8]';
+                                  itemBg = 'bg-[#EFF6FF] font-semibold text-slate-800';
+                                  circleBg = 'border border-[#1D4ED8] bg-[#1D4ED8] text-white';
+                                }
+
+                                return (
+                                  <label
+                                    key={optKey}
+                                    className={`flex select-none items-center gap-3 border p-2.5 transition ${itemBorder} ${itemBg} ${
+                                      isSubmitted ? 'cursor-default' : 'cursor-pointer'
+                                    } focus-within:outline focus-within:outline-2 focus-within:outline-[#1D4ED8]`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`question-${q.id}`}
+                                      value={optKey}
+                                      checked={isSelected}
+                                      onChange={() => handleSelectOption(q.id, optKey)}
+                                      disabled={isSubmitted}
+                                      aria-label={`${optKey}${optText ? `: ${optText}` : ''}`}
+                                      className="sr-only"
+                                    />
+                                    <div
+                                      className={`flex h-7 w-7 flex-shrink-0 items-center justify-center text-[13px] font-semibold transition ${circleBg}`}
+                                    >
+                                      {optKey}
+                                    </div>
+                                    <div className="flex-1 text-[14px] sm:text-[15px] leading-snug text-slate-700">
+                                      {isPart1 || isPart2 ? `${optKey}.` : optText ? `${optKey}. ${optText}` : `${optKey}.`}
+                                    </div>
+                                    {isSubmitted && isOptionCorrect && <Check size={16} className="mr-2 text-emerald-600" />}
+                                    {isSubmitted && isSelected && !isOptionCorrect && (
+                                      <X size={16} className="mr-2 text-red-500" />
+                                    )}
+                                  </label>
+                                );
+                              })}
+                            </div>
+
+                            {/* Review Mode: Detailed Explanation */}
+                            {isSubmitted && review && (
+                              <div className="ml-9 mt-3 border border-emerald-200 border-l-4 border-l-emerald-600 bg-emerald-50/70 p-3 text-[13px] leading-relaxed text-slate-800">
+                                <div className="mb-1 font-semibold text-emerald-900">
+                                  Đáp án đúng: {review.correctAnswer}
+                                </div>
+                                <p className="m-0 text-slate-700">{review.explanation || 'Không có giải thích bổ sung.'}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Review Mode: Audio Transcript & Vietnamese Translation */}
+                    {isSubmitted && (reviewContext?.transcript || reviewContext?.translation) && (
+                      <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-200 pt-4 text-[13px]">
+                        {reviewContext.transcript && (
+                          <div className="border border-slate-200 bg-[#F8FAFC] p-3">
+                            <span className="mb-1 flex items-center gap-1.5 font-semibold text-slate-800">
+                              <FileText size={14} /> Lời thoại âm thanh (Transcript):
+                            </span>
+                            <p className="m-0 whitespace-pre-wrap leading-relaxed text-slate-700">
+                              {reviewContext.transcript}
+                            </p>
+                          </div>
+                        )}
+                        {reviewContext.translation && (
+                          <div className="border border-slate-200 bg-white p-3">
+                            <span className="mb-1 flex items-center gap-1.5 font-semibold text-slate-800">
+                              Bản dịch tiếng Việt:
+                            </span>
+                            <p className="m-0 whitespace-pre-wrap leading-relaxed text-slate-700">
+                              {reviewContext.translation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Bottom Part Pagination Navigation */}
+            <div className="flex items-center justify-between gap-4 px-2 py-4">
+              {prevPart ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePart(prevPart);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="flex cursor-pointer items-center gap-2 border border-slate-300 bg-white px-5 py-2.5 text-[14px] font-semibold text-slate-700 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                >
+                  <ChevronLeft size={16} /> Quay lại Part {prevPart}
+                </button>
+              ) : (
+                <div />
               )}
 
-              {/* Part 6 & 7 Reading Passages (Single / Double / Triple) */}
-              {isPart6Or7 &&
-                cq.paragraph &&
-                (() => {
-                  const rawP = cq.paragraph;
-                  const hasSep2 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i.test(rawP);
-                  const hasSep3 = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i.test(rawP);
+              {nextPart ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActivePart(nextPart);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="ml-auto flex cursor-pointer items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#173ea8]"
+                >
+                  Chuyển sang Part {nextPart} <ChevronRight size={16} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSubmitModalOpen(true)}
+                  disabled={isSubmitted || isSubmitting}
+                  className="ml-auto flex cursor-pointer items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#173ea8] disabled:opacity-50"
+                >
+                  <CheckCircle2 size={16} /> Hoàn tất & Nộp bài
+                </button>
+              )}
+            </div>
+          </main>
 
-                  if (!hasSep2) {
-                    return (
-                      <div
-                        className={`mb-5 select-text whitespace-pre-wrap border border-slate-200 border-l-4 border-l-[#1D4ED8] bg-slate-50/70 p-4 leading-relaxed text-slate-900 sm:p-5 ${highlightContent ? 'text-base leading-loose' : 'text-sm'
-                          }`}
-                      >
-                        {rawP}
-                      </div>
-                    );
-                  }
+          {/* ================= RIGHT STICKY SIDEBAR ================= */}
+          <aside className="scrollbar-thin sticky top-[112px] hidden h-[calc(100vh-132px)] overflow-y-auto pr-1 lg:block">
+            <div className="flex flex-col gap-4 border border-slate-200 bg-white p-5">
+              {/* Box 1: Timer & Submit Button */}
+              <div>
+                <div className="mb-1.5 text-[14px] font-semibold text-slate-600">
+                  {isStopwatch ? 'Thời gian đã làm' : 'Thời gian còn lại'}
+                </div>
+                <div className="mb-3 border border-slate-200/90 bg-[#F8FAFC] p-2.5 text-center text-[28px] font-semibold text-[#1D4ED8] tabular-nums">
+                  {isSubmitted ? formatTime(scoreResults?.timeSpent || 0) : formatTime(timeRemaining)}
+                </div>
+                {!isSubmitted && (
+                  <div className="mb-3 text-center text-[14px] text-slate-600">
+                    <span className="inline-flex items-center gap-1 font-medium text-slate-600">
+                      Đã làm: <strong className="font-semibold text-[#1D4ED8] tabular-nums">{answeredCount}</strong> / {totalQuestionsCount} câu
+                    </span>
+                  </div>
+                )}
 
-                  // Render Double or Triple Passages
-                  const sep2Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*2\s*---\n*/i;
-                  const sep3Regex = /\n*---\s*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)\s*3\s*---\n*/i;
-                  const p1 = rawP.split(sep2Regex)[0]?.trim() || '';
-                  const rest = rawP.split(sep2Regex)[1] || '';
-                  let p2 = rest.trim();
-                  let p3 = '';
-                  if (hasSep3 && sep3Regex.test(rest)) {
-                    p2 = rest.split(sep3Regex)[0]?.trim() || '';
-                    p3 = rest.split(sep3Regex)[1]?.trim() || '';
-                  }
+                {!isSubmitted ? (
+                  <button
+                    type="button"
+                    onClick={() => setSubmitModalOpen(true)}
+                    disabled={isSubmitted || isSubmitting}
+                    className="w-full cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2.5 text-[15px] font-semibold text-white transition hover:bg-[#173ea8]"
+                  >
+                    Nộp bài thi
+                  </button>
+                ) : (
+                  <div className="w-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-[14px] font-semibold text-emerald-800">
+                    Đã nộp bài
+                  </div>
+                )}
 
-                  const passages = [
-                    { label: 'VĂN BẢN 1', text: p1 },
-                    { label: 'VĂN BẢN 2', text: p2 },
-                  ];
-                  if (p3) {
-                    passages.push({ label: 'VĂN BẢN 3', text: p3 });
-                  }
+                <div className="mt-2.5 border border-slate-200/90 bg-[#F8FAFC] p-2.5 text-[13px] leading-relaxed text-slate-600">
+                  <strong>Lưu ý:</strong> Hãy bấm <strong>Nộp bài thi</strong> khi hoàn thành để hệ thống chấm điểm và lưu kết quả. Nếu thoát giữa chừng, kết quả sẽ không được lưu.
+                </div>
+              </div>
+
+              <div className="h-[1px] bg-slate-200" />
+
+              {/* Box 2: Questions Palette by Part */}
+              <div className="flex flex-col gap-4">
+                {availableParts.map((pNum) => {
+                  const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
+                  if (partQuestions.length === 0) return null;
 
                   return (
-                    <div className="mb-5 flex flex-col gap-3.5">
-                      {passages.map((psg, pIdx) => (
-                        <div
-                          key={pIdx}
-                          className={`whitespace-pre-wrap border border-slate-200 border-l-4 border-l-[#1D4ED8] bg-slate-50/70 p-4 leading-relaxed text-slate-900 ${highlightContent ? 'text-base leading-loose' : 'text-sm'
-                            }`}
-                        >
-                          <span className="mb-2 inline-block border border-blue-200 bg-[#EFF6FF] px-2 py-0.5 font-mono text-[11px] font-bold uppercase text-[#1D4ED8]">
-                            {psg.label}
-                          </span>
-                          <div>{psg.text}</div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-              {/* Questions belonging to this context */}
-              <div className="flex flex-col gap-5">
-                {cq.questions.map((q) => {
-                  const selectedOption = userAnswers[q.id];
-                  const isFlagged = flaggedQuestions.has(q.id);
-                  const review = reviewById[q.id];
-
-                  return (
-                    <div
-                      key={q.id}
-                      id={`q-${q.id}`}
-                      className={`border p-3.5 transition-all ${isFlagged ? 'border-amber-300 bg-amber-50/50' : 'border-transparent'
-                        }`}
-                    >
-                      {/* Question title and number badge */}
-                      <div className="mb-3 flex items-start justify-between gap-3">
-                        <div className="flex flex-1 items-start gap-2.5">
-                          <span className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center border border-slate-300 bg-slate-100 font-mono text-xs font-bold text-slate-900">
-                            {q.questionNumber}
-                          </span>
-                          {!isPart1 && !isPart2 && (
-                            <div className="pt-0.5 text-sm font-semibold leading-relaxed text-slate-900">
-                              {q.questionContent}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Flag / Review button */}
-                        <button
-                          type="button"
-                          onClick={() => handleToggleFlag(q.id)}
-                          className={`flex cursor-pointer items-center gap-1 border px-2 py-1.5 text-xs transition ${isFlagged
-                            ? 'border-amber-400 bg-amber-100 font-semibold text-amber-900'
-                            : 'border-slate-300 bg-white text-slate-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-                            }`}
-                          title="Đánh dấu câu hỏi để xem lại"
-                        >
-                          <Flag size={13} fill={isFlagged ? '#d97706' : 'none'} />
-                        </button>
+                    <div key={pNum}>
+                      <div className="mb-2 flex items-center justify-between text-[14px] font-semibold text-slate-700">
+                        <span>Part {pNum}</span>
+                        <span className="text-[13px] font-semibold text-slate-500 tabular-nums">
+                          {partQuestions.filter((q) => !!userAnswers[q.id]).length}/{partQuestions.length}
+                        </span>
                       </div>
 
-                      {/* Radio Options List (A, B, C, D) */}
-                      <div
-                        className="flex flex-col gap-2 pl-9"
-                        role="radiogroup"
-                        aria-label={`Câu ${q.questionNumber}, chọn đáp án`}
-                      >
-                        {['A', 'B', 'C', 'D'].map((optKey) => {
-                          if (isPart2 && optKey === 'D') return null; // Part 2 only has A, B, C
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {partQuestions.map((q) => {
+                          const isAnswered = !!userAnswers[q.id];
+                          const isFlagged = flaggedQuestions.has(q.id);
 
-                          const optText = q[`option${optKey}`];
-                          const isSelected = selectedOption === optKey;
-                          const isOptionCorrect = review?.correctAnswer === optKey;
-
-                          let itemBorder = 'border-slate-200';
-                          let itemBg = 'bg-white hover:bg-slate-50';
-                          let circleBg = 'border border-slate-300 bg-white text-slate-800';
+                          let btnStyle = 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]';
 
                           if (isSubmitted) {
-                            if (isOptionCorrect) {
-                              itemBorder = 'border-emerald-300 bg-emerald-50 text-emerald-950 font-semibold';
-                              circleBg = 'border border-emerald-700 bg-emerald-700 text-white';
-                            } else if (isSelected && !isOptionCorrect) {
-                              itemBorder = 'border-red-300 bg-red-50 text-red-900';
-                              circleBg = 'border border-red-700 bg-red-700 text-white';
+                            const isCorrect = Boolean(reviewById[q.id]?.isCorrect);
+                            if (isCorrect) {
+                              btnStyle = 'border-emerald-700 bg-emerald-700 text-white font-semibold';
+                            } else if (isAnswered) {
+                              btnStyle = 'border-red-700 bg-red-700 text-white font-semibold';
                             }
-                          } else if (isSelected) {
-                            itemBorder = 'border-[#1D4ED8]';
-                            itemBg = 'bg-[#EFF6FF] font-semibold text-slate-900';
-                            circleBg = 'border border-[#1D4ED8] bg-[#1D4ED8] text-white';
+                          } else if (isFlagged && isAnswered) {
+                            btnStyle = 'border-amber-500 bg-[#1D4ED8] text-white font-semibold';
+                          } else if (isFlagged) {
+                            btnStyle = 'border-amber-400 bg-amber-50 text-amber-900 font-semibold';
+                          } else if (isAnswered) {
+                            btnStyle = 'border-[#1D4ED8] bg-[#1D4ED8] text-white font-semibold';
                           }
 
                           return (
-                            <label
-                              key={optKey}
-                              className={`flex select-none items-center gap-3 border p-2.5 transition ${itemBorder} ${itemBg} ${isSubmitted ? 'cursor-default' : 'cursor-pointer'
-                                } focus-within:outline focus-within:outline-2 focus-within:outline-[#1D4ED8]`}
+                            <button
+                              key={q.id}
+                              type="button"
+                              onClick={() => handleJumpToQuestion(q)}
+                              className={`relative flex h-8 cursor-pointer items-center justify-center border text-[13px] font-semibold tabular-nums transition ${btnStyle}`}
                             >
-                              <input
-                                type="radio"
-                                name={`question-${q.id}`}
-                                value={optKey}
-                                checked={isSelected}
-                                onChange={() => handleSelectOption(q.id, optKey)}
-                                disabled={isSubmitted}
-                                aria-label={`${optKey}${optText ? `: ${optText}` : ''}`}
-                                className="sr-only"
-                              />
-                              <div
-                                className={`flex h-7 w-7 flex-shrink-0 items-center justify-center font-mono text-xs font-bold transition ${circleBg}`}
-                              >
-                                {optKey}
-                              </div>
-                              <div className="flex-1 text-sm leading-snug text-slate-900">
-                                {isPart1 || isPart2 ? `${optKey}.` : optText ? `${optKey}. ${optText}` : `${optKey}.`}
-                              </div>
-                              {isSubmitted && isOptionCorrect && <Check size={16} className="mr-2 text-emerald-600" />}
-                              {isSubmitted && isSelected && !isOptionCorrect && (
-                                <X size={16} className="mr-2 text-red-500" />
+                              {q.questionNumber}
+                              {isFlagged && !isSubmitted && (
+                                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 border border-white bg-amber-500" />
                               )}
-                            </label>
+                            </button>
                           );
                         })}
                       </div>
-
-                      {/* Review Mode: Detailed Explanation */}
-                      {isSubmitted && review && (
-                        <div className="ml-9 mt-3 border border-emerald-200 border-l-4 border-l-emerald-600 bg-emerald-50/70 p-3 text-xs leading-relaxed text-slate-900">
-                          <div className="mb-1 font-semibold text-emerald-900">
-                            Đáp án đúng: {review.correctAnswer}
-                          </div>
-                          <p className="m-0 text-slate-700">{review.explanation || 'Không có giải thích bổ sung.'}</p>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
-
-              {/* Review Mode: Audio Transcript & Vietnamese Translation */}
-              {isSubmitted && (reviewContext?.transcript || reviewContext?.translation) && (
-                <div className="mt-5 flex flex-col gap-2.5 border-t border-slate-200 pt-4 text-xs">
-                  {reviewContext.transcript && (
-                    <div className="border border-slate-200 bg-slate-50 p-3">
-                      <span className="mb-1 flex items-center gap-1.5 font-semibold text-slate-900">
-                        <FileText size={14} /> Lời thoại âm thanh (Transcript):
-                      </span>
-                      <p className="m-0 whitespace-pre-wrap leading-relaxed text-slate-700">
-                        {reviewContext.transcript}
-                      </p>
-                    </div>
-                  )}
-                  {reviewContext.translation && (
-                    <div className="border border-slate-200 bg-white p-3">
-                      <span className="mb-1 flex items-center gap-1.5 font-semibold text-slate-900">
-                        Bản dịch tiếng Việt:
-                      </span>
-                      <p className="m-0 whitespace-pre-wrap leading-relaxed text-slate-700">
-                        {reviewContext.translation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
-          );
-        })
+          </aside>
+        </div>
+      </div>
+
+      {/* 5. MOBILE QUESTIONS PALETTE DRAWER */}
+      {mobilePaletteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex justify-end bg-slate-900/50"
+          onClick={() => setMobilePaletteOpen(false)}
+        >
+          <div
+            className="flex h-full w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="text-base font-semibold text-slate-800">Danh sách câu hỏi</h3>
+              <button
+                type="button"
+                onClick={() => setMobilePaletteOpen(false)}
+                className="border border-slate-300 bg-white p-1.5 text-slate-700 hover:border-slate-400"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {availableParts.map((pNum) => {
+                const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
+                return (
+                  <div key={pNum}>
+                    <div className="mb-2 text-[14px] font-semibold text-slate-700">Part {pNum}</div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {partQuestions.map((q) => {
+                        const isAnswered = !!userAnswers[q.id];
+                        return (
+                          <button
+                            key={q.id}
+                            type="button"
+                            onClick={() => handleJumpToQuestion(q)}
+                            className={`flex h-9 items-center justify-center border text-[13px] font-semibold tabular-nums ${
+                              isAnswered
+                                ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                                : 'border-slate-300 bg-white text-slate-700'
+                            }`}
+                          >
+                            {q.questionNumber}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Bottom Part Pagination Navigation */}
-      <div className="flex items-center justify-between gap-4 px-2 py-4">
-        {prevPart ? (
-          <button
-            type="button"
-            onClick={() => {
-              setActivePart(prevPart);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="flex cursor-pointer items-center gap-2 border border-slate-300 bg-white px-5 py-2.5 text-xs font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-          >
-            <ChevronLeft size={16} /> Quay lại Part {prevPart}
-          </button>
-        ) : (
-          <div />
-        )}
-
-        {nextPart ? (
-          <button
-            type="button"
-            onClick={() => {
-              setActivePart(nextPart);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="ml-auto flex cursor-pointer items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#173ea8]"
-          >
-            Chuyển sang Part {nextPart} <ChevronRight size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setSubmitModalOpen(true)}
-            disabled={isSubmitted || isSubmitting}
-            className="ml-auto flex cursor-pointer items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-6 py-2.5 text-xs font-semibold text-white transition hover:bg-[#173ea8] disabled:opacity-50"
-          >
-            <CheckCircle2 size={16} /> Hoàn tất & Nộp bài
-          </button>
-        )}
-      </div>
-    </main>
-
-    {/* ================= RIGHT STICKY SIDEBAR ================= */}
-    <aside className="scrollbar-thin sticky top-[112px] hidden h-[calc(100vh-132px)] overflow-y-auto pr-1 lg:block">
-      <div className="flex flex-col gap-4 border border-slate-200 bg-white p-5">
-        {/* Box 1: Timer & Submit Button */}
-        <div>
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            {isStopwatch ? 'Thời gian đã làm' : 'Thời gian còn lại'}
-          </div>
-          <div className="mb-3 border border-slate-200 bg-slate-50 p-2.5 text-center font-mono text-3xl font-bold tracking-tight text-slate-900">
-            {isSubmitted ? formatTime(scoreResults?.timeSpent || 0) : formatTime(timeRemaining)}
-          </div>
-          {!isSubmitted && (
-            <div className="mb-3 text-center text-xs text-slate-600">
-              <span className="inline-flex items-center gap-1 font-medium text-slate-500">
-                Đã làm: <strong className="font-mono text-sm font-bold text-slate-900">{answeredCount}</strong> / {totalQuestionsCount} câu
-              </span>
+      {/* 6. SUBMISSION CONFIRMATION MODAL */}
+      {submitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md border border-slate-200 bg-white p-6 text-center shadow-xl">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
+              <Send size={22} />
             </div>
-          )}
 
-          {!isSubmitted ? (
-            <button
-              type="button"
-              onClick={() => setSubmitModalOpen(true)}
-              disabled={isSubmitted || isSubmitting}
-              className="w-full cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2.5 text-sm font-semibold tracking-wide text-white transition hover:bg-[#173ea8]"
-            >
-              NỘP BÀI THI
-            </button>
-          ) : (
-            <div className="w-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-800">
-              ĐÃ NỘP BÀI
+            <h3 className="mb-2 text-xl font-semibold text-slate-800">Xác nhận nộp bài thi?</h3>
+            <p className="mb-5 text-sm leading-relaxed text-slate-600">
+              Hệ thống sẽ chấm điểm tức thì và chuyển sang trang đối chiếu đáp án, transcript và lời giải chi tiết.
+            </p>
+
+            <div className="mb-6 grid grid-cols-3 gap-2.5 text-center">
+              <div className="border border-slate-200 bg-[#F8FAFC] p-3">
+                <div className="text-lg font-semibold text-slate-800 tabular-nums">{totalQuestionsCount}</div>
+                <div className="text-xs text-slate-500">Tổng số câu</div>
+              </div>
+              <div className="border border-emerald-200 bg-emerald-50 p-3">
+                <div className="text-lg font-semibold text-emerald-700 tabular-nums">{answeredCount}</div>
+                <div className="text-xs font-semibold text-emerald-800">Đã làm</div>
+              </div>
+              <div className="border border-red-200 bg-red-50 p-3">
+                <div className="text-lg font-semibold text-red-700 tabular-nums">{totalQuestionsCount - answeredCount}</div>
+                <div className="text-xs font-semibold text-red-700">Chưa làm</div>
+              </div>
             </div>
-          )}
 
-          <div className="mt-2.5 border border-slate-200 bg-slate-50/80 p-2.5 text-xs leading-normal text-slate-600">
-            <strong>Lưu ý:</strong> Hãy bấm <strong>Nộp bài thi</strong> khi hoàn thành để hệ thống chấm điểm và lưu kết quả. Nếu thoát giữa chừng, kết quả sẽ không được lưu.
+            <div className="flex gap-3">
+              <button
+                type="button"
+                className="flex-1 cursor-pointer border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                onClick={() => setSubmitModalOpen(false)}
+              >
+                Làm tiếp
+              </button>
+              <button
+                type="button"
+                className="flex-1 cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] py-2.5 text-sm font-semibold text-white transition hover:bg-[#173ea8] disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => handleSubmitExam()}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Đang nộp bài...' : 'Nộp bài ngay'}
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="h-[1px] bg-slate-200" />
+      {/* 7. EXIT EXAM CONFIRMATION MODAL */}
+      {exitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md border border-slate-200 bg-white p-6 text-center shadow-xl">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-amber-200 bg-amber-50 text-amber-600">
+              <AlertTriangle size={24} />
+            </div>
 
-        {/* Box 2: Questions Palette by Part */}
-        <div className="flex flex-col gap-4">
-          {availableParts.map((pNum) => {
-            const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
-            if (partQuestions.length === 0) return null;
+            <h3 className="mb-2 text-xl font-semibold text-slate-800">Rời khỏi bài thi?</h3>
+            <p className="mb-6 text-sm leading-relaxed text-slate-600">
+              Bạn đang trong quá trình làm bài thi. Nếu rời đi bây giờ, phiên làm bài sẽ kết thúc và kết quả sẽ <strong>không được lưu lại</strong>.
+            </p>
 
-            return (
-              <div key={pNum}>
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-800">
-                  <span>Part {pNum}</span>
-                  <span className="font-mono text-[11px] text-slate-500">
-                    {partQuestions.filter((q) => !!userAnswers[q.id]).length}/{partQuestions.length}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-5 gap-1.5">
-                  {partQuestions.map((q) => {
-                    const isAnswered = !!userAnswers[q.id];
-                    const isFlagged = flaggedQuestions.has(q.id);
-
-                    let btnStyle = 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]';
-
-                    if (isSubmitted) {
-                      const isCorrect = Boolean(reviewById[q.id]?.isCorrect);
-                      if (isCorrect) {
-                        btnStyle = 'border-emerald-700 bg-emerald-700 text-white font-bold';
-                      } else if (isAnswered) {
-                        btnStyle = 'border-red-700 bg-red-700 text-white font-bold';
-                      }
-                    } else if (isFlagged && isAnswered) {
-                      btnStyle = 'border-amber-500 bg-[#1D4ED8] text-white font-bold';
-                    } else if (isFlagged) {
-                      btnStyle = 'border-amber-400 bg-amber-50 text-amber-900 font-semibold';
-                    } else if (isAnswered) {
-                      btnStyle = 'border-[#1D4ED8] bg-[#1D4ED8] text-white font-bold';
-                    }
-
-                    return (
-                      <button
-                        key={q.id}
-                        type="button"
-                        onClick={() => handleJumpToQuestion(q)}
-                        className={`relative flex h-8 cursor-pointer items-center justify-center border font-mono text-xs transition ${btnStyle}`}
-                      >
-                        {q.questionNumber}
-                        {isFlagged && !isSubmitted && (
-                          <span className="absolute -right-1 -top-1 h-2.5 w-2.5 border border-white bg-amber-500" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                className="flex-1 cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] py-2.5 text-sm font-semibold text-white transition hover:bg-[#173ea8]"
+                onClick={() => setExitModalOpen(false)}
+              >
+                Tiếp tục làm bài
+              </button>
+              <button
+                type="button"
+                className="flex-1 cursor-pointer border border-red-300 bg-white py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:border-red-400"
+                onClick={handleConfirmExit}
+              >
+                Rời khỏi bài thi
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </aside>
-  </div>
-</div>
-
-{/* 5. MOBILE QUESTIONS PALETTE DRAWER */ }
-{
-  mobilePaletteOpen && (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/50"
-      onClick={() => setMobilePaletteOpen(false)}
-    >
-      <div
-        className="flex h-full w-full max-w-sm flex-col gap-4 overflow-y-auto border-l border-slate-200 bg-white p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-          <h3 className="text-base font-semibold text-slate-900">Danh sách câu hỏi</h3>
-          <button
-            type="button"
-            onClick={() => setMobilePaletteOpen(false)}
-            className="border border-slate-300 bg-white p-1.5 text-slate-700 hover:border-slate-400"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {availableParts.map((pNum) => {
-            const partQuestions = flatQuestions.filter((q) => q.partNumber === pNum);
-            return (
-              <div key={pNum}>
-                <div className="mb-2 text-xs font-semibold text-slate-800">Part {pNum}</div>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {partQuestions.map((q) => {
-                    const isAnswered = !!userAnswers[q.id];
-                    return (
-                      <button
-                        key={q.id}
-                        type="button"
-                        onClick={() => handleJumpToQuestion(q)}
-                        className={`flex h-9 items-center justify-center border font-mono text-xs font-semibold ${isAnswered
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                          : 'border-slate-300 bg-white text-slate-800'
-                          }`}
-                      >
-                        {q.questionNumber}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
-  )
-}
-
-{/* 6. SUBMISSION CONFIRMATION MODAL */ }
-{
-  submitModalOpen && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-md border border-slate-200 bg-white p-6 text-center shadow-xl">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
-          <Send size={22} />
-        </div>
-
-        <h3 className="mb-2 text-xl font-semibold text-slate-900">Xác nhận nộp bài thi?</h3>
-        <p className="mb-5 text-sm leading-relaxed text-slate-600">
-          Hệ thống sẽ chấm điểm tức thì và chuyển sang trang đối chiếu đáp án, transcript và lời giải chi tiết.
-        </p>
-
-        <div className="mb-6 grid grid-cols-3 gap-2.5 text-center">
-          <div className="border border-slate-200 bg-slate-50 p-3">
-            <div className="font-mono text-lg font-bold text-slate-900">{totalQuestionsCount}</div>
-            <div className="text-xs text-slate-500">Tổng số câu</div>
-          </div>
-          <div className="border border-emerald-200 bg-emerald-50 p-3">
-            <div className="font-mono text-lg font-bold text-emerald-700">{answeredCount}</div>
-            <div className="text-xs font-semibold text-emerald-800">Đã làm</div>
-          </div>
-          <div className="border border-red-200 bg-red-50 p-3">
-            <div className="font-mono text-lg font-bold text-red-700">{totalQuestionsCount - answeredCount}</div>
-            <div className="text-xs font-semibold text-red-700">Chưa làm</div>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            className="flex-1 cursor-pointer border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400"
-            onClick={() => setSubmitModalOpen(false)}
-          >
-            Làm tiếp
-          </button>
-          <button
-            type="button"
-            className="flex-1 cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] py-2.5 text-sm font-semibold text-white transition hover:bg-[#173ea8] disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={() => handleSubmitExam()}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Đang nộp bài...' : 'Nộp bài ngay'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {/* 7. EXIT EXAM CONFIRMATION MODAL */}
-  {exitModalOpen && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-md border border-slate-200 bg-white p-6 text-center shadow-xl">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center border border-amber-200 bg-amber-50 text-amber-600">
-          <AlertTriangle size={24} />
-        </div>
-
-        <h3 className="mb-2 text-xl font-semibold text-slate-900">Rời khỏi bài thi?</h3>
-        <p className="mb-6 text-sm leading-relaxed text-slate-600">
-          Bạn đang trong quá trình làm bài thi. Nếu rời đi bây giờ, phiên làm bài sẽ kết thúc và kết quả sẽ <strong>không được lưu lại</strong>.
-        </p>
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            className="flex-1 cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] py-2.5 text-sm font-semibold text-white transition hover:bg-[#173ea8]"
-            onClick={() => setExitModalOpen(false)}
-          >
-            Tiếp tục làm bài
-          </button>
-          <button
-            type="button"
-            className="flex-1 cursor-pointer border border-red-300 bg-white py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 hover:border-red-400"
-            onClick={handleConfirmExit}
-          >
-            Rời khỏi bài thi
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
-</div>
   );
 };
 
