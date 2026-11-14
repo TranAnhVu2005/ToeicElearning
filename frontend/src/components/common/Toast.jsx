@@ -7,7 +7,7 @@ const TOAST_META = {
     icon: CheckCircle2,
   },
   error: {
-    label: 'Báo lỗi',
+    label: 'Thông báo lỗi',
     icon: AlertCircle,
   },
   warning: {
@@ -33,7 +33,7 @@ const Toast = ({ type = 'info', message, onClose }) => {
       aria-live={normalizedType === 'error' ? 'assertive' : 'polite'}
     >
       <div className="toast-icon" aria-hidden="true">
-        <IconComponent size={18} strokeWidth={2} />
+        <IconComponent size={19} strokeWidth={2.1} />
       </div>
       <div className="toast-body">
         <span className="toast-kicker">{label}</span>

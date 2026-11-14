@@ -13,6 +13,11 @@ public class AdminOverviewMetricsResponse {
     int activeWindowMinutes;
     long submittedAttemptsToday;
     long startedAttemptsToday;
+    long uniqueLoginsToday;
+    long loginCountToday;
+    long uniqueLoginsThisMonth;
+    long startedAttemptsThisMonth;
+    long submittedAttemptsThisMonth;
     LocalDate reportingDate;
     String timeZone;
     LocalDateTime generatedAt;

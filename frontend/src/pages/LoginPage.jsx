@@ -58,7 +58,9 @@ const LoginPage = () => {
       const loggedUser = await login(formData);
       handleRoleRedirect(loggedUser);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại!';
+      const data = err.response?.data;
+      const isLocked = Number(data?.code) === 2009 || err.response?.status === 403;
+      const msg = data?.message || (isLocked ? 'Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên' : null) || err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại!';
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
@@ -75,7 +77,9 @@ const LoginPage = () => {
       const loggedUser = await loginWithGoogle(credentialResponse.credential);
       handleRoleRedirect(loggedUser);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!';
+      const data = err.response?.data;
+      const isLocked = Number(data?.code) === 2009 || err.response?.status === 403;
+      const msg = data?.message || (isLocked ? 'Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên' : null) || err.message || 'Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!';
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);

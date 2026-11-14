@@ -9,10 +9,14 @@ import java.time.LocalDateTime;
 @Builder
 public class NotificationResponse {
     String id;
+    String notificationId;
     String title;
     String content;
     String type;
+    String category;
     String link;
+    String referenceUrl;
     Boolean read;
+    Boolean isRead;
     LocalDateTime createdAt;
 }

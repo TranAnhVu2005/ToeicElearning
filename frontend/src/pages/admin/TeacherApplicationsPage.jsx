@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { BadgeCheck, ClipboardCheck, RefreshCw, Search, X } from 'lucide-react';
 import { teacherApplicationService } from '../../services/teacherApplicationService';
-import AdminNavTabs from '../../components/common/AdminNavTabs';
+import AdminPageHeader from '../../components/common/AdminPageHeader';
+import teacherAppsBanner from '../../assets/img/ctu/nhadieuhanh.jpg';
 
 const statusNames = {
   PENDING_PAYMENT: 'Chờ thanh toán',
@@ -79,37 +80,33 @@ const TeacherApplicationsPage = () => {
   };
 
   return (
-    <main className="admin-page min-h-screen bg-white px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
-          <div>
-            <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-              <ClipboardCheck size={16} /> Khu vực quản trị
-            </div>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Hồ sơ giáo viên</h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Chỉ hồ sơ đã thanh toán thành công mới được duyệt. Duyệt hồ sơ mới cấp quyền giáo viên.
-            </p>
-          </div>
+    <main className="admin-page min-h-screen pb-12 text-slate-900">
+      <AdminPageHeader
+        eyebrow="Khu vực quản trị"
+        eyebrowIcon={ClipboardCheck}
+        title="Hồ sơ giáo viên"
+        description="Chỉ hồ sơ đã thanh toán thành công mới được duyệt. Duyệt hồ sơ mới cấp quyền giáo viên."
+        bannerImage={teacherAppsBanner}
+        actions={
           <button
             type="button"
             onClick={load}
             disabled={loading}
-            className="editorial-button-secondary inline-flex min-h-10 items-center gap-2 px-4 py-2 text-sm font-semibold"
+            className="editorial-button-secondary inline-flex min-h-10 items-center gap-2 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-60"
           >
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Làm mới
           </button>
-        </header>
+        }
+      />
 
-        <AdminNavTabs />
-
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
         {error && (
           <div role="alert" className="mb-5 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
             {error}
           </div>
         )}
 
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-[#F8FAFC] p-4">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white p-4">
           <label className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wider text-slate-700">
             <Search size={15} className="text-[#1D4ED8]" /> Trạng thái
             <select
@@ -127,7 +124,7 @@ const TeacherApplicationsPage = () => {
               <option value="REJECTED">Từ chối</option>
             </select>
           </label>
-          <span className="font-mono text-xs font-semibold text-slate-600">{totalElements} hồ sơ</span>
+          <span className="text-xs font-semibold tabular-nums text-slate-600">{totalElements} hồ sơ</span>
         </div>
 
         <section className="overflow-hidden border border-slate-200 bg-white">
@@ -152,10 +149,10 @@ const TeacherApplicationsPage = () => {
                     <tr key={row.id} className="align-top hover:bg-slate-50/70">
                       <td className="px-4 py-4">
                         <strong className="block text-slate-900">{row.userName}</strong>
-                        <span className="font-mono text-xs text-slate-500">{row.userEmail}</span>
+                        <span className="text-xs text-slate-500">{row.userEmail}</span>
                       </td>
                       <td className="max-w-xs whitespace-pre-wrap px-4 py-4 text-slate-700">{row.statement || '—'}</td>
-                      <td className="px-4 py-4 font-mono text-xs text-slate-600">
+                      <td className="px-4 py-4 text-xs tabular-nums text-slate-600">
                         {row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN') : '—'}
                       </td>
                       <td className="px-4 py-4">
@@ -170,8 +167,8 @@ const TeacherApplicationsPage = () => {
                         >
                           {row.paymentStatus || '—'}
                         </span>
-                        <span className="mt-1 block font-mono font-bold text-slate-900">{amountText(row.amount)}</span>
-                        <span className="mt-1 block break-all font-mono text-[10px] text-slate-500">
+                        <span className="mt-1 block font-semibold tabular-nums text-slate-900">{amountText(row.amount)}</span>
+                        <span className="admin-tech-code mt-1 block break-all text-[11px] text-slate-500">
                           {row.transactionReference || ''}
                         </span>
                       </td>
@@ -208,7 +205,7 @@ const TeacherApplicationsPage = () => {
             </div>
           )}
           <div className="flex items-center justify-between border-t border-slate-200 bg-[#F8FAFC] px-4 py-3">
-            <span className="font-mono text-xs font-semibold text-slate-600">
+            <span className="text-xs font-semibold tabular-nums text-slate-600">
               Trang {totalPages ? page : 0} / {totalPages}
             </span>
             <div className="flex gap-2">

@@ -31,7 +31,6 @@ const Footer = () => {
               <li><Link to="/"><ArrowRight size={14} /> Trang chủ</Link></li>
               <li><Link to="/courses"><ArrowRight size={14} /> Kho đề thi TOEIC</Link></li>
               <li><Link to="/classrooms"><ArrowRight size={14} /> Không gian Lớp học</Link></li>
-              <li><Link to="/about"><ArrowRight size={14} /> Giới thiệu dự án</Link></li>
               <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ & Hỗ trợ</Link></li>
               <li><Link to="/login"><ArrowRight size={14} /> Đăng nhập hệ thống</Link></li>
               <li><Link to="/register"><ArrowRight size={14} /> Đăng ký tài khoản</Link></li>

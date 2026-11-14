@@ -1,6 +1,17 @@
 import React, { useEffect, useId } from 'react';
 import { X } from 'lucide-react';
 
+const TAILWIND_MAX_WIDTH_MAP = {
+  'max-w-sm': '384px',
+  'max-w-md': '480px',
+  'max-w-lg': '540px',
+  'max-w-xl': '600px',
+  'max-w-2xl': '672px',
+  'max-w-3xl': '768px',
+  'max-w-4xl': '896px',
+  'max-w-5xl': '1024px',
+};
+
 const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', className = '' }) => {
   const titleId = useId();
   useEffect(() => {
@@ -23,6 +34,8 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', c
 
   if (!isOpen) return null;
 
+  const resolvedMaxWidth = TAILWIND_MAX_WIDTH_MAP[maxWidth] || maxWidth || '500px';
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div
@@ -31,24 +44,23 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '500px', c
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}
+        style={{
+          '--modal-max-width': resolvedMaxWidth,
+          maxWidth: resolvedMaxWidth,
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
       >
         <div className="modal-header">
           <h3 id={titleId} className="modal-title">{title}</h3>
           <button
             type="button"
+            className="modal-close-btn"
             onClick={onClose}
             aria-label="Đóng hộp thoại"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--gray-500)',
-              padding: 4,
-              borderRadius: 'var(--radius-sm)',
-            }}
           >
-            <X size={20} />
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
         <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>{children}</div>

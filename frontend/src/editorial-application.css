@@ -271,19 +271,61 @@
 }
 
 /* Classrooms, notifications, teacher/payment flows. */
-.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .not-found-page, .admin-page, .admin-page-wrapper, .test-management-page) {
+.app-shell :where(.classrooms-page, .payment-result-page, .teacher-application-page, .not-found-page) {
   background: #fff !important;
   color: var(--editorial-text) !important;
 }
 
-.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel, [role="tabpanel"]) {
+.app-shell .main-content > :where(.notifications-page, .contact-page) {
+  background: #F8FAFC !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell .main-content :where(.admin-page, .admin-page-wrapper, .test-management-page) {
+  background-color: #E2E8F0 !important;
+  background-image:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.52) 0%, rgba(241, 245, 249, 0.60) 55%, rgba(226, 232, 240, 0.68) 100%),
+    url('./assets/img/homepage/sanGo.jpg') !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-attachment: fixed !important;
+  color: var(--editorial-text) !important;
+}
+
+.app-shell :where(.classrooms-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel, [role="tabpanel"]) {
   border-color: var(--editorial-line) !important;
   border-radius: 2px !important;
   box-shadow: none !important;
 }
 
-.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel) {
+.app-shell :where(.classrooms-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(article, section, .card, .panel) {
   background-color: #fff;
+}
+
+.app-shell .notifications-page,
+.app-shell .notifications-page *,
+.app-shell .contact-page,
+.app-shell .contact-page *,
+.app-shell .admin-page,
+.app-shell .admin-page *:not(.admin-tech-code),
+.app-shell .admin-page-wrapper,
+.app-shell .admin-page-wrapper *:not(.admin-tech-code) {
+  font-family: var(--editorial-font) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+.app-shell .admin-tech-code {
+  font-family: var(--editorial-mono, "Ubuntu Mono", ui-monospace, monospace) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-shell .admin-editorial-hero {
+  position: relative;
+  border-bottom: 1px solid var(--editorial-line);
+  background-color: #F8FAFC;
+  background-size: cover;
+  background-position: center 42%;
 }
 
 .app-shell .classrooms-page > .max-w-6xl > header,
@@ -304,7 +346,7 @@
   box-shadow: none !important;
 }
 
-.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(button:not(.toast-close), a[role="button"], input[type="button"], input[type="submit"]) {
+.app-shell :where(.classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .admin-page, .admin-page-wrapper, .test-management-page) :where(button:not(.toast-close):not(.ctu-slider-dot), a[role="button"], input[type="button"], input[type="submit"]) {
   min-height: 40px;
   border-radius: 2px !important;
   box-shadow: none !important;
@@ -359,8 +401,12 @@
   color: var(--editorial-text) !important;
 }
 
-.app-shell :where(.admin-page, .admin-page-wrapper) :where(.text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400) {
+.app-shell :where(.admin-page, .admin-page-wrapper) :where(.text-white, .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400):not([class*="bg-[#1D4ED8]"]):not(.bg-blue-600):not(.bg-blue-700):not(.bg-red-600):not(.editorial-button-primary) {
   color: var(--editorial-text) !important;
+}
+
+.app-shell :where(.admin-page, .admin-page-wrapper) :where(.admin-nav-tabs a[aria-current="page"], [class*="bg-[#1D4ED8]"], .bg-blue-600, .bg-blue-700, .bg-red-600, .editorial-button-primary) {
+  color: #FFFFFF !important;
 }
 
 /* Dedicated practice rooms retain focus, timer, and answer-state clarity. */
@@ -461,45 +507,82 @@
 .app-shell .modal-backdrop {
   z-index: 1000;
   padding: 20px;
-  background: rgb(17 24 39 / 48%) !important;
-  backdrop-filter: blur(2px);
+  background: rgb(15 23 42 / 52%) !important;
+  backdrop-filter: blur(3px);
 }
 
 .app-shell .modal-container {
-  width: min(100%, var(--modal-max-width, 720px));
-  border: 1px solid var(--editorial-line) !important;
-  border-radius: 2px !important;
-  background: #fff !important;
-  box-shadow: 0 18px 50px rgb(17 24 39 / 18%) !important;
+  width: min(100%, var(--modal-max-width, 520px));
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  box-shadow: 0 22px 54px rgb(15 23 42 / 22%), 0 4px 12px rgb(15 23 42 / 8%) !important;
+  font-family: var(--editorial-font) !important;
 }
 
 .app-shell :where(.modal-header, .modal-footer) {
-  border-color: var(--editorial-line) !important;
-  background: #fff !important;
+  border-color: #e5e7eb !important;
+  background: #f8fafc !important;
 }
 
 .app-shell .modal-header {
   display: flex;
-  min-height: 60px;
+  min-height: 58px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--editorial-line);
+  padding: 16px 22px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .app-shell .modal-title {
   margin: 0;
-  font-size: 21px;
+  font-family: var(--editorial-font) !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  color: #111827 !important;
+}
+
+.app-shell .modal-close-btn {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: #6b7280 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.app-shell .modal-close-btn:hover {
+  background: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #111827 !important;
 }
 
 .app-shell .modal-body {
-  padding: 20px;
+  padding: 22px;
+  background: #ffffff !important;
+  font-family: var(--editorial-font) !important;
+  color: #1f2937;
+  line-height: 1.6;
 }
 
 .app-shell .modal-footer {
-  padding: 14px 20px;
-  border-top: 1px solid var(--editorial-line);
+  padding: 14px 22px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .app-shell :where(.toast, [role="status"].toast, [role="alert"].toast) {
@@ -508,31 +591,32 @@
   right: 24px !important;
   z-index: 2200 !important;
   width: max-content !important;
-  min-width: min(320px, calc(100vw - 32px)) !important;
-  max-width: min(440px, calc(100vw - 32px)) !important;
+  min-width: min(340px, calc(100vw - 32px)) !important;
+  max-width: min(460px, calc(100vw - 32px)) !important;
   display: flex !important;
   align-items: flex-start !important;
-  gap: 12px !important;
+  gap: 13px !important;
   padding: 14px 16px !important;
-  border: 1px solid var(--editorial-line) !important;
+  border: 1px solid #cbd5e1 !important;
   border-left: 4px solid var(--editorial-accent) !important;
-  border-radius: 2px !important;
-  background: #fff !important;
-  color: var(--editorial-text) !important;
-  box-shadow: 0 10px 28px rgb(17 24 39 / 14%) !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-family: var(--editorial-font) !important;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 14%), 0 2px 8px rgb(15 23 42 / 6%) !important;
 }
 
 .app-shell .toast-icon {
-  flex: 0 0 28px !important;
-  width: 28px !important;
-  height: 28px !important;
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  height: 36px !important;
   margin-top: 1px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 2px !important;
-  border: 1px solid var(--editorial-line) !important;
-  background: #f8fafc !important;
+  border-radius: 4px !important;
+  border: 1px solid #bfdbfe !important;
+  background: #eff6ff !important;
   color: var(--editorial-accent) !important;
 }
 
@@ -541,26 +625,26 @@
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 3px !important;
+  gap: 2px !important;
 }
 
 .app-shell .toast-kicker {
   display: inline-block !important;
-  font-family: var(--editorial-mono) !important;
-  font-size: 11px !important;
+  font-family: var(--editorial-font) !important;
+  font-size: 13.5px !important;
   font-weight: 700 !important;
-  line-height: 1.2 !important;
-  letter-spacing: 0.1em !important;
-  text-transform: uppercase !important;
-  color: var(--editorial-muted) !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+  color: #1e40af !important;
 }
 
 .app-shell .toast-message {
   font-family: var(--editorial-font) !important;
-  font-size: 15px !important;
+  font-size: 14.5px !important;
   font-weight: 500 !important;
   line-height: 1.5 !important;
-  color: var(--editorial-text) !important;
+  color: #1f2937 !important;
   overflow-wrap: anywhere !important;
 }
 
@@ -569,42 +653,79 @@
   width: 28px !important;
   height: 28px !important;
   min-height: 28px !important;
-  margin: -2px -4px 0 2px !important;
+  margin: -1px -4px 0 2px !important;
   padding: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: transparent !important;
   border: 1px solid transparent !important;
-  border-radius: 2px !important;
-  color: var(--editorial-muted) !important;
+  border-radius: 4px !important;
+  color: #64748b !important;
   box-shadow: none !important;
   cursor: pointer !important;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease !important;
 }
 
 .app-shell .toast-close:hover {
-  background: #f1f5f9 !important;
-  border-color: var(--editorial-line) !important;
-  color: var(--editorial-primary) !important;
+  background: rgb(15 23 42 / 6%) !important;
+  border-color: rgb(15 23 42 / 12%) !important;
+  color: #0f172a !important;
 }
 
-.app-shell .toast-success { border-left-color: var(--editorial-success) !important; }
-.app-shell .toast-success .toast-icon { border-color: #bbf7d0 !important; background: #f0fdf4 !important; color: var(--editorial-success) !important; }
-.app-shell .toast-success .toast-kicker { color: #15803d !important; }
+.app-shell .toast-success {
+  border-color: #bbf7d0 !important;
+  border-left-color: #16a34a !important;
+  background: linear-gradient(180deg, #f0fdf4 0%, #f7fee7 100%) !important;
+}
+.app-shell .toast-success .toast-icon {
+  border-color: #86efac !important;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+}
+.app-shell .toast-success .toast-kicker { color: #166534 !important; }
+.app-shell .toast-success .toast-message { color: #14532d !important; }
 
-.app-shell .toast-error { border-left-color: var(--editorial-danger) !important; }
-.app-shell .toast-error .toast-icon { border-color: #fecaca !important; background: #fef2f2 !important; color: var(--editorial-danger) !important; }
-.app-shell .toast-error .toast-kicker { color: #b91c1c !important; }
+.app-shell .toast-error {
+  border-color: #fecaca !important;
+  border-left-color: #dc2626 !important;
+  background: linear-gradient(180deg, #fff5f5 0%, #fef2f2 100%) !important;
+}
+.app-shell .toast-error .toast-icon {
+  border-color: #fca5a5 !important;
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+.app-shell .toast-error .toast-kicker { color: #991b1b !important; }
+.app-shell .toast-error .toast-message { color: #7f1d1d !important; }
 
-.app-shell .toast-warning { border-left-color: var(--editorial-warning) !important; }
-.app-shell .toast-warning .toast-icon { border-color: #fde68a !important; background: #fffbeb !important; color: var(--editorial-warning) !important; }
-.app-shell .toast-warning .toast-kicker { color: #b45309 !important; }
+.app-shell .toast-warning {
+  border-color: #fde68a !important;
+  border-left-color: #d97706 !important;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%) !important;
+}
+.app-shell .toast-warning .toast-icon {
+  border-color: #fcd34d !important;
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+}
+.app-shell .toast-warning .toast-kicker { color: #92400e !important; }
+.app-shell .toast-warning .toast-message { color: #78350f !important; }
 
-.app-shell .toast-info { border-left-color: var(--editorial-accent) !important; }
-.app-shell .toast-info .toast-icon { border-color: #bfdbfe !important; background: #eff6ff !important; color: var(--editorial-accent) !important; }
-.app-shell .toast-info .toast-kicker { color: var(--editorial-accent) !important; }
+.app-shell .toast-info {
+  border-color: #bfdbfe !important;
+  border-left-color: #1d4ed8 !important;
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%) !important;
+}
+.app-shell .toast-info .toast-icon {
+  border-color: #93c5fd !important;
+  background: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+.app-shell .toast-info .toast-kicker { color: #1e40af !important; }
+.app-shell .toast-info .toast-message { color: #1e3a8a !important; }
 
-.app-shell :where(.auth-alert, .profile-content-card) :where(.toast, [role="status"].toast, [role="alert"].toast) {
+.app-shell :where(.auth-alert, .profile-content-card, .user-management-toast) :where(.toast, [role="status"].toast, [role="alert"].toast) {
   position: relative !important;
   top: auto !important;
   right: auto !important;
@@ -614,7 +735,7 @@
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 5%) !important;
 }
 
 @media (max-width: 640px) {
@@ -700,7 +821,6 @@
 }
 
 .app-shell .test-management-page {
-  background: #FFFFFF !important;
   color: #111827 !important;
 }
 
@@ -813,7 +933,8 @@
   white-space: nowrap !important;
   flex-shrink: 0 !important;
   border-radius: 2px !important;
-  font-family: var(--editorial-mono, 'Ubuntu Mono', ui-monospace, monospace) !important;
+  font-family: var(--editorial-font) !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
 }
 
 .app-shell .test-builder-modal .test-builder-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),

@@ -52,6 +52,7 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 
 - AuthContext khôi phục session rồi đồng bộ profile với `/api/user/me`.
 - User bị khóa không được gọi nghiệp vụ cần xác thực; token cũ không bỏ qua được backend check.
+- Khi người dùng đăng nhập bằng tài khoản đang bị khóa (`isLocked == true`) qua đăng nhập thông thường (`POST /api/auth/login`) hoặc Google OAuth (`POST /api/auth/google`), hệ thống phản hồi lỗi `403 USER_ACCOUNT_LOCKED` (code `2009`: *"Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên"*), thông báo cụ thể cho người dùng biết trạng thái tài khoản thay vì gây hiểu lầm là sai mật khẩu; đồng thời ghi nhận audit thất bại và tăng bộ đếm rate limit.
 - Kiểm tra quyền ở từng API; UI guard chỉ phục vụ điều hướng.
 
 ## 3. Full test
@@ -128,8 +129,11 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 
 ## 8. Thông báo và thống kê
 
-- Tạo in-app notification khi: học sinh được giao assignment mới; deadline được đổi/gia hạn; giáo viên gửi feedback; thanh toán/hồ sơ teacher đổi trạng thái.
-- Notification chỉ tới thành viên APPROVED tại thời điểm sự kiện; thông báo có deep link nội bộ, unread/read, thời gian và không lộ thông tin lớp cho người ngoài.
+- Tạo in-app notification tự động theo các luồng nghiệp vụ:
+  - **Học tập & Đề thi**: chào mừng tài khoản mới (`WELCOME`), hoàn thành bài thi Full Test hoặc luyện tập theo Part (`EXAM_RESULT` kèm điểm số và liên kết `/results/{resultId}`), kiểm duyệt gỡ bình luận vi phạm (`COMMENT_MODERATED`).
+  - **Lớp học & Bài tập**: học viên gửi yêu cầu tham gia lớp (`CLASSROOM_JOIN_REQUEST` gửi cho giáo viên chủ nhiệm), giáo viên duyệt/cập nhật trạng thái thành viên (`CLASSROOM_MEMBER_APPROVED`, `CLASSROOM_MEMBER_STATUS`), giáo viên đăng tài liệu PDF mới (`CLASSROOM_MATERIAL`), giáo viên giao bài tập mới (`ASSIGNMENT_CREATED`), cập nhật hạn nộp (`ASSIGNMENT_DEADLINE_CHANGED`), học viên nộp bài tập lớp (`ASSIGNMENT_SUBMITTED` gửi cho giáo viên), và giáo viên gửi nhận xét bài làm (`ASSIGNMENT_FEEDBACK`).
+  - **Thương mại & Tài khoản**: mở khóa đề VIP thành công (`TEST_VIP_PURCHASE`), xác nhận thanh toán phí đăng ký giáo viên (`TEACHER_APPLICATION_PAYMENT` cho ứng viên và `TEACHER_APPLICATION_SUBMITTED` cho toàn bộ Admin), duyệt/từ chối hồ sơ giáo viên (`TEACHER_APPLICATION`), và đổi/thiết lập mật khẩu (`ACCOUNT_SECURITY`).
+- Notification của lớp học chỉ gửi tới thành viên đang `APPROVED` tại thời điểm sự kiện (hoặc giáo viên chủ nhiệm lớp); mỗi thông báo có deep link nội bộ, trạng thái unread/read, phân loại danh mục (`EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`), thời gian định dạng theo `Asia/Ho_Chi_Minh` và hỗ trợ đánh dấu đã đọc hoặc xóa dọn hộp thư.
 - Tab hiển thị gửi heartbeat khi đang authenticated và document visible; client nhịp 60 giây, server chỉ ghi tối đa một lần/phút/user. Không gửi route/action/question.
 - Admin overview đếm user duy nhất có `last_seen_at` trong 5 phút và chưa khóa; đây là presence ước lượng, không đồng nghĩa với user active trong ngày.
 - Lượt submit mỗi ngày lấy từ `test_result.created_at`, gồm full/part/assignment/review lại; lượt bắt đầu lấy từ `exam_session.started_at`. Resume session không tạo lượt bắt đầu mới; hủy/expire vẫn là lần bắt đầu. Nhóm ngày theo `APP_REPORTING_TIME_ZONE` (mặc định `Asia/Ho_Chi_Minh`) và trả cả ngày không có lượt.

@@ -10,6 +10,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserChangePas
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.SetLocalPasswordRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserUpdateProfileRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.service.GoogleIdTokenVerifier;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import jakarta.transaction.Transactional;
@@ -26,6 +27,7 @@ public class UserServiceImpl implements UserService{
     private final AuditEventService auditEventService;
     private final CloudinaryService cloudinaryService;
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final NotificationService notificationService;
 
 
     @Override
@@ -116,6 +118,13 @@ public class UserServiceImpl implements UserService{
         user.setAuthVersion((user.getAuthVersion() == null ? 0 : user.getAuthVersion()) + 1);
         userRepository.save(user);
         auditEventService.record(user, "PASSWORD_CHANGED", "USER", user.getId(), "credentialChanged=true");
+        notificationService.createNotification(
+                user,
+                "Mật khẩu tài khoản đã được cập nhật",
+                "Mật khẩu đăng nhập của bạn vừa được thay đổi thành công. Các phiên đăng nhập cũ đã được thu hồi để bảo vệ an toàn tài khoản.",
+                "ACCOUNT_SECURITY",
+                "/profile"
+        );
     }
 
     @Override
@@ -138,5 +147,12 @@ public class UserServiceImpl implements UserService{
         user.setAuthVersion((user.getAuthVersion() == null ? 0 : user.getAuthVersion()) + 1);
         userRepository.save(user);
         auditEventService.record(user, "LOCAL_PASSWORD_SET", "USER", user.getId(), "credentialChanged=true");
+        notificationService.createNotification(
+                user,
+                "Đã thiết lập mật khẩu đăng nhập cục bộ",
+                "Tài khoản liên kết Google của bạn đã được thiết lập thêm mật khẩu đăng nhập cục bộ thành công.",
+                "ACCOUNT_SECURITY",
+                "/profile"
+        );
     }
 }

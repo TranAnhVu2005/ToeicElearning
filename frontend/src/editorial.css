@@ -470,7 +470,7 @@ body,
 }
 
 /* Editorial page surfaces and content hierarchy across all current routes. */
-.app-shell :where(.home-page, .courses-page, .neo-courses-page, .course-detail-page, .practice-page, .neo-practice-page, .editorial-about, .auth-page-wrapper, .profile-page, .neo-brutal-profile, .neo-brutal-exam, .neo-brutal-dictation, .neo-brutal-result, .admin-page-wrapper, .admin-page, .test-management-page, .classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .not-found-page) {
+.app-shell :where(.home-page, .courses-page, .neo-courses-page, .course-detail-page, .practice-page, .neo-practice-page, .editorial-about, .auth-page-wrapper, .profile-page, .neo-brutal-profile, .neo-brutal-exam, .neo-brutal-dictation, .neo-brutal-result, .classrooms-page, .notifications-page, .payment-result-page, .teacher-application-page, .contact-page, .not-found-page) {
   background-color: #fff !important;
   color: var(--editorial-text) !important;
 }
@@ -482,13 +482,13 @@ body,
   box-shadow: none !important;
 }
 
-.app-shell :where(.neo-course-card, .practice-card, .profile-sidebar-card, .profile-content-card, .admin-stat-card, .table-responsive-container, .table-toolbar-card, .test-studio-list, .test-studio-header, .course-history-content, .course-detail-page section, .classrooms-page article, .classrooms-page section, .notifications-page article, .payment-result-page section, .teacher-application-page section, .contact-page section, .card, .panel) {
+.app-shell :where(.neo-course-card, .practice-card, .profile-sidebar-card, .profile-content-card, .admin-stat-card, .table-responsive-container, .table-toolbar-card, .test-studio-list, .test-studio-header, .course-history-content, .course-detail-page section, .classrooms-page article, .classrooms-page section, .payment-result-page section, .teacher-application-page section, .contact-page section, .card, .panel) {
   border-color: var(--editorial-line) !important;
   border-radius: 2px !important;
   box-shadow: none !important;
 }
 
-.app-shell :where(.neo-course-card, .practice-card, .profile-sidebar-card, .profile-content-card, .admin-stat-card, .test-studio-list, .course-history-content, .classrooms-page article, .classrooms-page section, .notifications-page article, .payment-result-page section, .teacher-application-page section, .contact-page section) {
+.app-shell :where(.neo-course-card, .practice-card, .profile-sidebar-card, .profile-content-card, .admin-stat-card, .test-studio-list, .course-history-content, .classrooms-page article, .classrooms-page section, .payment-result-page section, .teacher-application-page section) {
   background: #fff !important;
 }
 
@@ -856,8 +856,9 @@ body,
 .app-shell .auth-kicker {
   margin: 0 0 12px;
   color: var(--editorial-accent);
-  font-family: var(--editorial-mono);
+  font-family: var(--editorial-font);
   font-size: 13px;
+  font-weight: 700;
   letter-spacing: .08em;
 }
 
@@ -1496,8 +1497,8 @@ body,
   flex-wrap: wrap;
   gap: 6px 12px;
   color: var(--editorial-muted);
-  font-family: var(--editorial-mono, 'Ubuntu Mono', monospace) !important;
-  font-size: 12px;
+  font-family: var(--editorial-font) !important;
+  font-size: 12.5px;
 }
 
 .app-shell .home-page .news-test-meta span {
@@ -1889,7 +1890,7 @@ body,
 .app-shell .home-page .news-book-series,
 .app-shell .home-page .news-book-bottom,
 .app-shell .home-page .news-book-meta {
-  font-family: var(--editorial-mono, 'Ubuntu Mono', monospace) !important;
+  font-family: var(--editorial-font) !important;
 }
 
 .app-shell .home-page .news-kicker {

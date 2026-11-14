@@ -7,7 +7,6 @@ import {
   Edit2,
   Trash2,
   ExternalLink,
-  PlayCircle,
   Clock,
   Layers,
   Calendar,
@@ -36,7 +35,8 @@ import { examService } from '../../services/examService';
 import { uploadMediaFile } from '../../services/uploadService';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
-import AdminNavTabs from '../../components/common/AdminNavTabs';
+import AdminPageHeader from '../../components/common/AdminPageHeader';
+import testStudioBanner from '../../assets/img/hero/bangtrang.jpg';
 
 import Toast from '../../components/common/Toast';
 import {
@@ -2023,8 +2023,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-3 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1.5 border ${isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -2085,24 +2085,24 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasImage ? 'Đã có ảnh' : 'Chưa có ảnh'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasAudio
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasAudio ? 'Đã có audio' : 'Chưa có audio'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
@@ -2217,8 +2217,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       ) : (
                         <label
                           className={`rounded-[2px] border border-dashed p-5 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${uploadingKey === `${activePartIndex}-${cqIdx}-image`
-                              ? 'border-[#1D4ED8] bg-[#EFF6FF]'
-                              : 'border-[#D1D5DB] hover:border-[#1D4ED8] bg-[#F8FAFC]'
+                            ? 'border-[#1D4ED8] bg-[#EFF6FF]'
+                            : 'border-[#D1D5DB] hover:border-[#1D4ED8] bg-[#F8FAFC]'
                             }`}
                         >
                           <div className="w-10 h-10 rounded-[2px] bg-white border border-[#D1D5DB] text-[#1D4ED8] flex items-center justify-center">
@@ -2316,8 +2316,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       ) : (
                         <label
                           className={`rounded-[2px] border border-dashed p-3.5 text-center flex items-center justify-center gap-3 cursor-pointer transition-all ${uploadingKey === `${activePartIndex}-${cqIdx}-audio`
-                              ? 'border-[#1D4ED8] bg-[#EFF6FF]'
-                              : 'border-[#D1D5DB] hover:border-[#1D4ED8] bg-[#F8FAFC]'
+                            ? 'border-[#1D4ED8] bg-[#EFF6FF]'
+                            : 'border-[#D1D5DB] hover:border-[#1D4ED8] bg-[#F8FAFC]'
                             }`}
                         >
                           <div className="w-8 h-8 rounded-[2px] bg-white border border-[#D1D5DB] text-[#1D4ED8] flex items-center justify-center shrink-0">
@@ -2374,8 +2374,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                 handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionD', '(D)');
                               }}
                               className={`w-10 h-8 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer border ${isSelected
-                                  ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                  : 'bg-white text-[#374151] hover:bg-[#F8FAFC] border-transparent'
+                                ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                                : 'bg-white text-[#374151] hover:bg-[#F8FAFC] border-transparent'
                                 }`}
                               title={`Chọn (${opt}) làm đáp án đúng`}
                             >
@@ -2528,8 +2528,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border ${isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -2588,16 +2588,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasAudio
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasAudio ? 'Đã có audio' : 'Chưa có audio'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
@@ -2644,8 +2644,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                         <label
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] text-xs font-semibold cursor-pointer transition-all border ${uploadingKey === `${activePartIndex}-${cqIdx}-audio`
-                              ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
-                              : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
+                            ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
+                            : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
                             }`}
                         >
                           <UploadCloud size={13} />
@@ -2719,8 +2719,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                               handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionD', '');
                             }}
                             className={`w-11 h-8 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer border ${isSelected
-                                ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                : 'bg-white text-[#374151] hover:bg-[#F8FAFC] border-transparent'
+                              ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                              : 'bg-white text-[#374151] hover:bg-[#F8FAFC] border-transparent'
                               }`}
                             title={`Chọn (${opt}) làm đáp án đúng cho câu #${qNum}`}
                           >
@@ -2878,8 +2878,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border ${isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -2934,32 +2934,32 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasAudio
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasAudio ? 'Đã có Audio' : 'Chưa có Audio'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasImage ? 'Có ảnh Graphic' : 'Không ảnh'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranslation
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranslation ? 'Đã có bản dịch' : 'Chưa có bản dịch'}
@@ -3005,8 +3005,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                           <label
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] text-xs font-semibold cursor-pointer transition-all border ${uploadingKey === `${activePartIndex}-${cqIdx}-audio`
-                                ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
-                                : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
+                              ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
+                              : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
                               }`}
                           >
                             <UploadCloud size={13} />
@@ -3073,8 +3073,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                           <label
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold cursor-pointer transition-all border ${uploadingKey === `${activePartIndex}-${cqIdx}-image`
-                                ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
-                                : 'bg-white hover:bg-[#F8FAFC] text-[#111827] border-[#D1D5DB] hover:border-[#1D4ED8]'
+                              ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
+                              : 'bg-white hover:bg-[#F8FAFC] text-[#111827] border-[#D1D5DB] hover:border-[#1D4ED8]'
                               }`}
                           >
                             <UploadCloud size={13} className="text-[#1D4ED8]" />
@@ -3325,8 +3325,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                         )
                                       }
                                       className={`w-8 h-7 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center cursor-pointer ${isSelected
-                                          ? 'bg-[#1D4ED8] text-white'
-                                          : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                                        ? 'bg-[#1D4ED8] text-white'
+                                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
                                         }`}
                                     >
                                       {opt}
@@ -3423,8 +3423,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border ${isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -3479,32 +3479,32 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasAudio
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasAudio ? 'Đã có Audio' : 'Chưa có Audio'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasImage ? 'Có ảnh Graphic' : 'Không ảnh'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranslation
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasTranslation ? 'Đã có bản dịch' : 'Chưa có bản dịch'}
@@ -3550,8 +3550,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                           <label
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-[2px] text-xs font-semibold cursor-pointer transition-all border ${uploadingKey === `${activePartIndex}-${cqIdx}-audio`
-                                ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
-                                : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
+                              ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
+                              : 'bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border-[#1D4ED8]'
                               }`}
                           >
                             <UploadCloud size={13} />
@@ -3618,8 +3618,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                           <label
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold cursor-pointer transition-all border ${uploadingKey === `${activePartIndex}-${cqIdx}-image`
-                                ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
-                                : 'bg-white hover:bg-[#F8FAFC] text-[#111827] border-[#D1D5DB] hover:border-[#1D4ED8]'
+                              ? 'bg-[#E5E7EB] text-[#6B7280] border-[#D1D5DB]'
+                              : 'bg-white hover:bg-[#F8FAFC] text-[#111827] border-[#D1D5DB] hover:border-[#1D4ED8]'
                               }`}
                           >
                             <UploadCloud size={13} className="text-[#1D4ED8]" />
@@ -3870,8 +3870,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                         )
                                       }
                                       className={`w-8 h-7 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center cursor-pointer ${isSelected
-                                          ? 'bg-[#1D4ED8] text-white'
-                                          : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                                        ? 'bg-[#1D4ED8] text-white'
+                                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
                                         }`}
                                     >
                                       {opt}
@@ -3965,8 +3965,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border ${isFilled
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -4012,8 +4012,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${isFilled
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {isFilled ? 'Đã nhập câu hỏi' : 'Chưa nhập nội dung'}
@@ -4076,8 +4076,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       >
                         <span
                           className={`w-6 h-6 rounded-[2px] font-semibold text-xs flex items-center justify-center shrink-0 border ${q.correctAnswer === opt.label
-                              ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                              : 'bg-white text-[#374151] border-[#D1D5DB]'
+                            ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                            : 'bg-white text-[#374151] border-[#D1D5DB]'
                             }`}
                         >
                           {opt.label}.
@@ -4124,8 +4124,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                               )
                             }
                             className={`w-8 h-7 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center cursor-pointer ${isSelected
-                                ? 'bg-[#1D4ED8] text-white'
-                                : 'bg-white text-[#374151] hover:bg-[#EFF6FF]'
+                              ? 'bg-[#1D4ED8] text-white'
+                              : 'bg-white text-[#374151] hover:bg-[#EFF6FF]'
                               }`}
                           >
                             {opt}
@@ -4215,8 +4215,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border ${isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -4266,8 +4266,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasParagraph
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasParagraph ? 'Đã có đoạn văn' : 'Chưa có đoạn văn'}
@@ -4390,8 +4390,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                               >
                                 <span
                                   className={`w-5 h-5 rounded-[2px] font-semibold text-[11px] flex items-center justify-center shrink-0 border ${q.correctAnswer === opt.label
-                                      ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                      : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
+                                    ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                                    : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
                                     }`}
                                 >
                                   {opt.label}.
@@ -4436,8 +4436,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                         )
                                       }
                                       className={`w-7 h-6 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center cursor-pointer ${isSelected
-                                          ? 'bg-[#1D4ED8] text-white'
-                                          : 'text-[#374151] hover:bg-[#F8FAFC]'
+                                        ? 'bg-[#1D4ED8] text-white'
+                                        : 'text-[#374151] hover:bg-[#F8FAFC]'
                                         }`}
                                     >
                                       {opt}
@@ -4598,8 +4598,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border cursor-pointer ${item.isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -4627,8 +4627,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border cursor-pointer ${item.isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -4656,8 +4656,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   }}
                   className={`px-2.5 py-1 rounded-[2px] text-xs font-semibold transition-all inline-flex items-center gap-1 border cursor-pointer ${item.isComplete
-                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
-                      : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#DBEAFE]'
+                    : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                     }`}
                 >
                   <span
@@ -4757,16 +4757,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasParagraph
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasParagraph ? 'Đã có bài đọc' : 'Chưa có bài đọc'}
                     </span>
                     <span
                       className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
+                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
                       {hasImage ? 'Có ảnh đính kèm' : 'Không ảnh'}
@@ -5099,8 +5099,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                               >
                                 <span
                                   className={`w-5 h-5 rounded-[2px] font-semibold text-[11px] flex items-center justify-center shrink-0 border ${q.correctAnswer === opt.label
-                                      ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                      : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
+                                    ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                                    : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
                                     }`}
                                 >
                                   {opt.label}.
@@ -5145,8 +5145,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                         )
                                       }
                                       className={`w-7 h-6 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center cursor-pointer ${isSelected
-                                          ? 'bg-[#1D4ED8] text-white'
-                                          : 'text-[#374151] hover:bg-[#F8FAFC]'
+                                        ? 'bg-[#1D4ED8] text-white'
+                                        : 'text-[#374151] hover:bg-[#F8FAFC]'
                                         }`}
                                     >
                                       {opt}
@@ -5211,32 +5211,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   };
 
   return (
-    <div className="admin-page test-management-page py-8 min-h-screen">
+    <div className="admin-page test-management-page min-h-screen pb-12">
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      <div className="container">
-        {/* Page Header */}
-        <div className="test-studio-header flex items-center justify-between flex-wrap gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-3.5">
-              <div className="test-studio-icon w-12 h-12 flex items-center justify-center shrink-0">
-                <BookOpen size={24} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="test-studio-scope text-xs">
-                    {classroomId ? 'Đề riêng lớp học' : 'Quản trị hệ thống'}
-                  </span>
-                </div>
-                <h1 className="test-studio-title text-2xl m-0">Quản lý đề thi TOEIC</h1>
-                <p className="m-0 text-sm text-[#4B5563] mt-0.5">
-                  Soạn thảo, khởi tạo câu hỏi và cập nhật bộ đề thi thử cho học viên ({totalElements} đề thi hiện có)
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 flex-wrap">
+      <AdminPageHeader
+        eyebrow={classroomId ? 'Đề riêng lớp học' : 'Khu vực quản trị'}
+        eyebrowIcon={BookOpen}
+        title="Quản lý đề thi TOEIC"
+        description={`Soạn thảo, khởi tạo câu hỏi và cập nhật bộ đề thi thử cho học viên (${totalElements} đề thi hiện có).`}
+        showTabs={!classroomId}
+        bannerImage={testStudioBanner}
+        actions={
+          <>
             {!classroomId && (
               <Link
                 to="/courses"
@@ -5252,11 +5238,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             >
               <Plus size={16} /> Soạn đề {classroomId ? 'riêng mới' : 'thi mới'}
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        {/* Admin Navigation Tabs */}
-        {!classroomId && <AdminNavTabs />}
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
 
         {/* Filter & Search Bar */}
         <div className="test-studio-filters space-y-3 mb-6">
@@ -5271,7 +5257,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               className={`test-studio-status px-4 py-2 font-semibold text-sm inline-flex items-center gap-2 ${statusTab === 'PUBLISHED' ? 'is-active' : ''
                 }`}
             >
-              <CheckCircle2 size={15} /> Đề đã xuất bản (Published)
+              1. Đề đã xuất bản
             </button>
             <button
               type="button"
@@ -5282,7 +5268,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               className={`test-studio-status px-4 py-2 font-semibold text-sm inline-flex items-center gap-2 ${statusTab === 'DRAFT' ? 'is-active' : ''
                 }`}
             >
-              <Clock size={15} /> Đề bản nháp (Draft)
+              2. Đề bản nháp
             </button>
           </div>
 
@@ -5291,37 +5277,48 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B7280]" />
               <input
                 type="text"
-                placeholder={`Tìm kiếm đề thi ${statusTab === 'PUBLISHED' ? 'đã xuất bản' : 'bản nháp'} (ví dụ: ETS 2026)...`}
+                placeholder={`Tìm kiếm đề thi ${statusTab === 'PUBLISHED' ? 'đã xuất bản' : 'bản nháp'}`}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="test-studio-input w-full pl-10 pr-4 py-2 text-sm"
               />
             </div>
 
-            <div className="flex items-center gap-3 flex-wrap">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="test-studio-select px-3 py-2 text-sm font-medium"
-              >
-                <option value="createdAt">Sắp xếp: Ngày tạo</option>
-                <option value="titleTest">Sắp xếp: Tên đề thi</option>
-              </select>
+            <div className="flex items-end gap-3 flex-wrap">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Sắp xếp theo
+                </span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="test-studio-select px-3 py-2 text-sm font-medium min-w-[140px]"
+                >
+                  <option value="createdAt">Ngày tạo</option>
+                  <option value="titleTest">Tên đề thi</option>
+                </select>
+              </label>
 
-              <select
-                value={direction}
-                onChange={(e) => setDirection(e.target.value)}
-                className="test-studio-select px-3 py-2 text-sm font-medium"
-              >
-                <option value="DESC">Mới nhất trước</option>
-                <option value="ASC">Cũ nhất trước</option>
-              </select>
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Thứ tự
+                </span>
+                <select
+                  value={direction}
+                  onChange={(e) => setDirection(e.target.value)}
+                  className="test-studio-select px-3 py-2 text-sm font-medium min-w-[155px]"
+                >
+                  <option value="DESC">Mới nhất trước</option>
+                  <option value="ASC">Cũ nhất trước</option>
+                </select>
+              </label>
 
               <button
                 type="button"
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-sm self-end"
                 onClick={() => fetchTests(true)}
                 title="Làm mới dữ liệu"
+                aria-label="Làm mới dữ liệu"
               >
                 <RefreshCw size={15} />
               </button>
@@ -5360,13 +5357,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               <table className="test-studio-table w-full border-collapse text-left text-sm">
                 <thead>
                   <tr className="bg-[#F8FAFC] border-b border-[#D1D5DB] text-[#111827] font-semibold text-sm">
-                    <th className="px-5 py-3.5 w-20 text-center">STT</th>
-                    <th className="px-5 py-3.5">Tên bộ đề thi</th>
-                    <th className="px-5 py-3.5">Trạng thái</th>
-                    <th className="px-5 py-3.5">Cụm câu hỏi</th>
-                    <th className="px-5 py-3.5">Thời lượng</th>
-                    <th className="px-5 py-3.5">Ngày tạo</th>
-                    <th className="px-5 py-3.5 text-right">Thao tác</th>
+                    <th className="px-2.5 py-3.5 w-12 text-center whitespace-nowrap">STT</th>
+                    <th className="px-3 py-3.5 min-w-[200px]">Tên bộ đề thi</th>
+                    <th className="px-3 py-3.5 whitespace-nowrap">Trạng thái</th>
+                    <th className="px-3 py-3.5 whitespace-nowrap">Thời lượng</th>
+                    <th className="px-3 py-3.5 whitespace-nowrap">Ngày tạo</th>
+                    <th className="px-3 py-3.5 text-right whitespace-nowrap">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5375,7 +5371,6 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     const createdStr = test.createdAt
                       ? new Date(test.createdAt).toLocaleDateString('vi-VN')
                       : 'Hệ thống';
-                    const contextCount = test.contextQuestions?.length ?? test.contextCount ?? 0;
                     const isPublished = test.status === 'PUBLISHED';
 
                     return (
@@ -5383,10 +5378,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         key={test.id}
                         className="border-b border-[#E5E7EB] hover:bg-[#F8FAFC] transition-colors"
                       >
-                        <td className="px-5 py-4 text-center font-semibold text-[#6B7280]">
+                        <td className="px-2.5 py-4 text-center font-semibold text-[#6B7280] tabular-nums whitespace-nowrap">
                           {stt.toString().padStart(2, '0')}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-3 py-4">
                           <div className="flex items-center gap-3">
                             {test.coverImageUrl ? (
                               <img
@@ -5397,21 +5392,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                             ) : (
                               <div
                                 className={`w-10 h-10 rounded-[2px] flex items-center justify-center shrink-0 border ${isPublished
-                                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                                    : 'bg-[#F8FAFC] text-[#4B5563] border-[#D1D5DB]'
+                                  ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                                  : 'bg-[#F8FAFC] text-[#4B5563] border-[#D1D5DB]'
                                   }`}
                               >
                                 <FileText size={18} />
                               </div>
                             )}
-                            <div>
-                              <div className="font-semibold text-[#111111] text-[15px]">{test.titleTest}</div>
-                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                <span className="test-studio-format text-xs px-2 py-0.5">
-                                  Định dạng TOEIC
-                                </span>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-[#111111] text-[15px] leading-snug">{test.titleTest}</div>
+                              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                 {test.isVip && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-[2px] text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-[2px] text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] whitespace-nowrap">
                                     VIP · {Number(test.vipPriceVnd || 0).toLocaleString('vi-VN')} ₫
                                   </span>
                                 )}
@@ -5419,63 +5411,45 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {isPublished ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[2px] text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
-                              <CheckCircle2 size={13} /> Đã xuất bản
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] whitespace-nowrap">
+                              Đã xuất bản
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[2px] text-xs font-semibold bg-[#F8FAFC] text-[#374151] border border-[#D1D5DB]">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-[#F8FAFC] text-[#374151] border border-[#D1D5DB] whitespace-nowrap">
                               <Clock size={13} /> Bản nháp
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-4">
-                          <span className="inline-flex items-center gap-1.5 font-medium text-[#374151]">
-                            <Layers size={15} className="text-[#1D4ED8]" /> {contextCount} cụm phần
+                        <td className="px-3 py-4 text-[#4B5563] whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                            120 phút
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-[#4B5563]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Clock size={15} className="text-[#6B7280]" /> 120 phút
+                        <td className="px-3 py-4 text-[#4B5563] whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums">
+                            <Calendar size={14} className="shrink-0" /> {createdStr}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-[#4B5563]">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar size={14} /> {createdStr}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <div className="inline-flex items-center gap-1.5">
-                            <Link
-                              to={`/courses/${test.id}`}
-                              title="Xem trang chi tiết"
-                              className="btn btn-sm btn-outline p-2"
-                            >
-                              <ExternalLink size={14} />
-                            </Link>
-                            <Link
-                              to={`/courses/${test.id}/take`}
-                              title="Làm thử bài thi"
-                              className="btn btn-sm btn-outline p-2 text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#EFF6FF]"
-                            >
-                              <PlayCircle size={14} />
-                            </Link>
+                        <td className="px-3 py-4 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1 whitespace-nowrap">
+
                             {isPublished ? (
                               <button
                                 type="button"
                                 title="Thu hồi về bản nháp (ẩn khỏi học viên)"
-                                className="btn btn-sm btn-outline px-2.5 py-1.5 text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC] font-semibold inline-flex items-center gap-1 text-xs"
+                                className="btn btn-sm btn-outline px-2.5 py-1.5 text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC] font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
                                 onClick={() => handleTogglePublish(test)}
                                 disabled={actionLoading}
                               >
-                                <RotateCcw size={13} /> Về nháp
+                                <RotateCcw size={13} /> Chuyển về bản nháp
                               </button>
                             ) : (
                               <button
                                 type="button"
                                 title="Xuất bản đề thi (học viên có thể làm bài)"
-                                className="btn btn-sm btn-outline px-2.5 py-1.5 text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#EFF6FF] font-semibold inline-flex items-center gap-1 text-xs"
+                                className="btn btn-sm btn-outline px-2.5 py-1.5 text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#EFF6FF] font-semibold inline-flex items-center gap-1 text-xs whitespace-nowrap"
                                 onClick={() => handleTogglePublish(test)}
                                 disabled={actionLoading}
                               >
@@ -5484,18 +5458,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                             )}
                             <button
                               type="button"
-                              className="btn btn-sm btn-outline px-3 py-1.5 gap-1.5 font-semibold inline-flex items-center text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#EFF6FF]"
+                              className="btn btn-sm btn-outline px-2.5 py-1.5 gap-1 font-semibold inline-flex items-center text-xs text-[#1D4ED8] border-[#BFDBFE] hover:bg-[#EFF6FF] whitespace-nowrap"
                               onClick={() => handleOpenEditModal(test)}
                             >
-                              <Edit2 size={14} /> Sửa đề
+                              <Edit2 size={13} /> Sửa đề
                             </button>
                             {isAdmin && (
                               <button
                                 type="button"
-                                className="btn btn-sm btn-outline px-3 py-1.5 gap-1.5 font-semibold inline-flex items-center text-[#B91C1C] border-[#FECACA] hover:bg-[#FEF2F2]"
+                                className="btn btn-sm btn-outline px-2.5 py-1.5 gap-1 font-semibold inline-flex items-center text-xs text-[#B91C1C] border-[#FECACA] hover:bg-[#FEF2F2] whitespace-nowrap"
                                 onClick={() => handleOpenDeleteModal(test)}
                               >
-                                <Trash2 size={14} /> Xóa đề
+                                <Trash2 size={13} /> Xóa đề
                               </button>
                             )}
                           </div>
@@ -5557,8 +5531,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
               <span
                 className={`text-xs font-semibold px-2.5 py-1 rounded-[2px] border inline-flex items-center gap-1 ${formStatus === 'PUBLISHED'
-                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                    : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
+                  ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                  : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
                   }`}
               >
                 {formStatus === 'PUBLISHED' ? (
@@ -5796,8 +5770,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       </div>
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-[2px] border ${formIsVip
-                            ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                            : 'bg-white text-[#4B5563] border-[#D1D5DB]'
+                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                          : 'bg-white text-[#4B5563] border-[#D1D5DB]'
                           }`}
                       >
                         {formIsVip ? 'Đề VIP' : 'Miễn phí'}
@@ -5845,8 +5819,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     <button
                       type="button"
                       className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'PUBLISHED'
-                          ? 'bg-[#1D4ED8] text-white'
-                          : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                        ? 'bg-[#1D4ED8] text-white'
+                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
                         }`}
                       onClick={() => {
                         setFormStatus('PUBLISHED');
@@ -5858,8 +5832,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     <button
                       type="button"
                       className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'DRAFT'
-                          ? 'bg-[#111827] text-white'
-                          : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                        ? 'bg-[#111827] text-white'
+                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
                         }`}
                       onClick={() => {
                         setFormStatus('DRAFT');
@@ -6539,8 +6513,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                             )
                                           }
                                           className={`w-7 h-7 rounded-[2px] font-semibold text-xs border transition-all ${isCorrect
-                                              ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                              : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                                            ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                                            : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
                                             }`}
                                         >
                                           {opt}

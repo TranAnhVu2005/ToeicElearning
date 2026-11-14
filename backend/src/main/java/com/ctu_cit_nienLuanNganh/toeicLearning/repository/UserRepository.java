@@ -15,16 +15,16 @@ import java.util.Optional;
 // Có thể được tiêm tự động vào IoC, chuyển các lỗi db về lỗi spring thuần
 public interface UserRepository extends BaseRepository<User, String> {
 
-    @Query("SELECT u from User u JOIN FETCH u.role where u.userEmail = :email")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE LOWER(TRIM(u.userEmail)) = LOWER(TRIM(:email))")
     Optional<User> findByUserEmailWithRole(@Param("email") String email);
 
-    @Query("SELECT u from User u JOIN FETCH u.role where u.googleSub = :googleSub")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.googleSub = :googleSub")
     Optional<User> findByGoogleSubWithRole(@Param("googleSub") String googleSub);
 
-    @Query("SELECT u from User u JOIN FETCH u.role where u.userNumberphone = :numberPhone")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE TRIM(u.userNumberphone) = TRIM(:numberPhone)")
     Optional<User> findByUserNumberPhoneWithRole(@Param("numberPhone") String numberPhone);
 
-    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.id = :id")
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.id = :id")
     Optional<User> findByIdWithRole(@Param("id") String id);
 
     // Keep this as an explicit row lock: Hibernate's generated "FOR UPDATE OF alias"
@@ -39,6 +39,8 @@ public interface UserRepository extends BaseRepository<User, String> {
     boolean existsByUserEmail(String userEmail);
 
     boolean existsByUserNumberphone(String userNumberphone);
+
+    java.util.List<User> findByRole_RoleNameAndIsLockedFalse(String roleName);
 
     // Phục vụ Admin xem danh sách User có tìm kiếm, trong danh sách sẽ có vai trò,
     @Query(value = "SELECT u FROM User u JOIN FETCH u.role WHERE " +

@@ -69,23 +69,29 @@ const Navbar = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       setUnreadNotifications(0);
-      return;
+      return undefined;
     }
 
     let active = true;
 
-    notificationService.getUnreadCount()
-      .then((response) => {
-        if (active && response.code === 1000) {
-          setUnreadNotifications(
-            response.data?.unreadCount || 0
-          );
-        }
-      })
-      .catch(() => { });
+    const refreshUnreadCount = () => {
+      notificationService.getUnreadCount()
+        .then((response) => {
+          if (active && response.code === 1000) {
+            setUnreadNotifications(
+              response.data?.unreadCount || 0
+            );
+          }
+        })
+        .catch(() => { });
+    };
+
+    refreshUnreadCount();
+    window.addEventListener('toeic:notifications-updated', refreshUnreadCount);
 
     return () => {
       active = false;
+      window.removeEventListener('toeic:notifications-updated', refreshUnreadCount);
     };
   }, [isAuthenticated, location.pathname]);
 
@@ -253,13 +259,6 @@ const Navbar = () => {
             )}
 
             <NavLink
-              to="/about"
-              className={navLinkClass}
-            >
-              Giới thiệu
-            </NavLink>
-
-            <NavLink
               to="/contact"
               className={navLinkClass}
             >
@@ -389,7 +388,7 @@ const Navbar = () => {
                         <span className="flex-1">Thông báo</span>
 
                         {unreadNotifications > 0 && (
-                          <span className="font-mono text-[12px] font-semibold text-[#4D35C9]">
+                          <span className="tabular-nums text-[12px] font-semibold text-[#1D4ED8]">
                             {unreadNotifications}
                           </span>
                         )}
@@ -580,20 +579,12 @@ const Navbar = () => {
                   <span className="flex-1">Thông báo</span>
 
                   {unreadNotifications > 0 && (
-                    <span className="font-mono text-[12px] font-semibold text-[#4D35C9]">
+                    <span className="tabular-nums text-[12px] font-semibold text-[#1D4ED8]">
                       {unreadNotifications}
                     </span>
                   )}
                 </NavLink>
               )}
-
-              <NavLink
-                to="/about"
-                className={mobileLinkClass}
-                onClick={closeMobileMenu}
-              >
-                Giới thiệu
-              </NavLink>
 
               <NavLink
                 to="/contact"

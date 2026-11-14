@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, CreditCard, LoaderCircle, RefreshCw, Search } from 'lucide-react';
 import { adminService } from '../../services/adminService';
-import AdminNavTabs from '../../components/common/AdminNavTabs';
+import AdminPageHeader from '../../components/common/AdminPageHeader';
+import paymentsBanner from '../../assets/img/coursepage/biasach.jpg';
 
 const statusLabel = {
   PENDING: 'Đang xử lý',
@@ -136,32 +137,28 @@ const PaymentManagementPage = () => {
   };
 
   return (
-    <main className="admin-page min-h-screen bg-white px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-6">
-          <div>
-            <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-              <CreditCard size={16} /> Khu vực quản trị
-            </div>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Lịch sử thanh toán</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">
-              Tra cứu giao dịch đã ghi nhận trong hệ thống. Trang này chỉ đọc trạng thái lưu ở máy chủ.
-            </p>
-          </div>
+    <main className="admin-page min-h-screen pb-12 text-slate-900">
+      <AdminPageHeader
+        eyebrow="Khu vực quản trị"
+        eyebrowIcon={CreditCard}
+        title="Lịch sử thanh toán VNPAY"
+        description="Tra cứu giao dịch đã ghi nhận trong hệ thống. Trạng thái chỉ do callback thanh toán đã xác minh cập nhật."
+        bannerImage={paymentsBanner}
+        actions={
           <button
             type="button"
             onClick={loadPayments}
             disabled={loading || invalidDateRange}
-            className="editorial-button-secondary inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold disabled:opacity-50"
+            className="editorial-button-secondary inline-flex items-center gap-2 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-50"
           >
             <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Làm mới
           </button>
-        </header>
+        }
+      />
 
-        <AdminNavTabs />
-
-        <div className="mb-5 border border-slate-200 bg-[#F8FAFC] p-4 text-xs text-slate-600">
-          Giao dịch cũ có thể chưa lưu loại sản phẩm. Đây là màn tra cứu; trạng thái chỉ do callback thanh toán đã xác minh cập nhật.
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="mb-5 border border-slate-200 bg-white p-4 text-xs text-slate-600">
+          Giao dịch cũ có thể chưa lưu loại sản phẩm. Đây là màn tra cứu chỉ đọc; mọi thay đổi trạng thái được đồng bộ từ IPN VNPAY.
         </div>
 
         {error && (
@@ -172,7 +169,7 @@ const PaymentManagementPage = () => {
 
         <form
           onSubmit={handleSearch}
-          className="mb-6 grid gap-3 border border-slate-200 bg-[#F8FAFC] p-4 sm:grid-cols-2 xl:grid-cols-6"
+          className="mb-6 grid gap-3 border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-6"
         >
           <label className="sm:col-span-2 xl:col-span-1">
             <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-700">
@@ -228,7 +225,7 @@ const PaymentManagementPage = () => {
                 setPage(1);
                 setFilters((current) => ({ ...current, fromDate: event.target.value }));
               }}
-              className="w-full border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
             />
           </label>
           <label>
@@ -240,7 +237,7 @@ const PaymentManagementPage = () => {
                 setPage(1);
                 setFilters((current) => ({ ...current, toDate: event.target.value }));
               }}
-              className="w-full border border-slate-300 bg-white px-3 py-2 font-mono text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
             />
           </label>
           <button
@@ -259,7 +256,7 @@ const PaymentManagementPage = () => {
         <section className="overflow-hidden border border-slate-200 bg-white">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-[#F8FAFC] px-4 py-3">
             <h2 className="text-sm font-bold text-slate-900">Giao dịch</h2>
-            <span className="font-mono text-xs font-semibold text-slate-600">{totalElements} bản ghi</span>
+            <span className="text-xs font-semibold tabular-nums text-slate-600">{totalElements} bản ghi</span>
           </div>
           {loading ? (
             <p className="p-8 text-center text-sm text-slate-500">Đang tải giao dịch…</p>
@@ -291,8 +288,8 @@ const PaymentManagementPage = () => {
                       <React.Fragment key={row.id}>
                         <tr className="hover:bg-slate-50/70">
                           <td className="px-4 py-3">
-                            <span className="block font-bold text-slate-900">{row.payerName}</span>
-                            <span className="font-mono text-xs text-slate-500">{row.payerEmail}</span>
+                            <span className="block font-semibold text-slate-900">{row.payerName}</span>
+                            <span className="text-xs text-slate-500">{row.payerEmail}</span>
                           </td>
                           <td className="px-4 py-3">
                             <span className="block font-semibold text-slate-900">
@@ -300,8 +297,8 @@ const PaymentManagementPage = () => {
                             </span>
                             {row.productName && <span className="text-xs text-slate-500">{row.productName}</span>}
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-700">{row.transactionReference}</td>
-                          <td className="px-4 py-3 font-mono font-bold text-slate-900">{formatVnd(row.amount)}</td>
+                          <td className="admin-tech-code px-4 py-3 text-xs text-slate-700">{row.transactionReference}</td>
+                          <td className="px-4 py-3 font-semibold tabular-nums text-slate-900">{formatVnd(row.amount)}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`inline-block border px-2 py-0.5 text-xs font-semibold ${
@@ -315,8 +312,8 @@ const PaymentManagementPage = () => {
                               {statusLabel[row.status] || row.status || 'Chưa xác định'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-600">{formatVietnamDateTime(row.paymentDate)}</td>
-                          <td className="px-4 py-3 font-mono text-xs text-slate-600">{formatVietnamDateTime(row.paidAt)}</td>
+                          <td className="px-4 py-3 text-xs tabular-nums text-slate-600">{formatVietnamDateTime(row.paymentDate)}</td>
+                          <td className="px-4 py-3 text-xs tabular-nums text-slate-600">{formatVietnamDateTime(row.paidAt)}</td>
                           <td className="px-4 py-3">
                             <button
                               type="button"
@@ -346,37 +343,37 @@ const PaymentManagementPage = () => {
                                 <dl className="grid gap-3 text-xs sm:grid-cols-2 xl:grid-cols-4">
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">ID giao dịch nội bộ</dt>
-                                    <dd className="mt-1 break-all font-mono text-slate-900">{detail.id}</dd>
+                                    <dd className="admin-tech-code mt-1 break-all text-slate-900">{detail.id}</dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã giao dịch VNPAY</dt>
-                                    <dd className="mt-1 break-all font-mono text-slate-900">
+                                    <dd className="admin-tech-code mt-1 break-all text-slate-900">
                                       {detail.providerTransactionNumber || 'Chưa nhận được'}
                                     </dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã phản hồi VNPAY</dt>
-                                    <dd className="mt-1 font-mono text-slate-900">
+                                    <dd className="admin-tech-code mt-1 text-slate-900">
                                       {detail.providerResponseCode || 'Chưa nhận được'}
                                     </dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">Trạng thái xử lý VNPAY</dt>
-                                    <dd className="mt-1 font-mono text-slate-900">
+                                    <dd className="admin-tech-code mt-1 text-slate-900">
                                       {detail.providerTransactionStatus || 'Chưa nhận được'}
                                     </dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">ID người thanh toán</dt>
-                                    <dd className="mt-1 break-all font-mono text-slate-900">{detail.payerId}</dd>
+                                    <dd className="admin-tech-code mt-1 break-all text-slate-900">{detail.payerId}</dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">Loại tiền</dt>
-                                    <dd className="mt-1 font-mono text-slate-900">{detail.currency || 'VND'}</dd>
+                                    <dd className="mt-1 font-semibold text-slate-900">{detail.currency || 'VND'}</dd>
                                   </div>
                                   <div>
                                     <dt className="font-semibold uppercase tracking-wider text-slate-500">Thời điểm thanh toán</dt>
-                                    <dd className="mt-1 font-mono text-slate-900">{formatVietnamDateTime(detail.paidAt)}</dd>
+                                    <dd className="mt-1 tabular-nums text-slate-900">{formatVietnamDateTime(detail.paidAt)}</dd>
                                   </div>
                                 </dl>
                               )}
@@ -391,7 +388,7 @@ const PaymentManagementPage = () => {
             </div>
           )}
           <div className="flex items-center justify-between border-t border-slate-200 bg-[#F8FAFC] px-4 py-3">
-            <span className="font-mono text-xs font-semibold text-slate-600">
+            <span className="text-xs font-semibold tabular-nums text-slate-600">
               Trang {totalPages ? page : 0} / {totalPages}
             </span>
             <div className="flex gap-2">

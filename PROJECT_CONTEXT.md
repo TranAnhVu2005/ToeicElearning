@@ -40,8 +40,9 @@
 - **Thương mại VIP & Đăng ký giáo viên (VNPAY)**:
   - Đề VIP có `isVip` và `vipPriceVnd` riêng từng đề; mua một lần cấp `TestEntitlement` vĩnh viễn sau khi xác minh chữ ký/số tiền tại `GET /api/payments/vnpay/ipn`.
   - Hồ sơ giáo viên (`TeacherApplication`) tách biệt bước thanh toán phí (`PENDING_REVIEW`) và bước Admin duyệt (`APPROVED` mới cấp `ROLE_TEACHER`).
-- **Lớp học (`Classroom`, `ClassMember`, `Material`, `Assignment`)**:
+- **Lớp học (`Classroom`, `ClassMember`, `Material`, `Assignment`) & Thông báo (`Notification`)**:
   - Giáo viên tạo lớp, xoay mã tham gia (`join-code/rotate`), duyệt/chặn học sinh, tải tài liệu PDF private (≤ 10 MiB, quota 512 MiB/lớp, link tải ký hạn 5 phút), tạo đề riêng lớp và giao bài tập có `deadline` + `latePolicy` (`REJECT_AFTER_DEADLINE` / `ACCEPT_AND_MARK_LATE`).
+  - **Hệ thống Thông báo (`/api/notifications/**`, `NotificationsPage.jsx`)**: Tự động phát thông báo theo các chức năng thực tế của web: chào mừng đăng ký mới (`WELCOME`), đổi/đặt mật khẩu (`ACCOUNT_SECURITY`), hoàn thành bài thi Full Test/luyện Part (`EXAM_RESULT`), học viên nộp bài tập lớp cho giáo viên (`ASSIGNMENT_SUBMITTED`), giao bài tập mới (`ASSIGNMENT_CREATED`), đổi hạn nộp (`ASSIGNMENT_DEADLINE_CHANGED`), giáo viên nhận xét bài làm (`ASSIGNMENT_FEEDBACK`), học viên xin vào lớp (`CLASSROOM_JOIN_REQUEST`), duyệt/cập nhật thành viên lớp (`CLASSROOM_MEMBER_APPROVED` / `CLASSROOM_MEMBER_STATUS`), đăng tài liệu PDF mới (`CLASSROOM_MATERIAL`), thanh toán đề VIP (`TEST_VIP_PURCHASE`), thanh toán & duyệt hồ sơ giáo viên (`TEACHER_APPLICATION_PAYMENT`, `TEACHER_APPLICATION_SUBMITTED`, `TEACHER_APPLICATION`), và kiểm duyệt bình luận (`COMMENT_MODERATED`). Hỗ trợ lọc theo danh mục (`ALL`, `EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`), lọc chưa đọc, đánh dấu đã đọc từng mục/tất cả, xóa từng thông báo hoặc dọn sạch thông báo đã đọc, đồng bộ tức thời huy hiệu số chưa đọc trên `Navbar`.
 
 ## 4. Hệ thiết kế UI/UX Editorial (`docs/05_UI_UX_SPEC.md`)
 - **Phông chữ & Chữ số**: Toàn bộ ứng dụng dùng `--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif` với `@font-face EditorialNumerals` (`unicode-range: U+0030-0039`) và `font-variant-numeric: lining-nums tabular-nums` để chữ số `0–9` luôn cao đều nhau trên một đường cơ sở; `Ubuntu Mono` chỉ dùng cho code/mã giao dịch kỹ thuật.
@@ -50,7 +51,7 @@
 - **Trang Xem lại bài thi (`TestResultPage.jsx`)**: Bố cục 2 cột `grid-cols-[1fr_320px]` với bảng số câu bên phải (`sticky`), hover viền xanh `#1D4ED8` và khi bấm số câu sẽ cuộn mượt + phát sáng khung câu hỏi trong 1.8 giây tương tự phòng thi.
 
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
-- **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion` (tăng khi đổi/đặt mật khẩu hoặc khóa/mở khóa tài khoản); Google OIDC xác minh chữ ký RS256/JWK và liên kết theo `google_sub`; khóa bi quan dùng native `SELECT ... FOR UPDATE` tương thích MySQL/MariaDB; rate limit lưu hash bucket trong `auth_login_attempt`; nhật ký thao tác nhạy cảm lưu `audit_event`.
+- **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion` (tăng khi đổi/đặt mật khẩu hoặc khóa/mở khóa tài khoản); tài khoản bị khóa (`isLocked == true`) khi đăng nhập cục bộ hoặc Google đều phản hồi lỗi rõ ràng `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC xác minh chữ ký RS256/JWK và liên kết theo `google_sub`; khóa bi quan dùng native `SELECT ... FOR UPDATE` tương thích MySQL/MariaDB; rate limit lưu hash bucket trong `auth_login_attempt`; nhật ký thao tác nhạy cảm lưu `audit_event`.
 - **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql`; nâng cấp DB hiện có dùng các script trong `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
 - **Trạng thái kiểm chứng gần nhất (2026-11-14)**:
   - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml -q -DskipTests compile`: **PASS (exit 0)**.

@@ -11,6 +11,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.LoginRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.auth.request.RegisterRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.security.JwtService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService{
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -63,6 +65,13 @@ public class AuthServiceImpl implements AuthService{
                 .totalScore(0)
                 .build();
         User savedUser = userRepository.save(newUser);
+        notificationService.createNotification(
+                savedUser,
+                "Chào mừng bạn đến với TOEIC ELearning",
+                "Tài khoản của bạn đã được khởi tạo thành công. Hãy khám phá thư viện đề thi TOEIC để luyện tập theo từng Part, làm Full Test 200 câu hoặc luyện nghe chép chính tả.",
+                "WELCOME",
+                "/courses"
+        );
         return authMapper.toDTO(savedUser, jwtService.generateToken(savedUser));
     }
 
@@ -81,10 +90,13 @@ public class AuthServiceImpl implements AuthService{
                     .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
         }
 
-        if (Boolean.TRUE.equals(user.getIsLocked()) || user.getUserPassword() == null
+        if (Boolean.TRUE.equals(user.getIsLocked())) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_LOCKED);
+        }
+
+        if (user.getUserPassword() == null
                 || !passwordEncoder.matches(request.getUserPassword(), user.getUserPassword()))
         {
-            // Keep the response identical for wrong credentials and locked accounts.
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
         return authMapper.toDTO(user, jwtService.generateToken(user));
@@ -136,6 +148,13 @@ public class AuthServiceImpl implements AuthService{
                     .totalScore(0)
                     .build();
             user = userRepository.save(newUser);
+            notificationService.createNotification(
+                    user,
+                    "Chào mừng bạn đến với TOEIC ELearning",
+                    "Tài khoản Google của bạn đã được liên kết thành công. Hãy khám phá thư viện đề thi TOEIC để bắt đầu luyện tập ngay hôm nay.",
+                    "WELCOME",
+                    "/courses"
+            );
         }
         String appAccessToken = jwtService.generateToken(user);
         return authMapper.toDTO(user, appAccessToken);

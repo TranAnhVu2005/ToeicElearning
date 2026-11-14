@@ -159,10 +159,10 @@ public class TeacherApplicationService {
         notificationRepository.save(Notification.builder()
                 .user(application.getUser())
                 .title(approve ? "Đơn đăng ký giáo viên đã được duyệt" : "Đơn đăng ký giáo viên chưa được duyệt")
-                .content(approve ? "Tài khoản của bạn đã được cấp quyền giáo viên."
-                        : "Lý do: " + application.getReviewReason())
+                .content(approve ? "Tài khoản của bạn đã được cấp quyền giáo viên. Bạn có thể bắt đầu tạo và quản lý lớp học ngay bây giờ."
+                        : "Hồ sơ chưa được phê duyệt. Lý do: " + application.getReviewReason())
                 .type("TEACHER_APPLICATION")
-                .link("/teacher/application")
+                .link(approve ? "/classrooms" : "/teacher/application")
                 .isRead(false)
                 .build());
         return toResponse(application);

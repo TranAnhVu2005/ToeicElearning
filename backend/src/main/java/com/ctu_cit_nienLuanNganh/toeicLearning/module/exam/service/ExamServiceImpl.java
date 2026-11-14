@@ -12,6 +12,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.*;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service.AssignmentService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.media.service.ExamMediaAssetService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.PartForUserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.SubmitExamResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.exam.dto.TestHistoryResponseDTO;
@@ -77,6 +78,7 @@ public class ExamServiceImpl implements ExamService {
     private final AssignmentService assignmentService;
     private final ExamMediaAssetService examMediaAssetService;
     private final TestCommentRepository testCommentRepository;
+    private final NotificationService notificationService;
 
     private final CloudinaryService cloudinaryService;
     private final AuditEventService auditEventService;
@@ -1035,6 +1037,40 @@ public class ExamServiceImpl implements ExamService {
         userAnswerRepository.saveAll(answersToSave);
         updateUserProgressAfterSubmit(lockedUser, submittedAt.toLocalDate(), fullLengthForm, totalScore);
 
+        String examResultTitle = fullLengthForm
+                ? "Kết quả Full Test: " + test.getTitleTest()
+                : "Hoàn thành bài luyện tập: " + test.getTitleTest();
+        String examResultContent = fullLengthForm
+                ? "Bạn đạt " + totalScore + "/990 điểm ước tính (Nghe: " + listeningScore
+                        + " · Đọc: " + readingScore + " · Đúng " + correctCount + "/200 câu). Nhấn để xem chi tiết đáp án và lời giải."
+                : "Bạn trả lời đúng " + correctCount + "/" + targetQuestions.size()
+                        + " câu. Nhấn để xem lại chi tiết đáp án, transcript và lời giải.";
+        notificationService.createNotification(
+                lockedUser,
+                examResultTitle,
+                examResultContent,
+                "EXAM_RESULT",
+                "/results/" + savedResult.getId()
+        );
+
+        Assignment submittedAssignment = savedResult.getAssignment();
+        if (submittedAssignment != null && submittedAssignment.getClassroom() != null
+                && submittedAssignment.getClassroom().getTeacher() != null) {
+            String timingLabel = Boolean.TRUE.equals(savedResult.getAssignmentLate()) ? "Nộp trễ hạn" : "Đúng hạn";
+            String scoreLabel = fullLengthForm
+                    ? totalScore + "/990 điểm"
+                    : "Đúng " + correctCount + "/" + targetQuestions.size() + " câu";
+            notificationService.createNotification(
+                    submittedAssignment.getClassroom().getTeacher(),
+                    "Học viên vừa nộp bài tập lớp học",
+                    "Học viên " + lockedUser.getUserName() + " đã nộp bài tập \"" + submittedAssignment.getTitle()
+                            + "\" trong lớp \"" + submittedAssignment.getClassroom().getClassName()
+                            + "\" (" + timingLabel + " · Kết quả: " + scoreLabel + ").",
+                    "ASSIGNMENT_SUBMITTED",
+                    "/classrooms"
+            );
+        }
+
         return toSubmitResponse(savedResult, lockedUser);
     }
 
@@ -1863,7 +1899,20 @@ public class ExamServiceImpl implements ExamService {
             throw new AppException(ErrorCode.COMMENT_ACTION_FORBIDDEN);
         }
 
+        User commentOwner = comment.getUser();
+        Test commentTest = comment.getTest();
         testCommentRepository.delete(comment);
+
+        if (!isAuthor && isAdmin && commentOwner != null && commentTest != null) {
+            notificationService.createNotification(
+                    commentOwner,
+                    "Thông báo kiểm duyệt thảo luận đề thi",
+                    "Một bình luận của bạn tại đề \"" + commentTest.getTitleTest()
+                            + "\" đã được quản trị viên gỡ bỏ theo quy định thảo luận của hệ thống.",
+                    "COMMENT_MODERATED",
+                    "/courses/" + commentTest.getId()
+            );
+        }
     }
 
     private CommentResponseDTO mapToCommentResponse(TestComment comment) {

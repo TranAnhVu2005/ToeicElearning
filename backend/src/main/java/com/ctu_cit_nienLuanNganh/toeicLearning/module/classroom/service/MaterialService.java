@@ -10,6 +10,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Material;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.MaterialDownloadResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.MaterialResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassMemberRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassroomRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.MaterialRepository;
@@ -35,6 +36,7 @@ public class MaterialService {
     private final MaterialRepository materialRepository;
     private final CloudinaryService cloudinaryService;
     private final AuditEventService auditEventService;
+    private final NotificationService notificationService;
 
     @Value("${app.classroom.storage-quota-bytes:536870912}")
     private long classroomStorageQuotaBytes;
@@ -77,6 +79,18 @@ public class MaterialService {
         try {
             Material saved = materialRepository.save(material);
             auditEventService.record(currentUser, "CLASS_MATERIAL_UPLOADED", "MATERIAL", saved.getId(), "format=pdf");
+            List<User> approvedStudents = classMemberRepository
+                    .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)
+                    .stream()
+                    .map(ClassMember::getStudent)
+                    .toList();
+            notificationService.createNotifications(
+                    approvedStudents,
+                    "Tài liệu học tập mới trong lớp " + classroom.getClassName(),
+                    "Giáo viên " + currentUser.getUserName() + " vừa đăng tài liệu PDF mới: \"" + saved.getTitle() + "\".",
+                    "CLASSROOM_MATERIAL",
+                    "/classrooms"
+            );
             return toResponse(saved);
         } catch (RuntimeException exception) {
             cloudinaryService.deletePrivateClassPdf(uploadedFile.publicId());

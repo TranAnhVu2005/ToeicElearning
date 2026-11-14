@@ -52,7 +52,8 @@ public class AuthController {
             auditEventService.recordAuthentication(response.getId(), true, false);
             return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", response));
         } catch (AppException exception) {
-            if (exception.getErrorCode() == ErrorCode.INVALID_CREDENTIALS) {
+            if (exception.getErrorCode() == ErrorCode.INVALID_CREDENTIALS
+                    || exception.getErrorCode() == ErrorCode.USER_ACCOUNT_LOCKED) {
                 loginRateLimitService.recordFailure(clientIp, request.getEmailOrPhone());
                 auditEventService.recordAuthentication(null, false, false);
             }

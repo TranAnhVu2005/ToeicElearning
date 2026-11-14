@@ -9,11 +9,13 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor: add JWT Bearer token if available
+// Request interceptor: add JWT Bearer token if available (except public auth endpoints)
 apiClient.interceptors.request.use(
   (config) => {
+    const url = String(config.url || '');
+    const isPublicAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/google');
     const token = localStorage.getItem('accessToken');
-    if (token) {
+    if (token && !isPublicAuthEndpoint) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     // Let the browser add the multipart boundary. Keeping the shared JSON header

@@ -10,7 +10,6 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 
 // Load page code only when a route is visited so the first screen stays small.
 const HomePage = lazy(() => import('./pages/HomePage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const CoursesPage = lazy(() => import('./pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
@@ -50,7 +49,6 @@ function App() {
                 <Routes>
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
-              <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/practice" element={<Navigate to="/courses" replace />} />
               <Route path="/courses" element={<CoursesPage />} />

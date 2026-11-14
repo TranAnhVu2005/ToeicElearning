@@ -7,8 +7,6 @@ import {
   Lock,
   Unlock,
   Shield,
-  ShieldCheck,
-  UserCheck,
   AlertTriangle,
   RefreshCw,
   Clock,
@@ -18,7 +16,8 @@ import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 import UserAvatar from '../../components/common/UserAvatar';
-import AdminNavTabs from '../../components/common/AdminNavTabs';
+import AdminPageHeader from '../../components/common/AdminPageHeader';
+import usersBanner from '../../assets/img/ctu/daihoccantho.jpg';
 
 const UserManagementPage = () => {
   const { user: currentUser } = useAuth();
@@ -29,11 +28,11 @@ const UserManagementPage = () => {
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
-  
+
   // Search state with debouncing
   const [searchInput, setSearchInput] = useState('');
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
-  
+
   const [sortBy, setSortBy] = useState('createdAt');
   const [direction, setDirection] = useState('DESC');
 
@@ -103,11 +102,11 @@ const UserManagementPage = () => {
   // Execute lock/unlock
   const handleConfirmStatusChange = async () => {
     if (!selectedUser || actionLoading) return;
-    
+
     const targetId = selectedUser.id;
     const currentLockedStatus = getIsLocked(selectedUser);
     const nextIsLocked = !currentLockedStatus; // Flip isLocked boolean
-    
+
     try {
       setActionLoading(true);
 
@@ -115,7 +114,7 @@ const UserManagementPage = () => {
       setUsers((prevUsers) =>
         prevUsers.map((u) => (u.id === targetId ? { ...u, isLocked: nextIsLocked, locked: nextIsLocked } : u))
       );
-      
+
       // Close modal right away
       setStatusModalOpen(false);
 
@@ -180,20 +179,26 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="admin-page-wrapper user-management-page">
-      <div className="container section-padding">
-        <header className="user-management-heading">
-          <div className="user-management-title-row">
-            <div className="user-management-title-icon"><Users size={25} /></div>
-            <div>
-              <p className="user-management-eyebrow">QUẢN TRỊ / TÀI KHOẢN</p>
-              <h1>Quản lý người dùng</h1>
-              <p className="user-management-description">Tra cứu tài khoản và kiểm soát quyền truy cập hệ thống.</p>
-            </div>
-          </div>
-        </header>
+    <main className="admin-page user-management-page min-h-screen pb-12">
+      <AdminPageHeader
+        eyebrow="Khu vực quản trị"
+        eyebrowIcon={Users}
+        title="Quản lý người dùng"
+        description="Tra cứu tài khoản, theo dõi phân quyền và kiểm soát trạng thái truy cập hệ thống."
+        bannerImage={usersBanner}
+        actions={
+          <button
+            type="button"
+            className="editorial-button-secondary inline-flex min-h-10 items-center gap-2 bg-white px-4 py-2 text-sm font-semibold disabled:opacity-60"
+            onClick={() => fetchUsers(true)}
+            disabled={loading}
+          >
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Làm mới
+          </button>
+        }
+      />
 
-        <AdminNavTabs />
+      <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
 
         {/* Toast Alert */}
         {toast && (
@@ -209,9 +214,7 @@ const UserManagementPage = () => {
         {/* Overview Stats Bar */}
         <div className="admin-stats-bar user-management-stats">
           <div className="admin-stat-card">
-            <div className="admin-stat-icon stat-icon-yellow">
-              <Users size={24} />
-            </div>
+
             <div>
               <div className="admin-stat-count">{totalElements}</div>
               <div className="admin-stat-label">Tổng số tài khoản</div>
@@ -219,26 +222,22 @@ const UserManagementPage = () => {
           </div>
 
           <div className="admin-stat-card">
-            <div className="admin-stat-icon stat-icon-pink">
-              <UserCheck size={24} />
-            </div>
+
             <div>
               <div className="admin-stat-count">
                 {users.filter((u) => !getIsLocked(u)).length}
               </div>
-              <div className="admin-stat-label">Đang hoạt động (Trang này)</div>
+              <div className="admin-stat-label">Đang hoạt động</div>
             </div>
           </div>
 
           <div className="admin-stat-card">
-            <div className="admin-stat-icon stat-icon-paper">
-              <ShieldCheck size={24} />
-            </div>
+
             <div>
               <div className="admin-stat-count">
                 {users.filter((u) => u.roleName === 'ROLE_ADMIN').length}
               </div>
-              <div className="admin-stat-label">Quản trị viên (Trang này)</div>
+              <div className="admin-stat-label">Quản trị viên</div>
             </div>
           </div>
         </div>
@@ -265,8 +264,8 @@ const UserManagementPage = () => {
           </div>
 
           <div className="user-toolbar-actions">
-              <button
-                className="btn btn-outline btn-sm user-refresh-button"
+            <button
+              className="btn btn-outline btn-sm user-refresh-button"
               onClick={() => fetchUsers(true)}
               disabled={loading}
               title="Làm mới dữ liệu"
@@ -443,12 +442,13 @@ const UserManagementPage = () => {
           <div
             style={{
               padding: 12,
-              border: '2px solid #111111',
-              background: getIsLocked(selectedUser) ? '#FFE600' : '#FF5B93',
-              color: '#111111',
+              borderRadius: 2,
+              border: `1px solid ${getIsLocked(selectedUser) ? '#BFDBFE' : '#FECACA'}`,
+              background: getIsLocked(selectedUser) ? '#EFF6FF' : '#FEF2F2',
+              color: getIsLocked(selectedUser) ? '#1D4ED8' : '#B91C1C',
             }}
           >
-            <AlertTriangle size={24} />
+            <AlertTriangle size={22} />
           </div>
           <div>
             <p style={{ fontWeight: 600, color: 'var(--gray-900)', marginBottom: 6 }}>
@@ -465,7 +465,7 @@ const UserManagementPage = () => {
           </div>
         </div>
       </Modal>
-    </div>
+    </main>
   );
 };
 

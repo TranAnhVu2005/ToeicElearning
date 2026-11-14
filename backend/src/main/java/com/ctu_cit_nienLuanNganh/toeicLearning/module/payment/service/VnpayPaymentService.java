@@ -10,6 +10,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.PaymentTransaction;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TeacherApplication;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestEntitlement;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.dto.PaymentStatusResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class VnpayPaymentService {
     private final VnpayGatewayService gatewayService;
     private final PaymentTransactionRepository paymentRepository;
     private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
     private final TestEntitlementRepository entitlementRepository;
     private final AuditEventService auditEventService;
 
@@ -168,6 +170,13 @@ public class VnpayPaymentService {
                     .link("/teacher/application")
                     .isRead(false)
                     .build());
+            notificationService.notifyAllAdmins(
+                    "Hồ sơ đăng ký giáo viên mới chờ duyệt",
+                    "Người dùng " + application.getUser().getUserName() + " (" + application.getUser().getUserEmail()
+                            + ") đã hoàn tất thanh toán phí đăng ký giáo viên và đang chờ phê duyệt.",
+                    "TEACHER_APPLICATION_SUBMITTED",
+                    "/admin/teacher-applications"
+            );
             return;
         }
         if ("TEST_VIP".equals(payment.getProductType()) && payment.getTest() != null

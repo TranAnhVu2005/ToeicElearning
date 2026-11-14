@@ -30,7 +30,9 @@ public interface PaymentTransactionRepository extends BaseRepository<PaymentTran
             "AND (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%'))) ",
+            "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(p.productNameSnapshot, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(COALESCE(p.vnpTransactionNo, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ",
             countQuery = "SELECT COUNT(p) FROM PaymentTransaction p JOIN p.user u " +
                     "WHERE (:status IS NULL OR p.status = :status) " +
                     "AND (:productType IS NULL OR p.productType = :productType) " +
@@ -39,7 +41,9 @@ public interface PaymentTransactionRepository extends BaseRepository<PaymentTran
                     "AND (:keyword IS NULL OR :keyword = '' OR " +
                     "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                     "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                    "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
+                    "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(COALESCE(p.productNameSnapshot, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(COALESCE(p.vnpTransactionNo, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
     Page<PaymentTransaction> searchForAdmin(@Param("status") String status,
                                             @Param("fromDate") LocalDateTime fromDate,
                                             @Param("toDate") LocalDateTime toDate,

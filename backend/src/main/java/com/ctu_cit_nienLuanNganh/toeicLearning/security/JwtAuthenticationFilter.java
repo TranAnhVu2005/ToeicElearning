@@ -27,6 +27,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        String requestUri = request.getRequestURI();
+        if (requestUri != null && (requestUri.endsWith("/api/auth/login")
+                || requestUri.endsWith("/api/auth/register")
+                || requestUri.endsWith("/api/auth/google"))) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -38,26 +46,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String userId = jwtService.extractUserId(token);
             if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userRepository.findByIdWithRole(userId).orElse(null);
-                if (user != null && jwtService.isTokenValid(token, user)) {
+                if (user != null && userId.equals(user.getId()) && !jwtService.isTokenExpired(token)) {
                     if (Boolean.TRUE.equals(user.getIsLocked())) {
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                         response.setContentType("application/json;charset=UTF-8");
-                        response.getWriter().write("{\"code\":2009,\"message\":\"Tài khoản của bạn đã bị khóa.\"}");
+                        response.getWriter().write("{\"code\":2009,\"message\":\"Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên\"}");
                         return;
                     }
 
-                    Role role = user.getRole();
-                    String authority = role != null && role.getRoleName() != null
-                            ? role.getRoleName() : "ROLE_USER";
-                    if (!authority.startsWith("ROLE_")) {
-                        authority = "ROLE_" + authority;
-                    }
+                    if (jwtService.isTokenValid(token, user)) {
+                        Role role = user.getRole();
+                        String authority = role != null && role.getRoleName() != null
+                                ? role.getRoleName() : "ROLE_USER";
+                        if (!authority.startsWith("ROLE_")) {
+                            authority = "ROLE_" + authority;
+                        }
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user, null, Collections.singletonList(new SimpleGrantedAuthority(authority)));
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        user, null, Collections.singletonList(new SimpleGrantedAuthority(authority)));
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (RuntimeException ignored) {

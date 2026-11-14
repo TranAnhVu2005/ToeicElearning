@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -37,6 +38,7 @@ public class AssignmentService {
     private static final String ROLE_TEACHER = "ROLE_TEACHER";
     private static final String ROLE_USER = "ROLE_USER";
     private static final String APPROVED = "APPROVED";
+    private static final DateTimeFormatter DEADLINE_FMT = DateTimeFormatter.ofPattern("HH:mm 'ngày' dd/MM/yyyy");
 
     private final AssignmentRepository assignmentRepository;
     private final ClassroomRepository classroomRepository;
@@ -63,8 +65,11 @@ public class AssignmentService {
                 .build();
         Assignment saved = assignmentRepository.save(assignment);
         auditEventService.record(teacher, "ASSIGNMENT_CREATED", "ASSIGNMENT", saved.getId(), "active=true; latePolicy=" + saved.getLatePolicy());
-        notifyApprovedMembers(classroom, "Bài tập mới", "Lớp " + classroom.getClassName()
-                + " được giao bài: " + saved.getTitle(), "ASSIGNMENT_CREATED");
+        String formattedDeadline = saved.getDeadline() != null ? saved.getDeadline().format(DEADLINE_FMT) : "Chưa đặt";
+        notifyApprovedMembers(classroom, "Bài tập mới trong lớp " + classroom.getClassName(),
+                "Giáo viên " + teacher.getUserName() + " vừa giao bài tập \"" + saved.getTitle()
+                        + "\" (Hạn nộp: " + formattedDeadline + ").",
+                "ASSIGNMENT_CREATED");
         return toResponse(saved, null, false);
     }
 
@@ -112,8 +117,10 @@ public class AssignmentService {
                 "deadline=" + previousDeadline + "->" + saved.getDeadline()
                         + "; latePolicy=" + previousPolicy + "->" + saved.getLatePolicy());
         if (deadlineChanged) {
-            notifyApprovedMembers(saved.getClassroom(), "Hạn nộp được cập nhật",
-                    "Bài " + saved.getTitle() + " có hạn nộp mới: " + saved.getDeadline(),
+            String formattedDeadline = saved.getDeadline() != null ? saved.getDeadline().format(DEADLINE_FMT) : "Chưa đặt";
+            notifyApprovedMembers(saved.getClassroom(), "Cập nhật hạn nộp bài tập",
+                    "Bài tập \"" + saved.getTitle() + "\" trong lớp \"" + saved.getClassroom().getClassName()
+                            + "\" được cập nhật hạn nộp mới: " + formattedDeadline + ".",
                     "ASSIGNMENT_DEADLINE_CHANGED");
         }
         return toResponse(saved, null, false);
@@ -261,7 +268,8 @@ public class AssignmentService {
             notificationRepository.save(Notification.builder()
                     .user(result.getUser())
                     .title("Giáo viên đã nhận xét bài tập")
-                    .content("Bài " + assignment.getTitle() + " đã có nhận xét mới.")
+                    .content("Giáo viên " + teacher.getUserName() + " đã chấm và gửi nhận xét cho bài tập \""
+                            + assignment.getTitle() + "\" trong lớp \"" + assignment.getClassroom().getClassName() + "\".")
                     .type("ASSIGNMENT_FEEDBACK")
                     .link("/results/" + result.getId())
                     .isRead(false)

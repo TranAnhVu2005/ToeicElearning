@@ -11,6 +11,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.ClassMember;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Classroom;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassMemberRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassroomRepository;
 import jakarta.transaction.Transactional;
@@ -35,6 +36,7 @@ public class ClassroomService {
     private final ClassroomRepository classroomRepository;
     private final ClassMemberRepository classMemberRepository;
     private final AuditEventService auditEventService;
+    private final NotificationService notificationService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -114,6 +116,14 @@ public class ClassroomService {
                 .status(PENDING)
                 .build());
         auditEventService.record(currentUser, "CLASS_MEMBERSHIP_REQUESTED", "CLASS_MEMBERSHIP", member.getId(), "status=PENDING");
+        notificationService.createNotification(
+                classroom.getTeacher(),
+                "Yêu cầu tham gia lớp học mới",
+                "Học viên " + currentUser.getUserName() + " (" + currentUser.getUserEmail()
+                        + ") vừa gửi yêu cầu tham gia lớp \"" + classroom.getClassName() + "\". Vui lòng vào Quản lý lớp học để phê duyệt.",
+                "CLASSROOM_JOIN_REQUEST",
+                "/classrooms"
+        );
         return toClassroomResponse(classroom, PENDING, false);
     }
 
@@ -145,6 +155,25 @@ public class ClassroomService {
         if (!previousStatus.equals(request.getStatus())) {
             auditEventService.record(currentUser, "CLASS_MEMBERSHIP_STATUS_CHANGED", "CLASS_MEMBERSHIP", member.getId(),
                     "status=" + previousStatus + "->" + request.getStatus());
+            if (APPROVED.equals(request.getStatus())) {
+                notificationService.createNotification(
+                        member.getStudent(),
+                        "Yêu cầu tham gia lớp học đã được duyệt",
+                        "Giáo viên " + currentUser.getUserName() + " đã chấp thuận bạn vào lớp \""
+                                + classroom.getClassName() + "\". Bạn đã có thể truy cập tài liệu và làm bài tập của lớp.",
+                        "CLASSROOM_MEMBER_APPROVED",
+                        "/classrooms"
+                );
+            } else if (BLOCKED.equals(request.getStatus()) || REMOVED.equals(request.getStatus())) {
+                notificationService.createNotification(
+                        member.getStudent(),
+                        "Cập nhật trạng thái thành viên lớp học",
+                        "Quyền truy cập của bạn tại lớp \"" + classroom.getClassName() + "\" đã được cập nhật ("
+                                + (BLOCKED.equals(request.getStatus()) ? "Tạm khóa quyền truy cập" : "Đã gỡ khỏi danh sách lớp") + ").",
+                        "CLASSROOM_MEMBER_STATUS",
+                        "/classrooms"
+                );
+            }
         }
         return toMemberResponse(classMemberRepository.save(member));
     }

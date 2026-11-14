@@ -65,11 +65,12 @@ public class PaymentAdminService {
     }
 
     private PaymentTransactionResponseDTO toResponse(PaymentTransaction transaction) {
+        var payer = transaction.getUser();
         return PaymentTransactionResponseDTO.builder()
                 .id(transaction.getId())
-                .payerId(transaction.getUser().getId())
-                .payerName(transaction.getUser().getUserName())
-                .payerEmail(transaction.getUser().getUserEmail())
+                .payerId(payer != null ? payer.getId() : null)
+                .payerName(payer != null ? payer.getUserName() : null)
+                .payerEmail(payer != null ? payer.getUserEmail() : null)
                 .productType(transaction.getProductType())
                 .productName(transaction.getProductNameSnapshot())
                 .amount(transaction.getAmount())

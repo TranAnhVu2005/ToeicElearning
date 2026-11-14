@@ -1,6 +1,5 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.admin;
 
-import com.cloudinary.Api;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageParams;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
@@ -13,6 +12,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.service.AdminMetrics
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.AuditEventResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.PaymentTransactionResponseDTO;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.ActivityMetricsPointResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.AdminOverviewMetricsResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.DailyTestMetricsResponse;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -82,9 +82,22 @@ public class AdminController {
 
     @GetMapping("/metrics/tests")
     public ResponseEntity<ApiResponse<List<DailyTestMetricsResponse>>> getDailyTestMetrics(
-            @RequestParam LocalDate from,
-            @RequestParam LocalDate to) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return ResponseEntity.ok(ApiResponse.success(adminMetricsService.dailyTests(from, to)));
+    }
+
+    @GetMapping("/metrics/activity")
+    public ResponseEntity<ApiResponse<List<ActivityMetricsPointResponse>>> getDailyActivityMetrics(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(ApiResponse.success(adminMetricsService.dailyActivity(from, to)));
+    }
+
+    @GetMapping("/metrics/activity/monthly")
+    public ResponseEntity<ApiResponse<List<ActivityMetricsPointResponse>>> getMonthlyActivityMetrics(
+            @RequestParam(defaultValue = "6") int months) {
+        return ResponseEntity.ok(ApiResponse.success(adminMetricsService.monthlyActivity(months)));
     }
 
     @GetMapping("/audit-events")

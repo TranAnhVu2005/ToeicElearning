@@ -36,11 +36,11 @@ const ADMIN_TABS = [
   },
 ];
 
-const AdminNavTabs = () => {
+const AdminNavTabs = ({ className = '' }) => {
   return (
     <nav
       aria-label="Điều hướng phân hệ quản trị"
-      className="admin-nav-tabs flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4 mb-6"
+      className={`admin-nav-tabs flex flex-wrap items-center gap-2 border-b border-slate-200 pb-4 mb-6 ${className}`.trim()}
     >
       {ADMIN_TABS.map((tab) => {
         const Icon = tab.icon;
@@ -49,10 +49,10 @@ const AdminNavTabs = () => {
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
-              `inline-flex min-h-[40px] items-center gap-2 border px-3.5 py-2 text-sm font-semibold transition-colors ${
+              `inline-flex min-h-[40px] items-center gap-2 rounded-[2px] border px-3.5 py-2 text-sm font-semibold transition-colors ${
                 isActive
                   ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                  : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]'
+                  : 'border-slate-300 bg-white/95 text-slate-700 hover:border-[#1D4ED8] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]'
               }`
             }
           >

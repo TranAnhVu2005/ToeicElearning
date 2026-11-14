@@ -18,7 +18,7 @@
 | Module | Method + path | Quyền/ghi chú |
 |---|---|---|
 | Auth | `POST /auth/register` | Public; giới hạn theo IP (10 request) và cặp IP + email chuẩn hóa (5 request) trong 15 phút. |
-| Auth | `POST /auth/login` | Public; phát JWT và giới hạn 20 lần thất bại/IP hoặc 8 lần thất bại trên cặp IP + định danh trong 15 phút. |
+| Auth | `POST /auth/login` | Public; phát JWT và giới hạn 20 lần thất bại/IP hoặc 8 lần thất bại trên cặp IP + định danh trong 15 phút. Nếu tài khoản đang bị khóa (`isLocked == true`), trả lỗi `403 USER_ACCOUNT_LOCKED` (code `2009`: *"Tài khoản của bạn đã bị khóa, vui lòng liên hệ quản trị viên"*) thay vì báo sai mật khẩu, giúp người dùng biết rõ nguyên nhân để liên hệ quản trị viên; ghi nhận audit đăng nhập thất bại và tăng bộ đếm rate limit. |
 | Auth | `POST /auth/google` | Public; giới hạn 30 request/IP/15 phút; backend xác minh chữ ký Google JWK, issuer, audience, hạn token và email đã xác minh; không đặt ID token vào URL. |
 | Exam | `GET /exam/list` | Public, chỉ đề hệ thống PUBLISHED; view catalog không chứa context/question. Hỗ trợ `category=ALL|FULL|LISTENING|READING` để lọc toàn bộ đề 200 câu hoặc đề có Part thuộc nhóm tương ứng; giới hạn 120 request/IP/15 phút. |
 | Exam | `GET /exam/{testID}/access` | Public metadata/access; classroom test chỉ phản hồi cho member APPROVED; giới hạn 120/IP và 60/user mỗi 15 phút. |
@@ -132,12 +132,17 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 
 ### Thông báo và thống kê
 
-- `GET /notifications/me?unreadOnly=...&page=1&size=20` chỉ trả thông báo của current user, phân trang (`page` 1–10.000, `size` 1–50); kết quả dùng `PageResponse`. `PATCH /notifications/{id}/read` và `PATCH /notifications/read-all` chỉ cho recipient; read-all cập nhật bulk theo userId, không tải toàn bộ notification vào bộ nhớ.
-- Sự kiện tối thiểu: bài tập mới/gia hạn hoặc đổi deadline, giáo viên nhận xét submission, thanh toán giáo viên xác nhận, hồ sơ giáo viên được duyệt/từ chối.
+- `GET /notifications/me?unreadOnly=false&category=ALL&page=1&size=15` chỉ trả thông báo của current user, hỗ trợ lọc theo danh mục (`ALL`, `EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`) và trạng thái chưa đọc (`unreadOnly`), phân trang (`page` 1–10.000, `size` 1–50); kết quả dùng `PageResponse<NotificationResponse>`.
+- `GET /notifications/me/unread-count` trả `unreadCount` và `totalCount` của current user.
+- `PATCH /notifications/{id}/read` và `PATCH /notifications/read-all` chỉ cho recipient; read-all cập nhật bulk theo userId, không tải toàn bộ notification vào bộ nhớ.
+- `DELETE /notifications/{id}` xóa một thông báo thuộc sở hữu của current user; `DELETE /notifications/read` xóa bulk toàn bộ thông báo đã đọc của current user.
+- Các sự kiện phát sinh thông báo tự động trên hệ thống: đăng ký tài khoản mới (`WELCOME`), đổi/thiết lập mật khẩu (`ACCOUNT_SECURITY`), hoàn thành bài thi/luyện tập (`EXAM_RESULT`), học viên nộp bài tập lớp cho giáo viên (`ASSIGNMENT_SUBMITTED`), bài tập mới (`ASSIGNMENT_CREATED`), đổi hạn nộp (`ASSIGNMENT_DEADLINE_CHANGED`), giáo viên nhận xét bài làm (`ASSIGNMENT_FEEDBACK`), học viên gửi yêu cầu vào lớp (`CLASSROOM_JOIN_REQUEST`), giáo viên duyệt/cập nhật trạng thái thành viên lớp (`CLASSROOM_MEMBER_APPROVED` / `CLASSROOM_MEMBER_STATUS`), giáo viên đăng tài liệu PDF mới (`CLASSROOM_MATERIAL`), mở khóa đề VIP (`TEST_VIP_PURCHASE`), thanh toán phí giáo viên xác nhận cho ứng viên & Admin (`TEACHER_APPLICATION_PAYMENT` / `TEACHER_APPLICATION_SUBMITTED`), hồ sơ giáo viên được duyệt/từ chối (`TEACHER_APPLICATION`), và Admin kiểm duyệt gỡ bình luận (`COMMENT_MODERATED`).
 - `POST /user/presence`: authenticated; ghi heartbeat cho chính user lấy từ JWT. Client chỉ gửi request rỗng; server giới hạn ghi tối đa một lần/phút/user.
 - `POST /user/setpassword`: authenticated; dành cho Google-only account chưa có password hash. Client yêu cầu xác minh Google trực tiếp qua GIS và gửi ID token cùng mật khẩu mới; token chỉ được dùng trong request, không lưu browser. Backend đối chiếu `sub` và yêu cầu token được phát hành trong 5 phút gần nhất; user row được khóa, tài khoản khóa/đã có password bị từ chối, sau đó tăng `authVersion` để thu hồi mọi JWT hiện hành.
-- `GET /admin/metrics/overview`: ADMIN; trả số user có heartbeat trong 5 phút, số session mới bắt đầu và số lượt submit lưu hôm nay, ngày/múi giờ báo cáo và thời điểm tổng hợp; không có danh sách user.
+- `GET /admin/metrics/overview`: ADMIN; trả số user có heartbeat trong 5 phút, số người/lượt đăng nhập thành công hôm nay và trong tháng, số session mới bắt đầu và số lượt submit lưu hôm nay và trong tháng, ngày/múi giờ báo cáo và thời điểm tổng hợp; không có danh sách user.
 - `GET /admin/metrics/tests?from=YYYY-MM-DD&to=YYYY-MM-DD`: ADMIN; chuỗi số lượt bắt đầu và submit theo ngày, gồm ngày 0, khoảng tối đa 367 ngày. Mặc định múi giờ `Asia/Ho_Chi_Minh`, cấu hình qua `APP_REPORTING_TIME_ZONE`.
+- `GET /admin/metrics/activity?from=YYYY-MM-DD&to=YYYY-MM-DD`: ADMIN; chuỗi tổng hợp theo ngày gồm `uniqueLoginUsers`, `loginCount`, `startedAttempts`, `submittedAttempts` (múi giờ báo cáo, tối đa 367 ngày, không trả PII).
+- `GET /admin/metrics/activity/monthly?months=6`: ADMIN; chuỗi tổng hợp theo tháng (`YYYY-MM`, hỗ trợ `1..24` tháng gần nhất) gồm `uniqueLoginUsers`, `loginCount`, `startedAttempts`, `submittedAttempts` (không trả PII).
 - Lượt submit lấy từ `test_result`, bao gồm full/part/assignment/review lại; lượt bắt đầu lấy từ session mới trong `exam_session.started_at`. Khôi phục session hiện có không tạo thêm lượt bắt đầu; hủy/expire session vẫn là một lần đã bắt đầu.
 - Heartbeat chỉ gửi khi tab nhìn thấy và client polling 60 giây; server vẫn enforce khoảng ghi tối thiểu. Không lưu hành vi trang/câu hỏi hoặc gửi dữ liệu user vào metric.
 
