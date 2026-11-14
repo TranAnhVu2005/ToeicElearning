@@ -42,6 +42,7 @@
 | Admin | `PATCH /admin/changestatus` | ADMIN; khóa/mở khóa. |
 | Media | `POST /media/upload` | ADMIN/TEACHER; multipart file/folder; JPEG/PNG decoded before upload (≤5 MiB), MP3/WAV/M4A signature checked (≤20 MiB), app namespace only; max 30 requests/IP and 20/user per 15 minutes. Cover ảnh công khai lưu tại `Resource/toeic-learning/exams/{slug}/covers`; private exam upload registers server-returned public ID/format/resource/delivery type with the uploader; TEACHER may attach only their own registered private media. Client cannot request deletion of an old URL. |
 | Media | `DELETE /media/delete?url=...` | Disabled/removed: client-supplied URL cannot prove asset ownership. Server cleanup only accepts HTTPS assets on the configured Cloudinary account under the app namespace. |
+| AI | `POST /ai/chat` | Public cho câu hỏi hướng dẫn sử dụng hệ thống và kiến thức TOEIC chung; yêu cầu đã xác thực và xác minh quyền sở hữu `TestResult` phía server khi đính kèm `resultId` để giải thích câu hỏi/bài làm đã hoàn thành. Giới hạn 60 request/IP và 45 request/user mỗi 15 phút. |
 
 `SecurityConfig` chỉ allowlist public các method/route cần thiết; mọi request không khớp route public đều cần xác thực. Endpoint mới phải được phân loại public/authenticated/role rõ ràng và thêm authorization ở controller/service khi cần; không mở rộng wildcard `permitAll`.
 

@@ -36,6 +36,7 @@ const CourseDetailRoute = () => {
 };
 
 import ErrorBoundary from './components/common/ErrorBoundary';
+import AiAssistantWidget from './components/common/AiAssistantWidget';
 
 function App() {
   return (
@@ -122,6 +123,7 @@ function App() {
               </Suspense>
           </ErrorBoundary>
         </main>
+        <AiAssistantWidget />
         <Footer />
         </div>
       </AuthProvider>

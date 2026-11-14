@@ -8,7 +8,7 @@
 ## 2. Công nghệ & Entry Points
 - **Backend**: Java 17, Maven WAR, **Spring Boot 4.1.0**, Spring Data JPA (Hibernate 7.4), Spring Security, MySQL (`toeiclearning`), port `8080`. SQL logging mặc định tắt (`JPA_SHOW_SQL=false`).
   - Root package: `backend/src/main/java/com/ctu_cit_nienLuanNganh/toeicLearning/`
-  - Modules: `auth`, `exam`, `user`, `admin`, `media`, `classroom`, `notification`, cùng `common`, `config`, `security`.
+  - Modules: `auth`, `exam`, `user`, `admin`, `media`, `classroom`, `notification`, `ai`, cùng `common`, `config`, `security`.
 - **Frontend**: React 19, Vite 8, React Router, Tailwind CSS, Axios; dev port `5173`/`5174`, gọi `VITE_API_BASE_URL` (mặc định `http://localhost:8080/api`).
   - Routes chính (`frontend/src/App.jsx`, tải qua `React.lazy`):
     - Public/Catalog: `/` (`HomePage`), `/courses` (`CoursesPage`, `/practice` tự động redirect về `/courses`), `/courses/:testId` (`CourseDetailPage` gồm 4 tab: Luyện tập từng phần, Làm Full Test, Chép chính tả, Thảo luận), `/about`, `/contact`, `/login`, `/register`.
@@ -40,6 +40,9 @@
 - **Thương mại VIP & Đăng ký giáo viên (VNPAY)**:
   - Đề VIP có `isVip` và `vipPriceVnd` riêng từng đề; mua một lần cấp `TestEntitlement` vĩnh viễn sau khi xác minh chữ ký/số tiền tại `GET /api/payments/vnpay/ipn`.
   - Hồ sơ giáo viên (`TeacherApplication`) tách biệt bước thanh toán phí (`PENDING_REVIEW`) và bước Admin duyệt (`APPROVED` mới cấp `ROLE_TEACHER`).
+- **Trợ lý AI Học tập & Hướng dẫn hệ thống (`module/ai`, `AiAssistantWidget.jsx`)**:
+  - Endpoint `POST /api/ai/chat` tích hợp Gemini API (`gemini.api.key`, `gemini.api.url` qua header `x-goog-api-key`) kèm cơ chế Smart Local Tutor dự phòng khi mất kết nối ngoài.
+  - Khi đính kèm `resultId` trên trang Xem lại bài thi (`/results/:resultId`), server xác minh quyền sở hữu `TestResult` và tự trích xuất ngữ cảnh bài làm, đoạn văn, lời thoại (`transcript`), bản dịch (`translation`), đáp án đúng/đã chọn và giải thích của câu hỏi từ MySQL (tự động nhận diện cả số câu người dùng gõ trong tin nhắn như *"Giải thích câu 105"*). Tự động ẩn trên trang phòng thi đang làm dở (`/courses/:testId/take`) để đảm bảo tính trung thực của bài thi.
 - **Lớp học (`Classroom`, `ClassMember`, `Material`, `Assignment`) & Thông báo (`Notification`)**:
   - Giáo viên tạo lớp, xoay mã tham gia (`join-code/rotate`), duyệt/chặn học sinh, tải tài liệu PDF private (≤ 10 MiB, quota 512 MiB/lớp, link tải ký hạn 5 phút), tạo đề riêng lớp và giao bài tập có `deadline` + `latePolicy` (`REJECT_AFTER_DEADLINE` / `ACCEPT_AND_MARK_LATE`).
   - **Hệ thống Thông báo (`/api/notifications/**`, `NotificationsPage.jsx`)**: Tự động phát thông báo theo các chức năng thực tế của web: chào mừng đăng ký mới (`WELCOME`), đổi/đặt mật khẩu (`ACCOUNT_SECURITY`), hoàn thành bài thi Full Test/luyện Part (`EXAM_RESULT`), học viên nộp bài tập lớp cho giáo viên (`ASSIGNMENT_SUBMITTED`), giao bài tập mới (`ASSIGNMENT_CREATED`), đổi hạn nộp (`ASSIGNMENT_DEADLINE_CHANGED`), giáo viên nhận xét bài làm (`ASSIGNMENT_FEEDBACK`), học viên xin vào lớp (`CLASSROOM_JOIN_REQUEST`), duyệt/cập nhật thành viên lớp (`CLASSROOM_MEMBER_APPROVED` / `CLASSROOM_MEMBER_STATUS`), đăng tài liệu PDF mới (`CLASSROOM_MATERIAL`), thanh toán đề VIP (`TEST_VIP_PURCHASE`), thanh toán & duyệt hồ sơ giáo viên (`TEACHER_APPLICATION_PAYMENT`, `TEACHER_APPLICATION_SUBMITTED`, `TEACHER_APPLICATION`), và kiểm duyệt bình luận (`COMMENT_MODERATED`). Hỗ trợ lọc theo danh mục (`ALL`, `EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`), lọc chưa đọc, đánh dấu đã đọc từng mục/tất cả, xóa từng thông báo hoặc dọn sạch thông báo đã đọc, đồng bộ tức thời huy hiệu số chưa đọc trên `Navbar`.

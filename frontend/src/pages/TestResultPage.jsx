@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
+  Bot,
   CheckCircle2,
   CircleX,
   Clock,
@@ -10,9 +11,11 @@ import {
   Layers,
   RefreshCw,
   RotateCcw,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { examService } from '../services/examService';
+import { openAiAssistant, syncAiExamResultContext } from '../services/aiService';
 
 const formatDuration = (seconds = 0) => {
   const safeSeconds = Math.max(0, Number(seconds) || 0);
@@ -77,6 +80,15 @@ const TestResultPage = () => {
   const loading = loadState.key !== requestKey;
   const result = loading ? null : loadState.result;
   const error = loading ? '' : loadState.error;
+
+  useEffect(() => {
+    if (result) {
+      syncAiExamResultContext(result);
+    }
+    return () => {
+      syncAiExamResultContext(null);
+    };
+  }, [result]);
 
   const refreshResult = () => {
     setFailedMedia({});
@@ -252,6 +264,19 @@ const TestResultPage = () => {
 
       {/* Right Column Action Links */}
       <div className="space-y-2 border-t border-slate-200 pt-3">
+        <button
+          type="button"
+          onClick={() => {
+            if (isMobile) setMobilePaletteOpen(false);
+            openAiAssistant({
+              result,
+              question: null,
+            });
+          }}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 border border-blue-200 bg-[#EFF6FF] py-2 text-center text-xs font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
+        >
+          <Sparkles size={14} /> Hỏi Trợ lý AI về bài thi
+        </button>
         {!classroomReview && wrongQuestions.length > 0 && (
           <Link
             to={`/courses/${result.testId}/take?mode=practice&time=0&sourceResultId=${result.testResultId}&questionIds=${wrongQuestionIds}`}
@@ -404,8 +429,8 @@ const TestResultPage = () => {
                 </div>
               )}
 
-              {!classroomReview && wrongQuestions.length > 0 && (
-                <div className="mt-5 border-t border-slate-200 pt-5">
+              <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-5">
+                {!classroomReview && wrongQuestions.length > 0 && (
                   <Link
                     to={`/courses/${result.testId}/take?mode=practice&time=0&sourceResultId=${result.testResultId}&questionIds=${wrongQuestionIds}`}
                     className="inline-flex min-h-[42px] items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#173ea8]"
@@ -413,8 +438,24 @@ const TestResultPage = () => {
                     <RotateCcw size={15} />
                     Luyện lại {wrongQuestions.length} câu sai / bỏ trống
                   </Link>
-                </div>
-              )}
+                )}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    openAiAssistant({
+                      result,
+                      question: null,
+                      autoPrompt:
+                        'Hãy phân tích tổng quan kết quả bài thi này của tôi, chỉ ra Part nào tôi làm tốt, Part nào cần cải thiện và gợi ý lộ trình ôn tập.',
+                    })
+                  }
+                  className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 border border-blue-300 bg-[#EFF6FF] px-5 py-2.5 text-sm font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
+                >
+                  <Sparkles size={16} />
+                  Phân tích bài làm cùng Trợ lý AI
+                </button>
+              </div>
             </section>
 
             {/* Filter Bar */}
@@ -565,14 +606,16 @@ const TestResultPage = () => {
                       </p>
                     )}
 
-                    {question.passage && (
+                    {(question.paragraph || question.passage) && (
                       <div className="mb-4 border border-slate-200 bg-slate-50/70 p-4 text-sm leading-relaxed text-slate-800 whitespace-pre-wrap font-serif">
-                        {question.passage}
+                        {question.paragraph || question.passage}
                       </div>
                     )}
 
-                    {question.questionText && (
-                      <p className="mb-4 text-base font-medium text-slate-900">{question.questionText}</p>
+                    {(question.questionContent || question.questionText) && (
+                      <p className="mb-4 text-base font-medium text-slate-900">
+                        {question.questionContent || question.questionText}
+                      </p>
                     )}
 
                     {/* Options list */}
@@ -637,6 +680,17 @@ const TestResultPage = () => {
                       </details>
                     )}
 
+                    {question.translation && (
+                      <details className="mt-3 border border-slate-200 bg-slate-50/60 p-3.5 text-sm">
+                        <summary className="cursor-pointer font-semibold text-slate-800">
+                          Xem bản dịch tiếng Việt (Translation)
+                        </summary>
+                        <p className="mt-2.5 whitespace-pre-wrap border-t border-slate-200 pt-2.5 text-slate-700">
+                          {question.translation}
+                        </p>
+                      </details>
+                    )}
+
                     {question.explanation && (
                       <div className="mt-4 border border-blue-200 bg-[#EFF6FF]/60 p-4 text-sm">
                         <div className="flex items-center gap-2 font-semibold text-[#1D4ED8]">
@@ -645,6 +699,69 @@ const TestResultPage = () => {
                         <p className="mt-1.5 whitespace-pre-wrap text-slate-800">{question.explanation}</p>
                       </div>
                     )}
+
+                    {/* AI Tutor Contextual Action Bar for this Question */}
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-200 pt-3.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600">
+                          <Bot size={14} className="text-[#1D4ED8]" />
+                          Trợ lý AI:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openAiAssistant({
+                              result,
+                              question,
+                              autoPrompt: `Giải thích chi tiết vì sao câu ${question.questionNumber} (Part ${question.partNumber}) chọn đáp án ${question.correctAnswer} và vì sao loại các phương án còn lại.`,
+                            })
+                          }
+                          className="cursor-pointer border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-xs font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
+                        >
+                          Giải thích đáp án
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openAiAssistant({
+                              result,
+                              question,
+                              autoPrompt: `Phân tích cấu trúc ngữ pháp và liệt kê các từ vựng / collocations TOEIC quan trọng trong câu ${question.questionNumber}.`,
+                            })
+                          }
+                          className="cursor-pointer border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                        >
+                          Từ vựng & Ngữ pháp
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openAiAssistant({
+                              result,
+                              question,
+                              autoPrompt: `Chỉ ra các bẫy ETS thường gặp ở dạng câu ${question.questionNumber} (Part ${question.partNumber}) này và mẹo làm bài nhanh.`,
+                            })
+                          }
+                          className="cursor-pointer border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                        >
+                          Mẹo tránh bẫy
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openAiAssistant({
+                            result,
+                            question,
+                          })
+                        }
+                        className="inline-flex cursor-pointer items-center gap-1.5 border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#173ea8]"
+                      >
+                        <Sparkles size={13} />
+                        Hỏi bất kỳ điều gì về câu #{question.questionNumber}
+                      </button>
+                    </div>
                   </article>
                   );
                 })
