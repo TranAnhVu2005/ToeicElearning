@@ -203,6 +203,16 @@ public class ExamController {
                 examService.saveExamSessionAnswers(currentUser, sessionId, request)));
     }
 
+    @DeleteMapping("/sessions/{sessionId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> cancelExamSession(
+            @AuthenticationPrincipal User currentUser, @PathVariable String sessionId,
+            HttpServletRequest httpRequest) {
+        limit("exam-session-cancel", httpRequest, currentUser, 60, 30);
+        examService.cancelExamSession(currentUser, sessionId);
+        return ResponseEntity.ok(ApiResponse.success("Đã hủy phiên làm bài"));
+    }
+
     @GetMapping("/history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<java.util.List<TestHistoryResponseDTO>>> getTestHistory(

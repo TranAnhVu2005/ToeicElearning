@@ -34,11 +34,11 @@ Văn bản thường đạt tương phản tối thiểu 4.5:1; chữ lớn và 
 
 ### 2.2 Typography
 
-- **Gelasio** là font nội dung và display chính, dùng cho tiếng Việt, tiêu đề, điều hướng, nhãn và control. Fallback: Georgia, serif. Có thể dùng các mức weight 100–900 theo hierarchy; trình duyệt tổng hợp weight nếu font file không cung cấp biến thể tương ứng.
-- **Ubuntu Mono** chỉ dùng cho code, UUID, mã giao dịch, timer và dữ liệu kỹ thuật cần căn đơn cách. Fallback: `ui-monospace`, monospace.
+- **Gelasio** là font nội dung và display chính, dùng cho tiếng Việt, tiêu đề, điều hướng, nhãn và control (`--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif`). Để khắc phục việc phông fallback `Georgia` trên Windows hiển thị chữ số kiểu cũ (`oldstyle-nums` cao thấp không đều), hệ thống khai báo `@font-face` `'EditorialNumerals'` (`unicode-range: U+0030-0039`, lấy từ `Times New Roman` / `Cambria` / `Liberation Serif`) đứng đầu chuỗi `--editorial-font` kết hợp `font-variant-numeric: lining-nums tabular-nums` để mọi chữ số `0–9` luôn có chiều cao và độ rộng đều nhau trên cùng đường cơ sở.
+- **Ubuntu Mono** chỉ dùng cho code, UUID, mã giao dịch và dữ liệu kỹ thuật cần căn đơn cách (`:where(code, kbd, .font-mono)`). Fallback: `ui-monospace`, monospace.
 - Thang cỡ: `14 / 16 / 18 / 24 / 32 / 40 px`. Nội dung đọc/câu hỏi tối thiểu 16 px; metadata dense tối thiểu 14 px. Line-height nội dung tối thiểu 1.5.
 - Dùng weight, kích thước và khoảng cách để tạo hierarchy; tránh ép chữ tiếng Việt vào font trang trí hoặc dùng ALL CAPS cho đoạn đọc.
-- Số điểm/thời lượng dùng tabular figures; luôn gắn nhãn đơn vị/ngữ cảnh.
+- Số điểm/thời lượng dùng lining tabular figures (`lining-nums tabular-nums`); luôn gắn nhãn đơn vị/ngữ cảnh.
 
 ### 2.3 Spacing, shape và motion
 
@@ -74,13 +74,13 @@ Văn bản thường đạt tương phản tối thiểu 4.5:1; chữ lớn và 
 
 ## 5. Quy tắc theo nhóm route
 
-- **Home/catalog/practice:** headline phân cấp rõ, CTA và lọc dễ tìm; danh sách đề/card lấy đúng dữ liệu và trạng thái quyền từ API; hình ảnh hỗ trợ nội dung.
-- **Course detail/about/contact:** ưu tiên mục tiêu, thông tin đề, quyền truy cập, disclaimer và liên hệ hợp lệ; không thêm claims marketing thiếu căn cứ.
-- **Login/register/profile/teacher/payment/notifications:** cùng typography/form system; thể hiện loading, validation, error, pending/success/failure và bước kế tiếp đúng với server.
-- **Exam/dictation/results:** giữ nền phẳng, hạn chế ảnh trang trí/chuyển động, vùng câu hỏi dễ đọc và thao tác ổn định; media theo sát context. Answer key/transcript vẫn theo authorization hiện tại.
+- **Home/catalog/practice:** headline phân cấp rõ, CTA và lọc dễ tìm; route `/practice` tự động chuyển hướng về `/courses` (`CoursesPage.jsx`, phân trang 10 đề/trang, thẻ đề ngang nhỏ gọn đồng bộ mục NEWS trang chủ). Danh sách đề/card lấy đúng dữ liệu và trạng thái quyền từ API; hình ảnh hỗ trợ nội dung.
+- **Course detail/about/contact:** trang Chi tiết đề thi (`/courses/:testId`, `CourseDetailPage.jsx`) tập trung toàn bộ tùy chọn làm bài trên 4 tab (`Luyện tập từng phần`, `Làm full test`, `Chép chính tả`, `Thảo luận`), bảng lịch sử làm bài hiển thị đồng nhất cỡ chữ số (`15px` cho số chính, `13px` cho dòng phụ kèm điểm `Nghe`/`Đọc`) và khu vực bình luận đề thi (`TestComment`) hỗ trợ thêm/sửa inline/xóa qua modal xác nhận. Ưu tiên mục tiêu, thông tin đề, quyền truy cập, disclaimer và liên hệ hợp lệ; không thêm claims marketing thiếu căn cứ.
+- **Login/register/profile/teacher/payment/notifications:** cùng typography/form system; thể hiện loading, validation, error, pending/success/failure và bước kế tiếp đúng với server. Trang Hồ sơ (`/profile?tab=history`) tích hợp tab Lịch sử làm bài có bộ lọc và liên kết xem lại chi tiết.
+- **Exam/dictation/results:** giữ nền phẳng tại vùng đọc/làm bài, hạn chế ảnh trang trí/chuyển động dưới câu hỏi, vùng câu hỏi dễ đọc và thao tác ổn định; media theo sát context và hỗ trợ popover cài đặt tốc độ phát (`0.5×`–`2×` & `Reload File`). Trang Xem lại bài thi (`/results/:resultId`, `TestResultPage.jsx`) dùng bố cục 2 cột (`grid-cols-[1fr_320px]`) với bảng điều hướng câu hỏi cố định bên phải (`sticky`), hỗ trợ hover viền xanh `#1D4ED8` trên các ô số câu (`1..200`) và khi bấm vào số câu sẽ cuộn mượt kèm hiệu ứng highlight khung câu hỏi trong 1.8 giây giống phòng thi. Answer key/transcript vẫn theo authorization hiện tại.
 - **Classrooms/assignments:** hiển thị role, lớp đang chọn, membership, deadline và trạng thái nộp minh bạch; không đổi scope action hay policy.
-- **Admin/studio:** ưu tiên hierarchy và dữ liệu dễ quét; bảng/form/editor/autosave/modal có đủ loading/error/empty/disabled và giữ nguyên quyền/nghiệp vụ.
-- **Shell/system:** Navbar, Footer, Modal, Toast, Pagination, ProtectedRoute, Suspense, ErrorBoundary và 404 theo cùng token/hierarchy.
+- **Admin/studio (`/admin/tests`, `TestManagementPage.jsx`):** ưu tiên hierarchy và dữ liệu dễ quét; toàn bộ Modal Thêm/Sửa đề thi dùng bề mặt phẳng sạch `#FFFFFF` / `#F8FAFC` (không đặt ảnh nền trang trí dưới vùng form soạn thảo), viền mảnh `1px solid #D1D5DB`, góc `2px`, phông chữ `--editorial-font` (`EditorialNumerals` + `Gelasio`) và bảng màu đơn sắc `#111111`/`#4B5563` kết hợp điểm nhấn xanh dương `#1D4ED8`/`#EFF6FF` (không dùng các dải màu cầu vồng xanh lá/vàng/tím/hồng nặng tính AI). Thanh điều hướng Part được gộp gọn thành một hàng tab duy nhất (`Part 1 · 6/6 câu` ... `Part 7 · 54/54 câu`, nhãn số câu `white-space: nowrap` không bị rớt dòng).
+- **Shell/system:** Navbar, Footer, Modal, Toast (4 trạng thái `success`, `error`, `warning`, `info`, neo tại `top: 88px; right: 24px` dưới Navbar), Pagination, ProtectedRoute, Suspense, ErrorBoundary và 404 theo cùng token/hierarchy.
 
 ## 6. Accessibility và responsive
 

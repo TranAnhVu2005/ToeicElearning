@@ -342,6 +342,8 @@ const ExamTakePage = () => {
   const submissionStorageKey = `toeic:pending-submit:${JSON.stringify([
     testId, mode, partsParam, timeParam, assignmentId, sourceResultId, questionIdsParam,
   ])}`;
+  const progressStorageKey = `${submissionStorageKey}:progress`;
+  const forceRestartStorageKey = `${submissionStorageKey}:forceRestart`;
   const [submissionKey, setSubmissionKey] = useState(null);
   const submissionKeyRef = useRef(null);
   useEffect(() => {
@@ -421,6 +423,9 @@ const ExamTakePage = () => {
   const [submitError, setSubmitError] = useState('');
   const submitInFlightRef = useRef(false);
   const submitExamRef = useRef(null);
+  const saveInFlightRef = useRef(false);
+  const pendingAnswersRef = useRef(null);
+  const cancelRequestedRef = useRef(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
   const [highlightContent, setHighlightContent] = useState(false);
@@ -622,11 +627,18 @@ const ExamTakePage = () => {
 
           // Khởi tạo activePart ban đầu theo Part có trong đề
           const initialPart = visibleContexts[0]?.partNumber || targetPartNumbers[0] || 1;
-          setActivePart(initialPart);
+          cancelRequestedRef.current = false;
+
+          let shouldForceRestart = false;
+          try {
+            shouldForceRestart = window.sessionStorage.getItem(forceRestartStorageKey) === '1';
+          } catch {
+            shouldForceRestart = false;
+          }
 
           const sessionRequest = {
             testId,
-            restartActive: true,
+            restartActive: shouldForceRestart,
             ...(assignmentId ? { assignmentId } : {}),
             ...(sourceResultId ? { sourceResultId, questionIds: allQs.map((question) => question.id) } : {}),
             ...(mode === 'practice' && !sourceResultId ? { partNumbers: targetPartNumbers } : {}),
@@ -635,16 +647,118 @@ const ExamTakePage = () => {
           if (sessionResponse.code !== 1000 || !sessionResponse.data?.sessionId) {
             throw new Error(sessionResponse.message || 'Không thể bắt đầu phiên làm bài.');
           }
+          try {
+            window.sessionStorage.removeItem(forceRestartStorageKey);
+          } catch {
+            // ignore
+          }
           const sessionData = sessionResponse.data;
           setExamSession(sessionData);
-          answersRef.current = {};
-          setUserAnswers({});
-          const initialTime = sessionData.stopwatch ? 0
-            : Math.max(0, sessionData.remainingSeconds || initialMinutes * 60);
+
+          const validQuestionIdSet = new Set(allQs.map((q) => String(q.id)));
+          const validPartSet = new Set(visibleContexts.map((c) => c.partNumber));
+
+          let storedProgress = null;
+          try {
+            const rawProgress = window.sessionStorage.getItem(progressStorageKey);
+            if (rawProgress) {
+              storedProgress = JSON.parse(rawProgress);
+            }
+          } catch {
+            storedProgress = null;
+          }
+
+          const serverAnswers = {};
+          if (sessionData.resumed && sessionData.answers && typeof sessionData.answers === 'object') {
+            Object.entries(sessionData.answers).forEach(([qId, ans]) => {
+              const normalized = String(ans || '').toUpperCase();
+              if (validQuestionIdSet.has(String(qId)) && ['A', 'B', 'C', 'D'].includes(normalized)) {
+                serverAnswers[qId] = normalized;
+              }
+            });
+          }
+
+          const localAnswers = {};
+          const isSameSessionSnapshot = Boolean(storedProgress && storedProgress.sessionId === sessionData.sessionId);
+          if (isSameSessionSnapshot && storedProgress.answers && typeof storedProgress.answers === 'object') {
+            Object.entries(storedProgress.answers).forEach(([qId, ans]) => {
+              const normalized = String(ans || '').toUpperCase();
+              if (validQuestionIdSet.has(String(qId)) && ['A', 'B', 'C', 'D'].includes(normalized)) {
+                localAnswers[qId] = normalized;
+              }
+            });
+          }
+
+          const restoredAnswers = sessionData.resumed
+            ? { ...serverAnswers, ...localAnswers }
+            : isSameSessionSnapshot
+              ? { ...localAnswers }
+              : {};
+
+          answersRef.current = restoredAnswers;
+          setUserAnswers(restoredAnswers);
+
+          const restoredFlags = new Set(
+            isSameSessionSnapshot && Array.isArray(storedProgress.flaggedQuestions)
+              ? storedProgress.flaggedQuestions.filter((qId) => validQuestionIdSet.has(String(qId)))
+              : [],
+          );
+          setFlaggedQuestions(restoredFlags);
+
+          const restoredPart = isSameSessionSnapshot && validPartSet.has(Number(storedProgress.activePart))
+            ? Number(storedProgress.activePart)
+            : initialPart;
+          setActivePart(restoredPart);
+
+          try {
+            window.sessionStorage.setItem(
+              progressStorageKey,
+              JSON.stringify({
+                sessionId: sessionData.sessionId,
+                answers: restoredAnswers,
+                flaggedQuestions: Array.from(restoredFlags),
+                activePart: restoredPart,
+                updatedAt: Date.now(),
+              }),
+            );
+          } catch {
+            // ignore
+          }
+
+          const hasUnsyncedLocalAnswers = Object.keys(restoredAnswers).some(
+            (qId) => restoredAnswers[qId] !== serverAnswers[qId],
+          );
+          if (hasUnsyncedLocalAnswers) {
+            const unsyncedList = Object.entries(restoredAnswers)
+              .filter(([questionId, selectedAnswer]) => questionId && ['A', 'B', 'C', 'D'].includes(String(selectedAnswer).toUpperCase()))
+              .map(([questionId, selectedAnswer]) => ({
+                questionId,
+                selectedAnswer: String(selectedAnswer).toUpperCase(),
+              }));
+            examService.saveExamSessionAnswers(sessionData.sessionId, unsyncedList).catch(() => {});
+          }
+
+          let initialTime;
+          if (isStopwatch) {
+            initialTime = sessionData.resumed
+              ? Math.max(0, Number(sessionData.elapsedSeconds) || 0)
+              : 0;
+          } else if (sessionData.stopwatch) {
+            const elapsed = sessionData.resumed ? Math.max(0, Number(sessionData.elapsedSeconds) || 0) : 0;
+            initialTime = Math.max(0, initialMinutes * 60 - elapsed);
+          } else {
+            const remaining = Number(sessionData.remainingSeconds);
+            initialTime = Math.max(
+              0,
+              Number.isFinite(remaining) && remaining > 0 ? remaining : initialMinutes * 60,
+            );
+          }
           timeRemainingRef.current = initialTime;
           setTimeRemaining(initialTime);
           setTimerActive(true);
-          if (sessionData.timeUp) setTimeout(() => submitExamRef.current?.(), 0);
+          if (sessionData.timeUp || (!isStopwatch && initialTime === 0 && sessionData.resumed)) {
+            setTimeout(() => submitExamRef.current?.(), 0);
+          }
         } else {
           setError(res.message || 'Không thể tải đề thi.');
         }
@@ -662,7 +776,57 @@ const ExamTakePage = () => {
     if (testId) {
       fetchTest();
     }
-  }, [testId, mode, targetPartNumbers, isStopwatch, initialMinutes, sourceResultId, practiceQuestionIds, assignmentId]);
+  }, [testId, mode, targetPartNumbers, isStopwatch, initialMinutes, sourceResultId, practiceQuestionIds, assignmentId, progressStorageKey, forceRestartStorageKey]);
+
+  const queueSaveSessionAnswers = useCallback((sessionId, answersMap) => {
+    if (!sessionId || cancelRequestedRef.current || isSubmitted) return;
+    pendingAnswersRef.current = { sessionId, answersMap: { ...(answersMap || {}) } };
+    if (saveInFlightRef.current) return;
+
+    const runSaveLoop = async () => {
+      saveInFlightRef.current = true;
+      try {
+        while (pendingAnswersRef.current && !cancelRequestedRef.current) {
+          const currentBatch = pendingAnswersRef.current;
+          pendingAnswersRef.current = null;
+          const formattedAnswers = Object.entries(currentBatch.answersMap)
+            .filter(([questionId, selectedAnswer]) => questionId && ['A', 'B', 'C', 'D'].includes(String(selectedAnswer).toUpperCase()))
+            .map(([questionId, selectedAnswer]) => ({
+              questionId,
+              selectedAnswer: String(selectedAnswer).toUpperCase(),
+            }));
+          try {
+            await examService.saveExamSessionAnswers(currentBatch.sessionId, formattedAnswers);
+          } catch {
+            // Local sessionStorage snapshot keeps latest state across reload if network temporarily fails.
+          }
+        }
+      } finally {
+        saveInFlightRef.current = false;
+      }
+    };
+
+    runSaveLoop();
+  }, [isSubmitted]);
+
+  // Keep sessionStorage progress snapshot in sync with answers, flagged questions, and activePart
+  useEffect(() => {
+    if (!examSession?.sessionId || isSubmitted || cancelRequestedRef.current) return;
+    try {
+      window.sessionStorage.setItem(
+        progressStorageKey,
+        JSON.stringify({
+          sessionId: examSession.sessionId,
+          answers: userAnswers,
+          flaggedQuestions: Array.from(flaggedQuestions),
+          activePart,
+          updatedAt: Date.now(),
+        }),
+      );
+    } catch {
+      // ignore
+    }
+  }, [examSession, userAnswers, flaggedQuestions, activePart, isSubmitted, progressStorageKey]);
 
   // 2. Countdown or Stopwatch Timer
   useEffect(() => {
@@ -706,6 +870,23 @@ const ExamTakePage = () => {
         [qId]: option,
       };
       answersRef.current = next;
+      if (examSession?.sessionId && !cancelRequestedRef.current) {
+        try {
+          window.sessionStorage.setItem(
+            progressStorageKey,
+            JSON.stringify({
+              sessionId: examSession.sessionId,
+              answers: next,
+              flaggedQuestions: Array.from(flaggedQuestions),
+              activePart,
+              updatedAt: Date.now(),
+            }),
+          );
+        } catch {
+          // ignore
+        }
+        queueSaveSessionAnswers(examSession.sessionId, next);
+      }
       return next;
     });
   };
@@ -726,23 +907,22 @@ const ExamTakePage = () => {
   // Jump to question: switches Part if necessary and scrolls directly to question card
   const handleJumpToQuestion = (q) => {
     setMobilePaletteOpen(false);
+    const triggerHighlight = (el) => {
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.remove('question-jump-highlight', 'ring-2', 'ring-emerald-500');
+      void el.offsetWidth;
+      el.classList.add('question-jump-highlight', 'ring-2', 'ring-emerald-500');
+      setTimeout(() => el.classList.remove('question-jump-highlight', 'ring-2', 'ring-emerald-500'), 1600);
+    };
+
     if (activePart !== q.partNumber) {
       setActivePart(q.partNumber);
       setTimeout(() => {
-        const el = document.getElementById(`q-${q.id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('ring-2', 'ring-emerald-500');
-          setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-500'), 1500);
-        }
+        triggerHighlight(document.getElementById(`q-${q.id}`));
       }, 150);
     } else {
-      const el = document.getElementById(`q-${q.id}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-emerald-500');
-        setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-500'), 1500);
-      }
+      triggerHighlight(document.getElementById(`q-${q.id}`));
     }
   };
 
@@ -780,8 +960,11 @@ const ExamTakePage = () => {
       setSubmissionResult(response.data);
       setIsSubmitted(true);
       setTimerActive(false);
+      pendingAnswersRef.current = null;
       try {
         window.sessionStorage.removeItem(submissionStorageKey);
+        window.sessionStorage.removeItem(progressStorageKey);
+        window.sessionStorage.removeItem(forceRestartStorageKey);
       } catch {
         // A successful response ends this component's submit lifecycle regardless.
       }
@@ -801,31 +984,58 @@ const ExamTakePage = () => {
       submitInFlightRef.current = false;
       setIsSubmitting(false);
     }
-  }, [isSubmitted, isStopwatch, initialMinutes, testId, assignmentId, sourceResultId, flatQuestions, mode, targetPartNumbers, navigate, submissionStorageKey, submissionKey, examSession]);
+  }, [isSubmitted, isStopwatch, initialMinutes, testId, assignmentId, sourceResultId, flatQuestions, mode, targetPartNumbers, navigate, submissionStorageKey, progressStorageKey, forceRestartStorageKey, submissionKey, examSession]);
 
   useEffect(() => {
     submitExamRef.current = handleSubmitExam;
   }, [handleSubmitExam]);
 
-  // Handle user confirming exit midway
-  const handleConfirmExit = useCallback(() => {
+  // Handle user confirming exit midway — cancels active session so it will not be resumed
+  const handleConfirmExit = useCallback(async () => {
+    cancelRequestedRef.current = true;
+    pendingAnswersRef.current = null;
     setExitModalOpen(false);
     setTimerActive(false);
     try {
       window.sessionStorage.removeItem(submissionStorageKey);
+      window.sessionStorage.removeItem(progressStorageKey);
     } catch {
       // ignore
     }
+    if (examSession?.sessionId) {
+      try {
+        await examService.cancelExamSession(examSession.sessionId);
+      } catch {
+        try {
+          window.sessionStorage.setItem(forceRestartStorageKey, '1');
+        } catch {
+          // ignore
+        }
+      }
+    }
     navigate(`/courses/${testId}`, { replace: true });
-  }, [testId, submissionStorageKey, navigate]);
+  }, [testId, submissionStorageKey, progressStorageKey, forceRestartStorageKey, examSession, navigate]);
 
-  // Intercept browser leave/reload and browser Back button
+  // Flush local progress on reload/pagehide and intercept browser Back button to show exit confirmation modal
   useEffect(() => {
     if (isSubmitted) return undefined;
 
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
+    const handleBeforeUnload = () => {
+      if (!examSession?.sessionId || cancelRequestedRef.current) return;
+      try {
+        window.sessionStorage.setItem(
+          progressStorageKey,
+          JSON.stringify({
+            sessionId: examSession.sessionId,
+            answers: answersRef.current || {},
+            flaggedQuestions: Array.from(flaggedQuestions),
+            activePart,
+            updatedAt: Date.now(),
+          }),
+        );
+      } catch {
+        // ignore
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -841,7 +1051,7 @@ const ExamTakePage = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [isSubmitted]);
+  }, [isSubmitted, examSession, progressStorageKey, flaggedQuestions, activePart]);
 
   // Score Calculation
   const scoreResults = useMemo(() => {
@@ -1535,7 +1745,7 @@ const ExamTakePage = () => {
                 )}
 
                 <div className="mt-2.5 border border-slate-200/90 bg-[#F8FAFC] p-2.5 text-[13px] leading-relaxed text-slate-600">
-                  <strong>Lưu ý:</strong> Hãy bấm <strong>Nộp bài thi</strong> khi hoàn thành để hệ thống chấm điểm và lưu kết quả. Nếu thoát giữa chừng, kết quả sẽ không được lưu.
+                  <strong>Lưu ý:</strong> Tiến trình đang làm được tự động lưu giữ nếu trang bị tải lại (reload). Hãy bấm <strong>Nộp bài thi</strong> khi hoàn thành; nếu xác nhận thoát phòng thi, phiên sẽ bị hủy.
                 </div>
               </div>
 
@@ -1715,7 +1925,7 @@ const ExamTakePage = () => {
 
             <h3 className="mb-2 text-xl font-semibold text-slate-800">Rời khỏi bài thi?</h3>
             <p className="mb-6 text-sm leading-relaxed text-slate-600">
-              Bạn đang trong quá trình làm bài thi. Nếu rời đi bây giờ, phiên làm bài sẽ kết thúc và kết quả sẽ <strong>không được lưu lại</strong>.
+              Bạn đang trong quá trình làm bài thi. Nếu xác nhận rời đi bây giờ, phiên làm bài hiện tại sẽ <strong>bị hủy bỏ</strong> và kết quả sẽ <strong>không được lưu lại</strong>.
             </p>
 
             <div className="flex gap-3">

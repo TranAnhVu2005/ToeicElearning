@@ -1124,6 +1124,19 @@ public class ExamServiceImpl implements ExamService {
         return toSessionResponse(session, now, true);
     }
 
+    @Override
+    @Transactional
+    public void cancelExamSession(User currentUser, String sessionId) {
+        ExamSession session = examSessionRepository.findOwnedForUpdate(sessionId, currentUser.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.TEST_ACCESS_REQUIRED));
+        if (session.getStatus() == ExamSessionStatus.ACTIVE) {
+            session.setStatus(ExamSessionStatus.CANCELLED);
+            session.setAnswersJson("{}");
+            session.setTargetQuestionIds("[]");
+            session.setLastSavedAt(LocalDateTime.now());
+        }
+    }
+
     private void validateActiveSession(ExamSession session, User user, LocalDateTime now, boolean rejectTimeUp) {
         if (!session.getUser().getId().equals(user.getId()) || session.getStatus() != ExamSessionStatus.ACTIVE
                 || !session.getExpiresAt().isAfter(now)) throw new AppException(ErrorCode.TEST_ACCESS_REQUIRED);

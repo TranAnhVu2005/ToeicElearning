@@ -37,10 +37,10 @@ Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý ngư�
 - Luyện lại câu sai, luyện nghe transcript/audio và chép chính tả từ nội dung có bản quyền sử dụng hợp lệ.
 
 ## 3. Nền tảng hiện tại
-- Backend: Java 17, Spring Boot/Maven, Spring Data JPA, Spring Security, MySQL.
-- Frontend: React/JSX, Vite, React Router, Tailwind CSS, Axios.
-- JWT bearer auth; media bài thi lưu Cloudinary.
-- Mô hình đề: `Test -> ContextQuestion -> Question`, với `Part` cho 7 phần TOEIC.
+- Backend: Java 17, Spring Boot 4.1.0/Maven, Spring Data JPA (Hibernate 7.4), Spring Security, MySQL.
+- Frontend: React 19/JSX, Vite 8, React Router, Tailwind CSS, Axios.
+- JWT bearer auth (kèm `authVersion` thu hồi token); media bài thi lưu Cloudinary (public cho đề thường/ảnh bìa, `authenticated` cho đề VIP, `raw/private` cho PDF lớp học).
+- Mô hình đề: `Test -> ContextQuestion -> Question`, với `Part` cho 7 phần TOEIC; thảo luận đề thi lưu tại `TestComment` (`test_comment`).
 - Đọc `PROJECT_CONTEXT.md` (mục tiêu gọn, không quá khoảng 130 dòng) để biết entry points, command, trạng thái thực thi và các giới hạn đang biết.
 
 ## 4. Định hướng kiến trúc sản phẩm
@@ -60,7 +60,7 @@ Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý ngư�
 
 ## 5. Nguồn định dạng và giới hạn điểm thi
 
-Yêu cầu Part 1–7 khớp cấu trúc TOEIC Listening & Reading 200 câu; ETS mô tả Listening 100 câu/45 phút, Reading 100 câu/75 phút và 7 Parts. Tuy nhiên điểm ETS dùng scaled score 5–495 mỗi section và conversion raw-to-scaled phụ thuộc từng test form/equating; bảng chuyển đổi chính thức không được công bố chung. Vì vậy không quảng bá điểm tự quy đổi là “điểm ETS chính xác” trừ khi hệ thống dùng conversion table được phép cho đúng form. Nếu không, ghi rõ “điểm ước tính theo mô hình luyện tập”.
+Yêu cầu Part 1–7 khớp cấu trúc TOEIC Listening & Reading 200 câu; ETS mô tả Listening 100 câu/45 phút, Reading 100 câu/75 phút và 7 Parts. Tuy nhiên điểm ETS dùng scaled score 5–495 mỗi section và conversion raw-to-scaled phụ thuộc từng test form/equating; bảng chuyển đổi chính thức không được công bố chung. Vì vậy không quảng bá điểm tự quy đổi là “điểm ETS chính xác” trừ khi hệ thống dùng conversion table được phép cho đúng form. Trong mã nguồn hiện tại (`ExamServiceImpl.java`), bài thi đủ 200 câu (Full Test) được quy đổi bằng 2 bảng tra cứu ước tính độc lập 0–100 câu (`LISTENING_SCORE_TABLE` và `READING_SCORE_TABLE`, mỗi phần 5–495 điểm, tổng 10–990 điểm) và luôn gắn nhãn rõ là **điểm ước tính** (`ESTIMATED_TOEIC`); các bài luyện từng Part hoặc dưới 200 câu hiển thị trực tiếp số câu trả lời đúng (`RAW_COUNT`).
 
 Nguồn chính thức: [ETS TOEIC Listening & Reading format](https://www.ets.org/content/ets-org/language-master/in/home/toeic/test-takers/about/listening-reading.html), [ETS Examinee Handbook và raw-to-scaled conversion](https://www.ets.org/content/dam/ets-org/fr/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf).
 
@@ -84,7 +84,7 @@ Thứ tự là đề xuất quản trị scope, chủ dự án có thể thay đ
 
 - **Diagnostic + study plan:** bài đánh giá ngắn, mục tiêu điểm/ngày thi và gợi ý nội dung luyện từ phần yếu. Đây là chức năng định hướng học, không được tuyên bố đảm bảo tăng điểm.
 - **Wrong-answer notebook + spaced repetition:** gom câu sai/bỏ trống và nhắc ôn lại; người học có thể loại câu khỏi danh sách hoặc đánh dấu đã nắm.
-- **Resumable exam session (đã được chọn và nối code):** autosave/khôi phục đáp án, đồng hồ server, scope và fingerprint nội dung đề, idempotent submit; chính sách thời lượng/retention và giới hạn còn ghi trong `docs/02_DATABASE.md`, `docs/04_FLOW_LOGIC.md`.
+- **Resumable exam session (đã được chọn và triển khai):** tự động lưu đáp án hai lớp (`sessionStorage` + `PATCH /api/exam/sessions/{sessionId}/answers`), tự động khôi phục phiên `ACTIVE` khi người dùng bị sự cố tải lại trang (F5/reload) qua `POST /api/exam/sessions` (`restartActive: false`), và chỉ hủy bỏ phiên (`DELETE /api/exam/sessions/{sessionId}`) khi người dùng chủ động nhấn thoát phòng thi và xác nhận không nộp; xem chi tiết tại `docs/02_DATABASE.md`, `docs/03_API_SPEC.md` và `docs/04_FLOW_LOGIC.md`.
 - **Content quality workflow:** báo lỗi câu/audio/ảnh/đáp án; Admin xem hàng đợi, ghi quyết định và version đề để tránh sửa âm thầm kết quả cũ.
 - **Listening controls:** tốc độ phát, tua lùi ngắn, transcript hiện sau lượt luyện hoặc theo quyền cài đặt; không làm lộ transcript/answer trong chế độ mock exam.
 - **Operational reporting:** phân biệt attempt bắt đầu/nộp, funnel xem đề → checkout → thanh toán → hoàn thành; chỉ lưu metric cần thiết.

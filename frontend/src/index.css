@@ -22,8 +22,8 @@
   --color-surface: #FFFFFF;
   --color-border: #C9CDD3;
 
-  --font-heading: 'Gelasio', Georgia, serif;
-  --font-body: 'Gelasio', Georgia, serif;
+  --font-heading: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif;
+  --font-body: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif;
 }
 
 :root {
@@ -3003,45 +3003,46 @@ h3 {
 .test-builder-modal *,
 .test-structure-reference-modal,
 .test-structure-reference-modal * {
-  font-family: 'Gelasio', Georgia, serif !important;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "lnum" 1;
+  font-family: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+:where(.test-management-page, .test-builder-modal, .test-structure-reference-modal) :where(code, kbd, .font-mono) {
+  font-family: 'Ubuntu Mono', ui-monospace, monospace !important;
 }
 
 .test-management-page {
   min-height: 100vh;
-  background: #F8FAFC;
-  color: #0F172A;
+  background: #FFFFFF;
+  color: #111827;
 }
 
 .test-management-page .test-studio-header {
   position: relative;
   overflow: hidden;
-  padding: 28px 32px;
-  border: 1px solid #CBD5E1;
-  border-radius: 8px;
-  background-image:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.91) 48%, rgba(248, 250, 252, 0.78) 78%, rgba(15, 23, 42, 0.25) 100%),
-    url('./assets/img/coursepage/biasach.jpg');
-  background-size: cover;
-  background-position: center 36%;
-  box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.1);
+  padding: 24px 28px;
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
+  background: #F8FAFC;
+  background-image: none;
+  box-shadow: none;
 }
 
 .test-studio-icon {
-  border: 1px solid rgba(29, 78, 216, 0.2);
-  border-radius: 8px;
-  background: rgba(239, 246, 255, 0.95);
+  border: 1px solid #BFDBFE;
+  border-radius: 2px;
+  background: #EFF6FF;
   color: #1D4ED8;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.08);
+  box-shadow: none;
 }
 
 .test-studio-scope {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border: 1px solid #BFDBFE;
-  border-radius: 999px;
+  border-radius: 2px;
   background: #EFF6FF;
   color: #1D4ED8;
   font-size: 12px;
@@ -3050,22 +3051,22 @@ h3 {
 }
 
 .test-management-page .test-studio-title {
-  color: #0F172A;
+  color: #111111;
   font-weight: 700;
   letter-spacing: -0.015em;
 }
 
 .test-management-page .test-studio-header p {
-  color: #334155;
+  color: #4B5563;
 }
 
 .test-studio-create {
   border: 1px solid #1D4ED8 !important;
-  border-radius: 6px !important;
+  border-radius: 2px !important;
   background: #1D4ED8 !important;
   color: #FFFFFF !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.2) !important;
+  box-shadow: none !important;
 }
 
 .test-studio-create:hover {
@@ -3074,14 +3075,14 @@ h3 {
 }
 
 .test-management-page .test-studio-nav {
-  border-bottom: 1px solid #E2E8F0;
+  border-bottom: 1px solid #D1D5DB;
 }
 
 .test-management-page .test-studio-nav > * {
-  border: 1px solid transparent;
+  border: 0;
   border-bottom: 2px solid transparent;
-  border-radius: 6px 6px 0 0;
-  color: #475569;
+  border-radius: 0;
+  color: #4B5563;
   background: transparent;
   text-decoration: none;
   font-weight: 500;
@@ -3089,12 +3090,11 @@ h3 {
 }
 
 .test-management-page .test-studio-nav > *:hover {
-  color: #0F172A;
-  background: rgba(255, 255, 255, 0.7);
+  color: #111111;
+  background: #F8FAFC;
 }
 
 .test-management-page .test-studio-nav > .is-active {
-  border-color: #E2E8F0;
   border-bottom-color: #1D4ED8;
   background: #FFFFFF;
   color: #1D4ED8;
@@ -3103,23 +3103,23 @@ h3 {
 
 .test-studio-count {
   border: 1px solid #BFDBFE;
-  border-radius: 999px;
+  border-radius: 2px;
   background: #EFF6FF;
   color: #1D4ED8;
 }
 
 .test-studio-status {
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
   background: #FFFFFF;
-  color: #475569;
+  color: #374151;
   font-weight: 600;
   transition: all 160ms ease;
 }
 
 .test-studio-status:hover {
-  border-color: #94A3B8;
-  color: #0F172A;
+  border-color: #9CA3AF;
+  color: #111111;
   background: #F8FAFC;
 }
 
@@ -3127,69 +3127,69 @@ h3 {
   border-color: #1D4ED8;
   background: #EFF6FF;
   color: #1D4ED8;
-  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.1);
+  box-shadow: none;
 }
 
 .test-studio-filterbar {
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  background: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
+  background: #F9FAFB;
+  box-shadow: none;
 }
 
 .test-studio-input,
 .test-studio-select {
   min-height: 42px;
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
   background: #FFFFFF;
-  color: #0F172A;
+  color: #111827;
 }
 
 .test-studio-list {
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
   background: #FFFFFF;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  box-shadow: none;
 }
 
 .test-management-page .test-studio-table thead tr {
-  border-bottom: 1px solid #E2E8F0;
-  background: #F8FAFC;
-  color: #334155;
+  border-bottom: 1px solid #D1D5DB;
+  background: #F1F1F1;
+  color: #111827;
 }
 
 .test-management-page .test-studio-table th {
-  color: #334155;
+  color: #111827;
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0;
 }
 
 .test-management-page .test-studio-table tbody tr {
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid #E5E7EB;
 }
 
 .test-management-page .test-studio-table tbody tr:hover {
-  background: #F8FAFC;
+  background: #F9FAFB;
 }
 
 .test-management-page .test-studio-table td {
-  color: #0F172A;
+  color: #111827;
 }
 
 .test-studio-format {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #E2E8F0;
-  border-radius: 4px;
+  border: 1px solid #D1D5DB;
+  border-radius: 2px;
   background: #F8FAFC;
-  color: #475569;
+  color: #374151;
   font-weight: 500;
 }
 
 .test-studio-spinner {
-  border: 3px solid #E2E8F0;
+  border: 3px solid #E5E7EB;
   border-right-color: #1D4ED8;
   border-radius: 50%;
   animation: test-studio-spin 0.8s linear infinite;
@@ -3205,50 +3205,44 @@ h3 {
 .test-builder-modal {
   width: min(1160px, calc(100vw - 32px)) !important;
   max-width: 1160px !important;
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24) !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  box-shadow: 0 20px 48px rgba(17, 24, 39, 0.2) !important;
   background: #FFFFFF !important;
   overflow: hidden;
 }
 
 .test-builder-modal .modal-header {
   flex: 0 0 auto;
-  padding: 20px 28px !important;
-  border-bottom: 1px solid #CBD5E1 !important;
-  background-image:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.91) 50%, rgba(248, 250, 252, 0.78) 80%, rgba(15, 23, 42, 0.22) 100%),
-    url('./assets/img/coursepage/biasach.jpg') !important;
-  background-size: cover !important;
-  background-position: center 38% !important;
-  color: #0F172A !important;
+  padding: 18px 28px !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  background: #FFFFFF !important;
+  background-image: none !important;
+  color: #111111 !important;
 }
 
 .test-builder-modal .modal-title {
-  color: #0F172A !important;
-  font-family: 'Gelasio', Georgia, serif !important;
-  font-size: clamp(20px, 2.1vw, 26px) !important;
+  color: #111111 !important;
+  font-family: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif !important;
+  font-size: clamp(20px, 2vw, 24px) !important;
   font-weight: 700 !important;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
 .test-builder-modal .modal-body {
   padding: 0 28px 28px !important;
-  background-image:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.94) 0%, rgba(241, 245, 249, 0.96) 100%),
-    url('./assets/img/coursepage/biasach.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
+  background: #F8FAFC !important;
+  background-image: none !important;
 }
 
 .test-builder-modal .modal-footer {
-  border-top: 1px solid #E2E8F0 !important;
+  border-top: 1px solid #D1D5DB !important;
   background: #FFFFFF !important;
 }
 
 .test-builder-form {
-  color: #0F172A !important;
+  color: #111827 !important;
   gap: 20px !important;
 }
 
@@ -3257,59 +3251,49 @@ h3 {
   top: 0;
   z-index: 40;
   margin: 0 -28px !important;
-  padding: 14px 28px !important;
-  border-bottom: 1px solid #CBD5E1 !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+  padding: 12px 28px !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05) !important;
 }
 
 .test-builder-basic-info,
-.test-builder-part-panel {
-  padding: 24px !important;
-  border: 1px solid #DCE3EC !important;
-  border-radius: 8px !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04) !important;
-}
-
+.test-builder-part-panel,
 .test-builder-guide {
-  padding: 20px 24px !important;
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 8px !important;
-  background-image:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.92) 65%, rgba(239, 246, 255, 0.88) 100%),
-    url('./assets/img/coursepage/biasach.jpg') !important;
-  background-size: cover !important;
-  background-position: center 60% !important;
-  color: #0F172A !important;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+  padding: 24px !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  background: #FFFFFF !important;
+  background-image: none !important;
+  color: #111827 !important;
+  box-shadow: none !important;
 }
 
 .test-builder-guide-label {
-  padding: 3px 10px;
+  padding: 2px 8px;
   border: 1px solid #BFDBFE !important;
-  border-radius: 999px !important;
+  border-radius: 2px !important;
   background: #EFF6FF !important;
   color: #1D4ED8 !important;
   font-weight: 600 !important;
 }
 
 .test-builder-guide-summary {
-  color: #334155 !important;
+  color: #4B5563 !important;
 }
 
 .test-builder-part-tabs {
-  border-bottom: 1px solid #CBD5E1 !important;
+  border-bottom: 1px solid #D1D5DB !important;
 }
 
 .test-builder-part-tab-wrap {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid #CBD5E1 !important;
+  border: 1px solid #D1D5DB !important;
   border-bottom: 0 !important;
-  border-radius: 6px 6px 0 0 !important;
-  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 2px 2px 0 0 !important;
+  background: #F8FAFC !important;
   overflow: hidden;
   transition: all 160ms ease;
 }
@@ -3320,15 +3304,16 @@ h3 {
   gap: 8px;
   padding: 10px 14px;
   border: 0;
-  color: #334155 !important;
+  color: #374151 !important;
   background: transparent !important;
   font-weight: 600;
+  white-space: nowrap !important;
   transition: all 160ms ease;
 }
 
 .test-builder-part-tab:hover {
   color: #1D4ED8 !important;
-  background: #F8FAFC !important;
+  background: #FFFFFF !important;
 }
 
 .test-builder-part-tab.is-active {
@@ -3338,26 +3323,29 @@ h3 {
 }
 
 .test-builder-question-count {
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 999px !important;
-  padding: 1px 8px;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  padding: 1px 7px;
   background: #FFFFFF !important;
-  color: #475569 !important;
+  color: #4B5563 !important;
+  font-family: 'Ubuntu Mono', ui-monospace, monospace !important;
   font-size: 0.72rem;
 }
 
 .test-builder-part-tab.is-active .test-builder-question-count {
-  border-color: #93C5FD !important;
-  background: #DBEAFE !important;
-  color: #1E40AF !important;
+  border-color: #BFDBFE !important;
+  background: #FFFFFF !important;
+  color: #1D4ED8 !important;
 }
 
 .test-builder-remove-part {
   padding: 0 9px;
   border: 0;
-  border-left: 1px solid #E2E8F0 !important;
+  border-left: 1px solid #D1D5DB !important;
   background: transparent;
-  color: #64748B;
+  color: #6B7280;
 }
 
 .test-builder-remove-part:hover {
@@ -3368,36 +3356,30 @@ h3 {
 .part-studio-banner {
   position: relative;
   overflow: hidden;
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 8px !important;
-  background-image:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.93) 65%, rgba(241, 245, 249, 0.85) 100%),
-    url('./assets/img/coursepage/biasach.jpg') !important;
-  background-size: cover !important;
-  background-position: center 45% !important;
-  color: #0F172A !important;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03) !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  background: #F8FAFC !important;
+  background-image: none !important;
+  color: #111827 !important;
+  box-shadow: none !important;
 }
 
 .test-structure-reference-modal {
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2) !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
+  box-shadow: 0 20px 48px rgba(17, 24, 39, 0.2) !important;
   background: #FFFFFF !important;
 }
 
 .test-structure-reference-modal .modal-header {
-  border-bottom: 1px solid #CBD5E1 !important;
-  background-image:
-    linear-gradient(100deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.88) 100%),
-    url('./assets/img/coursepage/biasach.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  color: #0F172A !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  background: #FFFFFF !important;
+  background-image: none !important;
+  color: #111111 !important;
 }
 
 .test-structure-reference-modal .modal-title {
-  color: #0F172A !important;
+  color: #111111 !important;
   font-weight: 700 !important;
 }
 
@@ -3406,27 +3388,27 @@ h3 {
 }
 
 .test-structure-reference-banner {
-  border: 1px solid #CBD5E1 !important;
-  border-radius: 8px !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 2px !important;
   background: #FFFFFF !important;
-  color: #0F172A !important;
+  color: #111827 !important;
 }
 
 .test-structure-reference table {
   width: 100%;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #D1D5DB !important;
   border-collapse: collapse;
   background: #FFFFFF;
 }
 
 .test-structure-reference th {
-  background: #F8FAFC !important;
-  color: #0F172A !important;
+  background: #F1F1F1 !important;
+  color: #111111 !important;
 }
 
 .test-structure-reference th,
 .test-structure-reference td {
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #D1D5DB !important;
   padding: 10px 12px;
 }
 
@@ -3459,7 +3441,8 @@ h3 {
     padding: 12px 16px !important;
   }
   .test-builder-basic-info,
-  .test-builder-part-panel {
+  .test-builder-part-panel,
+  .test-builder-guide {
     padding: 16px !important;
   }
 }
@@ -3508,13 +3491,13 @@ h3 {
   --neo-line: 1px solid #D1D5DB;
   --neo-shadow: none;
   --neo-shadow-lg: none;
-  --font-heading: 'Gelasio', Georgia, serif;
-  --font-body: 'Gelasio', Georgia, serif;
+  --font-heading: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif;
+  --font-body: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif;
 }
 
 html { scroll-behavior: smooth; }
-body { font-family: 'Gelasio', Georgia, serif; color: #111827; background: #F1F1F1; line-height: 1.6; }
-h1, h2, h3, h4, h5, h6 { font-family: 'Gelasio', Georgia, serif; color: #111111; line-height: 1.2; }
+body { font-family: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif; color: #111827; background: #F1F1F1; line-height: 1.6; font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; }
+h1, h2, h3, h4, h5, h6 { font-family: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif; color: #111111; line-height: 1.2; font-variant-numeric: lining-nums tabular-nums; }
 code, kbd, .font-mono { font-family: 'Ubuntu Mono', ui-monospace, monospace; }
 :focus-visible { outline: 2px solid #1D4ED8 !important; outline-offset: 2px; }
 button, a, input, select, textarea { transition-duration: 160ms; }

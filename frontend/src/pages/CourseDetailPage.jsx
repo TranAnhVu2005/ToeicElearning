@@ -1267,7 +1267,7 @@ const CourseDetailPage = () => {
                     </div>
                   </div>
                   {isAuthenticated && testHistory.length > 0 && (
-                    <span className="inline-flex items-center rounded-[3px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-medium text-slate-600">
+                    <span className="inline-flex items-center rounded-[3px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-[13px] font-medium text-slate-600 tabular-nums">
                       {testHistory.length} lượt làm bài
                     </span>
                   )}
@@ -1294,7 +1294,7 @@ const CourseDetailPage = () => {
                   </div>
                 ) : (
                   <div className="course-history-table overflow-x-auto rounded-[3px] border border-slate-200">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse tabular-nums">
                       <thead>
                         <tr className="border-b border-slate-200 bg-[#F8FAFC] text-[14px] font-semibold text-slate-600">
                           <th className="py-3.5 px-4 whitespace-nowrap">Ngày làm bài</th>
@@ -1303,7 +1303,7 @@ const CourseDetailPage = () => {
                           <th className="py-3.5 px-4 text-right whitespace-nowrap">Chi tiết</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-200/80 bg-white text-[14px]">
+                      <tbody className="divide-y divide-slate-200/80 bg-white text-[15px]">
                         {testHistory.map((h, idx) => {
                           const isFullTestAttempt = h.scoreType === 'ESTIMATED_SCALED' || h.totalCount === 200;
                           const badgeLabel = isFullTestAttempt
@@ -1315,44 +1315,44 @@ const CourseDetailPage = () => {
                           return (
                             <tr key={h.id || idx} className="hover:bg-[#F8FAFC] transition-colors">
                               <td className="py-4 px-4 align-middle">
-                                <div className="text-[15px] font-semibold text-slate-800 whitespace-nowrap">
+                                <div className="text-[15px] font-semibold text-slate-800 whitespace-nowrap leading-snug tabular-nums">
                                   {h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : '—'}
                                 </div>
                                 <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
                                   <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 text-[12px] font-medium rounded-[2px] border whitespace-nowrap ${
-                                      isFullTestAttempt
+                                    className={`inline-flex items-center px-2.5 py-0.5 text-[13px] font-medium rounded-[2px] border whitespace-nowrap leading-snug tabular-nums ${isFullTestAttempt
                                         ? 'bg-[#EFF6FF] text-[#1D4ED8] border-blue-200'
                                         : 'bg-amber-50/90 text-amber-800 border-amber-200'
-                                    }`}
+                                      }`}
                                   >
                                     {badgeLabel}
                                   </span>
                                 </div>
                               </td>
                               <td className="py-4 px-4 align-middle">
-                                <div className="flex items-baseline gap-1.5 whitespace-nowrap">
-                                  <span className="text-[18px] font-semibold text-[#1D4ED8]">
+                                <div className="flex items-baseline gap-1.5 whitespace-nowrap leading-snug tabular-nums">
+                                  <span className="text-[15px] font-bold text-[#1D4ED8]">
                                     {h.totalScore}
                                   </span>
-                                  <span className="text-[14px] font-normal text-slate-500">
-                                    {h.scoreType === 'ESTIMATED_SCALED' ? '/ 990 điểm (ước tính)' : `/ ${h.totalCount} câu`}
+                                  <span className="text-[15px] font-semibold text-slate-700">
+                                    {h.scoreType === 'ESTIMATED_SCALED' ? '/ 990 điểm' : `/ ${h.totalCount} câu`}
                                   </span>
+
                                 </div>
-                                <div className="mt-1 flex items-center gap-2 text-[13px] text-slate-500 whitespace-nowrap">
+                                <div className="mt-1.5 flex items-center gap-2 text-[13px] text-slate-600 whitespace-nowrap leading-snug tabular-nums">
                                   <span>
-                                    Đúng <strong className="font-semibold text-slate-700">{h.correctCount}/{h.totalCount}</strong> câu
+                                    Đúng <strong className="font-semibold text-slate-800">{h.correctCount}/{h.totalCount}</strong> câu
                                   </span>
                                   {h.scoreType === 'ESTIMATED_SCALED' && h.listeningScore != null && h.readingScore != null && (
-                                    <span className="text-slate-400">
-                                      · Nghe: <strong className="font-medium text-slate-600">{h.listeningScore}</strong> · Đọc: <strong className="font-medium text-slate-600">{h.readingScore}</strong>
+                                    <span className="text-slate-500">
+                                      · Nghe: <strong className="font-semibold text-slate-800">{h.listeningScore}</strong> · Đọc: <strong className="font-semibold text-slate-800">{h.readingScore}</strong>
                                     </span>
                                   )}
                                 </div>
                               </td>
                               <td className="py-4 px-4 align-middle whitespace-nowrap">
-                                <span className="inline-flex items-center gap-1.5 text-[14px] font-medium text-slate-700">
-                                  <Clock size={14} strokeWidth={1.6} className="text-slate-400 shrink-0" />
+                                <span className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-slate-700 leading-snug tabular-nums">
+                                  <Clock size={15} strokeWidth={1.7} className="text-slate-400 shrink-0" />
                                   <span>{h.timeSpentFormatted || '—'}</span>
                                 </span>
                               </td>

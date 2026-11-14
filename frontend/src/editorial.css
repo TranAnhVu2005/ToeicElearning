@@ -1,4 +1,36 @@
 /* Editorial design system. Legacy class names are retained as structural hooks only. */
+@font-face {
+  font-family: 'EditorialNumerals';
+  src: local('Times New Roman'), local('Cambria'), local('Liberation Serif');
+  unicode-range: U+0030-0039;
+  font-weight: 100 599;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EditorialNumerals';
+  src: local('Times New Roman Bold'), local('Times New Roman'), local('Cambria Bold'), local('Cambria'), local('Liberation Serif Bold');
+  unicode-range: U+0030-0039;
+  font-weight: 600 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EditorialNumerals';
+  src: local('Times New Roman Italic'), local('Times New Roman'), local('Cambria Italic'), local('Cambria'), local('Liberation Serif Italic');
+  unicode-range: U+0030-0039;
+  font-weight: 100 599;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'EditorialNumerals';
+  src: local('Times New Roman Bold Italic'), local('Times New Roman Bold'), local('Times New Roman'), local('Cambria Bold Italic'), local('Cambria');
+  unicode-range: U+0030-0039;
+  font-weight: 600 900;
+  font-style: italic;
+}
+
 :root {
   --editorial-primary: #111111;
   --editorial-secondary: #f1f1f1;
@@ -11,7 +43,7 @@
   --editorial-line: #c9cdd3;
   --editorial-accent: #1d4ed8;
   --editorial-accent-soft: #eff6ff;
-  --editorial-font: 'Gelasio', Georgia, serif;
+  --editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif;
   --editorial-mono: 'Ubuntu Mono', ui-monospace, monospace;
   --space-1: 8px;
   --space-2: 16px;
@@ -77,15 +109,24 @@ body,
   font-size: 16px;
   line-height: 1.6;
   font-synthesis: weight style;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
 .app-shell :where(*) {
   font-family: var(--editorial-font) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
-.app-shell :where(code, pre, kbd, samp, .font-mono, [data-monospace], .tabular-nums, .font-tabular, [data-tabular]) {
+.app-shell :where(code, pre, kbd, samp, .font-mono, [data-monospace]) {
   font-family: var(--editorial-mono) !important;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.app-shell :where(.tabular-nums, .font-tabular, [data-tabular]) {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
 .app-shell :where(.neo-brutal-exam, .neo-brutal-dictation),
@@ -962,7 +1003,6 @@ body,
 }
 
 .app-shell .neo-brutal-result :where(button, a, input, textarea, select) {
-  border-color: var(--editorial-line) !important;
   border-radius: 2px !important;
   box-shadow: none !important;
 }

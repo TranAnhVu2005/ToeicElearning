@@ -29,11 +29,11 @@
 3. Nếu chưa có kết quả/giao dịch/assignment, backend xóa cứng đề. Trước đó, media đề private/public chỉ bị xóa khỏi Cloudinary khi không còn được context của đề khác tham chiếu; registry private được dọn cùng asset.
 4. UI hiển thị kết quả thực tế từ backend, không khẳng định xóa vĩnh viễn cho trường hợp archive.
 
-### Cập nhật đề hệ thống đã được sử dụng
+### Cập nhật đề hệ thống và đề đã có lịch sử
 
-- Nếu đề chưa có lượt làm, giao dịch hoặc assignment, admin có thể cập nhật metadata và toàn bộ nội dung.
-- Nếu đã có tham chiếu, API cập nhật toàn bộ từ chối để giữ nguyên câu hỏi/đáp án mà bài review lịch sử trỏ tới. UI dùng endpoint riêng cho tên, ảnh bìa và trạng thái; khi publish, backend vẫn kiểm tra nội dung và quyền media. Metadata endpoint không sửa giá VIP hay nội dung.
-- Nếu admin thay câu hỏi ở đề có tham chiếu, UI hiển thị rõ `TEST_HAS_HISTORY` và đề nghị chỉ sửa tên/ảnh bìa. Muốn thay nội dung, cần tạo đề mới; không sửa dữ liệu mà kết quả cũ đang tham chiếu.
+- Khi Admin cập nhật đề thi qua `PUT /api/exam/update/{id}`, backend thực hiện cập nhật tại chỗ (`upsertTestDetailInPlace`) các `ContextQuestion` và `Question` theo thứ tự câu hỏi thay vì xóa và tạo lại bản ghi mới. Nhờ đó các khóa ngoại `question_id` trong `user_answer` của các lượt thi lịch sử luôn được giữ nguyên vẹn và học viên vẫn xem lại bài làm cũ bình thường.
+- Nếu chỉ thay đổi thông tin chung (tên đề, ảnh bìa, trạng thái `PUBLISHED`/`DRAFT`, cấu hình `isVip` và `vipPriceVnd`), UI có thể dùng `PATCH /api/exam/update/{id}/metadata` mà không cần gửi lại 200 câu hỏi; khi chuyển sang `PUBLISHED`, backend vẫn kiểm tra quyền media và tính hợp lệ của nội dung đề.
+- Câu hỏi điền chỗ trống trong đoạn văn của Part 6 (câu 131–146) được phép để trống `questionContent` khi xuất bản theo đúng cấu trúc đề TOEIC thực tế.
 
 ## 1.1. Đăng ký giáo viên, thanh toán và duyệt
 
@@ -89,8 +89,10 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 - Mỗi lần làm mới (không phải replay idempotent) lưu `TestResult`/`UserAnswer` và cập nhật tiến độ học tập trên dòng `User` đã khóa: tính `currentStreak` (tăng 1 nếu `lastActiveDate` là hôm qua, giữ nguyên nếu cùng ngày, đặt lại 1 nếu cách ngày), cập nhật `highestStreak`, `lastActiveDate` và `totalScore` (lưu điểm ước tính cao nhất của các lượt Full Test 200 câu).
 - Mỗi lần làm lưu user, test, optional part, thời lượng, tổng câu, số đúng/điểm và timestamp.
 - User chỉ xem history/review của mình; quyền admin cần policy riêng.
-- Review cho thấy lựa chọn đã chọn, đáp án đúng, đúng/sai, explanation và transcript/translation nếu phù hợp.
-- Điểm luyện part không được trình bày như điểm TOEIC 10–990 của full test.
+- Review (`/results/:resultId`) cho thấy lựa chọn đã chọn, đáp án đúng, đúng/sai, explanation và transcript/translation nếu phù hợp; bố cục 2 cột với bảng số câu bên phải hỗ trợ hover viền xanh `#1D4ED8` và khi bấm vào một ô số câu sẽ cuộn mượt tới câu đó kèm hiệu ứng viền/nền nổi bật trong 1.8 giây tương tự phòng thi.
+- Quy tắc tính điểm TOEIC trong `ExamServiceImpl.java`:
+  - **Full Test (đủ 200 câu)**: Quy đổi độc lập số câu đúng Listening (`0–100`) và Reading (`0–100`) qua 2 bảng tra cứu `LISTENING_SCORE_TABLE` (`0 -> 5`, `1..75 -> c * 5 + 10`, `76..95 -> c * 5 + 15`, `96..100 -> 495`) và `READING_SCORE_TABLE` (`0..2 -> 5`, `3..100 -> (c - 1) * 5`), cộng lại thành tổng điểm ước tính `10–990` (`scoreType = ESTIMATED_TOEIC`).
+  - **Luyện từng Part / < 200 câu**: Hiển thị trực tiếp số câu trả lời đúng (`scoreType = RAW_COUNT`), không trình bày như điểm TOEIC 10–990 của Full Test.
 - Chống tạo result trùng khi retry: frontend giữ key trong `sessionStorage` đến khi nhận xác nhận thành công; backend khóa hàng user trong transaction khi xử lý submit và `test_result.submission_key` có unique constraint. Key trùng chỉ replay kết quả của cùng user/test/assignment/source result; ngữ cảnh khác bị từ chối. Lượt làm lại chủ động là attempt mới với UUID mới. Cơ chế idempotency hoạt động cùng ExamSession, không thay thế session lưu nháp.
 - ETS quy định điểm scaled 5–495 cho mỗi section; raw-to-scaled conversion được xây dựng theo từng test form qua equating. Nếu không có bảng chuyển đổi được phép cho đúng form, điểm web phải gắn nhãn **ước tính**, không gọi “điểm ETS chính xác”. Nguồn: [ETS format](https://www.ets.org/content/ets-org/language-master/in/home/toeic/test-takers/about/listening-reading.html), [ETS Examinee Handbook](https://www.ets.org/content/dam/ets-org/fr/pdfs/toeic/toeic-listening-reading-test-examinee-handbook.pdf).
 
@@ -137,8 +139,8 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 
 - Tải riêng context Listening qua API dictation đã xác thực; API chỉ trả transcript cần cho bài luyện, không trả options, answer key hoặc explanation. VIP/classroom access vẫn được xác minh tại server.
 - Chọn audio/context hợp lệ, nghe theo câu/đoạn, nhập nội dung nghe được, cho phép phát lại theo giới hạn cài đặt.
-- So sánh văn bản sau chuẩn hóa dấu câu/khoảng trắng nhưng vẫn hiển thị bản gốc; khác biệt từ thiếu/thừa/sai cần dễ nhận biết.
-- Có thể hiện transcript/translation sau khi kiểm tra hoặc khi người học bật reveal; không mặc định tiết lộ transcript trước lượt nghe đầu nếu mục tiêu là dictation.
+- So sánh văn bản theo từng vế câu (`.`, `,`, `;`, `:`, `?`, `!`) sau chuẩn hóa dấu câu/khoảng trắng: khi người học nhấn "Kiểm tra kết quả" hoặc nhấn `Enter` (`Ctrl + Enter`), hệ thống hiển thị đáp án đến hết dấu câu của vế xa nhất đang gõ (tô đậm màu xanh lá các từ gợi ý trong vế đó) và che toàn bộ phần còn lại phía sau bằng `*****`.
+- Khi người học bấm chuột hoặc gõ tiếp vào ô nhập liệu, khung kết quả bên dưới tự động ẩn đi để người học luyện gõ theo trí nhớ và chỉ hiển thị lại khi nhấn `Enter` (`Ctrl + Enter`) hoặc nút "Kiểm tra kết quả" tiếp theo; hỗ trợ nút `Skip` (`Bỏ qua vế này`) và 2 tùy chọn `Hiển thị đáp án đến dấu câu` / `Hiển thị toàn bộ đáp án`.
 - Lưu tiến trình/độ chính xác nếu người dùng đăng nhập; nếu không, cần nêu chính sách local storage và quyền riêng tư.
 - Chỉ sử dụng audio/transcript mà hệ thống có quyền lưu trữ/phân phối.
 
@@ -160,10 +162,11 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 
 1. Backend tạo session gắn user, test snapshot, assignment/source result tùy chọn và câu hỏi được xác định từ dữ liệu server; lưu lựa chọn định kỳ qua autosave.
 2. Mỗi lần lưu kiểm tra owner, session TTL, quyền VIP, assignment membership/deadline/late policy và fingerprint nội dung đề. Với assignment, backend khóa hàng membership APPROVED trong giao dịch khi autosave/nộp; thao tác giáo viên đổi trạng thái cùng membership cũng lấy khóa đó để không thể commit hai quyết định trái nhau đồng thời. Không chấp nhận câu hỏi ngoài session hoặc giá trị ngoài A–D.
-3. Khi quay lại cùng phạm vi, hỏi tiếp tục hay hủy session cũ để tạo lượt mới; câu trả lời được khôi phục và đồng hồ căn theo server `startedAt`/remainingSeconds.
-4. Full test và assignment dùng đồng hồ đếm ngược tối đa 120 phút; assignment `REJECT_AFTER_DEADLINE` dừng đồng hồ trước deadline 2 giây để gửi request trong hạn. Với `ACCEPT_AND_MARK_LATE`, autosave và submit được phép đến khi session hết TTL (tối đa 24 giờ sau deadline), timer không vượt quá TTL còn lại và backend đánh dấu lần nộp trễ; với policy từ chối, backend không cho autosave/submit sau deadline. Luyện Part/wrong-answer dùng stopwatch và giữ nháp 24 giờ.
-5. Nộp bài truyền sessionId; backend dùng elapsed time server và snapshot đáp án khi đã hết giờ. Trước hết giờ, snapshot cuối cùng được validate/lưu atomically cùng submit. Submit idempotent; session lưu status/result để chặn làm lặp sai phạm vi.
-6. Dữ liệu session không chứa answer key. Cleanup job chạy mỗi 5 phút, expire session active hết TTL và xóa answer/target drafts; submit hoặc hủy lượt cũng xóa draft ngay. Giới hạn tổng session khác phạm vi chưa có.
+3. Khi người dùng bị sự cố tải lại trang (F5/reload) hoặc mở lại cùng phạm vi đang làm dở, frontend gọi `POST /api/exam/sessions` với `restartActive: false` để tự động tiếp nối phiên `ACTIVE` hiện hành mà không bật hộp thoại làm gián đoạn; toàn bộ câu trả lời đã chọn (`sessionData.answers` kết hợp bản sao tức thời trong `sessionStorage`), các câu đánh dấu (`flaggedQuestions`), Part đang mở và đồng hồ đếm ngược/đếm tiến (`startedAt`/`remainingSeconds`) đều được khôi phục nguyên vẹn.
+4. Khi người dùng chủ động nhấn "Thoát phòng thi" (hoặc nút Back trình duyệt) và xác nhận "Rời khỏi bài thi" không nộp, frontend gọi `DELETE /api/exam/sessions/{sessionId}` để chuyển trạng thái phiên sang `CANCELLED`, xóa dữ liệu nháp trên server và xóa `sessionStorage` để hủy bỏ hoàn toàn phiên làm bài đó.
+5. Full test và assignment dùng đồng hồ đếm ngược tối đa 120 phút; assignment `REJECT_AFTER_DEADLINE` dừng đồng hồ trước deadline 2 giây để gửi request trong hạn. Với `ACCEPT_AND_MARK_LATE`, autosave và submit được phép đến khi session hết TTL (tối đa 24 giờ sau deadline), timer không vượt quá TTL còn lại và backend đánh dấu lần nộp trễ; với policy từ chối, backend không cho autosave/submit sau deadline. Luyện Part/wrong-answer dùng stopwatch và giữ nháp 24 giờ.
+6. Nộp bài truyền sessionId; backend dùng elapsed time server và snapshot đáp án khi đã hết giờ. Trước hết giờ, snapshot cuối cùng được validate/lưu atomically cùng submit. Submit idempotent; session lưu status/result để chặn làm lặp sai phạm vi.
+7. Dữ liệu session không chứa answer key. Cleanup job chạy mỗi 5 phút, expire session active hết TTL và xóa answer/target drafts; submit hoặc hủy lượt cũng xóa draft ngay. Giới hạn tổng session khác phạm vi chưa có.
 
 ## 13. Báo lỗi nội dung và quản lý phiên bản (đề xuất)
 

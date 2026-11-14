@@ -51,6 +51,7 @@ public interface ExamService {
     SubmitExamResponseDTO submitExam(User currentUser, SubmitExamAnswer request);
     ExamSessionResponse startExamSession(User currentUser, StartExamSessionRequest request);
     ExamSessionResponse saveExamSessionAnswers(User currentUser, String sessionId, SaveExamSessionAnswersRequest request);
+    void cancelExamSession(User currentUser, String sessionId);
     List<TestHistoryResponseDTO> getTestHistory(User currentUser, String testId);
     TestResultDetailResponseDTO getTestResultDetail(User currentUser, String resultId);
     TestResultDetailResponseDTO getAssignmentResultDetail(User teacher, String resultId);

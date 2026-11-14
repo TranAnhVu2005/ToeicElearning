@@ -76,6 +76,9 @@ export const examService = {
   saveExamSessionAnswers: async (sessionId, answers) => (
     await apiClient.patch(`/exam/sessions/${sessionId}/answers`, { answers })
   ).data,
+  cancelExamSession: async (sessionId) => (
+    await apiClient.delete(`/exam/sessions/${sessionId}`)
+  ).data,
 
   getTestHistory: async (testId) => {
     const response = await apiClient.get('/exam/history', { params: testId ? { testId } : {} });

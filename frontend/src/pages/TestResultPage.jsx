@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -29,7 +29,18 @@ const TestResultPage = () => {
   const [failedMedia, setFailedMedia] = useState({});
   const [filterMode, setFilterMode] = useState('ALL'); // ALL | WRONG | PART_1..7
   const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
+  const [activeQuestionId, setActiveQuestionId] = useState(null);
+  const [highlightedQuestionId, setHighlightedQuestionId] = useState(null);
+  const highlightTimerRef = useRef(null);
   const requestKey = `${resultId}:${classroomReview ? 'teacher' : 'owner'}:${requestAttempt}`;
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +102,9 @@ const TestResultPage = () => {
 
   const handleJumpToQuestion = (question) => {
     setMobilePaletteOpen(false);
+    setActiveQuestionId(question.questionId);
+    setHighlightedQuestionId(null);
+
     // If the question is currently filtered out, switch filter to show it
     if (filterMode === 'WRONG' && question.isCorrect) {
       setFilterMode('ALL');
@@ -98,11 +112,19 @@ const TestResultPage = () => {
       setFilterMode('ALL');
     }
 
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current);
+    }
+
     setTimeout(() => {
       const el = document.getElementById(`review-q-${question.questionId}`);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      setHighlightedQuestionId(question.questionId);
+      highlightTimerRef.current = setTimeout(() => {
+        setHighlightedQuestionId((prev) => (prev === question.questionId ? null : prev));
+      }, 1800);
     }, 60);
   };
 
@@ -166,15 +188,15 @@ const TestResultPage = () => {
       {/* Palette Summary Badges */}
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="border border-emerald-200 bg-emerald-50 p-2">
-          <span className="block font-mono text-base font-bold text-emerald-800">{correctCount}</span>
+          <span className="block text-base font-bold text-emerald-800 tabular-nums">{correctCount}</span>
           <span className="text-[11px] font-semibold text-emerald-700">Đúng</span>
         </div>
         <div className="border border-red-200 bg-red-50 p-2">
-          <span className="block font-mono text-base font-bold text-red-800">{incorrectCount}</span>
+          <span className="block text-base font-bold text-red-800 tabular-nums">{incorrectCount}</span>
           <span className="text-[11px] font-semibold text-red-700">Sai</span>
         </div>
         <div className="border border-amber-200 bg-amber-50 p-2">
-          <span className="block font-mono text-base font-bold text-amber-800">{skippedCount}</span>
+          <span className="block text-base font-bold text-amber-800 tabular-nums">{skippedCount}</span>
           <span className="text-[11px] font-semibold text-amber-700">Bỏ trống</span>
         </div>
       </div>
@@ -188,9 +210,9 @@ const TestResultPage = () => {
 
           return (
             <div key={pNum} className="border-t border-slate-200 pt-3">
-              <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-800">
+              <div className="mb-2 flex items-center justify-between text-[14px] font-semibold text-slate-700">
                 <span>Part {pNum}</span>
-                <span className="font-mono text-slate-500">
+                <span className="text-[13px] font-semibold text-slate-500 tabular-nums">
                   {partCorrect}/{partQuestions.length} đúng
                 </span>
               </div>
@@ -198,18 +220,22 @@ const TestResultPage = () => {
                 {partQuestions.map((q) => {
                   const isSkipped = !q.selectedAnswer;
                   const isCorrect = q.isCorrect;
-                  const btnStyle = isCorrect
-                    ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-400'
+                  const isActiveTarget = activeQuestionId === q.questionId;
+                  const stateClass = isCorrect
+                    ? 'is-correct border-emerald-300 bg-emerald-50 text-emerald-800'
                     : isSkipped
-                    ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:border-amber-400'
-                    : 'border-red-300 bg-red-50 text-red-800 hover:bg-red-100 hover:border-red-400';
+                    ? 'is-skipped border-slate-300 bg-white text-slate-700'
+                    : 'is-wrong border-red-300 bg-red-50 text-red-800';
 
                   return (
                     <button
                       key={q.questionId}
                       type="button"
                       onClick={() => handleJumpToQuestion(q)}
-                      className={`flex h-8 items-center justify-center border font-mono text-xs font-bold transition-all ${btnStyle}`}
+                      aria-current={isActiveTarget ? 'true' : undefined}
+                      className={`result-palette-btn flex h-8 cursor-pointer items-center justify-center border text-[13px] font-semibold tabular-nums transition hover:border-[#1D4ED8] hover:text-[#1D4ED8] ${stateClass} ${
+                        isActiveTarget ? 'palette-btn-active' : ''
+                      }`}
                       title={`Câu ${q.questionNumber} (Part ${q.partNumber}): ${
                         isCorrect ? 'ĐÚNG' : isSkipped ? 'BỎ TRỐNG' : 'CHƯA ĐÚNG'
                       }`}
@@ -262,7 +288,7 @@ const TestResultPage = () => {
             <button
               type="button"
               onClick={() => setMobilePaletteOpen(true)}
-              className="inline-flex items-center gap-1.5 border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-800 hover:border-[#1D4ED8] hover:text-[#1D4ED8] lg:hidden"
+              className="inline-flex items-center gap-1.5 border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 tabular-nums hover:border-[#1D4ED8] hover:text-[#1D4ED8] lg:hidden"
             >
               <Layers size={14} /> Bảng câu hỏi ({correctCount}/{totalCount})
             </button>
@@ -282,7 +308,7 @@ const TestResultPage = () => {
           <div className="flex flex-col gap-6 min-w-0">
             {/* Summary Header Card */}
             <section className="border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-              <p className="editorial-eyebrow font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
+              <p className="editorial-eyebrow text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
                 BÁO CÁO KẾT QUẢ & LỜI GIẢI CHI TIẾT
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">{result.testTitle}</h1>
@@ -292,9 +318,9 @@ const TestResultPage = () => {
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#1D4ED8]">
                     {result.scoreType === 'ESTIMATED_SCALED' ? 'Điểm quy đổi ước tính' : 'Kết quả chấm điểm'}
                   </span>
-                  <p className="mt-1.5 font-mono text-2xl font-bold text-[#1D4ED8]">{scoreLabel}</p>
+                  <p className="mt-1.5 text-2xl font-bold text-[#1D4ED8] tabular-nums">{scoreLabel}</p>
                   <p className="mt-1 text-xs text-slate-600">
-                    Độ chính xác: <strong className="font-mono">{accuracy}%</strong> ({correctCount}/{totalCount} câu)
+                    Độ chính xác: <strong className="tabular-nums">{accuracy}%</strong> ({correctCount}/{totalCount} câu)
                   </p>
                 </div>
 
@@ -303,7 +329,7 @@ const TestResultPage = () => {
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
                       <Headphones size={13} className="text-[#1D4ED8]" /> Listening
                     </span>
-                    <p className="mt-1.5 font-mono text-xl font-bold text-slate-900">
+                    <p className="mt-1.5 text-xl font-bold text-slate-900 tabular-nums">
                       {result.scoreType === 'ESTIMATED_SCALED'
                         ? `${result.listeningScore} / 495`
                         : `${listening.filter((q) => q.isCorrect).length}/${listening.length} câu`}
@@ -319,7 +345,7 @@ const TestResultPage = () => {
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
                       <BookOpen size={13} className="text-[#1D4ED8]" /> Reading
                     </span>
-                    <p className="mt-1.5 font-mono text-xl font-bold text-slate-900">
+                    <p className="mt-1.5 text-xl font-bold text-slate-900 tabular-nums">
                       {result.scoreType === 'ESTIMATED_SCALED'
                         ? `${result.readingScore} / 495`
                         : `${reading.filter((q) => q.isCorrect).length}/${reading.length} câu`}
@@ -334,7 +360,7 @@ const TestResultPage = () => {
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
                     <Clock size={13} className="text-[#1D4ED8]" /> Thời gian hoàn thành
                   </span>
-                  <p className="mt-1.5 font-mono text-xl font-bold text-slate-900">
+                  <p className="mt-1.5 text-xl font-bold text-slate-900 tabular-nums">
                     {formatDuration(result.totalTime)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">Ghi nhận trên máy chủ</p>
@@ -395,7 +421,7 @@ const TestResultPage = () => {
             {questions.length > 0 && (
               <section className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-slate-50/70 p-4">
                 <span className="text-sm font-semibold text-slate-700">
-                  Đang hiển thị <strong className="font-mono">{filteredQuestions.length}</strong> / {questions.length} câu hỏi
+                  Đang hiển thị <strong className="tabular-nums">{filteredQuestions.length}</strong> / {questions.length} câu hỏi
                 </span>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
@@ -447,21 +473,39 @@ const TestResultPage = () => {
                   Không có câu hỏi nào trong bộ lọc này.
                 </div>
               ) : (
-                filteredQuestions.map((question) => (
-                  <article
-                    key={question.questionId}
-                    id={`review-q-${question.questionId}`}
-                    className="border border-slate-200 bg-white p-5 sm:p-6 shadow-sm"
-                  >
-                    <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-7 min-w-[28px] items-center justify-center border border-slate-300 bg-slate-100 px-2 font-mono text-xs font-bold text-slate-900">
-                          #{question.questionNumber}
-                        </span>
-                        <h2 className="text-base font-semibold text-slate-900">
-                          Câu {question.questionNumber} · Part {question.partNumber}
-                        </h2>
-                      </div>
+                filteredQuestions.map((question) => {
+                  const isJumpHighlighted = highlightedQuestionId === question.questionId;
+                  const isActiveTarget = activeQuestionId === question.questionId;
+
+                  return (
+                    <article
+                      key={question.questionId}
+                      id={`review-q-${question.questionId}`}
+                      className={`border border-slate-200 bg-white p-5 sm:p-6 transition-all duration-300 ${
+                        isJumpHighlighted
+                          ? 'question-jump-highlight ring-2 ring-emerald-500'
+                          : isActiveTarget
+                          ? 'question-active-target'
+                          : ''
+                      }`}
+                    >
+                      <header className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className={`flex h-7 min-w-[30px] items-center justify-center border px-2 text-xs font-bold tabular-nums transition-colors ${
+                              isJumpHighlighted
+                                ? 'border-emerald-600 bg-emerald-600 text-white'
+                                : isActiveTarget
+                                ? 'border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]'
+                                : 'border-slate-300 bg-slate-100 text-slate-900'
+                            }`}
+                          >
+                            #{question.questionNumber}
+                          </span>
+                          <h2 className="text-base font-semibold text-slate-900">
+                            Câu {question.questionNumber} · Part {question.partNumber}
+                          </h2>
+                        </div>
                       <span
                         className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-semibold ${
                           question.isCorrect
@@ -555,11 +599,11 @@ const TestResultPage = () => {
                             className={`flex items-start justify-between gap-3 border p-3 text-sm transition-colors ${rowStyle}`}
                           >
                             <span className="flex items-start gap-2.5">
-                              <span className="font-mono font-bold text-slate-700">{optionKey}.</span>
+                              <span className="font-bold text-slate-700">{optionKey}.</span>
                               <span>{optionText || `(${optionKey})`}</span>
                             </span>
 
-                            <span className="flex shrink-0 items-center gap-1.5 font-mono text-xs">
+                            <span className="flex shrink-0 items-center gap-1.5 text-xs">
                               {isCorrectKey && (
                                 <span className="border border-emerald-300 bg-emerald-100 px-2 py-0.5 font-bold text-emerald-800">
                                   ĐÁP ÁN ĐÚNG
@@ -602,7 +646,8 @@ const TestResultPage = () => {
                       </div>
                     )}
                   </article>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -614,7 +659,7 @@ const TestResultPage = () => {
                 <div className="text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Danh sách câu hỏi
                 </div>
-                <div className="font-mono text-xs font-bold text-slate-900">
+                <div className="text-xs font-bold text-slate-900 tabular-nums">
                   {questions.length} câu
                 </div>
               </div>
