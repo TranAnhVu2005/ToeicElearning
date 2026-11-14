@@ -432,12 +432,14 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             List<AiChatRequest.HistoryMessage> history,
             String userMessage
     ) {
-        if (geminiApiKey == null || geminiApiKey.isBlank() || geminiApiUrl == null || geminiApiUrl.isBlank()) {
+        String effectiveKey = resolveEffectiveGeminiKey();
+        String effectiveUrl = resolveEffectiveGeminiUrl();
+        if (effectiveKey == null || effectiveKey.isBlank() || effectiveUrl == null || effectiveUrl.isBlank()) {
             return null;
         }
 
-        String trimmedKey = geminiApiKey.trim();
-        String primaryUrl = geminiApiUrl.trim();
+        String trimmedKey = effectiveKey.trim();
+        String primaryUrl = effectiveUrl.trim();
         List<String> candidateUrls = new ArrayList<>();
 
         // Keys starting with "AQ." are Google Cloud Vertex AI Express Mode keys
@@ -461,6 +463,60 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                 }
             } catch (Exception ex) {
                 log.debug("Gemini endpoint {} skipped: {}", sanitizeUrl(endpointUrl), ex.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private String resolveEffectiveGeminiKey() {
+        if (geminiApiKey != null && !geminiApiKey.isBlank()) {
+            return geminiApiKey.trim();
+        }
+        return readDotEnvValue("GEMINI_API_KEY");
+    }
+
+    private String resolveEffectiveGeminiUrl() {
+        String fromDotEnv = readDotEnvValue("GEMINI_API_URL");
+        if (fromDotEnv != null && !fromDotEnv.isBlank()) {
+            return fromDotEnv.trim();
+        }
+        if (geminiApiUrl != null && !geminiApiUrl.isBlank()) {
+            return geminiApiUrl.trim();
+        }
+        return "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    }
+
+    private String readDotEnvValue(String targetKey) {
+        java.nio.file.Path[] candidates = new java.nio.file.Path[]{
+                java.nio.file.Paths.get(".env"),
+                java.nio.file.Paths.get("backend", ".env")
+        };
+        for (java.nio.file.Path path : candidates) {
+            try {
+                if (java.nio.file.Files.isRegularFile(path)) {
+                    for (String rawLine : java.nio.file.Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                        String line = rawLine.trim();
+                        if (line.isEmpty() || line.startsWith("#")) {
+                            continue;
+                        }
+                        int eqIdx = line.indexOf('=');
+                        if (eqIdx <= 0) {
+                            continue;
+                        }
+                        String k = line.substring(0, eqIdx).trim();
+                        if (targetKey.equals(k)) {
+                            String v = line.substring(eqIdx + 1).trim();
+                            if ((v.startsWith("\"") && v.endsWith("\"")) || (v.startsWith("'") && v.endsWith("'"))) {
+                                v = v.substring(1, v.length() - 1).trim();
+                            }
+                            if (!v.isEmpty()) {
+                                return v;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // Ignore file read errors and try next candidate
             }
         }
         return null;

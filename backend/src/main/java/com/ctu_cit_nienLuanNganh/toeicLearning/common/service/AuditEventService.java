@@ -6,12 +6,14 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.admin.dto.AuditEventResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.AuditEventRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuditEventService {
     private final AuditEventRepository repository;
 
@@ -25,14 +27,18 @@ public class AuditEventService {
 
     public void recordActorId(String actorUserId, String action, String targetType, String targetId,
                               String details, String outcome) {
-        repository.save(AuditEvent.builder()
-                .actorUserId(actorUserId)
-                .action(action)
-                .targetType(targetType)
-                .targetId(targetId)
-                .outcome(outcome)
-                .details(details)
-                .build());
+        try {
+            repository.save(AuditEvent.builder()
+                    .actorUserId(actorUserId)
+                    .action(action)
+                    .targetType(targetType)
+                    .targetId(targetId)
+                    .outcome(outcome)
+                    .details(details)
+                    .build());
+        } catch (Exception ex) {
+            log.warn("Could not persist audit event action={} targetType={}: {}", action, targetType, ex.getMessage());
+        }
     }
 
     public void recordAuthentication(String actorUserId, boolean successful, boolean googleLogin) {
