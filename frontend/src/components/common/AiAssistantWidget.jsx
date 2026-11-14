@@ -7,23 +7,27 @@ import {
   X,
   RotateCcw,
   BookOpen,
-  HelpCircle,
   CheckCircle2,
   CircleX,
   ChevronRight,
   LoaderCircle,
   Maximize2,
   Minimize2,
+  Copy,
+  Check,
+  Lightbulb,
+  Languages,
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
 
 /**
  * Lightweight, safe Markdown-to-JSX renderer for AI responses
- * Supports ### / #### headings, bullet lists (- / + / *), numbered lists, blockquotes (>), and **bold** / `code`
+ * Supports ### / #### headings, horizontal rules (---), bullet lists (- / + / *),
+ * numbered lists, blockquotes (>), and **bold** / *italic* / `code`
  */
 const renderInlineFormatting = (text) => {
   if (!text) return null;
-  const tokens = String(text).split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  const tokens = String(text).split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*\n]+\*)/g);
   return tokens.map((token, idx) => {
     if (token.startsWith('**') && token.endsWith('**') && token.length > 4) {
       return (
@@ -36,10 +40,17 @@ const renderInlineFormatting = (text) => {
       return (
         <code
           key={idx}
-          className="border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[13px] font-semibold text-[#1D4ED8]"
+          className="rounded-md border border-blue-200/80 bg-blue-50/80 px-1.5 py-0.5 text-[12.5px] font-semibold text-[#1D4ED8]"
         >
           {token.slice(1, -1)}
         </code>
+      );
+    }
+    if (token.startsWith('*') && token.endsWith('*') && token.length > 2 && !token.startsWith('**')) {
+      return (
+        <em key={idx} className="italic text-slate-800">
+          {token.slice(1, -1)}
+        </em>
       );
     }
     return token;
@@ -56,17 +67,27 @@ const AiMarkdownMessage = ({ content }) => {
     if (listItems.length === 0) return;
     if (listType === 'ol') {
       elements.push(
-        <ol key={`list-${keySuffix}`} className="my-2 list-decimal space-y-1.5 pl-5 text-sm leading-relaxed text-slate-800">
+        <ol
+          key={`list-${keySuffix}`}
+          className="my-2.5 list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:font-bold marker:text-[#1D4ED8]"
+        >
           {listItems.map((item, i) => (
-            <li key={i}>{renderInlineFormatting(item)}</li>
+            <li key={i} className="pl-0.5">
+              {renderInlineFormatting(item)}
+            </li>
           ))}
         </ol>
       );
     } else {
       elements.push(
-        <ul key={`list-${keySuffix}`} className="my-2 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-slate-800">
+        <ul
+          key={`list-${keySuffix}`}
+          className="my-2.5 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:text-[#1D4ED8]"
+        >
           {listItems.map((item, i) => (
-            <li key={i}>{renderInlineFormatting(item)}</li>
+            <li key={i} className="pl-0.5">
+              {renderInlineFormatting(item)}
+            </li>
           ))}
         </ul>
       );
@@ -81,23 +102,37 @@ const AiMarkdownMessage = ({ content }) => {
       return;
     }
 
+    // Horizontal rule (---, ***, ___)
+    if (/^([-*_])\1{2,}$/.test(line)) {
+      flushList(index);
+      elements.push(<hr key={index} className="my-3.5 border-t border-slate-200/90" />);
+      return;
+    }
+
     if (line.startsWith('#### ')) {
       flushList(index);
       elements.push(
-        <h4 key={index} className="mt-3.5 mb-1.5 text-sm font-bold uppercase tracking-wider text-[#1D4ED8]">
+        <h4
+          key={index}
+          className="mt-3.5 mb-1.5 flex items-center gap-1.5 text-[13px] font-bold tracking-wide text-[#1D4ED8] uppercase"
+        >
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#1D4ED8]" />
           {renderInlineFormatting(line.slice(5))}
         </h4>
       );
       return;
     }
 
-    if (line.startsWith('### ') || line.startsWith('## ')) {
+    if (line.startsWith('### ') || line.startsWith('## ') || line.startsWith('# ')) {
       flushList(index);
-      const titleText = line.replace(/^#{2,3}\s+/, '');
+      const titleText = line.replace(/^#{1,3}\s+/, '');
       elements.push(
-        <h3 key={index} className="mt-3 mb-2 border-b border-slate-200 pb-1.5 text-base font-bold text-slate-950">
+        <div
+          key={index}
+          className="mt-3 mb-2 border-b border-slate-200/90 pb-1.5 text-[15px] font-bold text-slate-950 first:mt-0"
+        >
           {renderInlineFormatting(titleText)}
-        </h3>
+        </div>
       );
       return;
     }
@@ -107,7 +142,7 @@ const AiMarkdownMessage = ({ content }) => {
       elements.push(
         <blockquote
           key={index}
-          className="my-2 border-l-3 border-[#1D4ED8] bg-blue-50/50 px-3 py-2 text-xs leading-relaxed text-slate-700 italic"
+          className="my-2.5 rounded-r-xl border-l-3 border-[#1D4ED8] bg-[#EFF6FF]/70 px-3.5 py-2.5 text-[13px] leading-relaxed text-slate-700 italic"
         >
           {renderInlineFormatting(line.slice(2))}
         </blockquote>
@@ -137,14 +172,14 @@ const AiMarkdownMessage = ({ content }) => {
 
     flushList(index);
     elements.push(
-      <p key={index} className="my-1.5 text-sm leading-relaxed text-slate-800">
+      <p key={index} className="my-1.5 text-[14px] leading-relaxed text-slate-800 first:mt-0 last:mb-0">
         {renderInlineFormatting(line)}
       </p>
     );
   });
 
   flushList('end');
-  return <div className="space-y-1">{elements}</div>;
+  return <div className="space-y-1.5">{elements}</div>;
 };
 
 const PLATFORM_QUICK_TOPICS = [
@@ -174,6 +209,7 @@ const AiAssistantWidget = () => {
   const [focusedQuestion, setFocusedQuestion] = useState(null);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedMsgId, setCopiedMsgId] = useState(null);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -506,6 +542,16 @@ const AiAssistantWidget = () => {
     return null;
   }
 
+  const handleCopyMessage = (msgId, text) => {
+    if (!navigator?.clipboard) return;
+    navigator.clipboard.writeText(String(text || '')).then(() => {
+      setCopiedMsgId(msgId);
+      setTimeout(() => {
+        setCopiedMsgId((prev) => (prev === msgId ? null : prev));
+      }, 1800);
+    });
+  };
+
   const handleResetConversation = () => {
     setMessages([
       {
@@ -529,24 +575,25 @@ const AiAssistantWidget = () => {
     <>
       {/* Floating Trigger Button */}
       {!isOpen && (
-        <div className="fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2">
+        <div className="ai-assistant-launcher fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2">
           <button
             type="button"
             onClick={() => {
               setIsOpen(true);
               setTimeout(() => inputRef.current?.focus(), 120);
             }}
-            className="group flex cursor-pointer items-center gap-2.5 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-3 text-white shadow-lg transition-all hover:bg-[#173ea8]"
+            className="ai-launcher-btn group flex cursor-pointer items-center gap-3 rounded-2xl border border-blue-500/30 bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#1D4ED8] px-4 py-3 text-white shadow-[0_12px_30px_-6px_rgba(29,78,216,0.45)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-6px_rgba(29,78,216,0.6)]"
             aria-label="Mở Trợ lý AI TOEIC Learning"
           >
-            <span className="flex h-7 w-7 items-center justify-center border border-white/30 bg-white/15">
-              <Sparkles size={16} />
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/25 bg-white/15 backdrop-blur-xs">
+              <Sparkles size={17} className="text-blue-100 transition-transform duration-200 group-hover:scale-110" />
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0F172A] bg-emerald-400" />
             </span>
-            <span className="text-left">
-              <span className="block text-[10px] font-bold uppercase tracking-widest text-blue-100">
+            <span className="pr-1 text-left">
+              <span className="block text-[10px] font-bold tracking-widest text-blue-200 uppercase">
                 Gemini AI Tutor
               </span>
-              <span className="block text-sm font-bold leading-tight">
+              <span className="block text-sm font-bold leading-snug text-white">
                 {examResult ? 'Trợ lý AI Giải đề' : 'Trợ lý AI TOEIC'}
               </span>
             </span>
@@ -558,69 +605,97 @@ const AiAssistantWidget = () => {
       {isOpen && (
         <aside
           aria-label="Cửa sổ Trợ lý AI TOEIC Learning"
-          className={`fixed z-50 flex flex-col border border-slate-300 bg-white shadow-2xl transition-all duration-200 ${
+          className={`ai-assistant-panel fixed z-50 flex flex-col overflow-hidden rounded-t-2xl border border-slate-200/90 bg-white shadow-[0_24px_60px_-12px_rgba(15,23,42,0.28)] transition-all duration-200 sm:rounded-2xl ${
             isExpanded
               ? 'inset-3 sm:inset-6 lg:left-auto lg:w-[680px]'
-              : ' inset-x-0 bottom-0 h-[85vh] sm:right-5 sm:bottom-5 sm:left-auto sm:h-[650px] sm:max-h-[calc(100vh-40px)] sm:w-[440px]'
+              : 'inset-x-0 bottom-0 h-[86vh] sm:right-5 sm:bottom-5 sm:left-auto sm:h-[660px] sm:max-h-[calc(100vh-36px)] sm:w-[448px]'
           }`}
         >
           {/* Panel Header */}
-          <header className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-950 px-4 py-3.5 text-white">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-blue-400/40 bg-[#1D4ED8] text-white">
-                <Bot size={19} />
+          <header className="ai-assistant-header flex items-center justify-between gap-3 border-b border-slate-800 bg-gradient-to-r from-[#0B1120] via-[#111827] to-[#1E3A8A] px-4 py-3.5 text-white">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-400/35 bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] text-white shadow-sm">
+                <Bot size={20} />
+                <span
+                  className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0B1120] bg-emerald-400"
+                  title="Đang trực tuyến"
+                />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h2 className="truncate text-base font-bold text-white">Trợ lý AI TOEIC Learning</h2>
-                  <span className="border border-blue-400/40 bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-200">
-                    AI
+                <div className="flex items-center gap-2">
+                  <div className="ai-assistant-title truncate text-[15px] font-bold tracking-tight text-white">
+                    Trợ lý AI TOEIC Learning
+                  </div>
+                  <span className="shrink-0 rounded-full border border-blue-300/35 bg-blue-500/25 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-100 uppercase">
+                    AI Tutor
                   </span>
                 </div>
-                <p className="truncate text-xs text-slate-300">
+                <p className="mt-0.5 truncate text-xs text-slate-300">
                   {examResult
-                    ? `Đang hỗ trợ giải đề: ${examResult.testTitle || 'Bài thi TOEIC'}`
-                    : 'Giải đáp bài thi TOEIC & Hướng dẫn sử dụng hệ thống'}
+                    ? `Đang đồng bộ: ${examResult.testTitle || 'Bài thi TOEIC'}`
+                    : 'Giải đáp kiến thức TOEIC & Hướng dẫn hệ thống'}
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
                 onClick={handleResetConversation}
                 title="Làm mới hội thoại"
-                className="cursor-pointer border border-white/15 bg-white/5 p-1.5 text-slate-300 transition-colors hover:border-white/30 hover:text-white"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-white/30 hover:bg-white/20 hover:text-white"
               >
-                <RotateCcw size={15} />
+                <RotateCcw size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
                 title={isExpanded ? 'Thu gọn khung chat' : 'Mở rộng khung chat'}
-                className="hidden cursor-pointer border border-white/15 bg-white/5 p-1.5 text-slate-300 transition-colors hover:border-white/30 hover:text-white sm:inline-flex"
+                className="hidden h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-white/30 hover:bg-white/20 hover:text-white sm:inline-flex"
               >
-                {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 title="Đóng Trợ lý AI (Esc)"
                 aria-label="Đóng Trợ lý AI"
-                className="cursor-pointer border border-white/15 bg-white/5 p-1.5 text-slate-300 transition-colors hover:border-red-400 hover:bg-red-500/20 hover:text-white"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-red-400/60 hover:bg-red-500/25 hover:text-white"
               >
                 <X size={16} />
               </button>
             </div>
           </header>
 
-          {/* Exam Review Context Switcher Bar (Visible when viewing a completed exam on TestResultPage) */}
+          {/* Sleek Exam Review Context Bar (Visible when viewing a completed exam on TestResultPage) */}
           {examResult && (
-            <div className="border-b border-slate-200 bg-[#EFF6FF]/75 px-4 py-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#1D4ED8]">
-                  <BookOpen size={14} />
-                  <span>Ngữ cảnh đang hỏi:</span>
+            <div className="ai-assistant-context border-b border-slate-200/90 bg-gradient-to-b from-[#EFF6FF]/90 to-[#F8FAFC] px-3.5 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[#1D4ED8]">
+                    <BookOpen size={13} />
+                  </span>
+                  {focusedQuestion ? (
+                    <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-bold text-slate-900 tabular-nums">
+                        Câu #{focusedQuestion.questionNumber} · Part {focusedQuestion.partNumber}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                          focusedQuestion.isCorrect
+                            ? 'bg-emerald-100/90 text-emerald-800'
+                            : 'bg-rose-100/90 text-rose-800'
+                        }`}
+                      >
+                        {focusedQuestion.isCorrect ? <CheckCircle2 size={11} /> : <CircleX size={11} />}
+                        Chọn: {focusedQuestion.selectedAnswer || 'Trống'} · Đúng: {focusedQuestion.correctAnswer}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="truncate text-xs font-bold text-slate-800">
+                      Ngữ cảnh: Toàn bộ đề thi ({resultQuestions.length} câu)
+                    </span>
+                  )}
                 </div>
 
                 <select
@@ -635,35 +710,21 @@ const AiAssistantWidget = () => {
                       setFocusedQuestion(found || null);
                     }
                   }}
-                  className="max-w-[230px] cursor-pointer border border-blue-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 tabular-nums focus:border-[#1D4ED8] focus:outline-none"
+                  className="max-w-[165px] shrink-0 cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-bold text-[#1D4ED8] shadow-2xs tabular-nums transition-colors hover:border-[#1D4ED8] focus:border-[#1D4ED8] focus:outline-none"
                 >
-                  <option value="">Tổng quan cả bài thi ({resultQuestions.length} câu)</option>
+                  <option value="">Cả đề ({resultQuestions.length} câu)</option>
                   {resultQuestions.map((q) => (
                     <option key={q.questionId} value={q.questionId}>
-                      Câu #{q.questionNumber} · Part {q.partNumber} ({q.isCorrect ? 'Đúng' : q.selectedAnswer ? 'Sai' : 'Bỏ trống'})
+                      Câu #{q.questionNumber} · P{q.partNumber} ({q.isCorrect ? 'Đúng' : q.selectedAnswer ? 'Sai' : 'Trống'})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {focusedQuestion ? (
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border border-blue-200/80 bg-white px-3 py-2 text-xs">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="border border-blue-200 bg-blue-50 px-2 py-0.5 font-bold tabular-nums text-[#1D4ED8]">
-                      Câu #{focusedQuestion.questionNumber} · Part {focusedQuestion.partNumber}
-                    </span>
-                    <span
-                      className={`inline-flex items-center gap-1 font-bold ${
-                        focusedQuestion.isCorrect ? 'text-emerald-700' : 'text-red-700'
-                      }`}
-                    >
-                      {focusedQuestion.isCorrect ? <CheckCircle2 size={13} /> : <CircleX size={13} />}
-                      Bạn chọn: {focusedQuestion.selectedAnswer || 'Bỏ trống'} · Đáp án đúng:{' '}
-                      {focusedQuestion.correctAnswer}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5 pt-1 sm:pt-0">
+              {/* Quick Action Pill Chips */}
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {focusedQuestion ? (
+                  <>
                     <button
                       type="button"
                       disabled={loading}
@@ -672,9 +733,10 @@ const AiAssistantWidget = () => {
                           `Giải thích chi tiết vì sao câu ${focusedQuestion.questionNumber} (Part ${focusedQuestion.partNumber}) chọn đáp án ${focusedQuestion.correctAnswer} và phân tích các phương án còn lại.`
                         )
                       }
-                      className="cursor-pointer border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-[#1D4ED8] hover:bg-blue-100 disabled:opacity-50"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-blue-300/80 bg-[#1D4ED8] px-2.5 py-1 text-[11px] font-bold text-white shadow-2xs transition-all hover:bg-[#1E40AF] disabled:opacity-50"
                     >
-                      Giải thích ngay
+                      <Sparkles size={11} />
+                      <span>Giải thích đáp án</span>
                     </button>
                     <button
                       type="button"
@@ -684,82 +746,121 @@ const AiAssistantWidget = () => {
                           `Trích lọc các từ vựng, cụm từ (collocations) và cấu trúc ngữ pháp quan trọng trong câu ${focusedQuestion.questionNumber}.`
                         )
                       }
-                      className="cursor-pointer border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
                     >
-                      Từ vựng & Ngữ pháp
+                      <Languages size={11} className="text-[#1D4ED8]" />
+                      <span>Từ vựng & Ngữ pháp</span>
                     </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() =>
-                      sendMessage(
-                        'Hãy phân tích tổng quan kết quả bài thi này của tôi, chỉ ra Part nào tôi đang làm tốt, Part nào yếu nhất và gợi ý chiến lược cải thiện.'
-                      )
-                    }
-                    className="cursor-pointer border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#1D4ED8] hover:bg-blue-50 disabled:opacity-50"
-                  >
-                    <Sparkles size={11} className="mr-1 inline" />
-                    Phân tích điểm mạnh & yếu bài này
-                  </button>
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() =>
-                      sendMessage('Tóm tắt các dạng câu hỏi tôi làm sai nhiều nhất trong bài thi này và cách khắc phục.')
-                    }
-                    className="cursor-pointer border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
-                  >
-                    Tóm tắt lỗi sai cần tránh
-                  </button>
-                </div>
-              )}
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() =>
+                        sendMessage(
+                          `Chỉ ra bẫy thường gặp trong câu ${focusedQuestion.questionNumber} (Part ${focusedQuestion.partNumber}) và mẹo làm nhanh dạng bài này.`
+                        )
+                      }
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                    >
+                      <Lightbulb size={11} className="text-amber-600" />
+                      <span>Mẹo tránh bẫy</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() =>
+                        sendMessage(
+                          'Hãy phân tích tổng quan kết quả bài thi này của tôi, chỉ ra Part nào tôi đang làm tốt, Part nào yếu nhất và gợi ý chiến lược cải thiện.'
+                        )
+                      }
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#1D4ED8] shadow-2xs transition-colors hover:bg-blue-50 disabled:opacity-50"
+                    >
+                      <Sparkles size={11} />
+                      <span>Phân tích điểm mạnh & yếu</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() =>
+                        sendMessage('Tóm tắt các dạng câu hỏi tôi làm sai nhiều nhất trong bài thi này và cách khắc phục.')
+                      }
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                    >
+                      <Lightbulb size={11} className="text-amber-600" />
+                      <span>Tổng hợp lỗi sai cần tránh</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
 
           {/* Conversation Messages List */}
-          <div className="flex-1 space-y-4 overflow-y-auto bg-[#F8FAFC] p-4">
+          <div className="flex-1 space-y-4 overflow-y-auto bg-[#F8FAFC] px-4 py-4">
             {messages.map((msg) => {
               const isUser = msg.role === 'user';
               return (
-                <div key={msg.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-                  <div className="mb-1 flex items-center gap-1.5 px-0.5 text-[11px] font-bold text-slate-500">
+                <div key={msg.id} className={`group flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+                  {/* Sender Meta Row */}
+                  <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[11px] font-bold text-slate-500">
                     {isUser ? (
                       <>
                         {msg.questionBadge && (
-                          <span className="border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[10px] font-bold tabular-nums text-[#1D4ED8]">
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
                             {msg.questionBadge}
                           </span>
                         )}
-                        <span>Bạn</span>
+                        <span className="text-slate-600">Bạn</span>
                       </>
                     ) : (
                       <>
-                        <Sparkles size={12} className="text-[#1D4ED8]" />
-                        <span className="text-slate-700">Trợ lý AI</span>
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-blue-100 text-[#1D4ED8]">
+                          <Sparkles size={11} />
+                        </span>
+                        <span className="font-bold text-slate-800">Trợ lý AI</span>
                         {msg.referencedQuestionNumber && (
-                          <span className="border border-blue-200 bg-blue-50 px-1.5 py-0.2 text-[10px] font-bold tabular-nums text-[#1D4ED8]">
+                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
                             Câu #{msg.referencedQuestionNumber}
                           </span>
+                        )}
+                        {!msg.isError && msg.id !== 'welcome' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg.id, msg.content)}
+                            title="Sao chép câu trả lời"
+                            className="ml-1 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700"
+                          >
+                            {copiedMsgId === msg.id ? (
+                              <>
+                                <Check size={11} className="text-emerald-600" />
+                                <span className="text-emerald-600">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={11} />
+                                <span>Sao chép</span>
+                              </>
+                            )}
+                          </button>
                         )}
                       </>
                     )}
                   </div>
 
+                  {/* Message Bubble */}
                   <div
-                    className={`max-w-[92%] border p-3.5 ${
+                    className={`max-w-[92%] ${
                       isUser
-                        ? 'border-[#1D4ED8] bg-[#1D4ED8] text-sm leading-relaxed text-white'
+                        ? 'rounded-2xl rounded-tr-xs bg-gradient-to-br from-[#1D4ED8] to-[#1E40AF] px-4 py-2.5 text-[14px] leading-relaxed text-white shadow-xs'
                         : msg.isError
-                        ? 'border-red-300 bg-red-50 text-sm text-red-900'
-                        : 'border-slate-200 bg-white text-slate-900 shadow-xs'
+                          ? 'rounded-2xl rounded-tl-xs border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-900'
+                          : 'rounded-2xl rounded-tl-xs border border-slate-200/90 bg-white px-4 py-3.5 text-slate-900 shadow-[0_2px_12px_-3px_rgba(15,23,42,0.06)]'
                     }`}
                   >
                     {isUser ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                      <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-white">{msg.content}</p>
                     ) : (
                       <AiMarkdownMessage content={msg.content} />
                     )}
@@ -767,14 +868,14 @@ const AiAssistantWidget = () => {
 
                   {/* Follow-up Suggestion Chips */}
                   {!isUser && Array.isArray(msg.suggestedFollowUps) && msg.suggestedFollowUps.length > 0 && (
-                    <div className="mt-2 flex max-w-[94%] flex-wrap gap-1.5">
+                    <div className="mt-2.5 flex max-w-[95%] flex-wrap gap-1.5">
                       {msg.suggestedFollowUps.map((followUp, idx) => (
                         <button
                           key={idx}
                           type="button"
                           disabled={loading}
                           onClick={() => sendMessage(followUp)}
-                          className="inline-flex cursor-pointer items-center gap-1 border border-slate-200 bg-white px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:bg-blue-50/60 hover:text-[#1D4ED8] disabled:opacity-50"
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-left text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-[#1D4ED8] hover:bg-[#EFF6FF]/80 hover:text-[#1D4ED8] disabled:opacity-50"
                         >
                           <ChevronRight size={12} className="shrink-0 text-[#1D4ED8]" />
                           <span>{followUp}</span>
@@ -788,7 +889,7 @@ const AiAssistantWidget = () => {
 
             {loading && (
               <div className="flex items-start gap-2">
-                <div className="flex items-center gap-2.5 border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 shadow-xs">
+                <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-xs border border-blue-200/80 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-xs">
                   <LoaderCircle size={16} className="animate-spin text-[#1D4ED8]" />
                   <span>Trợ lý AI đang phân tích và soạn câu trả lời...</span>
                 </div>
@@ -798,24 +899,15 @@ const AiAssistantWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Footer */}
+          {/* Unified Modern Composer Footer */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage(inputValue);
             }}
-            className="border-t border-slate-200 bg-white p-3.5"
+            className="border-t border-slate-200/90 bg-white p-3"
           >
-            <div className="mb-2 flex items-center justify-between text-[11px] text-slate-500">
-              <span className="flex items-center gap-1 font-medium">
-                <HelpCircle size={12} className="text-[#1D4ED8]" />
-                {examResult
-                  ? 'Mẹo: Bạn có thể gõ trực tiếp "Giải thích câu 15" hoặc bấm nút trên từng câu.'
-                  : 'Hỏi bất kỳ điều gì về TOEIC hoặc cách dùng trang web.'}
-              </span>
-            </div>
-
-            <div className="flex items-end gap-2">
+            <div className="ai-composer-box flex flex-col rounded-2xl border border-slate-300/90 bg-[#F8FAFC] px-3.5 pt-2.5 pb-2 transition-all focus-within:border-[#1D4ED8] focus-within:bg-white focus-within:ring-3 focus-within:ring-blue-500/10">
               <textarea
                 ref={inputRef}
                 rows={2}
@@ -829,22 +921,46 @@ const AiAssistantWidget = () => {
                 }}
                 placeholder={
                   focusedQuestion
-                    ? `Hỏi về Câu #${focusedQuestion.questionNumber} (ngữ pháp, từ vựng, tại sao chọn ${focusedQuestion.correctAnswer}...)`
+                    ? `Hỏi bất kỳ điều gì về Câu #${focusedQuestion.questionNumber} (hoặc gõ "câu 15" để chuyển câu)...`
                     : examResult
-                    ? 'Nhập câu hỏi về bài thi (VD: Giải thích câu 12, hoặc hỏi về tính năng web)...'
-                    : 'Nhập câu hỏi của bạn về TOEIC hoặc cách sử dụng trang web...'
+                      ? 'Hỏi bất kỳ câu nào trong đề (VD: "Giải thích câu 8", "Phân tích Part 5")...'
+                      : 'Nhập câu hỏi của bạn về TOEIC hoặc cách sử dụng trang web...'
                 }
                 disabled={loading}
-                className="min-h-[56px] max-h-28 flex-1 resize-none border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#1D4ED8] focus:outline-none disabled:bg-slate-50"
+                className="max-h-28 min-h-[42px] w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
               />
-              <button
-                type="submit"
-                disabled={loading || !inputValue.trim()}
-                aria-label="Gửi câu hỏi cho Trợ lý AI"
-                className="flex h-[56px] w-12 shrink-0 cursor-pointer items-center justify-center border border-[#1D4ED8] bg-[#1D4ED8] text-white transition-colors hover:bg-[#173ea8] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <Send size={17} />
-              </button>
+
+              <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-200/70 pt-1.5">
+                <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
+                  {focusedQuestion ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-[#1D4ED8] tabular-nums">
+                      Đang chọn: Câu #{focusedQuestion.questionNumber}
+                      <button
+                        type="button"
+                        onClick={() => setFocusedQuestion(null)}
+                        title="Bỏ ghim câu này để hỏi chung cả đề"
+                        className="ml-0.5 cursor-pointer rounded-full p-0.5 text-blue-500 hover:bg-blue-100 hover:text-blue-800"
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="truncate font-medium text-slate-400">
+                      Nhấn <strong className="font-semibold text-slate-600">Enter</strong> để gửi ·{' '}
+                      <strong className="font-semibold text-slate-600">Shift + Enter</strong> xuống dòng
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !inputValue.trim()}
+                  aria-label="Gửi câu hỏi cho Trợ lý AI"
+                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[#1D4ED8] text-white shadow-xs transition-all hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
             </div>
           </form>
         </aside>

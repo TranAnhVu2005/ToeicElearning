@@ -701,10 +701,12 @@ const TestResultPage = () => {
                     )}
 
                     {/* AI Tutor Contextual Action Bar for this Question */}
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-200 pt-3.5">
+                    <div className="ai-question-action-bar mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-200/80 pt-3.5">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-600">
-                          <Bot size={14} className="text-[#1D4ED8]" />
+                        <span className="inline-flex items-center gap-1.5 pr-1 text-xs font-bold text-slate-700">
+                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-blue-50 text-[#1D4ED8]">
+                            <Bot size={13} />
+                          </span>
                           Trợ lý AI:
                         </span>
                         <button
@@ -716,7 +718,7 @@ const TestResultPage = () => {
                               autoPrompt: `Giải thích chi tiết vì sao câu ${question.questionNumber} (Part ${question.partNumber}) chọn đáp án ${question.correctAnswer} và vì sao loại các phương án còn lại.`,
                             })
                           }
-                          className="cursor-pointer border border-blue-200 bg-blue-50/80 px-2.5 py-1 text-xs font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
+                          className="ai-q-chip ai-q-chip-accent cursor-pointer rounded-full border border-blue-200 bg-blue-50/90 px-3 py-1 text-xs font-bold text-[#1D4ED8] transition-all hover:border-[#1D4ED8] hover:bg-blue-100"
                         >
                           Giải thích đáp án
                         </button>
@@ -729,7 +731,7 @@ const TestResultPage = () => {
                               autoPrompt: `Phân tích cấu trúc ngữ pháp và liệt kê các từ vựng / collocations TOEIC quan trọng trong câu ${question.questionNumber}.`,
                             })
                           }
-                          className="cursor-pointer border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                          className="ai-q-chip cursor-pointer rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition-all hover:border-[#1D4ED8] hover:bg-blue-50/50 hover:text-[#1D4ED8]"
                         >
                           Từ vựng & Ngữ pháp
                         </button>
@@ -742,7 +744,7 @@ const TestResultPage = () => {
                               autoPrompt: `Chỉ ra các bẫy ETS thường gặp ở dạng câu ${question.questionNumber} (Part ${question.partNumber}) này và mẹo làm bài nhanh.`,
                             })
                           }
-                          className="cursor-pointer border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                          className="ai-q-chip cursor-pointer rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition-all hover:border-[#1D4ED8] hover:bg-blue-50/50 hover:text-[#1D4ED8]"
                         >
                           Mẹo tránh bẫy
                         </button>
@@ -756,7 +758,7 @@ const TestResultPage = () => {
                             question,
                           })
                         }
-                        className="inline-flex cursor-pointer items-center gap-1.5 border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-[#173ea8]"
+                        className="ai-q-ask-btn inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#1D4ED8] bg-[#1D4ED8] px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs transition-all hover:bg-[#173ea8]"
                       >
                         <Sparkles size={13} />
                         Hỏi bất kỳ điều gì về câu #{question.questionNumber}
