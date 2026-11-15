@@ -4,7 +4,7 @@
 
 ## 1. Mục tiêu
 
-Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý người dùng, bán quyền truy cập đề VIP qua VNPAY, hỗ trợ học viên làm full test/luyện Part và xem lại kết quả.
+Website luyện thi TOEIC có quản trị nội dung bài thi (kho 20 bộ đề ETS 2026 & YBM 2026), quản lý người dùng, bán quyền truy cập đề VIP và thu phí xét duyệt giáo viên qua cổng thanh toán PayOS, hệ thống lớp học kiểu Google Classroom (mời học viên qua Gmail, thông báo bài tập qua Gmail, xem trước tài liệu PDF trực tiếp), hỗ trợ học viên làm full test/luyện Part/nghe chép chính tả Dictation và xem lại kết quả cùng Trợ lý AI Nuna.
 
 ## 2. Vai trò
 
@@ -25,16 +25,16 @@ Website luyện thi TOEIC có quản trị nội dung bài thi, quản lý ngư�
 - Tiếp tục phiên làm bài đã lưu sau khi mất mạng/đóng trình duyệt nếu phiên còn hiệu lực (đã được chủ dự án chọn; xem giới hạn và trạng thái tại `PROJECT_CONTEXT.md`, `docs/02_DATABASE.md` và `docs/04_FLOW_LOGIC.md`).
 
 ### Giáo viên
-- Gửi hồ sơ đăng ký giáo viên và hoàn tất khoản phí theo phương thức hệ thống hỗ trợ; nhận thông báo khi thanh toán xác nhận, sau đó chờ admin phê duyệt.
-- Tạo lớp, chia sẻ mã/lời mời, duyệt học sinh, xem danh sách thành viên, chặn hoặc xóa thành viên theo quyền.
-- Đăng tài liệu trong lớp; tạo đề riêng tư cho lớp mình hoặc chọn đề công khai của hệ thống để giao.
-- Tạo/sửa/xóa bài tập, đặt hoặc gia hạn hạn nộp; theo dõi trạng thái nộp, điểm và nhận xét.
+- Gửi hồ sơ đăng ký giáo viên và hoàn tất khoản phí xét duyệt (mặc định 2.000 VND) qua PayOS; nhận thông báo khi thanh toán xác nhận, sau đó chờ admin phê duyệt (hỗ trợ tạo lại mã QR PayOS mới nếu link thanh toán cũ hết hạn).
+- Tạo lớp, chia sẻ mã tham gia (`Class Code`) hoặc mời hàng loạt học viên qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`, tự động thêm và duyệt thẳng học viên đã có tài khoản trên hệ thống), duyệt học sinh, xem danh sách thành viên, chặn hoặc xóa thành viên theo quyền.
+- Đăng thông báo lên Bảng tin lớp học (gửi đồng thời thông báo in-app và email Gmail kiểu Google Classroom); đăng tài liệu PDF trong lớp (hỗ trợ xem trước trực tiếp trên trình duyệt và tải về); tạo đề riêng tư cho lớp mình hoặc chọn đề công khai của hệ thống để giao.
+- Tạo/sửa/xóa bài tập, đặt hoặc gia hạn hạn nộp (tự động gửi email thông báo Gmail cho học viên trong lớp); theo dõi trạng thái nộp, điểm và nhận xét.
 - Theo dõi bài chưa nộp, trễ, chưa chấm và xu hướng kết quả; xuất bảng điểm khi cần (đề xuất cần duyệt).
 
 ### Học sinh
-- Tham gia lớp bằng mã/lời mời, theo dõi tài liệu, bài tập, hạn nộp và thông báo của giáo viên.
+- Tham gia lớp bằng mã tham gia (`Class Code`) hoặc qua đường dẫn lời mời trong Gmail (`/classrooms?joinCode=...`), theo dõi Bảng tin, tài liệu PDF (xem trước trực tiếp hoặc tải xuống), bài tập, hạn nộp và thông báo của giáo viên.
 - Làm bài tập lớp, nhận trạng thái đã nộp/trễ và xem nhận xét khi được công bố.
-- Luyện lại câu sai, luyện nghe transcript/audio và chép chính tả từ nội dung có bản quyền sử dụng hợp lệ.
+- Luyện lại câu sai, hỏi Trợ lý AI Nuna giải thích chi tiết từng câu hỏi từ Câu #1 đến #200, luyện nghe transcript/audio và chép chính tả từ nội dung có bản quyền sử dụng hợp lệ.
 
 ## 3. Nền tảng hiện tại
 - Backend: Java 17, Spring Boot 4.1.0/Maven, Spring Data JPA (Hibernate 7.4), Spring Security, MySQL.
@@ -72,9 +72,9 @@ ETS cũng nêu rõ kết quả ứng dụng luyện tập của họ không đư
 
 1. **Nền tảng đáng tin cậy:** auth/RBAC, quản trị đề, catalog/free-VIP, phòng thi, backend submit/history/review, an toàn answer key.
 2. **Lớp học:** teacher application/approval, classroom membership/material, đề private, assignment/deadline/submission/report/feedback.
-3. **Thương mại:** VNPAY checkout/IPN, entitlement, màn admin transaction, đối soát và chính sách hoàn/đơn lỗi.
+3. **Thương mại:** PayOS checkout/webhook, entitlement, màn admin transaction, đối soát và chính sách hoàn/đơn lỗi.
 
-**Trạng thái hiện tại:** flow checkout VNPAY cho phí đăng ký giáo viên và đề VIP, IPN/return/status, hồ sơ và admin approval đã có trong code; entitlement đề VIP cấp vĩnh viễn từ IPN hợp lệ. Build thành công không đồng nghĩa đã tích hợp merchant hoặc kiểm thử payment end-to-end; đối soát/refund vẫn cần quy trình vận hành được chốt.
+**Trạng thái hiện tại:** flow checkout PayOS cho phí đăng ký giáo viên (2.000 VND) và đề VIP, webhook (`/api/payments/payos/webhook`, `/api/payments/webhook`), return/status kèm tự động đồng bộ trạng thái từ PayOS API (`syncPendingPaymentIfPossible`), hồ sơ và admin approval đã có trong code; entitlement đề VIP cấp vĩnh viễn từ webhook/xác nhận hợp lệ. Đối soát/refund vẫn cần quy trình vận hành được chốt.
 4. **Cải thiện học tập:** đánh giá đầu vào, mục tiêu/kế hoạch học, sổ câu sai, ôn tập ngắt quãng, tiến bộ theo Part, tiếp tục phiên thi, audio tools.
 5. **Giữ chân và vận hành:** notification preferences, metrics/dashboard, report nội dung lỗi, vận hành/backup/audit.
 

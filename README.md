@@ -1,6 +1,6 @@
 # TOEIC Learning
 
-Website luyện thi TOEIC gồm catalog đề, phòng thi và xem lại kết quả; các luồng giáo viên/lớp học, assignment và đề VIP/VNPAY cũng được phát triển trong cùng ứng dụng.
+Website luyện thi TOEIC gồm kho 20 bộ đề chuẩn (ETS 2026 & YBM 2026), phòng thi tự động lưu phiên, luyện nghe chép chính tả Dictation, xem lại kết quả cùng Trợ lý AI Nuna; các luồng giáo viên/lớp học kiểu Google Classroom (mời qua Gmail, thông báo bài tập qua Gmail, xem trước tài liệu PDF trực tiếp) và thương mại đề VIP / đăng ký giáo viên qua cổng thanh toán PayOS được tích hợp đồng nhất trong cùng ứng dụng.
 
 ## Cấu trúc
 

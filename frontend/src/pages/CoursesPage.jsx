@@ -349,9 +349,7 @@ const CoursesPage = () => {
                     className="h-14 w-14 shrink-0 rounded-xl border border-blue-100 bg-[#EFF6FF]/60 object-contain p-1"
                   />
                   <div>
-                    <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#1D4ED8]">
-                      🐾 Bạn đồng hành Nuna
-                    </span>
+
                     <h3 className="mt-0.5 text-sm font-bold text-slate-900">
                       Chọn đề nào hôm nay?
                     </h3>

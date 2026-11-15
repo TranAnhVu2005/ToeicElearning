@@ -11,8 +11,8 @@
 | Tài khoản | `Role`, `User` | Vai trò, hồ sơ, mật khẩu mã hóa, khóa tài khoản và `authVersion` để thu hồi JWT; Google `sub` nullable và unique để nhận diện OIDC ổn định. |
 | Đề thi | `Test`, `Part`, `ContextQuestion`, `Question` | Đề, phần thi, nhóm audio/đoạn đọc và câu hỏi. |
 | Kết quả | `TestResult`, `UserAnswer` | Một lần làm và lựa chọn từng câu; lưu `submission_key` duy nhất để submit retry trả lại cùng kết quả, cùng `score_type` để review giữ đúng cách diễn giải điểm. |
-| Thương mại | `PaymentTransaction`, `TeacherApplication`, `TestEntitlement` | VNPAY cho hồ sơ giáo viên và đề VIP; entitlement đề có entity. |
-| Lớp học | `Classroom`, `ClassMember`, `Material`, `Assignment` | Luồng lớp, tài liệu PDF private, bài tập/feedback và đề riêng đã có. |
+| Thương mại | `PaymentTransaction`, `TeacherApplication`, `TestEntitlement` | Thanh toán PayOS cho hồ sơ giáo viên và đề VIP; entitlement đề có entity. |
+| Lớp học | `Classroom`, `ClassMember`, `Material`, `Assignment` | Luồng lớp học kiểu Google Classroom, tài liệu PDF private (xem trước & tải về), bài tập/feedback, thông báo Gmail và đề riêng đã có. |
 | Giới hạn request | `LoginAttemptBucket` (`auth_login_attempt`) | Lưu bộ đếm theo scope API và hash bucket IP/IP+định danh/actor cùng thời điểm cửa sổ; dùng cho auth và upload. Cleanup bản ghi quá hạn; không lưu IP, email hoặc user ID thô. |
 | Khác | `Notification` | Có entity/schema; không tự mở rộng thành yêu cầu mới. |
 | Vận hành | `AuditEvent` (`audit_event`) | Nhật ký thao tác nhạy cảm tối thiểu; UTC timestamp, actor/action/target/outcome. Hiện ghi đăng ký và login success/failure, password changes, user lock, teacher review, payment/entitlement, đề, classroom create/update/join-code rotation, membership, assignment, feedback và material; không lưu payload, join code, identifier hoặc credential. |
@@ -22,7 +22,7 @@
 Các tên dưới đây là miền dữ liệu cần đáp ứng, không buộc giữ nguyên tên bảng. Mỗi entity cần ID, audit fields, khóa ngoại, unique/index, validation và trạng thái rõ.
 
 - **TeacherApplication (đã có)**: user, statement, trạng thái `PENDING_PAYMENT` / `PENDING_REVIEW` / `APPROVED` / `REJECTED`, admin/thời điểm duyệt và lý do. Chỉ cấp role giáo viên sau khi duyệt; khi duyệt, backend khóa cả dòng `teacher_application` và dòng `user` bằng native `SELECT ... FOR UPDATE` để tránh xung đột với trạng thái khóa tài khoản.
-- **PaymentTransaction (đã mở rộng)**: user, amount VND, `productType`, teacher application tùy chọn, mã `vnpTxnRef`, trạng thái, mã phản hồi/giao dịch provider và `paidAt`. Checkout và xác nhận thanh toán là hai trạng thái riêng; IPN và thao tác đánh dấu hết hạn đều khóa dòng giao dịch bằng native `SELECT ... FOR UPDATE`.
+- **PaymentTransaction (đã mở rộng cho PayOS)**: user, amount VND, `productType` (`TEACHER_APPLICATION` / `TEST_VIP`), teacher application hoặc test tùy chọn, mã đơn `payosOrderCode` (`payos_order_code`, unique), trạng thái (`PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`), mã phản hồi/tham chiếu provider (`payosCode`, `payosStatus`, `payosReference`) và `paidAt`. Checkout và xác nhận thanh toán là hai trạng thái riêng; webhook PayOS và thao tác đồng bộ đều khóa dòng giao dịch bằng native `SELECT ... FOR UPDATE`. Khi hồ sơ giáo viên `PENDING_PAYMENT` có giao dịch cũ đã hết hạn, hệ thống cập nhật lại chính dòng `PaymentTransaction` đó với `payosOrderCode` mới để tránh vi phạm unique constraint `uk_payment_transaction_teacher_application`.
 - **ExamMediaAsset (đã có)**: public ID duy nhất, format, Cloudinary resource/delivery type, người tải lên và thời điểm. Chỉ metadata do upload endpoint đăng ký mới được teacher gắn vào đề; teacher chỉ được dùng media mình tải lên. Admin giữ quyền quản trị nội dung toàn hệ thống.
 - **Test ảnh bìa**: `Test.coverImageUrl` nullable, lưu URL ảnh bìa công khai thuộc Cloudinary namespace của ứng dụng. Upload qua media endpoint trong thư mục `exams/{slug}/covers`; ảnh chỉ dùng cho catalog/NEWS, không thay thế media câu hỏi. Khi thay thế hoặc xóa ảnh bìa/xóa đề, ảnh bìa cũ trên Cloudinary chỉ bị xóa nếu không còn đề nào khác tham chiếu. Database cũ thêm cột bằng migration `V20261111_01__add_test_cover_image.sql`.
 - **TestComment (Bình luận đề thi)**: `test_comment` liên kết `test_id` và `user_id`, lưu `content` (tối đa 2000 ký tự) cùng timestamp `created_at`, `updated_at`. Cho phép người dùng trao đổi, thảo luận, sửa/xóa bình luận cá nhân hoặc admin kiểm duyệt xóa. Index `idx_test_comment_test_created(test_id, created_at)`. Migration tương ứng: `backend/migrations/V20261112_01__add_test_comment.sql` và bổ sung trong `backend/toeic_learning_fresh_install.sql`.
@@ -85,21 +85,21 @@ Các tên dưới đây là miền dữ liệu cần đáp ứng, không buộc 
 
 Một context có thể đại diện một tập câu hỏi trong UI, nhưng phải cho phép passage con tách biệt. Mỗi câu cần liên kết xác định tới passage tương ứng.
 
-## 5. Thanh toán và quyền VIP
+## 5. Thanh toán PayOS và quyền VIP
 
-- `PaymentTransaction` liên kết đề VIP và snapshot amount/tên sản phẩm; `TestEntitlement` cấp quyền sau IPN success. Đây là entity code-first/JPA update; cần kiểm tra schema môi trường trước rollout.
+- `PaymentTransaction` liên kết đề VIP và snapshot amount/tên sản phẩm; `TestEntitlement` cấp quyền sau khi webhook PayOS hoặc đồng bộ API PayOS xác nhận `PAID`.
 - Mỗi đề VIP được cấu hình giá riêng bởi admin. Catalog có thể hiển thị giá hiện tại, nhưng checkout phải tra lại trạng thái publish/VIP và giá hiện hành từ DB, rồi lưu snapshot vào giao dịch; tuyệt đối không tin amount từ request.
 - Đã chốt: giá được phép sửa và chỉ áp dụng checkout mới; người mua một lần có quyền vĩnh viễn. Chính sách hoàn tiền/thu hồi quyền chưa chốt; hiện không có thao tác thu hồi.
-- Mục tiêu là lưu tham chiếu giao dịch duy nhất, user, số tiền, trạng thái, thời gian và liên kết tới đề/gói mua.
-- Callback phải xác thực chữ ký, xử lý lặp an toàn (idempotent), chỉ cấp quyền sau xác nhận thành công phía server.
+- Mục tiêu là lưu mã đơn `payos_order_code` duy nhất, user, số tiền, trạng thái, mã tham chiếu `payos_reference`, thời gian và liên kết tới đề/hồ sơ giáo viên.
+- Webhook PayOS (`/api/payments/payos/webhook` và `/api/payments/webhook`) phải xác thực chữ ký HMAC-SHA256 (`PAYOS_CHECKSUM_KEY`), xử lý lặp an toàn (idempotent), chỉ cấp quyền sau xác nhận thành công phía server.
 - Admin cần xem giao dịch; lọc, đối soát, hoàn tiền, báo cáo là phạm vi cần chủ dự án chốt.
-- Không lưu secret VNPAY trong repo/frontend. Dùng cấu hình môi trường và không ghi credential vào log.
+- Không lưu secret PayOS (`PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`) trong repo/frontend. Dùng cấu hình môi trường và không ghi credential vào log.
 
 ### Đăng ký giáo viên
 
-- Một hồ sơ có thể liên kết giao dịch phí đăng ký; callback VNPAY thành công cập nhật giao dịch và chuyển hồ sơ sang `PENDING_REVIEW` trong cùng quy trình idempotent.
+- Một hồ sơ liên kết giao dịch phí đăng ký (`TEACHER_APPLICATION_FEE_VND`, mặc định `2000` VND); webhook PayOS (hoặc đồng bộ trạng thái PayOS) thành công cập nhật giao dịch và chuyển hồ sơ sang `PENDING_REVIEW` trong cùng quy trình idempotent.
+- Khi link thanh toán cũ hết hạn mà hồ sơ vẫn đang ở `PENDING_PAYMENT`, ứng viên có thể gửi lại yêu cầu để hệ thống cấp `payosOrderCode` mới trên bản ghi giao dịch hiện có và tạo mã QR PayOS mới.
 - Khi admin duyệt, tạo/nâng role TEACHER và lưu người duyệt/thời điểm; khi từ chối, giữ lịch sử và lý do, định nghĩa chính sách hoàn phí trước khi triển khai.
-- Nếu dùng chuyển khoản ngân hàng ngoài VNPAY thay vì VNPAY checkout, phải mô tả nguồn xác nhận giao dịch (webhook ngân hàng hay đối soát admin). Không thể phát thông báo “thành công tự động” an toàn chỉ từ ảnh/chuyển khoản người dùng tự khai.
 
 ## 5.1. Lớp và bài tập
 
@@ -129,14 +129,14 @@ Một context có thể đại diện một tập câu hỏi trong UI, nhưng ph
 
 ## 6. SQL và migration
 
-- File khởi tạo hợp nhất hiện hành là `backend/toeic_learning_fresh_install.sql`. Đây là lựa chọn đầy đủ nhất trong các script khởi tạo đã rà: schema bootstrap được đồng bộ với migrations và entity hiện tại, cùng seed đề hiện có. Chỉ chạy trên database mới/trống; file không DROP database/bảng, nhưng sẽ dừng nếu gặp bảng trùng. Cần tạo tài khoản qua luồng đăng ký rồi gán quyền admin bằng thao tác DBA có kiểm soát.
-- `backend/database_script.sql` và `backend/database_script_20de.sql` là script cũ, cả hai có `DROP DATABASE toeiclearning`; không chạy trên DB có dữ liệu cần giữ. Hai file seed rời đã được đưa vào file hợp nhất dưới dạng bản sao draft, vì vậy không chạy/nối thêm chúng sau file hợp nhất.
-- Bản sao ETS/YBM trong seed đều được tạo từ Test 01, không phải đề độc lập; trong file hợp nhất chúng được đổi tên thành local sample copy và đặt `DRAFT`. Test 01 gốc vẫn là seed hiện có; xác minh answer key và quyền phân phối trước khi publish/thương mại hóa.
-- File hợp nhất đã được kiểm tra tĩnh về bảng, đích khóa ngoại, seed tài khoản và câu lệnh DROP; chưa chạy trên MySQL, nên không xem đây là xác nhận runtime hoặc migration trên DB đang dùng.
-- Các file `backend/migrations/` dành cho database đã tồn tại; không chạy bootstrap SQL để nâng cấp. Đối chiếu trạng thái migration/schema trước khi áp dụng migration để tránh chạy lặp.
+- File khởi tạo hợp nhất hiện hành là `backend/toeic_learning_fresh_install.sql`. Đây là file chuẩn duy nhất để dựng mới cơ sở dữ liệu: đã loại bỏ các bảng dư thừa không dùng trong code (`vocabulary`, `lesson`), đồng bộ hoàn toàn 22 bảng với entity hiện hành (bao gồm các cột `payos_order_code`, `payos_reference`, `payos_code`, `payos_status` trong `payment_transaction`), và seed đầy đủ **20 bộ đề thi chính thức (`PUBLISHED`, 200 câu/đề)**:
+  - 10 đề ETS: `ETS TOEIC 2026 - TEST 01` đến `ETS TOEIC 2026 - TEST 10`.
+  - 10 đề YBM: `YBM TOEIC 2026 - TEST 01` đến `YBM TOEIC 2026 - TEST 10`.
+- `backend/database_script.sql` và `backend/database_script_20de.sql` là script cũ; không sử dụng để tránh xung đột schema cũ.
+- Các file `backend/migrations/` dành cho database đã tồn tại cần nâng cấp không phá hủy dữ liệu.
 - Hiện `spring.jpa.hibernate.ddl-auto=update`; thay đổi schema dài hạn cần migration có version, tương thích dữ liệu seed và rollback.
-- Seed test cần giữ thứ tự câu và toàn vẹn khóa ngoại.
-- Kiểm tra quyền sử dụng thương mại cho ngân hàng câu hỏi/media/transcript/explanation trước khi seed hoặc phát hành đề.
+- Seed test giữ đúng thứ tự câu (`orderIndex`, `questionNumber` 1–200) và toàn vẹn khóa ngoại.
+- Kiểm tra quyền sử dụng thương mại cho ngân hàng câu hỏi/media/transcript/explanation trước khi phát hành thương mại.
 
 ## 7. Bảo vệ dữ liệu và quyền truy cập
 

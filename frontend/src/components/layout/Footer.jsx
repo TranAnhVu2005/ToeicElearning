@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, MessageSquareText } from 'lucide-react';
+import { ArrowRight, MessageSquareText } from 'lucide-react';
 import brandLogo from '../../assets/img/logo1.png';
 import { TOBY_IMAGES } from '../common/TobyMascot';
 import { openAiAssistant } from '../../services/aiService';
@@ -26,15 +26,12 @@ const Footer = () => {
             </div>
             <div>
               <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]">
-                <Sparkles size={13} />
-                <span>🐾 Góc nhắn nhủ từ chú cún Nuna</span>
+                <span>🐾 Nuna có điều muốn nói!!!</span>
               </span>
               <h3 className="mt-1 text-lg font-bold text-slate-900">
-                Chỉ 15 phút luyện TOEIC mỗi ngày cùng Nuna để bứt phá mục tiêu 990!
+                Tớ muốn đi dạo cùng với chứng chỉ TOEIC 990! Dắt tớ đi cùng nhé!
               </h3>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                Giữ chuỗi Streak học tập, luyện nghe chép chính tả Dictation và hỏi Nuna AI bất cứ câu nào bạn còn phân vân.
-              </p>
+
             </div>
           </div>
 
@@ -82,8 +79,7 @@ const Footer = () => {
                 className="h-10 w-10 shrink-0 rounded-lg border border-blue-100 bg-white object-contain p-0.5"
               />
               <span className="text-xs leading-snug text-slate-600">
-                <strong className="block font-bold text-slate-900">🐾 Linh vật Nuna đồng hành 24/7</strong>
-                Luôn xuất hiện nhắc nhở ôn tập và giải đáp mọi câu hỏi TOEIC của bạn.
+                Nuna, người bạn đồng hành luôn xuất hiện nhắc nhở ôn tập và giải đáp mọi câu hỏi TOEIC của bạn.
               </span>
             </div>
           </div>
@@ -111,7 +107,7 @@ const Footer = () => {
                 className="h-12 w-18 shrink-0 rounded-lg bg-white object-contain p-0.5"
               />
               <p className="text-xs leading-relaxed text-slate-700">
-                Chọn đề thi phù hợp để làm Full Test 200 câu hoặc luyện tập từng Part theo mục tiêu cá nhân.
+                Chọn đề thi phù hợp, dành ra 120 phút để làm fulltest hoặc luyện tập từng Part theo mục tiêu cá nhân.
               </p>
             </div>
             <ul className="footer-links">

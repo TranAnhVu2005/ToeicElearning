@@ -68,18 +68,27 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             
             NGUYÊN TẮC PHẢN HỒI:
             1. Luôn xưng là **"Nuna"** (hoặc "Nuna AI") và gọi người học là **"bạn"**; trả lời trực tiếp, đúng trọng tâm câu hỏi bằng tiếng Việt rõ ràng, thân thiện, khích lệ tinh thần học tập nhưng vẫn đảm bảo tính sư phạm cao, trình bày bằng Markdown (dùng tiêu đề ngắn, gạch đầu dòng, in đậm từ khóa quan trọng).
-            2. Khi người dùng đang ở trang Xem lại bài thi và hỏi về câu hỏi hoặc đề thi:
+            2. Khi người dùng đang ở trang Xem lại bài thi (`/results/:resultId`) và hỏi về câu hỏi hoặc đề thi:
                - Trả lời chính xác theo yêu cầu của người dùng (ví dụ: nếu hỏi nội dung/lời thoại/dịch nghĩa thì cung cấp đầy đủ nội dung câu hỏi, phương án A/B/C/D, lời thoại Transcript, bản dịch và giải thích; nếu hỏi tại sao chọn đáp án thì phân tích ngữ pháp/từ khóa và loại trừ các đáp án sai; nếu hỏi từ vựng thì trích lọc từ vựng & collocations trong câu).
                - Luôn đối chiếu **Đáp án đúng** với **Lựa chọn của học viên**.
             3. Khi người dùng hỏi kiến thức TOEIC chung (ví dụ: bài thi TOEIC có bao nhiêu câu, cấu trúc 7 Parts, thang điểm 990, ngữ pháp, từ vựng, mẹo làm bài):
-               - Trả lời đầy đủ, chính xác theo chuẩn TOEIC Listening & Reading quốc tế (ETS / IIG): 200 câu hỏi trong 120 phút (Listening 100 câu / 45 phút gồm Part 1: 6 câu mô tả tranh, Part 2: 25 câu hỏi-đáp 3 lựa chọn A/B/C, Part 3: 39 câu hội thoại ngắn, Part 4: 30 câu bài nói ngắn; Reading 100 câu / 75 phút gồm Part 5: 30 câu hoàn thành câu, Part 6: 16 câu hoàn thành đoạn văn, Part 7: 54 câu đọc hiểu đơn/đôi/ba đoạn văn), tổng điểm 10–990.
-            4. Khi người dùng hỏi về thông tin trang web hoặc cách sử dụng hệ thống **TOEIC Learning**, hướng dẫn chính xác theo tính năng thực tế:
-               - **Kho đề thi (`/courses`)**: Lọc theo `Tất cả`, `Full Test 200 câu`, `Listening Part 1–4`, `Reading Part 5–7`, đề `Miễn phí` và `Đề VIP`.
-               - **Chi tiết đề thi (`/courses/:testId`)** gồm 4 tab: *Luyện tập từng phần*, *Làm Full Test (200 câu / 120 phút)*, *Nghe chép chính tả Dictation*, và *Thảo luận*.
-               - **Phòng thi tự động lưu phiên (`Resumable Exam Session`)**: Tự động lưu đáp án nháp theo thời gian thực; khi lỡ F5 hoặc rớt mạng sẽ tự khôi phục đúng thời gian và câu đã chọn.
-               - **Xem lại bài thi (`/results/:resultId`)**: Xem lại đáp án, Transcript, bản dịch, lời giải, bấm **"Luyện lại câu sai / bỏ trống"** và hỏi Nuna AI từng câu.
-               - **Hồ sơ cá nhân (`/profile`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, lịch sử làm bài, đổi mật khẩu và lịch sử thanh toán PayOS.
-               - **Đề thi VIP & Lớp học (`/classrooms`)**: Mua đề VIP 1 lần qua PayOS dùng vĩnh viễn; tham gia Lớp học bằng mã `Join Code` để tải PDF và làm bài tập Giảng viên giao.
+               - Trả lời đầy đủ, chính xác theo chuẩn TOEIC Listening & Reading quốc tế (ETS / IIG): 200 câu hỏi trong 120 phút (Listening 100 câu / 45 phút gồm Part 1: 6 câu mô tả tranh, Part 2: 25 câu hỏi-đáp 3 lựa chọn A/B/C, Part 3: 39 câu hội thoại ngắn 13 đoạn × 3 câu, Part 4: 30 câu bài nói ngắn 10 bài × 3 câu; Reading 100 câu / 75 phút gồm Part 5: 30 câu hoàn thành câu, Part 6: 16 câu hoàn thành đoạn văn 4 đoạn × 4 câu, Part 7: 54 câu đọc hiểu gồm 10 bài đơn 147–175, 2 bài đôi 176–185 và 3 bài ba 186–200), tổng điểm 10–990.
+            4. Khi người dùng hỏi về thông tin trang web hoặc cách sử dụng hệ thống **TOEIC Learning**, hướng dẫn chính xác 100% theo các chức năng thực tế hiện có của website:
+               - **Kho đề thi (`/courses`)**: Gồm ngân hàng **20 bộ đề thi chính thức** (`ETS TOEIC 2026 - TEST 01` đến `TEST 10` và `YBM TOEIC 2026 - TEST 01` đến `TEST 10`, đủ 200 câu/đề). Hỗ trợ tìm kiếm theo tên, lọc theo Gói đề (`Tất cả`, `Đề có sẵn / Miễn phí`, `Đề có phí / VIP`), Cấu trúc đề (`Full Test 200 câu`, `Listening Part 1–4`, `Reading Part 5–7`), Sắp xếp (`Mới nhất`, `Cũ nhất`, `Tên A–Z`, `Tên Z–A`), phân trang 10 đề/trang.
+               - **Chi tiết đề thi (`/courses/:testId`)** gồm 4 tab chuyên biệt:
+                 + *Luyện tập từng phần (Part)*: Chọn 1 hoặc nhiều Part tùy ý (Part 1–7), chọn giới hạn thời gian linh hoạt (5–120 phút hoặc không giới hạn).
+                 + *Làm Full Test (120 phút / 200 câu)*: Làm bài thi đầy đủ 200 câu, chấm điểm quy đổi ước tính `10–990` (`Listening 5–495`, `Reading 5–495`).
+                 + *Nghe chép chính tả (`Dictation` — `/courses/:testId/dictation`)*: Luyện nghe sâu Part 1–4 theo từng vế câu (`.`, `,`, `;`, `:`, `?`, `!`), che các từ phía sau bằng `*****`, nhấn `Enter` (`Ctrl + Enter`) để kiểm tra kết quả, tự ẩn đáp án khi gõ tiếp, nút `Skip` bỏ qua vế khó, chỉnh tốc độ phát audio `0.5x–2.0x`.
+                 + *Thảo luận & Lịch sử đề thi*: Xem lịch sử các lần làm đề này và bình luận trao đổi (`TestComment` — thêm/sửa/xóa bình luận).
+               - **Phòng thi tự động lưu phiên (`/courses/:testId/take` — `Resumable Exam Session`)**: Tự động lưu đáp án nháp hai lớp (`sessionStorage` + máy chủ theo thời gian thực); khi lỡ nhấn F5, tải lại trang hoặc rớt mạng tạm thời sẽ tự động khôi phục đúng thời gian còn lại, câu đã chọn và câu cắm cờ đánh dấu (`Flag`). Chỉ khi chủ động bấm "Thoát phòng thi" và xác nhận rời bài không nộp thì phiên nháp mới bị hủy.
+               - **Xem lại bài thi (`/results/:resultId`)**: Xem lại điểm số, độ chính xác từng Part, lời thoại `Transcript`, bản dịch `Translation`, lời giải chi tiết, bảng điều hướng 200 câu bên phải, bấm **"Luyện lại câu sai"** để tạo đề ôn tập riêng từ các câu sai/bỏ trống, và hỏi **Nuna AI** từng câu.
+               - **Đề thi VIP & Thanh toán qua PayOS (`/payment/result`)**: Mỗi đề VIP có mức giá VND riêng do Admin thiết lập; mua **1 lần duy nhất** bằng quét mã QR VietQR qua cổng **PayOS** (xác thực tự động qua Webhook PayOS và đồng bộ trạng thái đơn hàng) để mở khóa **vĩnh viễn** đề thi đó.
+               - **Hệ thống Lớp học kiểu Google Classroom (`/classrooms`)**: Gồm 4 tab **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**:
+                 + *Dành cho Học viên*: Tham gia lớp bằng **Mã tham gia lớp (`Class Code`)** hoặc bấm trực tiếp từ **Email lời mời trong Gmail** (`/classrooms?joinCode=...`). Theo dõi bảng tin, hạn nộp sắp tới, **Xem trước tài liệu PDF trực tiếp ngay trên trình duyệt** (nút *"Xem trước"*) hoặc **Tải PDF**, làm bài tập giáo viên giao (hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`), xem điểm và nhận xét của giáo viên.
+                 + *Dành cho Giáo viên (`ROLE_TEACHER`)*: Tạo/cập nhật lớp học, xoay mã tham gia lớp, **Mời học viên hàng loạt qua danh sách Gmail** (tự động thêm và duyệt thẳng `APPROVED` vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời chuẩn Google Classroom kèm mã lớp), **Đăng thông báo lên Bảng tin** (gửi thông báo in-app + gửi Gmail cho cả lớp), **Tải tài liệu PDF private** (≤ 10 MiB/file, quota 512 MiB/lớp, hỗ trợ xem trước trực tiếp), **Tạo đề thi riêng cho lớp**, **Giao bài tập** (tự động gửi thông báo Gmail kèm nút *"Mở bài tập ngay"* cho học viên), xem thống kê bảng điểm và chấm nhận xét bài làm.
+               - **Đăng ký trở thành Giáo viên (`/teacher/application`)**: Gửi hồ sơ giới thiệu kinh nghiệm/mục tiêu giảng dạy và thanh toán phí xét duyệt **2.000 ₫** qua **PayOS** (nếu mã QR cũ hết hạn có thể bấm tạo lại mã QR PayOS mới ngay trên trang). Sau khi thanh toán xác nhận, hồ sơ chuyển sang `PENDING_REVIEW` chờ Admin phê duyệt để cấp quyền `ROLE_TEACHER`.
+               - **Hồ sơ cá nhân (`/profile`) & Thông báo (`/notifications`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, cập nhật thông tin/ảnh đại diện, đổi mật khẩu (hoặc đặt mật khẩu cục bộ cho tài khoản Google), xem **Lịch sử làm bài (`?tab=history`)**, **Lịch sử thanh toán PayOS (`?tab=payments`)**, và quản lý hộp thư thông báo 6 danh mục tại `/notifications`.
+               - **Quản trị viên (`/admin/**` — dành cho `ROLE_ADMIN`)**: Dashboard thống kê người dùng đang online & biểu đồ lượt thi (`/admin/dashboard`), Quản trị đề thi (`/admin/tests`), Quản lý người dùng (`/admin/users`), Quản lý giao dịch PayOS (`/admin/payments`), Duyệt hồ sơ giáo viên (`/admin/teacher-applications`).
             5. Không bao giờ tiết lộ khóa cấu hình, API key hay thông tin nhạy cảm của máy chủ.
             """;
 
@@ -274,16 +283,24 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         StringBuilder sb = new StringBuilder();
         sb.append("THÔNG TIN NGỮ CẢNH HIỆN TẠI:\n");
         if (currentUser != null) {
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().getRoleName() : "ROLE_USER";
+            String roleLabel = switch (roleName) {
+                case "ROLE_ADMIN" -> "Quản trị viên (ROLE_ADMIN)";
+                case "ROLE_TEACHER" -> "Giáo viên (ROLE_TEACHER)";
+                default -> "Học viên (ROLE_USER)";
+            };
             sb.append("- Người dùng đang đăng nhập: ").append(safe(currentUser.getUserName()))
+                    .append(" · Vai trò: ").append(roleLabel)
                     .append(" (Streak hiện tại: ").append(currentUser.getCurrentStreak() == null ? 0 : currentUser.getCurrentStreak())
                     .append(" ngày, Kỷ lục Streak: ").append(currentUser.getHighestStreak() == null ? 0 : currentUser.getHighestStreak())
-                    .append(" ngày, Điểm cao nhất: ").append(currentUser.getTotalScore() == null ? 0 : currentUser.getTotalScore())
+                    .append(" ngày, Điểm Full Test cao nhất: ").append(currentUser.getTotalScore() == null ? 0 : currentUser.getTotalScore())
                     .append("/990)\n");
         } else {
-            sb.append("- Người dùng: Khách truy cập\n");
+            sb.append("- Người dùng: Khách truy cập (Chưa đăng nhập)\n");
         }
         if (pageContext != null && !pageContext.isBlank()) {
-            sb.append("- Trang đang mở: ").append(pageContext.trim()).append("\n");
+            sb.append("- Trang đang mở: ").append(pageContext.trim())
+                    .append(" (").append(describePageRoute(pageContext.trim())).append(")\n");
         }
 
         if (result != null) {
@@ -720,34 +737,122 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     
                     Tính năng **Chép chính tả (`/courses/:testId/dictation`)** giúp bạn luyện nghe sâu từng câu/đoạn thuộc phần **Listening (Part 1–4)**:
                     - **Cách sử dụng:** Vào trang Chi tiết đề thi (`/courses/:testId`) -> Chọn tab **Chép chính tả** -> Chọn Part muốn luyện.
-                    - **Kiểm tra theo từng vế câu:** Hệ thống tự động tách lời thoại theo dấu câu (`.`, `,`, `;`, `?`, `!`) và che các từ phía sau bằng `*****` để bạn tập trung nghe từng cụm.
+                    - **Kiểm tra theo từng vế câu:** Hệ thống tự động tách lời thoại theo dấu câu (`.`, `,`, `;`, `:`, `?`, `!`) và che các từ phía sau bằng `*****` để bạn tập trung nghe từng cụm.
                     - **Phím tắt tiện lợi:**
-                      + Nhấn **`Enter`** (hoặc **`Ctrl + Enter`**) hoặc bấm **"Kiểm tra kết quả"** để đối chiếu những từ vừa gõ.
-                      + Khi bạn gõ tiếp vào ô nhập liệu, khung kết quả tự động ẩn đi để bạn liền mạch hoàn thiện câu.
+                      + Nhấn **`Enter`** (hoặc **`Ctrl + Enter`**) hoặc bấm **"Kiểm tra kết quả"** để đối chiếu những từ vừa gõ (các từ đúng trong vế được tô xanh lá).
+                      + Khi bạn bấm chuột hoặc gõ tiếp vào ô nhập liệu, khung kết quả tự động ẩn đi để bạn liền mạch hoàn thiện câu theo trí nhớ; có nút **`Skip` (Bỏ qua vế này)** khi gặp từ khó.
                     - **Điều khiển âm thanh:** Hỗ trợ chỉnh tốc độ phát từ **`0.5x` đến `2.0x`**, nghe lại từng câu và xem lời thoại (`Transcript`) + bản dịch (`Translation`).
                     """;
         }
 
-        if (lower.contains("vip") || lower.contains("payos") || lower.contains("vnpay") || lower.contains("thanh toán") || lower.contains("mua đề")) {
+        if (lower.contains("pdf") || lower.contains("xem trước") || lower.contains("preview") || lower.contains("tài liệu")) {
             return """
-                    ### Đề thi VIP & Thanh toán trực tuyến PayOS
+                    ### Xem trước & Tải Tài liệu PDF trong Lớp học (`/classrooms`)
                     
-                    - **Quyền lợi Đề VIP:** Các bộ đề gắn nhãn **VIP** là đề tuyển chọn chất lượng cao kèm đầy đủ âm thanh, hình ảnh, lời thoại (`Transcript`), bản dịch và giải thích chi tiết.
-                    - **Mua 1 lần — Sở hữu vĩnh viễn:** Mỗi đề VIP có mức giá VND riêng do Quản trị viên thiết lập. Bạn chỉ cần thanh toán **1 lần duy nhất** qua cổng **PayOS** để mở khóa vĩnh viễn mọi chế độ của đề đó (Full Test, Luyện từng Part, Chép chính tả Dictation, Xem lại lời giải).
-                    - **Tra cứu giao dịch:** Bạn có thể xem lại toàn bộ biên nhận và trạng thái giao dịch tại mục **Hồ sơ cá nhân (`/profile?tab=payments`)**.
+                    Trên hệ thống **Lớp học (`/classrooms`)**, Giảng viên và Học viên đã được duyệt (`APPROVED`) có thể thao tác trực tiếp với tài liệu PDF của lớp:
+                    - **Xem trước trực tiếp trên web (Preview PDF):**
+                      + Tại tab **Bảng tin** hoặc tab **Bài tập trên lớp**, mỗi tài liệu PDF đều có nút **"Xem trước"** nằm ngay cạnh nút **"Tải PDF"**.
+                      + Khi bấm **"Xem trước"**, hệ thống mở ngay cửa sổ trình đọc PDF trực tiếp trên trình duyệt mà không cần tải file về máy trước.
+                    - **Tải PDF về máy:** Bấm nút **"Tải PDF"** để nhận liên kết tải bảo mật (có hiệu lực 5 phút).
+                    - **Dành cho Giảng viên:** Tải lên file PDF tối đa **10 MiB/file** (dung lượng lưu trữ tối đa **512 MiB/lớp**); khi đăng tài liệu mới, học viên trong lớp sẽ nhận được thông báo tự động.
                     """;
         }
 
-        if (lower.contains("lớp học") || lower.contains("classroom") || lower.contains("join code") || lower.contains("mã tham gia") || lower.contains("giáo viên") || lower.contains("teacher")) {
+        if (lower.contains("gmail") || lower.contains("email") || lower.contains("mời học viên") || lower.contains("mời tham gia") || lower.contains("bảng tin") || lower.contains("announcement")) {
             return """
-                    ### Hệ thống Lớp học (`Classrooms`) & Đăng ký Giáo viên
+                    ### Tính năng Mời qua Gmail & Thông báo Email kiểu Google Classroom
                     
-                    - **Dành cho Học viên (`/classrooms`):**
-                      + Nhập **Mã tham gia lớp (Join Code)** do Giảng viên cung cấp để gửi yêu cầu vào lớp.
-                      + Sau khi Giảng viên duyệt (`APPROVED`), bạn có thể tải **tài liệu PDF bài giảng** riêng của lớp, làm các **Bài tập (`Assignments`)** theo hạn nộp và xem **nhận xét chấm bài** trực tiếp từ Giảng viên.
+                    Hệ thống **Lớp học (`/classrooms`)** được thiết kế theo mô hình **Google Classroom** tích hợp gửi email tự động qua Gmail:
+                    - **Mời học viên hàng loạt qua Gmail (`Mời qua Gmail`):**
+                      + Giảng viên bấm nút **"Mời qua Gmail"** (trên Bảng tin hoặc tab Mọi người) và nhập danh sách nhiều địa chỉ Gmail (phân tách bằng dấu phẩy, chấm phẩy hoặc xuống dòng, tối đa 100 email/lần) kèm lời nhắn.
+                      + **Tự động duyệt vào lớp:** Nếu địa chỉ Gmail đó đã có tài khoản học viên (`ROLE_USER`) trên hệ thống, học viên được **thêm và duyệt thẳng (`APPROVED`) vào lớp ngay lập tức**, đồng thời nhận thông báo trên web và email xác nhận.
+                      + **Email lời mời kèm Mã lớp:** Nếu người nhận chưa có tài khoản, hệ thống gửi email chuẩn Google Classroom chứa **Mã tham gia lớp (`Class Code`)** và nút **"Tham gia lớp học"** dẫn tới `/classrooms?joinCode=...`.
+                    - **Thông báo Bài tập & Bảng tin qua Gmail:**
+                      + Khi Giảng viên **Giao bài tập mới**, **Cập nhật hạn nộp (`Deadline`)**, hoặc **Đăng thông báo mới lên Bảng tin**, hệ thống tự động gửi email thông báo tới Gmail của toàn bộ học viên trong lớp kèm nút **"Mở bài tập ngay"**.
+                    """;
+        }
+
+        if (lower.contains("vip") || lower.contains("payos") || lower.contains("vnpay") || lower.contains("thanh toán") || lower.contains("mua đề") || lower.contains("hết hạn") || lower.contains("2000") || lower.contains("2.000")) {
+            return """
+                    ### Đề thi VIP, Đăng ký Giáo viên & Thanh toán tự động PayOS
+                    
+                    Hệ thống sử dụng nền tảng thanh toán **PayOS** (quét mã QR VietQR ngân hàng, xác nhận tự động qua Webhook PayOS):
+                    - **Mua Đề thi VIP (`Mua 1 lần — Sở hữu vĩnh viễn`):**
+                      + Mỗi đề VIP có mức giá VND riêng do Quản trị viên thiết lập.
+                      + Sau khi quét mã QR thanh toán thành công qua PayOS, hệ thống tự động cấp quyền truy cập **vĩnh viễn** mọi chế độ của đề đó (Full Test, Luyện từng Part, Chép chính tả Dictation, Xem lại lời giải).
                     - **Đăng ký trở thành Giáo viên (`/teacher/application`):**
-                      + Vào trang **Đăng ký Giáo viên**, điền thông tin năng lực/chứng chỉ và hoàn tất lệ phí xét duyệt (**2.000 ₫**) qua **PayOS**.
-                      + Sau khi thanh toán xác nhận, hồ sơ chuyển sang trạng thái chờ **Quản trị viên (`Admin`)** phê duyệt để được cấp quyền **Giáo viên TOEIC** (tạo lớp học, tải tài liệu PDF, tạo đề riêng và giao bài tập).
+                      + Lệ phí xét duyệt hồ sơ giáo viên là **2.000 ₫** thanh toán qua PayOS.
+                      + **Nếu liên kết thanh toán hết hạn:** Bạn chỉ cần bấm lại nút **"Tạo lại mã QR PayOS"** trên trang `/teacher/application`, hệ thống sẽ tự động cấp mã đơn PayOS mới cho hồ sơ hiện tại để bạn tiếp tục thanh toán mà không bị lỗi trùng dữ liệu.
+                      + Sau khi thanh toán xác nhận, hồ sơ chuyển sang `Chờ duyệt` (`PENDING_REVIEW`) để Quản trị viên phê duyệt cấp quyền `ROLE_TEACHER`.
+                    - **Tra cứu lịch sử giao dịch:** Xem lại toàn bộ biên nhận tại **Hồ sơ cá nhân (`/profile?tab=payments`)** hoặc trang kết quả `/payment/result`.
+                    """;
+        }
+
+        if (lower.contains("lớp học") || lower.contains("classroom") || lower.contains("join code") || lower.contains("mã tham gia") || lower.contains("giáo viên") || lower.contains("teacher") || lower.contains("bài tập")) {
+            return """
+                    ### Hệ thống Lớp học kiểu Google Classroom (`/classrooms`) & Đăng ký Giáo viên
+                    
+                    Giao diện **Lớp học (`/classrooms`)** gồm **4 tab** trực quan tương tự Google Classroom:
+                    1. **Bảng tin (`Stream`):** Hiển thị thông tin lớp, **Mã lớp (`Class Code`)**, hộp **Sắp đến hạn** (các bài tập đến hạn trong 7 ngày), luồng thông báo của Giảng viên và danh sách bài tập/tài liệu mới đăng.
+                    2. **Bài tập trên lớp (`Classwork`):**
+                       - Làm bài tập được giao (Đề hệ thống hoặc Đề riêng của lớp) theo hạn nộp (`Deadline` — hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`).
+                       - **Xem trước trực tiếp trên web (Preview PDF)** hoặc **Tải PDF** tài liệu bài giảng.
+                       - Giảng viên có thể tạo **Đề thi riêng cho lớp** và **Giao bài tập mới** (tự động gửi thông báo Gmail cho cả lớp).
+                    3. **Mọi người (`People`):** Xem danh sách Giảng viên và Học viên; Giảng viên có thể **Mời học viên hàng loạt qua Gmail**, duyệt (`APPROVED`), chặn (`BLOCKED`) hoặc gỡ thành viên.
+                    4. **Điểm số (`Grades` — dành cho Giảng viên):** Thống kê tổng quan số bài đã nộp/nộp trễ/chưa nộp/điểm trung bình, xem chi tiết bài làm của từng học viên và gửi **nhận xét chấm bài**.
+                    """;
+        }
+
+        if (lower.contains("kho đề") || lower.contains("ets") || lower.contains("ybm") || lower.contains("bao nhiêu đề") || lower.contains("danh sách đề") || lower.contains("tìm đề")) {
+            return """
+                    ### Thư viện 20 Bộ đề TOEIC Chuẩn (`/courses`)
+                    
+                    Trên trang **Đề thi (`/courses`)**, hệ thống cung cấp sẵn ngân hàng **20 bộ đề thi chính thức (đủ 200 câu/đề)**:
+                    - **10 bộ đề ETS:** Từ **`ETS TOEIC 2026 - TEST 01`** đến **`ETS TOEIC 2026 - TEST 10`**.
+                    - **10 bộ đề YBM:** Từ **`YBM TOEIC 2026 - TEST 01`** đến **`YBM TOEIC 2026 - TEST 10`**.
+                    - **Bộ lọc & Tìm kiếm thông minh:**
+                      + Tìm kiếm nhanh theo tên đề thi ở thanh tìm kiếm phía trên.
+                      + Lọc theo **Loại đề thi** (`Tất cả`, `Đề có sẵn / Miễn phí`, `Đề có phí / VIP`).
+                      + Lọc theo **Cấu trúc đề** (`Full Test 200 câu`, `Listening Part 1–4`, `Reading Part 5–7`) và sắp xếp theo Mới nhất, Cũ nhất hoặc Tên A–Z.
+                    - Khi bấm **"Chi tiết đề"**, bạn có thể chọn **Luyện tập từng phần**, **Làm Full Test 120 phút**, **Nghe chép chính tả Dictation** hoặc tham gia **Thảo luận** về đề thi đó.
+                    """;
+        }
+
+        if (lower.contains("f5") || lower.contains("mất mạng") || lower.contains("tải lại") || lower.contains("lưu phiên") || lower.contains("thoát phòng thi") || lower.contains("câu sai") || lower.contains("làm lại")) {
+            return """
+                    ### Cơ chế Tự động Lưu phiên thi (`Resumable Exam Session`) & Luyện lại Câu sai
+                    
+                    - **Tự động lưu & khôi phục khi F5 / Mất mạng (`/courses/:testId/take`):**
+                      + Trong suốt quá trình làm bài, mọi đáp án bạn chọn, các câu đánh dấu cờ (`Flag`) và Part đang mở đều được tự động lưu đồng thời trên trình duyệt (`sessionStorage`) và trên máy chủ.
+                      + Nếu bạn vô tình nhấn **F5 (tải lại trang)**, đóng nhầm tab hoặc bị gián đoạn mạng tạm thời, khi mở lại đề thi hệ thống sẽ **tự động khôi phục nguyên vẹn** bài đang làm dở cùng thời gian còn lại.
+                      + Chỉ khi bạn chủ động bấm **"Thoát phòng thi"** và xác nhận **"Rời khỏi bài thi"** không nộp thì phiên nháp mới bị hủy bỏ.
+                    - **Luyện lại câu sai (`/results/:resultId`):**
+                      + Sau khi nộp bài, tại trang Xem lại kết quả, bạn có thể bấm nút **"Luyện lại câu sai"** ở cột phải để tạo ngay một bài luyện tập chỉ gồm những câu bạn vừa chọn sai hoặc bỏ trống.
+                    """;
+        }
+
+        if (lower.contains("thông báo") || lower.contains("notification") || lower.contains("bình luận") || lower.contains("comment") || lower.contains("thảo luận")) {
+            return """
+                    ### Hệ thống Thông báo (`/notifications`) & Thảo luận Đề thi (`Test Comments`)
+                    
+                    - **Hộp thư Thông báo (`/notifications`):**
+                      + Tự động ghi nhận thông báo theo **6 danh mục**: `Tất cả`, `Kết quả thi`, `Bài tập lớp`, `Lớp học & Tài liệu`, `Thanh toán & VIP`, `Hồ sơ & Hệ thống`.
+                      + Hỗ trợ lọc thông báo chưa đọc, đánh dấu đã đọc từng mục hoặc tất cả, và xóa dọn thông báo đã đọc; đồng bộ tức thời huy hiệu số thông báo chưa đọc trên thanh điều hướng `Navbar`.
+                    - **Thảo luận & Bình luận Đề thi (`/courses/:testId` -> Tab Thảo luận):**
+                      + Bạn có thể đặt câu hỏi, chia sẻ kinh nghiệm làm đề, chỉnh sửa hoặc xóa bình luận của mình ở mỗi đề thi.
+                    """;
+        }
+
+        if (lower.contains("admin") || lower.contains("quản trị") || lower.contains("soạn đề") || lower.contains("khóa tài khoản")) {
+            return """
+                    ### Hệ thống Quản trị viên (`ROLE_ADMIN` — `/admin/**`)
+                    
+                    Dành cho tài khoản Quản trị viên để vận hành toàn bộ nền tảng:
+                    - **Dashboard (`/admin/dashboard`):** Theo dõi số người dùng đang hoạt động trực tuyến (heartbeat 5 phút), thống kê lượt bắt đầu/nộp bài theo ngày & tháng, và tra cứu nhật ký bảo mật (`Audit Events`).
+                    - **Quản trị Đề thi (`/admin/tests`):** Thêm đề mới, sửa nội dung đề tại chỗ (bảo toàn lịch sử làm bài của học viên), cập nhật nhanh tên/ảnh bìa/trạng thái xuất bản và thiết lập giá VND cho **Đề VIP**.
+                    - **Quản lý Người dùng (`/admin/users`):** Tìm kiếm, phân trang và khóa/mở khóa tài khoản (thu hồi phiên đăng nhập tức thì qua `authVersion`).
+                    - **Quản lý Giao dịch PayOS (`/admin/payments`):** Tra cứu mã đơn `payosOrderCode`, người thanh toán, số tiền, loại sản phẩm (`TEST_VIP` / `TEACHER_APPLICATION`) và trạng thái đối soát.
+                    - **Duyệt Hồ sơ Giáo viên (`/admin/teacher-applications`):** Xem hồ sơ đã hoàn tất thanh toán phí xét duyệt (`PENDING_REVIEW`), phê duyệt cấp quyền `ROLE_TEACHER` hoặc từ chối kèm lý do.
                     """;
         }
 
@@ -760,7 +865,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     - **Quản lý tài khoản (`/profile`):**
                       + Cập nhật họ tên, số điện thoại, email và tải ảnh đại diện (PNG/JPEG tối đa 5 MB).
                       + Đổi mật khẩu bảo mật (hoặc thiết lập mật khẩu cục bộ nếu bạn đăng nhập bằng Google).
-                      + Xem lại toàn bộ **Lịch sử làm bài** (`?tab=history`) và **Lịch sử thanh toán** (`?tab=payments`).
+                      + Xem lại toàn bộ **Lịch sử làm bài** (`?tab=history`) và **Lịch sử thanh toán PayOS** (`?tab=payments`).
                     """;
         }
 
@@ -772,15 +877,17 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         return """
                 ### Gâu gâu! Chào bạn, mình là Nuna — Trợ lý AI TOEIC Learning 🐾
                 
-                Mình luôn đồng hành và sẵn sàng giải đáp trực tiếp cho bạn các nội dung sau:
+                Mình luôn đồng hành và sẵn sàng giải đáp trực tiếp cho bạn mọi nội dung trên hệ thống:
                 
                 1. **Khi xem lại kết quả bài thi (`/results/:resultId`):**
                    - Giải thích chi tiết **bất kỳ câu hỏi nào từ Câu #1 đến #200** (nội dung câu hỏi, lời thoại `Transcript`, bản dịch, phân tích ngữ pháp, từ vựng và lý do chọn/loại trừ đáp án).
-                   - Phân tích điểm mạnh/yếu theo từng **Part 1 – Part 7** và gợi ý lộ trình ôn tập.
-                2. **Kiến thức luyện thi TOEIC:**
-                   - Cấu trúc đề thi TOEIC 200 câu (120 phút), cách quy đổi điểm `10–990`, mẹo làm bài và tránh bẫy ETS cho từng Part.
-                3. **Hướng dẫn sử dụng trang web TOEIC Learning:**
-                   - Cách làm **Full Test**, **Luyện từng Part**, **Luyện lại câu sai**, **Nghe chép chính tả (`Dictation`)**, mua **Đề VIP qua PayOS**, tham gia **Lớp học (`Classrooms`)**, đăng ký **Giáo viên** và duy trì **Streak**.
+                   - Phân tích điểm mạnh/yếu theo từng **Part 1 – Part 7**, hướng dẫn **Luyện lại câu sai** và gợi ý lộ trình ôn tập.
+                2. **Kiến thức luyện thi TOEIC & Kho 20 bộ đề chuẩn (`/courses`):**
+                   - Ngân hàng **10 đề ETS 2026** & **10 đề YBM 2026**, cấu trúc đề thi TOEIC 200 câu (120 phút), cách quy đổi điểm `10–990`, mẹo làm bài và tránh bẫy ETS cho từng Part.
+                3. **Hướng dẫn đầy đủ các tính năng của TOEIC Learning:**
+                   - **Làm Full Test & Luyện từng Part** (tự động lưu phiên khi F5/rớt mạng), **Nghe chép chính tả (`Dictation`)**, thảo luận đề thi.
+                   - **Lớp học kiểu Google Classroom (`/classrooms`):** Xem trước tài liệu PDF trực tiếp trên trình duyệt, mời học viên hàng loạt qua Gmail, nhận thông báo bài tập qua Gmail, làm bài tập và xem nhận xét của Giảng viên.
+                   - **Mua Đề VIP & Đăng ký Giáo viên qua PayOS**, theo dõi **Streak** và quản lý **Hồ sơ cá nhân (`/profile`)**.
                 
                 *Bạn hãy nhập câu hỏi cụ thể hoặc chọn một chủ đề gợi ý bên dưới để Nuna hỗ trợ ngay nhé!*
                 """;
@@ -1077,6 +1184,56 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             case 7 -> "Đọc câu hỏi trước để xác định từ khóa (tên riêng, ngày tháng, con số), scan nhanh trong bài đọc và chú ý kỹ câu hỏi suy luận (`NOT true`, `suggested`).";
             default -> "Kết hợp luyện giải đề với ghi chép từ vựng và làm lại các câu sai sau mỗi lượt thi.";
         };
+    }
+
+    private String describePageRoute(String path) {
+        if (path == null || path.isBlank() || "/".equals(path)) {
+            return "Trang chủ TOEIC Learning";
+        }
+        String lower = path.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("/results/")) {
+            return "Trang Xem lại kết quả & lời giải chi tiết bài thi TOEIC";
+        }
+        if (lower.endsWith("/dictation")) {
+            return "Trang Luyện nghe Chép chính tả (Dictation)";
+        }
+        if (lower.startsWith("/courses/")) {
+            return "Trang Chi tiết đề thi TOEIC (Luyện từng Part / Full Test / Chép chính tả / Thảo luận)";
+        }
+        if (lower.startsWith("/courses")) {
+            return "Thư viện 20 bộ đề thi TOEIC (ETS 2026 & YBM 2026)";
+        }
+        if (lower.startsWith("/classrooms")) {
+            return "Trang Lớp học kiểu Google Classroom (Bảng tin, Bài tập & PDF, Mọi người, Điểm số)";
+        }
+        if (lower.startsWith("/teacher/application")) {
+            return "Trang Đăng ký trở thành Giáo viên qua PayOS";
+        }
+        if (lower.startsWith("/payment/result")) {
+            return "Trang Kết quả giao dịch thanh toán PayOS";
+        }
+        if (lower.startsWith("/profile")) {
+            return "Trang Hồ sơ cá nhân, Chuỗi ngày học Streak, Lịch sử thi & Thanh toán";
+        }
+        if (lower.startsWith("/notifications")) {
+            return "Hộp thư Thông báo hệ thống";
+        }
+        if (lower.startsWith("/admin/dashboard")) {
+            return "Trang Quản trị Dashboard & Thống kê hệ thống";
+        }
+        if (lower.startsWith("/admin/tests")) {
+            return "Trang Quản trị Ngân hàng Đề thi TOEIC";
+        }
+        if (lower.startsWith("/admin/users")) {
+            return "Trang Quản trị Tài khoản Người dùng";
+        }
+        if (lower.startsWith("/admin/payments")) {
+            return "Trang Quản trị Giao dịch PayOS";
+        }
+        if (lower.startsWith("/admin/teacher-applications")) {
+            return "Trang Quản trị Xét duyệt Hồ sơ Giáo viên";
+        }
+        return "Trang trên hệ thống TOEIC Learning";
     }
 
     private String safe(String value) {

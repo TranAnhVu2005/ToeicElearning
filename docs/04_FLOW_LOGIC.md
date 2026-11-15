@@ -20,7 +20,7 @@
 5. Chỉ cấp entitlement sau IPN hợp lệ; retry/callback phải idempotent. Thay đổi giá sau này chỉ áp dụng checkout mới, không sửa giao dịch/biên nhận lịch sử.
 6. Quyền mua là vĩnh viễn, không có `expiresAt`; refund/revoke không tự phát sinh cho tới khi có chính sách được duyệt.
 
-**Trạng thái code:** admin form/entity có giá riêng; `/api/exam/{id}/access` trả metadata + access flag; checkout `/api/payments/vip/checkout`, IPN cấp `TestEntitlement`, notification, payment history `TEST_VIP`, và kiểm tra entitlement ở detail/part/submit đã nối. Pending URL hết hạn bị giữ để tránh thu trùng; đề có giao dịch không hard-delete. Chưa chạy sandbox/IPN, live migration hoặc end-to-end/visual QA.
+**Trạng thái code:** admin form/entity có giá riêng; `/api/exam/{id}/access` trả metadata + access flag; checkout `/api/payments/vip/checkout` qua PayOS, webhook `/api/payments/payos/webhook` (và `/api/payments/webhook`) cấp `TestEntitlement`, notification, payment history `TEST_VIP`, và kiểm tra entitlement ở detail/part/submit đã nối. Đề có giao dịch không hard-delete.
 
 ### Gỡ hoặc xóa đề hệ thống (Admin)
 
@@ -35,18 +35,16 @@
 - Nếu chỉ thay đổi thông tin chung (tên đề, ảnh bìa, trạng thái `PUBLISHED`/`DRAFT`, cấu hình `isVip` và `vipPriceVnd`), UI có thể dùng `PATCH /api/exam/update/{id}/metadata` mà không cần gửi lại 200 câu hỏi; khi chuyển sang `PUBLISHED`, backend vẫn kiểm tra quyền media và tính hợp lệ của nội dung đề.
 - Câu hỏi điền chỗ trống trong đoạn văn của Part 6 (câu 131–146) được phép để trống `questionContent` khi xuất bản theo đúng cấu trúc đề TOEIC thực tế.
 
-## 1.1. Đăng ký giáo viên, thanh toán và duyệt
+## 1.1. Đăng ký giáo viên, thanh toán PayOS và duyệt
 
-1. Người dùng gửi hồ sơ đăng ký giáo viên; hồ sơ bắt đầu ở `PENDING_PAYMENT` hoặc trạng thái tương đương.
-2. Backend tạo checkout/VNPAY request bằng giá phí lấy từ cấu hình/DB và mã tham chiếu duy nhất.
-3. Chỉ callback/IPN hợp lệ mới đánh dấu thanh toán thành công. Kết quả redirect của trình duyệt không phải bằng chứng thanh toán.
-4. Sau thành công, gửi thông báo “Đã nhận thanh toán, hồ sơ đang chờ quản trị viên duyệt”; trạng thái application là `PENDING_REVIEW`.
+1. Người dùng gửi hồ sơ đăng ký giáo viên; hồ sơ bắt đầu ở `PENDING_PAYMENT`.
+2. Backend tạo yêu cầu thanh toán PayOS (`/v2/payment-requests`) bằng mức phí lấy từ cấu hình (`TEACHER_APPLICATION_FEE_VND`, mặc định `2000` VND) và mã đơn `payosOrderCode` duy nhất.
+3. Chỉ webhook PayOS hợp lệ (hoặc đối chiếu trạng thái `PAID` trực tiếp từ PayOS API qua `syncPendingPaymentIfPossible`) mới đánh dấu thanh toán thành công. Kết quả redirect của trình duyệt không phải bằng chứng thanh toán.
+4. Sau thành công, gửi thông báo “Đã nhận thanh toán, hồ sơ đang chờ quản trị viên duyệt” (đồng thời thông báo cho toàn bộ Admin); trạng thái application chuyển sang `PENDING_REVIEW`.
 5. Admin duyệt hoặc từ chối kèm lý do. Chỉ khi approve mới cấp role TEACHER; lưu admin, thời gian và quyết định.
-6. Mục tiêu retry phải tránh thu tiền trùng và bảo toàn khả năng xử lý IPN đến muộn; chính sách hết hạn/mở checkout lại cần giữ mã đơn ổn định hoặc đối soát trước khi tạo giao dịch mới.
+6. Nếu liên kết thanh toán PayOS trước đó đã hết hạn (`EXPIRED`/`CANCELLED`/`PENDING` quá hạn) mà hồ sơ vẫn đang ở `PENDING_PAYMENT`, người dùng có thể bấm gửi lại trên trang `/teacher/application`: backend đồng bộ trạng thái đơn cũ với PayOS trước, nếu chưa thanh toán thì tái sử dụng dòng `PaymentTransaction` hiện có với `payosOrderCode` mới và trả về mã QR PayOS mới.
 
-**Trạng thái code hiện tại:** các route hồ sơ giáo viên/IPN/return/status đã có. Phí lấy từ `TEACHER_APPLICATION_FEE_VND`; giao dịch pending được dùng lại khi URL còn hạn. Khi URL đã hết hạn nhưng chưa có kết quả provider, giao dịch được giữ ở trạng thái chưa xác định và checkout mới bị chặn để tránh thu tiền trùng; kể cả bản ghi `EXPIRED` cũ cũng cần đối soát trước khi retry. IPN hợp lệ đến muộn vẫn có thể xử lý khi đơn còn `PENDING`. Return chỉ redirect, status UI được poll từ endpoint owner-scoped. Đối soát cần thao tác hỗ trợ/admin; merchant sandbox và IPN public HTTPS chưa được tích hợp end-to-end.
-
-Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay checkout VNPAY, phải xác nhận ai/nguồn nào xác nhận tiền trước bước 4.
+**Trạng thái code hiện tại:** các route hồ sơ giáo viên, webhook PayOS (`/api/payments/payos/webhook` và `/api/payments/webhook`), return (`/api/payments/payos/return`) và status (`/api/payments/me/{transactionReference}`) đã hoàn thiện. Phí lấy từ `TEACHER_APPLICATION_FEE_VND` (mặc định `2000` VND).
 
 ## 2. Auth và tài khoản khóa
 
@@ -101,11 +99,12 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 
 ### Tạo lớp và tham gia
 
-1. TEACHER tạo lớp với tên và mô tả tùy chọn; server cấp mã mời đủ khó đoán. Chủ lớp có thể sửa tên/mô tả trong phạm vi lớp sở hữu hoặc xoay mã; thao tác xoay vô hiệu hóa mã cũ nhưng không thay đổi thành viên/yêu cầu tham gia đã ghi nhận. Thay đổi thông tin lớp được audit nhưng không ghi nội dung mô tả vào log.
-2. USER gửi yêu cầu vào lớp bằng mã; membership `PENDING`.
+1. TEACHER tạo lớp với tên và mô tả tùy chọn; server cấp mã mời (`Class Code`) đủ khó đoán. Chủ lớp có thể sửa tên/mô tả trong phạm vi lớp sở hữu, xoay mã mới (`POST /api/classrooms/{classroomId}/join-code/rotate`), đăng thông báo lên Bảng tin lớp học (`POST /api/classrooms/{classroomId}/announcements` — gửi thông báo in-app và gửi email HTML kiểu Google Classroom tới các học viên trong lớp), hoặc mời hàng loạt học viên qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`).
+2. Khi giáo viên mời qua danh sách Gmail: những địa chỉ Gmail đã có tài khoản học viên (`ROLE_USER`) được tự động thêm và duyệt thẳng (`APPROVED`) vào lớp kèm thông báo in-app và email; những địa chỉ chưa có tài khoản nhận email lời mời kèm mã lớp và nút dẫn tới `/classrooms?joinCode=<MÃ_LỚP>`. Học viên cũng có thể tự nhập mã lớp để gửi yêu cầu tham gia (`PENDING`).
 3. Giáo viên duyệt => `APPROVED`, từ chối/gỡ => không còn quyền xem nội dung lớp; chặn => `BLOCKED` và từ chối truy cập/nộp.
 4. Giáo viên xem roster theo trạng thái, tìm kiếm; mọi member action chỉ áp dụng trong lớp do giáo viên đó sở hữu.
-5. Tài liệu lớp: giáo viên owner tải PDF tối đa 10 MiB; backend kiểm tra chữ ký PDF và marker kết thúc, quota 512 MiB/lớp (cấu hình `CLASSROOM_STORAGE_QUOTA_BYTES`), khóa hàng classroom khi kiểm tra quota/upload và gửi file Cloudinary raw/private. Hidden file vẫn tính quota do asset chưa bị xóa. Teacher owner và student có membership APPROVED mới xem danh sách/tải. Mỗi thao tác download kiểm tra lại quyền rồi cấp URL signed attachment 5 phút; không trả storage URL trong metadata. File legacy thiếu private asset ID không cấp link tải; giáo viên cần tải lại.
+5. Tài liệu lớp: giáo viên owner tải PDF tối đa 10 MiB; backend kiểm tra chữ ký PDF và marker kết thúc, quota 512 MiB/lớp (cấu hình `CLASSROOM_STORAGE_QUOTA_BYTES`), khóa hàng classroom khi kiểm tra quota/upload và gửi file Cloudinary raw/private. Hidden file vẫn tính quota do asset chưa bị xóa. Teacher owner và student có membership APPROVED mới xem danh sách, **Xem trước trực tiếp trên trình duyệt** (`GET /api/classrooms/{classroomId}/materials/{materialId}/preview` trả `application/pdf` inline hiển thị trong modal xem trước) hoặc **Tải PDF** (`GET .../download` cấp URL signed attachment 5 phút).
+6. Khi giáo viên giao bài tập mới (`POST /api/classrooms/{classroomId}/assignments`) hoặc cập nhật hạn nộp (`PATCH /api/classrooms/assignments/{assignmentId}`), hệ thống tự động tạo thông báo in-app đồng thời gửi **Email thông báo kiểu Google Classroom** (qua `ClassroomEmailService` dùng cấu hình `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`) tới Gmail của toàn bộ học viên `APPROVED` trong lớp kèm nút **"Mở bài tập ngay"**.
 
 ### Đề và bài tập
 
@@ -198,7 +197,7 @@ Nếu chủ dự án định dùng chuyển khoản ngân hàng thủ công thay
 - Mỗi request kiểm tra trạng thái locked/quyền và scope dữ liệu theo actor; không dựa vào menu, form, `userId` hoặc `classId` từ browser.
 - Exam session/submit dùng thời gian và answer key server-side; không trả đáp án trước submit, không chấp nhận score tự khai, không tạo kết quả trùng khi retry.
 - Catalog chỉ trả metadata public. Trước tải nội dung/media VIP, server kiểm tra entitlement vĩnh viễn đã cấp cho user; lớp học kiểm tra membership/ownership mỗi lần truy cập.
-- VNPAY return trên browser chỉ phục vụ trải nghiệm. Chỉ callback/IPN được xác minh và đối chiếu với đơn trong DB mới cập nhật trạng thái/cấp quyền; callback xử lý lặp phải an toàn.
+- PayOS return trên browser chỉ phục vụ trải nghiệm chuyển hướng. Chỉ webhook PayOS được xác minh HMAC-SHA256 (hoặc đồng bộ trực tiếp từ PayOS API) và đối chiếu với đơn trong DB mới cập nhật trạng thái/cấp quyền; callback xử lý lặp phải an toàn.
 - Upload kiểm tra type/content/size/quota và quyền; xóa media cần xác nhận asset thuộc provider namespace, ownership và không còn tham chiếu.
 - Registration/login/password, payment/entitlement, thay đổi role/status, duyệt giáo viên và thao tác đề/lớp quan trọng cần tạo audit event tối thiểu nhưng không log secret/credential. Code ghi nhận registration/login success/failure, đổi/đặt mật khẩu, payment/entitlement IPN, user lock/unlock, teacher review, đề, membership, assignment, feedback và tài liệu; auth event không lưu identifier.
 - Nếu đổi JWT bearer sang cookie hoặc thêm refresh token, cập nhật threat model CSRF/XSS/session và API/UI cùng lúc trước khi release.

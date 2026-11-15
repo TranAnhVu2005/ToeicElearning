@@ -23,8 +23,8 @@ public class PaymentTransaction extends BaseEntity {
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "vnp_txn_ref", nullable = false, unique = true, length = 100)
-    private String vnpTxnRef;
+    @Column(name = "payos_order_code", nullable = false, unique = true, length = 100)
+    private String payosOrderCode;
 
     @Column(name = "product_type", length = 40)
     private String productType;
@@ -44,17 +44,17 @@ public class PaymentTransaction extends BaseEntity {
     private String status;
 
     @CreationTimestamp
-    @Column(name = "payment_date", updatable = false)
+    @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
-    @Column(name = "vnp_transaction_no", length = 32)
-    private String vnpTransactionNo;
+    @Column(name = "payos_reference", length = 64)
+    private String payosReference;
 
-    @Column(name = "vnp_response_code", length = 8)
-    private String vnpResponseCode;
+    @Column(name = "payos_code", length = 16)
+    private String payosCode;
 
-    @Column(name = "vnp_transaction_status", length = 8)
-    private String vnpTransactionStatus;
+    @Column(name = "payos_status", length = 16)
+    private String payosStatus;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;

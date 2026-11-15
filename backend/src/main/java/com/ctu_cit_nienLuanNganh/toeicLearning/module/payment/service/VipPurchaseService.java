@@ -47,28 +47,37 @@ public class VipPurchaseService {
 
         var latest = paymentRepository.findTopByUser_IdAndTest_IdAndProductTypeOrderByPaymentDateDesc(
                 buyer.getId(), test.getId(), PRODUCT_TYPE);
+        PaymentTransaction payment = null;
         if (latest.isPresent()) {
             PaymentTransaction previous = latest.get();
             paymentService.syncPendingPaymentIfPossible(previous);
             if ("SUCCESS".equals(previous.getStatus())) {
                 throw new AppException(ErrorCode.TEST_ALREADY_OWNED);
             }
-            if ("PENDING".equals(previous.getStatus()) || "EXPIRED".equals(previous.getStatus())) {
-                previous.setStatus("CANCELLED");
-                previous.setVnpTransactionStatus("CANCELLED");
-                paymentRepository.saveAndFlush(previous);
-            }
+            payment = previous;
+            payment.setProductNameSnapshot(test.getTitleTest());
+            payment.setAmount(test.getVipPriceVnd());
+            payment.setPayosOrderCode(gatewayService.newOrderCode());
+            payment.setProductType(PRODUCT_TYPE);
+            payment.setStatus("PENDING");
+            payment.setPaymentDate(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+            payment.setPayosCode(null);
+            payment.setPayosStatus(null);
+            payment.setPayosReference(null);
+            payment.setPaidAt(null);
         }
 
-        PaymentTransaction payment = PaymentTransaction.builder()
-                .user(buyer)
-                .test(test)
-                .productNameSnapshot(test.getTitleTest())
-                .amount(test.getVipPriceVnd())
-                .vnpTxnRef(gatewayService.newOrderCode())
-                .productType(PRODUCT_TYPE)
-                .status("PENDING")
-                .build();
+        if (payment == null) {
+            payment = PaymentTransaction.builder()
+                    .user(buyer)
+                    .test(test)
+                    .productNameSnapshot(test.getTitleTest())
+                    .amount(test.getVipPriceVnd())
+                    .payosOrderCode(gatewayService.newOrderCode())
+                    .productType(PRODUCT_TYPE)
+                    .status("PENDING")
+                    .build();
+        }
         payment = paymentRepository.saveAndFlush(payment);
         return checkoutResponse(payment, remoteAddress);
     }
@@ -76,7 +85,7 @@ public class VipPurchaseService {
     private CheckoutResponse checkoutResponse(PaymentTransaction payment, String remoteAddress) {
         PayosGatewayService.CheckoutLink checkout = gatewayService.createCheckout(payment, remoteAddress);
         return CheckoutResponse.builder()
-                .transactionReference(payment.getVnpTxnRef())
+                .transactionReference(payment.getPayosOrderCode())
                 .checkoutUrl(checkout.url())
                 .paymentStatus(payment.getStatus())
                 .amount(payment.getAmount())

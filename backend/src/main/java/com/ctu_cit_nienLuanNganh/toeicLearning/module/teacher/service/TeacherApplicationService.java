@@ -66,6 +66,7 @@ public class TeacherApplicationService {
             throw new AppException(ErrorCode.TEACHER_APPLICATION_CONFLICT);
         }
 
+        PaymentTransaction payment = null;
         if (application != null && application.getStatus() == TeacherApplicationStatus.PENDING_PAYMENT) {
             Optional<PaymentTransaction> latest = paymentRepository
                     .findTopByTeacherApplication_IdOrderByPaymentDateDesc(application.getId());
@@ -75,11 +76,17 @@ public class TeacherApplicationService {
                 if ("SUCCESS".equals(previous.getStatus())) {
                     throw new AppException(ErrorCode.TEACHER_APPLICATION_CONFLICT);
                 }
-                if ("PENDING".equals(previous.getStatus()) || "EXPIRED".equals(previous.getStatus())) {
-                    previous.setStatus("CANCELLED");
-                    previous.setVnpTransactionStatus("CANCELLED");
-                    paymentRepository.saveAndFlush(previous);
-                }
+                payment = previous;
+                payment.setAmount(BigDecimal.valueOf(fee));
+                payment.setPayosOrderCode(payosGatewayService.newOrderCode());
+                payment.setProductType(PRODUCT_TYPE);
+                payment.setProductNameSnapshot("Đăng ký giáo viên TOEIC");
+                payment.setStatus("PENDING");
+                payment.setPaymentDate(LocalDateTime.now(REPORTING_ZONE));
+                payment.setPayosCode(null);
+                payment.setPayosStatus(null);
+                payment.setPayosReference(null);
+                payment.setPaidAt(null);
             }
             if (request.getStatement() != null && !request.getStatement().isBlank()) {
                 application.setStatement(request.getStatement().trim());
@@ -93,15 +100,17 @@ public class TeacherApplicationService {
                     .build());
         }
 
-        PaymentTransaction payment = PaymentTransaction.builder()
-                .user(applicant)
-                .amount(BigDecimal.valueOf(fee))
-                .vnpTxnRef(payosGatewayService.newOrderCode())
-                .productType(PRODUCT_TYPE)
-                .productNameSnapshot("Đăng ký giáo viên TOEIC")
-                .teacherApplication(application)
-                .status("PENDING")
-                .build();
+        if (payment == null) {
+            payment = PaymentTransaction.builder()
+                    .user(applicant)
+                    .amount(BigDecimal.valueOf(fee))
+                    .payosOrderCode(payosGatewayService.newOrderCode())
+                    .productType(PRODUCT_TYPE)
+                    .productNameSnapshot("Đăng ký giáo viên TOEIC")
+                    .teacherApplication(application)
+                    .status("PENDING")
+                    .build();
+        }
         payment = paymentRepository.saveAndFlush(payment);
         return checkoutResponse(application, payment, remoteAddress);
     }
@@ -178,7 +187,7 @@ public class TeacherApplicationService {
         PayosGatewayService.CheckoutLink checkout = payosGatewayService.createCheckout(payment, remoteAddress);
         return CheckoutResponse.builder()
                 .applicationId(application.getId())
-                .transactionReference(payment.getVnpTxnRef())
+                .transactionReference(payment.getPayosOrderCode())
                 .checkoutUrl(checkout.url())
                 .paymentStatus(payment.getStatus())
                 .amount(payment.getAmount())
@@ -198,7 +207,7 @@ public class TeacherApplicationService {
                 .statement(application.getStatement())
                 .status(application.getStatus())
                 .paymentStatus(payment == null ? null : payment.getStatus())
-                .transactionReference(payment == null ? null : payment.getVnpTxnRef())
+                .transactionReference(payment == null ? null : payment.getPayosOrderCode())
                 .amount(payment == null ? BigDecimal.valueOf(payosGatewayService.configuredTeacherFee()) : payment.getAmount())
                 .createdAt(application.getCreatedAt())
                 .reviewedAt(application.getReviewedAt())

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Sparkles, MessageSquareText } from 'lucide-react';
+import { ArrowRight, MessageSquareText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import vocabularyPhoto from '../../assets/img/home-optimized/lambai.jpg';
 import { TOBY_IMAGES } from '../common/TobyMascot';
@@ -87,14 +87,10 @@ const HomeLearningSection = () => {
                   alt={currentMood.title}
                   className="h-full w-full object-contain"
                 />
-                <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#1D4ED8] px-2.5 py-0.5 text-[10px] font-bold text-white shadow">
-                  Bấm đổi biểu cảm 🐾
-                </span>
               </button>
 
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]">
-                  <Sparkles size={13} />
                   <span>Gặp gỡ Nuna — Bạn đồng hành TOEIC của bạn</span>
                 </div>
                 <h3 className="mt-2 font-serif text-2xl font-bold text-[#0F172A]">
@@ -103,23 +99,7 @@ const HomeLearningSection = () => {
                 <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#475569]">
                   {currentMood.desc}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  {TOBY_HOME_MOODS.map((item, idx) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => setActiveMoodIndex(idx)}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-all cursor-pointer ${
-                        idx === activeMoodIndex
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white shadow-sm'
-                          : 'border-[#CBD5E1] bg-white text-[#334155] hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-                      }`}
-                    >
-                      <img src={item.img} alt="" className="h-4 w-4 object-contain" />
-                      <span>{item.badge}</span>
-                    </button>
-                  ))}
-                </div>
+
               </div>
             </div>
 

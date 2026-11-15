@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 
 public interface PaymentTransactionRepository extends BaseRepository<PaymentTransaction, String> {
     // Use native FOR UPDATE so MariaDB does not fail on Hibernate's generated "FOR UPDATE OF alias".
-    @Query(value = "SELECT p.* FROM payment_transaction p WHERE p.vnp_txn_ref = :txnRef FOR UPDATE", nativeQuery = true)
-    Optional<PaymentTransaction> findForUpdateByVnpTxnRef(@Param("txnRef") String txnRef);
+    @Query(value = "SELECT p.* FROM payment_transaction p WHERE p.payos_order_code = :orderCode FOR UPDATE", nativeQuery = true)
+    Optional<PaymentTransaction> findForUpdateByPayosOrderCode(@Param("orderCode") String orderCode);
 
-    Optional<PaymentTransaction> findByVnpTxnRefAndUser_Id(String txnRef, String userId);
+    Optional<PaymentTransaction> findByPayosOrderCodeAndUser_Id(String payosOrderCode, String userId);
     Page<PaymentTransaction> findByUser_IdOrderByPaymentDateDesc(String userId, Pageable pageable);
     Optional<PaymentTransaction> findTopByTeacherApplication_IdOrderByPaymentDateDesc(String applicationId);
     Optional<PaymentTransaction> findTopByUser_IdAndTest_IdAndProductTypeOrderByPaymentDateDesc(
@@ -30,9 +30,9 @@ public interface PaymentTransactionRepository extends BaseRepository<PaymentTran
             "AND (:keyword IS NULL OR :keyword = '' OR " +
             "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(p.payosOrderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(COALESCE(p.productNameSnapshot, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-            "LOWER(COALESCE(p.vnpTransactionNo, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ",
+            "LOWER(COALESCE(p.payosReference, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ",
             countQuery = "SELECT COUNT(p) FROM PaymentTransaction p JOIN p.user u " +
                     "WHERE (:status IS NULL OR p.status = :status) " +
                     "AND (:productType IS NULL OR p.productType = :productType) " +
@@ -41,9 +41,9 @@ public interface PaymentTransactionRepository extends BaseRepository<PaymentTran
                     "AND (:keyword IS NULL OR :keyword = '' OR " +
                     "LOWER(u.userName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                     "LOWER(u.userEmail) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                    "LOWER(p.vnpTxnRef) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+                    "LOWER(p.payosOrderCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
                     "LOWER(COALESCE(p.productNameSnapshot, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-                    "LOWER(COALESCE(p.vnpTransactionNo, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
+                    "LOWER(COALESCE(p.payosReference, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))) ")
     Page<PaymentTransaction> searchForAdmin(@Param("status") String status,
                                             @Param("fromDate") LocalDateTime fromDate,
                                             @Param("toDate") LocalDateTime toDate,

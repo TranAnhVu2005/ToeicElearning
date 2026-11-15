@@ -48,8 +48,9 @@ Người dùng đang duyệt và chỉnh sửa bộ đặc tả trong `docs/`. *
 
 ### Vai trò
 
-- Admin: thêm/sửa/xóa bài thi; khóa/mở khóa tài khoản; quản lý giao dịch VNPAY và quyền mua đề VIP.
-- Người dùng: cập nhật hồ sơ, đổi mật khẩu, làm full test, luyện theo từng Part và xem lại bài thi đã làm.
+- Admin: thêm/sửa/xóa bài thi; khóa/mở khóa tài khoản; duyệt hồ sơ đăng ký giáo viên; quản lý giao dịch PayOS và quyền mua đề VIP.
+- Giáo viên: tạo và quản lý lớp học, mời học viên qua mã lớp hoặc danh sách Gmail, đăng thông báo bảng tin (kèm gửi Gmail), tải tài liệu PDF private (hỗ trợ xem trước trực tiếp và tải về), tạo đề riêng cho lớp, giao bài tập (kèm thông báo Gmail) và chấm nhận xét bài làm.
+- Người dùng: cập nhật hồ sơ, đổi mật khẩu, làm full test, luyện theo từng Part, luyện nghe chép chính tả Dictation, xem lại bài thi đã làm, hỏi Trợ lý AI Nuna, tham gia lớp học và mua đề VIP qua PayOS.
 - Backend phải là nơi thực thi quyền, trạng thái thanh toán và quyền truy cập đề. UI guard chỉ hỗ trợ điều hướng.
 - Với hệ lớp học, mọi thao tác kiểm tra teacher ownership, classroom membership, trạng thái member và quyền assignment ở server; không tin classId/userId client.
 - Phân biệt đã nộp, nộp trễ, chưa nộp, chưa chấm; không tự áp một late policy hoặc quy tắc điểm trung bình khi docs đánh dấu cần chốt.
@@ -80,11 +81,11 @@ Người dùng đang duyệt và chỉnh sửa bộ đặc tả trong `docs/`. *
 ## Bản đồ tài liệu đặc tả
 
 - `docs/01_OVERVIEW.md`: mục tiêu, vai trò, hệ thống và thứ tự đọc.
-- `docs/02_DATABASE.md`: entity, quan hệ, câu TOEIC, payment, lớp, bài tập, dữ liệu học tập, quyền và migration.
-- `docs/03_API_SPEC.md`: API hiện có/mục tiêu cho thi, VNPAY, teacher onboarding, lớp, học tập cá nhân, metrics, thông báo.
-- `docs/04_FLOW_LOGIC.md`: luồng catalog, thi/review, lớp/assignment, diagnostic, ôn tập, resume và vận hành.
+- `docs/02_DATABASE.md`: entity, quan hệ, câu TOEIC, payment PayOS, lớp, bài tập, dữ liệu học tập, quyền và migration.
+- `docs/03_API_SPEC.md`: API hiện có/mục tiêu cho thi, PayOS, teacher onboarding, lớp, Gmail notification/invitation, xem trước PDF, trợ lý AI, học tập cá nhân, metrics, thông báo.
+- `docs/04_FLOW_LOGIC.md`: luồng catalog, thi/review, lớp/assignment/Gmail, xem trước PDF, PayOS, diagnostic, ôn tập, resume và vận hành.
 - `docs/05_UI_UX_SPEC.md`: visual system và màn hình user/teacher/admin, cá nhân hóa, quality queue, responsive/accessibility.
-- `docs/06_SECURITY_SPEC.md`: threat model, auth/session, authorization, API, upload, VNPAY, privacy, vận hành và security acceptance checklist.
+- `docs/06_SECURITY_SPEC.md`: threat model, auth/session, authorization, API, upload, PayOS, privacy, vận hành và security acceptance checklist.
 
 Khi áp dụng mọi tài liệu trên, phải tuân thủ mục “Giữ nguyên kiến trúc hiện tại”; đặc tả tính năng/bảo mật không tự cho phép thay framework, auth architecture hay cấu trúc ứng dụng.
 

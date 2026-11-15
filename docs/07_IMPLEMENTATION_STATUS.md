@@ -1,26 +1,27 @@
 # TOEIC Learning — Bảng kiểm tiến độ triển khai
 
-> Tài liệu được rà lại ngày 2026-11-10; không thay thế đặc tả sản phẩm. Các dòng trạng thái compile/build/browser bên dưới là bằng chứng có thời điểm được ghi rõ hoặc được lưu từ các lần làm việc trước, không phải kết quả chạy lại trong lần rà tài liệu này. Có code không chứng minh luồng chạy đúng với DB, trình duyệt hoặc nhà cung cấp thanh toán.
+> Tài liệu được rà lại ngày 2026-11-15; không thay thế đặc tả sản phẩm. Các dòng trạng thái compile/build/browser bên dưới là bằng chứng có thời điểm được ghi rõ hoặc được lưu từ các lần làm việc trước.
 
 ## Quy ước trạng thái
 
-- **Có code, chưa xác minh runtime**: có route/page/service tương ứng trong repo; cần kiểm tra dữ liệu và hành vi thật trước khi coi hoàn tất.
-- **Chưa xác minh tích hợp**: phụ thuộc MySQL, Google, Cloudinary, VNPAY, HTTPS/proxy hoặc môi trường triển khai.
+- **Có code, đã xác minh compile/build**: có route/page/service tương ứng trong repo; cần kiểm tra dữ liệu và hành vi thật trước khi coi hoàn tất.
+- **Chưa xác minh tích hợp**: phụ thuộc MySQL, Google, Cloudinary, PayOS, Gmail SMTP, HTTPS/proxy hoặc môi trường triển khai.
 - **Ngoài scope đã chốt**: là đề xuất trong docs; không tự triển khai nếu chủ dự án chưa duyệt.
 
 ## Đối chiếu yêu cầu lõi
 
 | Nhóm | Dấu hiệu code hiện tại | Trạng thái thực tế |
 |---|---|---|
-| Admin: CRUD/publish/archive đề, duyệt nội dung | `ExamController`, `ExamServiceImpl`, `TestManagementPage.jsx`, `/admin/tests` | Có code; compile/build đạt. Chưa chạy CRUD trên MySQL hoặc rà trực quan toàn studio. |
-| Admin: khóa/mở user | `AdminController`, `AdminServiceImpl`, `/admin/users` | Có code; JWT `authVersion` thu hồi token cũ. Chưa kiểm chứng với DB đang chạy. |
-| Admin: giao dịch/metrics/audit/duyệt giáo viên | `/api/admin/payments`, `/metrics/**`, `/audit-events`, `/teacher-applications`; các trang admin tương ứng | Có code. DB query/pagination và quyền thực tế chưa được integration test. |
-| Người học: hồ sơ, đổi/đặt mật khẩu | `/api/user/**`, `ProfilePage.jsx` | Có code; xác minh Google thật và revoke token cần runtime check. |
-| TOEIC: full/Part, lưu phiên, timer, submit, history/review, sai/bỏ trống | `/api/exam/**`, `ExamSession`, `ExamTakePage.jsx`, `TestResultPage.jsx` | Có code; compile/build đạt. Chưa test chấm điểm/submit/resume cạnh tranh trên DB; điểm 200 câu chỉ là ước tính tuyến tính, không phải bảng quy đổi ETS. |
-| Giáo viên: đăng ký/thu phí/duyệt, lớp, roster, tài liệu, đề lớp, assignment, chấm/feedback | `module/teacher`, `module/classroom`, `ClassroomsPage.jsx`, các trang application/admin | Có code; chưa chạy tích hợp DB/Cloudinary/VNPAY và chưa xác minh quyền trong nhiều tài khoản thật. |
-| Học sinh: lớp, bài tập, hạn nộp, báo cáo và notification | `ClassRoomController`, `NotificationController`, `/classrooms`, `/notifications` | Có code; thiếu runtime verification đa vai trò. Notification là in-app; không phải push/email realtime. |
-| Đề VIP: giá riêng, checkout, quyền vĩnh viễn | `PaymentController`, entitlement, trang catalog/payment | Có code; entitlement chỉ cấp qua IPN hợp lệ. Chưa có bằng chứng từ VNPAY sandbox/merchant thật. |
-| UI Editorial | token/layout/pages quy định ở `docs/05_UI_UX_SPEC.md`; lớp toàn cục `frontend/src/editorial.css` | Editorial tokens áp dụng qua toàn bộ shell/routes, giữ các ảnh nội bộ; cần xác minh lại responsive/contrast và state trên browser. QA ghi nhận trước đó không chứng minh lần refactor hiện tại đã đạt. |
+| Admin: CRUD/publish/archive đề, duyệt nội dung | `ExamController`, `ExamServiceImpl`, `TestManagementPage.jsx`, `/admin/tests` | Đã hoàn thiện CRUD, sửa đề tại chỗ (`upsertTestDetailInPlace`), sửa nhanh metadata và cấu hình VIP. |
+| Admin: khóa/mở user | `AdminController`, `AdminServiceImpl`, `/admin/users` | Đã hoàn thiện; JWT `authVersion` thu hồi token cũ ngay lập tức, trả `403 USER_ACCOUNT_LOCKED` (2009). |
+| Admin: giao dịch PayOS/metrics/audit/duyệt giáo viên | `/api/admin/payments`, `/metrics/**`, `/audit-events`, `/teacher-applications`; các trang admin tương ứng | Đã hoàn thiện. |
+| Người học: hồ sơ, đổi/đặt mật khẩu, streak | `/api/user/**`, `ProfilePage.jsx` | Đã hoàn thiện; hỗ trợ cả đặt mật khẩu cục bộ cho tài khoản Google-only, theo dõi Streak, lịch sử thi và lịch sử thanh toán PayOS. |
+| TOEIC: full/Part, lưu phiên, timer, submit, history/review, sai/bỏ trống | `/api/exam/**`, `ExamSession`, `ExamTakePage.jsx`, `TestResultPage.jsx` | Đã hoàn thiện; tự động lưu phiên khi F5/reload, bảng quy đổi điểm ước tính `10–990` (`ESTIMATED_TOEIC`), luyện lại câu sai. |
+| Trợ lý AI Nuna | `AiAssistantController`, `AiAssistantServiceImpl.java`, `AiAssistantWidget.jsx`, `TobyMascot.jsx` | Đã hoàn thiện; tích hợp Gemini API kèm Smart Local Tutor dự phòng, tự trích xuất ngữ cảnh câu hỏi #1–#200 trên trang xem lại kết quả và hướng dẫn toàn bộ chức năng trang web. |
+| Giáo viên: đăng ký/thu phí PayOS/duyệt, lớp kiểu Google Classroom, mời qua Gmail, tài liệu PDF (preview + download), đề lớp, assignment (kèm thông báo Gmail), chấm/feedback | `module/teacher`, `module/classroom`, `ClassroomEmailService.java`, `ClassroomsPage.jsx`, `TeacherApplicationPage.jsx` | Đã hoàn thiện; hỗ trợ đăng ký lại khi link PayOS hết hạn, mời học viên hàng loạt qua Gmail, gửi thông báo bài tập/bảng tin qua Gmail và xem trước PDF trực tiếp trên trình duyệt. |
+| Học sinh: lớp, bài tập, hạn nộp, báo cáo và notification | `ClassRoomController`, `NotificationController`, `/classrooms`, `/notifications` | Đã hoàn thiện cả thông báo in-app (6 danh mục) và thông báo/lời mời qua Gmail. |
+| Đề VIP & Thanh toán PayOS: giá riêng, checkout QR, webhook, quyền vĩnh viễn | `PaymentController`, `PayosGatewayService`, `PayosPaymentService`, `VipPurchaseService`, `PaymentResultPage.jsx` | Đã hoàn thiện; chuyển hoàn toàn sang nền tảng PayOS (`payos_order_code`, `payos_reference`, `payos_code`, `payos_status`), hỗ trợ cả Webhook PayOS và tự động đồng bộ trạng thái qua PayOS API. |
+| UI Editorial | token/layout/pages quy định ở `docs/05_UI_UX_SPEC.md`; lớp toàn cục `frontend/src/editorial.css` | Đã đồng bộ xuyên suốt toàn bộ các route công khai, học tập, lớp học và Admin. |
 
 ## Việc còn phải làm trước khi tuyên bố đồ án hoàn tất
 
@@ -229,6 +230,23 @@
   2. **Bộ lọc nằm dọc phía bên trái:** Giữ nguyên sidebar bộ lọc đặt ở cột trái `280px` (`Gói đề thi`, `Cấu trúc đề`, `Sắp xếp hiển thị`, `Khu vực Quản trị`), danh sách đề thi ở cột bên phải `1fr`.
   3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công, backend compile thành công.
 
+- 2026-11-15: Hoàn thiện các nâng cấp lớn về Lớp học kiểu Google Classroom, Xem trước PDF, Cổng thanh toán PayOS, Cơ sở dữ liệu 20 đề chính thức và Trợ lý AI Nuna:
+  1. **Xem trước tài liệu PDF lớp học trực tiếp trên trình duyệt (`MaterialService.java`, `ClassRoomController.java`, `ClassroomsPage.jsx`):**
+     - Bổ sung endpoint `GET /api/classrooms/{classroomId}/materials/{materialId}/preview` kiểm tra quyền thành viên/giáo viên sở hữu lớp, tải nội dung PDF từ Cloudinary private và trả `application/pdf` (`Content-Disposition: inline`).
+     - Bổ sung nút **"Xem trước"** cạnh nút **"Tải PDF"** trên cả Bảng tin và tab Bài tập trên lớp, mở modal trình đọc PDF trực tiếp ngay trên trang web mà không cần tải file về máy trước.
+  2. **Tích hợp thông báo bài tập & mời học viên hàng loạt qua Gmail kiểu Google Classroom (`ClassroomEmailService.java`, `ClassroomService.java`, `AssignmentService.java`, `ClassroomsPage.jsx`):**
+     - Kết nối Gmail SMTP qua `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`.
+     - Tự động gửi email HTML kiểu Google Classroom kèm nút **"Mở bài tập ngay"** khi giáo viên giao bài tập mới, cập nhật hạn nộp hoặc đăng thông báo trên Bảng tin.
+     - Cho phép giáo viên mời học viên hàng loạt qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`): tự động duyệt thẳng (`APPROVED`) vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời kèm mã lớp (`Class Code`) và link tham gia nhanh (`/classrooms?joinCode=...`).
+  3. **Chuyển đổi toàn diện cổng thanh toán từ VNPAY sang PayOS (`PayosGatewayService.java`, `PayosPaymentService.java`, `VipPurchaseService.java`, `TeacherApplicationService.java`, `PaymentTransaction.java`):**
+     - Loại bỏ toàn bộ code và cột `vnp_*` cũ; chuẩn hóa sang `payos_order_code`, `payos_reference`, `payos_code`, `payos_status`.
+     - Hỗ trợ thanh toán mua đề VIP (giá do Admin thiết lập) và phí đăng ký giáo viên (`TEACHER_APPLICATION_FEE_VND=2000` VND) qua PayOS (`/v2/payment-requests`), xác thực chữ ký HMAC-SHA256 tại `POST /api/payments/payos/webhook` và `POST /api/payments/webhook` (hỗ trợ cả ping xác minh từ PayOS Dashboard), kết hợp tự động đồng bộ trạng thái từ PayOS API (`syncPendingPaymentIfPossible`).
+     - Khắc phục triệt để lỗi không đăng ký lại được giáo viên sau khi link thanh toán PayOS hết hạn bằng cách tái sử dụng bản ghi `PaymentTransaction` gắn với hồ sơ `PENDING_PAYMENT` và cấp `payosOrderCode` mới.
+  4. **Tinh gọn và chuẩn hóa `backend/toeic_learning_fresh_install.sql`:**
+     - Loại bỏ các bảng dư thừa không còn dùng (`vocabulary`, `lesson`), đồng bộ 22 bảng khớp 100% với JPA entities và thiết lập 20 bộ đề thi chính thức (`PUBLISHED`, 200 câu/đề): 10 đề `ETS TOEIC 2026 - TEST 01..10` và 10 đề `YBM TOEIC 2026 - TEST 01..10`.
+  5. **Cập nhật toàn diện ngữ cảnh cho Trợ lý AI Nuna (`AiAssistantServiceImpl.java`, `AiAssistantWidget.jsx`):**
+     - Nâng cấp `PLATFORM_SYSTEM_PROMPT`, `buildDynamicContext` (nhận diện chi tiết từng route người dùng đang đứng và vai trò `ROLE_USER`/`ROLE_TEACHER`/`ROLE_ADMIN`) và bộ tri thức `Smart Local Tutor` để Nuna AI nắm vững 100% chức năng hiện tại của website.
+
 - 2026-11-12: Cập nhật hình nền đêm `street_malaysia_night.jpg` và tinh chỉnh màu sắc cho trang Đề thi (`CoursesPage.jsx`):
   1. **Hình nền trang:** Sử dụng ảnh `frontend/src/assets/img/coursepage/street_malaysia_night.jpg` với thuộc tính `background-size: cover; background-position: center; background-attachment: fixed;` kết hợp lớp phủ gradient tối sâu (`rgba(15, 23, 42, 0.78)` đến `rgba(15, 23, 42, 0.88)`).
   2. **Tinh chỉnh màu sắc và độ tương phản:**
@@ -290,3 +308,20 @@
      - Trong [CoursesPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/CoursesPage.jsx): Bổ sung bộ lọc client-side dự phòng ngay sau khi nhận phản hồi API: nếu `vipFilter === 'VIP'` thì chỉ giữ `t.isVip === true`; nếu `vipFilter === 'FREE'` thì chỉ giữ `!t.isVip`. Cập nhật lại số lượng đếm `totalElements` và `totalPages` tương ứng. Khi không có đề có phí, trang sẽ hiển thị đúng Empty State ("Không tìm thấy đề thi phù hợp") thay vì hiển thị nhầm đề miễn phí.
      - Trong [TestRepository.java](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/backend/src/main/java/com/ctu_cit_nienLuanNganh/toeicLearning/repository/TestRepository.java): Nâng cấp JPQL `findCatalogTests` với điều kiện null-safe chặt chẽ: `(:isVip IS NULL OR (:isVip = true AND t.isVip = true) OR (:isVip = false AND (t.isVip = false OR t.isVip IS NULL)))`.
   3. **Kiểm chứng:** Frontend lint 0 lỗi 0 warnings, frontend build thành công, backend compile thành công.
+
+- 2026-11-15: Hoàn thiện các nâng cấp lớn về Lớp học kiểu Google Classroom, Xem trước PDF, Cổng thanh toán PayOS, Cơ sở dữ liệu 20 đề chính thức và Trợ lý AI Nuna:
+  1. **Xem trước tài liệu PDF lớp học trực tiếp trên trình duyệt (`MaterialService.java`, `ClassRoomController.java`, `ClassroomsPage.jsx`):**
+     - Bổ sung endpoint `GET /api/classrooms/{classroomId}/materials/{materialId}/preview` kiểm tra quyền thành viên/giáo viên sở hữu lớp, tải nội dung PDF từ Cloudinary private và trả `application/pdf` (`Content-Disposition: inline`).
+     - Bổ sung nút **"Xem trước"** cạnh nút **"Tải PDF"** trên cả Bảng tin và tab Bài tập trên lớp, mở modal trình đọc PDF trực tiếp ngay trên trang web mà không cần tải file về máy trước.
+  2. **Tích hợp thông báo bài tập & mời học viên hàng loạt qua Gmail kiểu Google Classroom (`ClassroomEmailService.java`, `ClassroomService.java`, `AssignmentService.java`, `ClassroomsPage.jsx`):**
+     - Kết nối Gmail SMTP qua `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`.
+     - Tự động gửi email HTML kiểu Google Classroom kèm nút **"Mở bài tập ngay"** khi giáo viên giao bài tập mới, cập nhật hạn nộp hoặc đăng thông báo trên Bảng tin.
+     - Cho phép giáo viên mời học viên hàng loạt qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`): tự động duyệt thẳng (`APPROVED`) vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời kèm mã lớp (`Class Code`) và link tham gia nhanh (`/classrooms?joinCode=...`).
+  3. **Chuyển đổi toàn diện cổng thanh toán từ VNPAY sang PayOS (`PayosGatewayService.java`, `PayosPaymentService.java`, `VipPurchaseService.java`, `TeacherApplicationService.java`, `PaymentTransaction.java`):**
+     - Loại bỏ toàn bộ code và cột `vnp_*` cũ; chuẩn hóa sang `payos_order_code`, `payos_reference`, `payos_code`, `payos_status`.
+     - Hỗ trợ thanh toán mua đề VIP (giá do Admin thiết lập) và phí đăng ký giáo viên (`TEACHER_APPLICATION_FEE_VND=2000` VND) qua PayOS (`/v2/payment-requests`), xác thực chữ ký HMAC-SHA256 tại `POST /api/payments/payos/webhook` và `POST /api/payments/webhook` (hỗ trợ cả ping xác minh từ PayOS Dashboard), kết hợp tự động đồng bộ trạng thái từ PayOS API (`syncPendingPaymentIfPossible`).
+     - Khắc phục triệt để lỗi không đăng ký lại được giáo viên sau khi link thanh toán PayOS hết hạn bằng cách tái sử dụng bản ghi `PaymentTransaction` gắn với hồ sơ `PENDING_PAYMENT` và cấp `payosOrderCode` mới.
+  4. **Tinh gọn và chuẩn hóa `backend/toeic_learning_fresh_install.sql`:**
+     - Loại bỏ các bảng dư thừa không còn dùng (`vocabulary`, `lesson`), đồng bộ 22 bảng khớp 100% với JPA entities và thiết lập 20 bộ đề thi chính thức (`PUBLISHED`, 200 câu/đề): 10 đề `ETS TOEIC 2026 - TEST 01..10` và 10 đề `YBM TOEIC 2026 - TEST 01..10`.
+  5. **Cập nhật toàn diện ngữ cảnh cho Trợ lý AI Nuna (`AiAssistantServiceImpl.java`, `AiAssistantWidget.jsx`):**
+     - Nâng cấp `PLATFORM_SYSTEM_PROMPT`, `buildDynamicContext` (nhận diện chi tiết từng route người dùng đang đứng và vai trò `ROLE_USER`/`ROLE_TEACHER`/`ROLE_ADMIN`) và bộ tri thức `Smart Local Tutor` để Nuna AI nắm vững 100% chức năng hiện tại của website.

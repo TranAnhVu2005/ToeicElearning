@@ -1,80 +1,63 @@
--- TOEIC Learning: database mới dùng MySQL 8.0.13+.
--- Chỉ chạy trên database trống. File không DROP DB/tables; nếu schema đã có bảng,
--- CREATE TABLE sẽ dừng ở object trùng thay vì xóa/ghi đè dữ liệu.
--- Schema bên dưới hợp nhất DDL hiện hành trong database_script_20de.sql cùng các
--- thay đổi đã được đưa vào bootstrap từ migrations (classroom.description,
--- auth/login rate limits, private media, presence, VIP entitlement, exam session,
--- audit). Không nối lại seed_ets_2026_test02_to_test10.sql hoặc
--- seed_ybm_2025_tests.sql: các bản sao đó đã được bao gồm bên dưới ở dạng local.
--- Test 02-04 là bản sao local từ nội dung Test 01, để PUBLISHED phục vụ kiểm thử UI/API với nhiều đề.
--- Test 05-10 và các bản YBM tiếp tục là DRAFT. Các bản sao giữ nguyên URL media của Test 01;
--- chúng không phải nội dung ETS/YBM độc lập và không được coi là đề thương mại.
--- Kiểm tra độ chính xác answer key, giấy phép nội dung/media và quyền thương mại
--- trước khi publish cho người học thật hoặc đưa dữ liệu lên production; các clone
--- Test 02-04 chỉ phục vụ kiểm thử giao diện/chức năng trong môi trường local.
--- Không tạo tài khoản admin/password mặc định. Đăng ký tài khoản tin cậy trước,
--- rồi DBA có thể gán role ROLE_ADMIN theo email đã xác minh, ví dụ:
--- UPDATE `user` SET role_id=(SELECT id FROM role WHERE role_name='ROLE_ADMIN')
--- WHERE user_email='<trusted-admin-email>';
 -- ==============================================================================
--- KHỞI TẠO CƠ SỞ DỮ LIỆU TOEIC LEARNING (ETS TOEIC 2026 TEST 01 - TRỌN BỘ 200 CÂU)
--- TOÀN BỘ 7 PHẦN THI (PART 1 -> PART 7: 100 CÂU LISTENING + 100 CÂU READING)
--- TRANSCRIPT TIẾNG ANH THUẦN TÚY, BẢN DỊCH TIẾNG VIỆT LƯU RIÊNG TRONG CỘT TRANSLATION
--- Nội dung đề là seed hiện có trong repository; cần xác minh answer key và quyền phân phối trước khi xuất bản/thương mại hóa.
+-- KHỞI TẠO CƠ SỞ DỮ LIỆU CHÍNH THỨC HỆ THỐNG TOEIC LEARNING
+-- TRỌN BỘ 20 ĐỀ THI CHÍNH THỨC (200 CÂU / ĐỀ):
+--   + 10 ĐỀ ETS: ETS TOEIC 2026 - TEST 01 ĐẾN ETS TOEIC 2026 - TEST 10
+--   + 10 ĐỀ YBM: YBM TOEIC 2026 - TEST 01 ĐẾN YBM TOEIC 2026 - TEST 10
+-- ĐẦY ĐỦ 7 PHẦN THI (PART 1 -> PART 7: 100 CÂU LISTENING + 100 CÂU READING)
+-- TÍCH HỢP CỔNG THANH TOÁN PAYOS, LỚP HỌC TRỰC TUYẾN & TRỢ LÝ AI
 -- ==============================================================================
--- Non-destructive fresh install: không DROP database hoặc bảng.
-CREATE DATABASE IF NOT EXISTS toeiclearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+DROP DATABASE IF EXISTS toeiclearning;
+CREATE DATABASE toeiclearning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE toeiclearning;
 
 -- ==============================================================================
--- 1. BẢNG CẤU HÌNH & DANH MỤC ĐỘC LẬP
+-- 1. BẢNG CẤU HÌNH & DANH MỤC ĐỘC LẬP (ROLE, PART, TEST)
 -- ==============================================================================
 CREATE TABLE role (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    role_name VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    role_name VARCHAR(50) NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO role (id, role_name) VALUES 
-('0d0bcedb-aeaa-11f1-b6c1-c0e43471a03a', 'ROLE_ADMIN'), 
-('0d0bf593-aeaa-11f1-b6c1-c0e43471a03a', 'ROLE_USER'), 
+INSERT INTO role (id, role_name) VALUES
+('0d0bcedb-aeaa-11f1-b6c1-c0e43471a03a', 'ROLE_ADMIN'),
+('0d0bf593-aeaa-11f1-b6c1-c0e43471a03a', 'ROLE_USER'),
 ('0d0bf686-aeaa-11f1-b6c1-c0e43471a03a', 'ROLE_TEACHER');
 
 CREATE TABLE part (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     name_part VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO part (id, name_part) VALUES 
-('0d104916-aeaa-11f1-b6c1-c0e43471a03a', 'Part 1'), 
-('0d10545b-aeaa-11f1-b6c1-c0e43471a03a', 'Part 2'), 
-('0d10551f-aeaa-11f1-b6c1-c0e43471a03a', 'Part 3'), 
-('0d105559-aeaa-11f1-b6c1-c0e43471a03a', 'Part 4'), 
-('0d10565f-aeaa-11f1-b6c1-c0e43471a03a', 'Part 5'), 
-('0d1056cd-aeaa-11f1-b6c1-c0e43471a03a', 'Part 6'), 
+INSERT INTO part (id, name_part) VALUES
+('0d104916-aeaa-11f1-b6c1-c0e43471a03a', 'Part 1'),
+('0d10545b-aeaa-11f1-b6c1-c0e43471a03a', 'Part 2'),
+('0d10551f-aeaa-11f1-b6c1-c0e43471a03a', 'Part 3'),
+('0d105559-aeaa-11f1-b6c1-c0e43471a03a', 'Part 4'),
+('0d10565f-aeaa-11f1-b6c1-c0e43471a03a', 'Part 5'),
+('0d1056cd-aeaa-11f1-b6c1-c0e43471a03a', 'Part 6'),
 ('0d105702-aeaa-11f1-b6c1-c0e43471a03a', 'Part 7');
 
 CREATE TABLE test (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title_test VARCHAR(255) NOT NULL,
-    cover_image_url VARCHAR(2048),
+    cover_image_url VARCHAR(500),
     status VARCHAR(20) DEFAULT 'DRAFT',
     is_vip BOOLEAN NOT NULL DEFAULT FALSE,
     vip_price_vnd DECIMAL(10, 0),
     classroom_id VARCHAR(36),
     owner_teacher_id VARCHAR(36),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_test_classroom (classroom_id),
     INDEX idx_test_owner_teacher (owner_teacher_id)
 );
 
-
 -- ==============================================================================
--- 2. BẢNG NGƯỜI DÙNG (USER)
+-- 2. BẢNG NGƯỜI DÙNG, PHIÊN ĐĂNG NHẬP & TÀI NGUYÊN MEDIA
 -- ==============================================================================
 CREATE TABLE `user` (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -91,34 +74,51 @@ CREATE TABLE `user` (
     highest_streak INT DEFAULT 0,
     total_score INT DEFAULT 0,
     last_active_date DATE,
-    role_id VARCHAR(36) NOT NULL, 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    role_id VARCHAR(36),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_role FOREIGN KEY (role_id) REFERENCES role(id)
 );
 
 CREATE TABLE auth_login_attempt (
-    bucket_key CHAR(64) PRIMARY KEY,
+    bucket_key VARCHAR(64) PRIMARY KEY,
     attempt_count INT NOT NULL,
     window_started_at DATETIME NOT NULL,
     INDEX idx_auth_login_attempt_window (window_started_at)
 );
 
--- Không seed tài khoản, thông tin cá nhân hoặc password hash cố định.
+INSERT INTO `user` (
+    id, user_name, user_email, user_numberphone, user_password, user_avatar,
+    is_locked, current_streak, highest_streak, total_score, last_active_date, role_id
+) VALUES
+(
+    'd1b3a271-e75e-492a-8803-1ffec9e54bbe', 'Trần Anh Vũ Đẹp Trai', 'trananhvu314159@gmail.com', '0927447532',
+    '$2a$10$YLHLkZAjLueikLFgcRmgJORbkHG7j4FjF7yudMlWl1QdZf9O/gRcK', NULL, FALSE, 0, 0, 0, NULL,
+    '0d0bf593-aeaa-11f1-b6c1-c0e43471a03a'
+),
+(
+    'fc67189e-31b2-4e3f-bf19-d023a25f19df', 'Trần Anh Vũ', 'vub2306603@student.ctu.edu.vn', '0359906510',
+    '$2a$10$sLPsskj9u/kmrfTl99L8Q.8eHifM0P6A3LIa8VcIyQ6UJVv9uz.CK',
+    'https://res.cloudinary.com/ovs0odtq/image/upload/v1789218770/toeic-learning/avatars/jjar8htr37ju2bkx4kns.jpg',
+    FALSE, 0, 0, 0, NULL,
+    '0d0bcedb-aeaa-11f1-b6c1-c0e43471a03a'
+);
+
 CREATE TABLE exam_media_asset (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    public_id VARCHAR(512) NOT NULL UNIQUE,
+    public_id VARCHAR(512) NOT NULL,
     media_format VARCHAR(16) NOT NULL,
     resource_type VARCHAR(16) NOT NULL,
     delivery_type VARCHAR(16) NOT NULL,
     uploaded_by_id VARCHAR(36) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_exam_media_asset_public_id UNIQUE (public_id),
     CONSTRAINT fk_exam_media_asset_uploader FOREIGN KEY (uploaded_by_id) REFERENCES `user`(id),
     INDEX idx_exam_media_asset_uploader (uploaded_by_id)
 );
 
 -- ==============================================================================
--- 3. NHÓM LỚP HỌC & BÀI TẬP VỀ NHÀ
+-- 3. NHÓM LỚP HỌC, THÀNH VIÊN, TÀI LIỆU & BÀI TẬP
 -- ==============================================================================
 CREATE TABLE user_presence (
     user_id VARCHAR(36) PRIMARY KEY,
@@ -133,8 +133,8 @@ CREATE TABLE classroom (
     description TEXT NULL,
     class_code VARCHAR(50) UNIQUE NOT NULL,
     teacher_id VARCHAR(36) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_class_teacher FOREIGN KEY (teacher_id) REFERENCES `user`(id)
 );
 
@@ -149,14 +149,15 @@ CREATE TABLE class_member (
     status VARCHAR(20) DEFAULT 'PENDING',
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_class_member_class_student UNIQUE (class_id, student_id),
-    CONSTRAINT fk_member_class FOREIGN KEY (class_id) REFERENCES classroom(id),
-    CONSTRAINT fk_member_student FOREIGN KEY (student_id) REFERENCES `user`(id)
+    CONSTRAINT fk_member_class FOREIGN KEY (class_id) REFERENCES classroom(id) ON DELETE CASCADE,
+    CONSTRAINT fk_member_student FOREIGN KEY (student_id) REFERENCES `user`(id) ON DELETE CASCADE
 );
 
 CREATE TABLE material (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     title VARCHAR(255) NOT NULL,
-    file_url VARCHAR(1000) NOT NULL,
+    content TEXT,
+    file_url VARCHAR(1000),
     cloudinary_public_id VARCHAR(512),
     file_format VARCHAR(20),
     original_file_name VARCHAR(180),
@@ -165,9 +166,9 @@ CREATE TABLE material (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     uploaded_by_id VARCHAR(36),
     class_id VARCHAR(36) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_material_class FOREIGN KEY (class_id) REFERENCES classroom(id),
-    CONSTRAINT fk_material_uploader FOREIGN KEY (uploaded_by_id) REFERENCES `user`(id)
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_material_class FOREIGN KEY (class_id) REFERENCES classroom(id) ON DELETE CASCADE,
+    CONSTRAINT fk_material_uploader FOREIGN KEY (uploaded_by_id) REFERENCES `user`(id) ON DELETE SET NULL
 );
 
 CREATE TABLE assignment (
@@ -179,15 +180,15 @@ CREATE TABLE assignment (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     class_id VARCHAR(36) NOT NULL,
     test_id VARCHAR(36),
-    external_file_url VARCHAR(255), 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_assign_class FOREIGN KEY (class_id) REFERENCES classroom(id),
+    external_file_url VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_assign_class FOREIGN KEY (class_id) REFERENCES classroom(id) ON DELETE CASCADE,
     CONSTRAINT fk_assign_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE SET NULL
 );
 
 -- ==============================================================================
--- 4. BẢNG DỮ LIỆU ĐỀ THI (Test Data)
+-- 4. BẢNG DỮ LIỆU ĐỀ THI (CONTEXT QUESTION & QUESTION)
 -- ==============================================================================
 CREATE TABLE context_question (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -199,38 +200,38 @@ CREATE TABLE context_question (
     image_format VARCHAR(16),
     audio_delivery_type VARCHAR(16),
     image_delivery_type VARCHAR(16),
-    paragraph TEXT,      
-    transcript TEXT,   
+    paragraph TEXT,
+    transcript TEXT,
     translation TEXT,
     test_id VARCHAR(36),
-    part_id VARCHAR(36), 
+    part_id VARCHAR(36),
     order_index INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_cq_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
-    CONSTRAINT fk_cq_part FOREIGN KEY (part_id) REFERENCES part(id)
+    CONSTRAINT fk_cq_part FOREIGN KEY (part_id) REFERENCES part(id),
+    INDEX idx_context_question_order_follow_test_id (test_id, order_index)
 );
-CREATE INDEX idx_context_question_order_follow_test_id ON context_question(test_id, order_index);
 
 CREATE TABLE question (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    question_content TEXT,            
-    option_a VARCHAR(500),            
+    question_content TEXT,
+    option_a VARCHAR(500),
     option_b VARCHAR(500),
     option_c VARCHAR(500),
     option_d VARCHAR(500),
     correct_answer CHAR(1) NOT NULL,
-    explanation TEXT,                 
+    explanation TEXT,
     context_question_id VARCHAR(36),
     question_number INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_question_cq FOREIGN KEY (context_question_id) REFERENCES context_question(id) ON DELETE CASCADE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_question_cq FOREIGN KEY (context_question_id) REFERENCES context_question(id) ON DELETE CASCADE,
+    INDEX idx_question_order_follow_context_question_id (context_question_id, question_number)
 );
-CREATE INDEX idx_question_order_follow_context_question_id ON question(context_question_id, question_number);
 
 -- ==============================================================================
--- 5. BẢNG LỊCH SỬ LÀM BÀI & BÀI TẬP
+-- 5. BẢNG LỊCH SỬ LÀM BÀI, PHIÊN THI & ĐÁP ÁN NGƯỜI DÙNG
 -- ==============================================================================
 CREATE TABLE test_result (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -243,10 +244,10 @@ CREATE TABLE test_result (
     total_count INT NOT NULL,
     total_time INT NOT NULL,
     teacher_comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id VARCHAR(36),
-    test_id VARCHAR(36),                   
-    part_id VARCHAR(36),                   
+    test_id VARCHAR(36),
+    part_id VARCHAR(36),
     assignment_id VARCHAR(36),
     assignment_deadline_snapshot DATETIME,
     assignment_late BOOLEAN DEFAULT FALSE,
@@ -256,29 +257,40 @@ CREATE TABLE test_result (
     CONSTRAINT fk_test_result_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
     CONSTRAINT fk_test_result_part FOREIGN KEY (part_id) REFERENCES part(id),
     CONSTRAINT fk_test_result_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE SET NULL,
-    CONSTRAINT fk_test_result_source FOREIGN KEY (source_result_id) REFERENCES test_result(id) ON DELETE SET NULL
+    CONSTRAINT fk_test_result_source FOREIGN KEY (source_result_id) REFERENCES test_result(id) ON DELETE SET NULL,
+    INDEX idx_test_result_created_at (created_at)
 );
-CREATE INDEX idx_test_result_created_at ON test_result(created_at);
 
 CREATE TABLE exam_session (
-    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()), user_id VARCHAR(36) NOT NULL, test_id VARCHAR(36) NOT NULL,
-    assignment_id VARCHAR(36), source_result_id VARCHAR(36), test_result_id VARCHAR(36), scope_key CHAR(64) NOT NULL,
-    test_content_fingerprint CHAR(64) NOT NULL, started_at DATETIME NOT NULL, expires_at DATETIME NOT NULL,
-    duration_limit_seconds INT, status VARCHAR(20) NOT NULL, target_question_ids LONGTEXT NOT NULL,
-    answers_json LONGTEXT NOT NULL, last_saved_at DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    test_id VARCHAR(36) NOT NULL,
+    assignment_id VARCHAR(36),
+    source_result_id VARCHAR(36),
+    test_result_id VARCHAR(36),
+    scope_key VARCHAR(64) NOT NULL,
+    test_content_fingerprint VARCHAR(64) NOT NULL,
+    started_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL,
+    duration_limit_seconds INT,
+    status VARCHAR(20) NOT NULL,
+    target_question_ids LONGTEXT NOT NULL,
+    answers_json LONGTEXT NOT NULL,
+    last_saved_at DATETIME NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_exam_session_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
     CONSTRAINT fk_exam_session_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
     CONSTRAINT fk_exam_session_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE SET NULL,
     CONSTRAINT fk_exam_session_source FOREIGN KEY (source_result_id) REFERENCES test_result(id) ON DELETE SET NULL,
     CONSTRAINT fk_exam_session_result FOREIGN KEY (test_result_id) REFERENCES test_result(id) ON DELETE SET NULL,
-    INDEX idx_exam_session_user_status (user_id, status), INDEX idx_exam_session_expires_at (expires_at)
+    INDEX idx_exam_session_user_status (user_id, status),
+    INDEX idx_exam_session_expires_at (expires_at)
 );
 
 CREATE TABLE user_answer (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    selected_answer CHAR(1),          
+    selected_answer CHAR(1),
     is_correct BOOLEAN NOT NULL,
     test_result_id VARCHAR(36),
     question_id VARCHAR(36),
@@ -287,7 +299,7 @@ CREATE TABLE user_answer (
 );
 
 -- ==============================================================================
--- 6. GIAO DỊCH VNPAY & THÔNG BÁO HỆ THỐNG
+-- 6. GIAO DỊCH THANH TOÁN PAYOS, ĐĂNG KÝ GIÁO VIÊN, NHẬT KÝ & BÌNH LUẬN
 -- ==============================================================================
 CREATE TABLE teacher_application (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -297,8 +309,8 @@ CREATE TABLE teacher_application (
     reviewed_by_id VARCHAR(36),
     reviewed_at DATETIME,
     review_reason VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_teacher_application_user FOREIGN KEY (user_id) REFERENCES `user`(id),
     CONSTRAINT fk_teacher_application_reviewer FOREIGN KEY (reviewed_by_id) REFERENCES `user`(id),
     INDEX idx_teacher_application_status_created (status, created_at)
@@ -308,16 +320,16 @@ CREATE TABLE payment_transaction (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     user_id VARCHAR(36) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    vnp_txn_ref VARCHAR(100) UNIQUE NOT NULL, 
+    payos_order_code VARCHAR(100) UNIQUE NOT NULL,
     product_type VARCHAR(40),
     teacher_application_id VARCHAR(36),
     test_id VARCHAR(36),
     product_name_snapshot VARCHAR(255),
     status VARCHAR(20) NOT NULL,
     payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    vnp_transaction_no VARCHAR(32),
-    vnp_response_code VARCHAR(8),
-    vnp_transaction_status VARCHAR(8),
+    payos_reference VARCHAR(64),
+    payos_code VARCHAR(16),
+    payos_status VARCHAR(16),
     paid_at DATETIME,
     CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES `user`(id),
     CONSTRAINT fk_payment_teacher_application FOREIGN KEY (teacher_application_id) REFERENCES teacher_application(id),
@@ -340,7 +352,7 @@ CREATE TABLE test_entitlement (
 );
 
 CREATE TABLE audit_event (
-    id VARCHAR(36) NOT NULL,
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
     occurred_at_utc DATETIME NOT NULL,
     actor_user_id VARCHAR(36) NULL,
     action VARCHAR(80) NOT NULL,
@@ -348,7 +360,6 @@ CREATE TABLE audit_event (
     target_id VARCHAR(36) NOT NULL,
     outcome VARCHAR(30) NOT NULL,
     details VARCHAR(300) NULL,
-    PRIMARY KEY (id),
     INDEX idx_audit_occurred_utc (occurred_at_utc),
     INDEX idx_audit_target (target_type, target_id)
 );
@@ -361,32 +372,30 @@ CREATE TABLE notification (
     is_read BOOLEAN DEFAULT FALSE,
     type VARCHAR(50),
     link VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_noti_user FOREIGN KEY (user_id) REFERENCES `user`(id)
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_noti_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE
 );
 
--- ==============================================================================
--- 6.1. BẢNG BÌNH LUẬN ĐỀ THI (TEST COMMENT)
--- [DÒNG ĐƯỢC THÊM MỚI CHO TÍNH NĂNG BÌNH LUẬN ĐỀ THI - COPY KHỐI NÀY VÀO SQL ĐỂ CHẠY CHO ĐỢT TEST]
--- ------------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS test_comment (
+CREATE TABLE test_comment (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     test_id VARCHAR(36) NOT NULL,
     user_id VARCHAR(36) NOT NULL,
+    parent_id VARCHAR(36),
     content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_test_comment_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE CASCADE,
-    CONSTRAINT fk_test_comment_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE
+    CONSTRAINT fk_test_comment_user FOREIGN KEY (user_id) REFERENCES `user`(id) ON DELETE CASCADE,
+    CONSTRAINT fk_test_comment_parent FOREIGN KEY (parent_id) REFERENCES test_comment(id) ON DELETE CASCADE,
+    INDEX idx_test_comment_test_created (test_id, created_at),
+    INDEX idx_test_comment_parent (parent_id)
 );
-CREATE INDEX idx_test_comment_test_created ON test_comment(test_id, created_at);
--- ==============================================================================
 
 -- ==============================================================================
 -- 7. DỮ LIỆU MẪU ĐỀ THI: ETS TOEIC 2026 - TEST 01 (TRỌN BỘ CÂU 1 ĐẾN 200)
 -- ==============================================================================
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES 
-('ddaaa16f-8d39-4669-9e60-6c9de8270c00', 'ETS TOEIC 2026 - Test 01', 'PUBLISHED', '2026-09-16 04:50:24', '2026-09-16 04:50:24');
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES 
+('ddaaa16f-8d39-4669-9e60-6c9de8270c00', 'ETS TOEIC 2026 - TEST 01', 'PUBLISHED', FALSE, NULL, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 -- ==============================================================================
 -- 7.2 PART 1: MÔ TẢ HÌNH ẢNH (CÂU 1 -> 6)
@@ -4907,16 +4916,21 @@ Giải thích: Thông báo nêu "Erica has been a valuable member of the Wilson 
  'c7000196-8d39-4669-9e60-6c9de8270c00', 200, '2026-09-16 04:50:24', '2026-09-16 04:50:24');
 
 -- ==============================================================================
--- 8. BẢN SAO LOCAL TEST 02-10: TEST 02-04 PUBLISHED CHO KIỂM THỬ; TEST 05-10 DRAFT
+-- 8. NHÂN BẢN BỘ ĐỀ ETS TOEIC 2026 TỪ TEST 02 ĐẾN TEST 10 (TRỌN BỘ 10 ĐỀ ETS)
+-- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- [TEST 02]: ETS TOEIC 2026 - Test 02 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c02)
+-- [ETS 2026 - TEST 02]: ETS TOEIC 2026 - TEST 02 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c02)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c02', 'ETS TOEIC 2026 - Test 02', 'PUBLISHED', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c02', 'ETS TOEIC 2026 - TEST 02', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 02
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 02
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c02', cq.id)), 1, 8), '-',
@@ -4927,6 +4941,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -4938,8 +4958,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 02
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 02
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c02', q.id)), 1, 8), '-',
@@ -4970,13 +4993,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 03]: ETS TOEIC 2026 - Test 03 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c03)
+-- [ETS 2026 - TEST 03]: ETS TOEIC 2026 - TEST 03 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c03)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c03', 'ETS TOEIC 2026 - Test 03', 'PUBLISHED', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c03', 'ETS TOEIC 2026 - TEST 03', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 03
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 03
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c03', cq.id)), 1, 8), '-',
@@ -4987,6 +5014,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -4998,8 +5031,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 03
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 03
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c03', q.id)), 1, 8), '-',
@@ -5030,13 +5066,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 04]: ETS TOEIC 2026 - Test 04 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c04)
+-- [ETS 2026 - TEST 04]: ETS TOEIC 2026 - TEST 04 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c04)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c04', 'ETS TOEIC 2026 - Test 04', 'PUBLISHED', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c04', 'ETS TOEIC 2026 - TEST 04', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 04
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 04
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c04', cq.id)), 1, 8), '-',
@@ -5047,6 +5087,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5058,8 +5104,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 04
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 04
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c04', q.id)), 1, 8), '-',
@@ -5090,13 +5139,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 05]: ETS TOEIC 2026 - Test 05 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c05)
+-- [ETS 2026 - TEST 05]: ETS TOEIC 2026 - TEST 05 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c05)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c05', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 05)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c05', 'ETS TOEIC 2026 - TEST 05', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 05
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 05
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c05', cq.id)), 1, 8), '-',
@@ -5107,6 +5160,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5118,8 +5177,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 05
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 05
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c05', q.id)), 1, 8), '-',
@@ -5150,13 +5212,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 06]: ETS TOEIC 2026 - Test 06 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c06)
+-- [ETS 2026 - TEST 06]: ETS TOEIC 2026 - TEST 06 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c06)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c06', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 06)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c06', 'ETS TOEIC 2026 - TEST 06', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 06
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 06
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c06', cq.id)), 1, 8), '-',
@@ -5167,6 +5233,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5178,8 +5250,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 06
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 06
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c06', q.id)), 1, 8), '-',
@@ -5210,13 +5285,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 07]: ETS TOEIC 2026 - Test 07 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c07)
+-- [ETS 2026 - TEST 07]: ETS TOEIC 2026 - TEST 07 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c07)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c07', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 07)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c07', 'ETS TOEIC 2026 - TEST 07', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 07
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 07
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c07', cq.id)), 1, 8), '-',
@@ -5227,6 +5306,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5238,8 +5323,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 07
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 07
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c07', q.id)), 1, 8), '-',
@@ -5270,13 +5358,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 08]: ETS TOEIC 2026 - Test 08 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c08)
+-- [ETS 2026 - TEST 08]: ETS TOEIC 2026 - TEST 08 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c08)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c08', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 08)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c08', 'ETS TOEIC 2026 - TEST 08', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 08
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 08
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c08', cq.id)), 1, 8), '-',
@@ -5287,6 +5379,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5298,8 +5396,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 08
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 08
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c08', q.id)), 1, 8), '-',
@@ -5330,13 +5431,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 09]: ETS TOEIC 2026 - Test 09 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c09)
+-- [ETS 2026 - TEST 09]: ETS TOEIC 2026 - TEST 09 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c09)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c09', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 09)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c09', 'ETS TOEIC 2026 - TEST 09', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 09
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 09
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c09', cq.id)), 1, 8), '-',
@@ -5347,6 +5452,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5358,8 +5469,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 09
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 09
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c09', q.id)), 1, 8), '-',
@@ -5390,13 +5504,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [TEST 10]: ETS TOEIC 2026 - Test 10 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c10)
+-- [ETS 2026 - TEST 10]: ETS TOEIC 2026 - TEST 10 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c10)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ddaaa16f-8d39-4669-9e60-6c9de8270c10', 'LOCAL SAMPLE COPY - ETS Test 01 (pagination copy 10)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c10', 'ETS TOEIC 2026 - TEST 10', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản toàn bộ Context Questions cho Test 10
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho ETS TOEIC 2026 - TEST 10
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c10', cq.id)), 1, 8), '-',
@@ -5407,6 +5525,12 @@ SELECT
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
@@ -5418,8 +5542,11 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho Test 10
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho ETS TOEIC 2026 - TEST 10
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
         SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c10', q.id)), 1, 8), '-',
@@ -5449,34 +5576,42 @@ FROM question q
 JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- 9. -- ==============================================================================
--- NHÂN BẢN DỮ LIỆU: BỘ 20 ĐỀ THI YBM - 2025 (TỪ TEST 01 ĐẾN TEST 20)
--- PHỤC VỤ KIỂM THỬ TÍNH NĂNG PHÂN TRANG (PAGINATION) VÀ TÌM KIẾM TRÊN GIAO DIỆN
--- CÁC KHÓA CHÍNH (UUID) VÀ KHÓA NGOẠI (FK) ĐƯỢC TẠO CHUẨN XÁC VÀ ĐỘC LẬP 100%
+-- ==============================================================================
+-- 9. NHÂN BẢN BỘ ĐỀ YBM TOEIC 2026 TỪ TEST 01 ĐẾN TEST 10 (TRỌN BỘ 10 ĐỀ YBM)
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 01]: YBM - 2025 - Test 01 (ID: ybm20250-8d39-4669-9e60-6c9de8270c01)
+-- [YBM 2026 - TEST 01]: YBM TOEIC 2026 - TEST 01 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c11)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c01', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 01)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c11', 'YBM TOEIC 2026 - TEST 01', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 01
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 01
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c01',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c11',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5484,15 +5619,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 01
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 01
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5502,11 +5640,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c01', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5516,27 +5654,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 02]: YBM - 2025 - Test 02 (ID: ybm20250-8d39-4669-9e60-6c9de8270c02)
+-- [YBM 2026 - TEST 02]: YBM TOEIC 2026 - TEST 02 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c12)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c02', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 02)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c12', 'YBM TOEIC 2026 - TEST 02', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 02
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 02
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c02',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c12',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5544,15 +5692,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 02
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 02
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5562,11 +5713,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c02', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5576,27 +5727,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 03]: YBM - 2025 - Test 03 (ID: ybm20250-8d39-4669-9e60-6c9de8270c03)
+-- [YBM 2026 - TEST 03]: YBM TOEIC 2026 - TEST 03 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c13)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c03', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 03)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c13', 'YBM TOEIC 2026 - TEST 03', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 03
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 03
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c03',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c13',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5604,15 +5765,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 03
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 03
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5622,11 +5786,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c03', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5636,27 +5800,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 04]: YBM - 2025 - Test 04 (ID: ybm20250-8d39-4669-9e60-6c9de8270c04)
+-- [YBM 2026 - TEST 04]: YBM TOEIC 2026 - TEST 04 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c14)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c04', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 04)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c14', 'YBM TOEIC 2026 - TEST 04', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 04
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 04
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c04',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c14',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5664,15 +5838,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 04
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 04
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5682,11 +5859,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c04', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5696,27 +5873,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 05]: YBM - 2025 - Test 05 (ID: ybm20250-8d39-4669-9e60-6c9de8270c05)
+-- [YBM 2026 - TEST 05]: YBM TOEIC 2026 - TEST 05 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c15)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c05', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 05)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c15', 'YBM TOEIC 2026 - TEST 05', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 05
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 05
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c05',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c15',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5724,15 +5911,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 05
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 05
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5742,11 +5932,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c05', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5756,27 +5946,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 06]: YBM - 2025 - Test 06 (ID: ybm20250-8d39-4669-9e60-6c9de8270c06)
+-- [YBM 2026 - TEST 06]: YBM TOEIC 2026 - TEST 06 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c16)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c06', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 06)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c16', 'YBM TOEIC 2026 - TEST 06', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 06
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 06
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c06',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c16',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5784,15 +5984,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 06
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 06
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5802,11 +6005,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c06', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5816,27 +6019,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 07]: YBM - 2025 - Test 07 (ID: ybm20250-8d39-4669-9e60-6c9de8270c07)
+-- [YBM 2026 - TEST 07]: YBM TOEIC 2026 - TEST 07 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c17)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c07', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 07)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c17', 'YBM TOEIC 2026 - TEST 07', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 07
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 07
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c07',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c17',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5844,15 +6057,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 07
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 07
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5862,11 +6078,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c07', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5876,27 +6092,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 08]: YBM - 2025 - Test 08 (ID: ybm20250-8d39-4669-9e60-6c9de8270c08)
+-- [YBM 2026 - TEST 08]: YBM TOEIC 2026 - TEST 08 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c18)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c08', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 08)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c18', 'YBM TOEIC 2026 - TEST 08', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 08
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 08
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c08',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c18',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5904,15 +6130,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 08
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 08
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5922,11 +6151,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c08', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5936,27 +6165,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 09]: YBM - 2025 - Test 09 (ID: ybm20250-8d39-4669-9e60-6c9de8270c09)
+-- [YBM 2026 - TEST 09]: YBM TOEIC 2026 - TEST 09 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c19)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c09', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 09)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c19', 'YBM TOEIC 2026 - TEST 09', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 09
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 09
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c09',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c19',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -5964,15 +6203,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 09
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 09
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -5982,11 +6224,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c09', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -5996,27 +6238,37 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 10]: YBM - 2025 - Test 10 (ID: ybm20250-8d39-4669-9e60-6c9de8270c10)
+-- [YBM 2026 - TEST 10]: YBM TOEIC 2026 - TEST 10 (ID: ddaaa16f-8d39-4669-9e60-6c9de8270c20)
 -- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c10', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 10)', 'DRAFT', NOW(), NOW());
+INSERT INTO test (id, title_test, status, is_vip, vip_price_vnd, created_at, updated_at) VALUES
+('ddaaa16f-8d39-4669-9e60-6c9de8270c20', 'YBM TOEIC 2026 - TEST 10', 'PUBLISHED', FALSE, NULL, NOW(), NOW());
 
--- Nhân bản Context Questions cho YBM - 2025 - Test 10
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
+-- Nhân bản toàn bộ Context Questions cho YBM TOEIC 2026 - TEST 10
+INSERT INTO context_question (
+    id, audio_url, image_url, audio_public_id, image_public_id,
+    audio_format, image_format, audio_delivery_type, image_delivery_type,
+    paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', cq.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', cq.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', cq.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', cq.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', cq.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', cq.id)), 21, 12)
     )),
     cq.audio_url,
     cq.image_url,
+    cq.audio_public_id,
+    cq.image_public_id,
+    cq.audio_format,
+    cq.image_format,
+    cq.audio_delivery_type,
+    cq.image_delivery_type,
     cq.paragraph,
     cq.transcript,
     cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c10',
+    'ddaaa16f-8d39-4669-9e60-6c9de8270c20',
     cq.part_id,
     cq.order_index,
     NOW(),
@@ -6024,15 +6276,18 @@ SELECT
 FROM context_question cq
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 10
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
+-- Nhân bản trọn bộ 200 câu hỏi cho YBM TOEIC 2026 - TEST 10
+INSERT INTO question (
+    id, question_content, option_a, option_b, option_c, option_d,
+    correct_answer, explanation, context_question_id, question_number, created_at, updated_at
+)
 SELECT
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.id)), 21, 12)
     )),
     q.question_content,
     q.option_a,
@@ -6042,611 +6297,11 @@ SELECT
     q.correct_answer,
     q.explanation,
     LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c10', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 11]: YBM - 2025 - Test 11 (ID: ybm20250-8d39-4669-9e60-6c9de8270c11)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c11', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 11)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 11
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c11',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 11
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c11', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 12]: YBM - 2025 - Test 12 (ID: ybm20250-8d39-4669-9e60-6c9de8270c12)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c12', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 12)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 12
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c12',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 12
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c12', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 13]: YBM - 2025 - Test 13 (ID: ybm20250-8d39-4669-9e60-6c9de8270c13)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c13', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 13)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 13
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c13',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 13
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c13', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 14]: YBM - 2025 - Test 14 (ID: ybm20250-8d39-4669-9e60-6c9de8270c14)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c14', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 14)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 14
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c14',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 14
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c14', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 15]: YBM - 2025 - Test 15 (ID: ybm20250-8d39-4669-9e60-6c9de8270c15)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c15', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 15)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 15
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c15',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 15
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c15', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 16]: YBM - 2025 - Test 16 (ID: ybm20250-8d39-4669-9e60-6c9de8270c16)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c16', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 16)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 16
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c16',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 16
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c16', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 17]: YBM - 2025 - Test 17 (ID: ybm20250-8d39-4669-9e60-6c9de8270c17)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c17', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 17)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 17
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c17',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 17
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c17', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 18]: YBM - 2025 - Test 18 (ID: ybm20250-8d39-4669-9e60-6c9de8270c18)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c18', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 18)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 18
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c18',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 18
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c18', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 19]: YBM - 2025 - Test 19 (ID: ybm20250-8d39-4669-9e60-6c9de8270c19)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c19', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 19)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 19
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c19',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 19
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c19', q.context_question_id)), 21, 12)
-    )),
-    q.question_number,
-    NOW(),
-    NOW()
-FROM question q
-JOIN context_question cq ON q.context_question_id = cq.id
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- ------------------------------------------------------------------------------
--- [YBM 2025 - TEST 20]: YBM - 2025 - Test 20 (ID: ybm20250-8d39-4669-9e60-6c9de8270c20)
--- ------------------------------------------------------------------------------
-INSERT INTO test (id, title_test, status, created_at, updated_at) VALUES
-('ybm20250-8d39-4669-9e60-6c9de8270c20', 'LOCAL SAMPLE COPY - ETS Test 01 (batch B copy 20)', 'DRAFT', NOW(), NOW());
-
--- Nhân bản Context Questions cho YBM - 2025 - Test 20
-INSERT INTO context_question (id, audio_url, image_url, paragraph, transcript, translation, test_id, part_id, order_index, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', cq.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', cq.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', cq.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', cq.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', cq.id)), 21, 12)
-    )),
-    cq.audio_url,
-    cq.image_url,
-    cq.paragraph,
-    cq.transcript,
-    cq.translation,
-    'ybm20250-8d39-4669-9e60-6c9de8270c20',
-    cq.part_id,
-    cq.order_index,
-    NOW(),
-    NOW()
-FROM context_question cq
-WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
-
--- Nhân bản trọn bộ 200 câu hỏi cho YBM - 2025 - Test 20
-INSERT INTO question (id, question_content, option_a, option_b, option_c, option_d, correct_answer, explanation, context_question_id, question_number, created_at, updated_at)
-SELECT
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.id)), 21, 12)
-    )),
-    q.question_content,
-    q.option_a,
-    q.option_b,
-    q.option_c,
-    q.option_d,
-    q.correct_answer,
-    q.explanation,
-    LOWER(CONCAT(
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 1, 8), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 9, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 13, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 17, 4), '-',
-        SUBSTR(MD5(CONCAT('ybm20250-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 21, 12)
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 1, 8), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 9, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 13, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 17, 4), '-',
+        SUBSTR(MD5(CONCAT('ddaaa16f-8d39-4669-9e60-6c9de8270c20', q.context_question_id)), 21, 12)
     )),
     q.question_number,
     NOW(),
@@ -6656,16 +6311,17 @@ JOIN context_question cq ON q.context_question_id = cq.id
 WHERE cq.test_id = 'ddaaa16f-8d39-4669-9e60-6c9de8270c00';
 
 -- ==============================================================================
--- 10. CÂU LỆNH KIỂM TRA TỔNG SỐ ĐỀ THI TRÊN TOÀN HỆ THỐNG (ETS & YBM)
+-- 10. KIỂM TRA TỔNG SỐ ĐỀ THI CHÍNH THỨC TRÊN HỆ THỐNG (20 ĐỀ THI - 200 CÂU / ĐỀ)
 -- ==============================================================================
-SELECT 
+SELECT
     t.id,
     t.title_test,
     t.status,
+    t.is_vip,
     COUNT(DISTINCT cq.id) AS total_context_questions,
     COUNT(q.id) AS total_questions
 FROM test t
 LEFT JOIN context_question cq ON t.id = cq.test_id
 LEFT JOIN question q ON cq.id = q.context_question_id
-GROUP BY t.id, t.title_test, t.status
+GROUP BY t.id, t.title_test, t.status, t.is_vip
 ORDER BY t.title_test ASC;

@@ -69,7 +69,7 @@ public class PayosPaymentService {
             return new WebhookResult(0, "Ok", null);
         }
 
-        PaymentTransaction payment = paymentRepository.findForUpdateByVnpTxnRef(txnRef).orElse(null);
+        PaymentTransaction payment = paymentRepository.findForUpdateByPayosOrderCode(txnRef).orElse(null);
         if (payment == null) {
             // PayOS Dashboard sends a test webhook with dummy orderCode (e.g., 123) when verifying the webhook URL.
             log.info("PayOS webhook verified for non-local orderCode={} (webhook verification ping)", txnRef);
@@ -102,9 +102,9 @@ public class PayosPaymentService {
             return new WebhookResult(1, "Invalid payment data", null);
         }
 
-        payment.setVnpResponseCode(dataCode);
-        payment.setVnpTransactionStatus(successfulPayment ? "PAID" : "FAILED");
-        payment.setVnpTransactionNo(reference);
+        payment.setPayosCode(truncate(dataCode, 16));
+        payment.setPayosStatus(successfulPayment ? "PAID" : "FAILED");
+        payment.setPayosReference(truncate(reference, 64));
         String previousStatus = payment.getStatus();
         if (successfulPayment) {
             payment.setStatus("SUCCESS");
@@ -128,7 +128,7 @@ public class PayosPaymentService {
         if (!"PENDING".equals(status) && !"EXPIRED".equals(status)) {
             return;
         }
-        PayosGatewayService.PayosLinkStatus remote = gatewayService.fetchPaymentLinkInfo(payment.getVnpTxnRef());
+        PayosGatewayService.PayosLinkStatus remote = gatewayService.fetchPaymentLinkInfo(payment.getPayosOrderCode());
         if (remote == null || remote.status() == null) {
             return;
         }
@@ -140,10 +140,10 @@ public class PayosPaymentService {
                 && remote.amount() == expectedAmount
                 && hasValidProductAssociation(payment)) {
             payment.setStatus("SUCCESS");
-            payment.setVnpResponseCode("00");
-            payment.setVnpTransactionStatus("PAID");
+            payment.setPayosCode("00");
+            payment.setPayosStatus("PAID");
             if (remote.reference() != null && !remote.reference().isBlank()) {
-                payment.setVnpTransactionNo(remote.reference());
+                payment.setPayosReference(truncate(remote.reference(), 64));
             }
             if (payment.getPaidAt() == null) {
                 payment.setPaidAt(LocalDateTime.now(GATEWAY_ZONE));
@@ -154,11 +154,11 @@ public class PayosPaymentService {
                     "status=" + previousStatus + "->SUCCESS");
         } else if ("CANCELLED".equalsIgnoreCase(remote.status())) {
             payment.setStatus("CANCELLED");
-            payment.setVnpTransactionStatus("CANCELLED");
+            payment.setPayosStatus("CANCELLED");
             paymentRepository.save(payment);
         } else if ("EXPIRED".equalsIgnoreCase(remote.status())) {
             payment.setStatus("EXPIRED");
-            payment.setVnpTransactionStatus("EXPIRED");
+            payment.setPayosStatus("EXPIRED");
             paymentRepository.save(payment);
         }
     }
@@ -179,11 +179,11 @@ public class PayosPaymentService {
 
     @Transactional
     public PaymentStatusResponse getMyPayment(User user, String transactionReference) {
-        PaymentTransaction payment = paymentRepository.findByVnpTxnRefAndUser_Id(transactionReference, user.getId())
+        PaymentTransaction payment = paymentRepository.findByPayosOrderCodeAndUser_Id(transactionReference, user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         syncPendingPaymentIfPossible(payment);
         return PaymentStatusResponse.builder()
-                .transactionReference(payment.getVnpTxnRef())
+                .transactionReference(payment.getPayosOrderCode())
                 .status(payment.getStatus())
                 .productType(payment.getProductType())
                 .productName(payment.getProductNameSnapshot())
@@ -200,7 +200,7 @@ public class PayosPaymentService {
         Page<PaymentTransaction> payments = paymentRepository.findByUser_IdOrderByPaymentDateDesc(
                 user.getId(), PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "paymentDate")));
         return PageResponse.of(payments.map(payment -> PaymentStatusResponse.builder()
-                .transactionReference(payment.getVnpTxnRef())
+                .transactionReference(payment.getPayosOrderCode())
                 .status(payment.getStatus())
                 .productType(payment.getProductType())
                 .productName(payment.getProductNameSnapshot())
@@ -267,6 +267,12 @@ public class PayosPaymentService {
         } catch (Exception exception) {
             return LocalDateTime.now(GATEWAY_ZONE);
         }
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.length() > maxLength ? trimmed.substring(0, maxLength) : trimmed;
     }
 
     public record WebhookResult(int error, String message, Object data) {

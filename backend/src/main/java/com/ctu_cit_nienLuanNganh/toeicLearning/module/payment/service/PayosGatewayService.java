@@ -91,7 +91,7 @@ public class PayosGatewayService {
         long expiredAtEpochSeconds = Instant.now().plus(PAYMENT_TIMEOUT).getEpochSecond();
 
         long amount = toVndAmount(transaction.getAmount());
-        long orderCode = parseOrderCode(transaction.getVnpTxnRef());
+        long orderCode = parseOrderCode(transaction.getPayosOrderCode());
         String description = buildPayosDescription(transaction, orderCode);
         String returnUrl = buildFrontendResultUrl(String.valueOf(orderCode), null);
         String cancelUrl = buildFrontendResultUrl(String.valueOf(orderCode), null);

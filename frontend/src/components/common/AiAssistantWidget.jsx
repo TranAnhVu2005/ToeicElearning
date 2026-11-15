@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
 import { TOBY_IMAGES, TobyAvatar } from './TobyMascot';
+import nunaBgImage from '../../assets/img/gaugau/anh_cho_ban_sung.jpg';
 
 /**
  * Lightweight, safe Markdown-to-JSX renderer for AI responses
@@ -192,12 +193,12 @@ const PLATFORM_QUICK_TOPICS = [
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Đề thi VIP & Thanh toán PayOS',
-    prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì và cách mua đề VIP qua PayOS như thế nào?',
+    label: 'Lớp học, Xem trước PDF & Mời Gmail',
+    prompt: 'Hệ thống Lớp học kiểu Google Classroom, tính năng Xem trước PDF trực tiếp và Mời học viên qua Gmail hoạt động như thế nào?',
   },
   {
-    label: 'Tham gia Lớp học & Đăng ký Giáo viên',
-    prompt: 'Làm sao để tham gia Lớp học bằng mã Join Code hoặc đăng ký trở thành Giáo viên trên TOEIC Learning?',
+    label: 'Đề thi VIP, Đăng ký GV & PayOS',
+    prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì, cách mua đề VIP hoặc đăng ký Giáo viên qua PayOS như thế nào?',
   },
 ];
 
@@ -216,7 +217,7 @@ const AiAssistantWidget = () => {
       id: 'welcome',
       role: 'assistant',
       content:
-        'Gâu gâu! Xin chào, mình là **Nuna — Trợ lý AI & Bạn đồng hành TOEIC** của bạn! 🐾\n\nMình luôn túc trực để giúp bạn:\n- **Giải thích cặn kẽ từng câu hỏi TOEIC** (ngữ pháp, từ vựng, lời thoại Transcript, lý do chọn/loại trừ đáp án) ngay khi bạn xem lại bài thi.\n- **Phân tích điểm mạnh - điểm yếu** theo từng Part và gợi ý lộ trình bứt phá điểm số.\n- **Giải đáp mọi thông tin & cách dùng trang web** (Full Test, luyện từng Part, nghe chép chính tả Dictation, đề VIP, Lớp học, giữ chuỗi Streak...).',
+        'Gâu gâu! Chào bạn, mình là **Nuna — Bạn đồng hành TOEIC** của bạn đây! 🐾\n\nBạn có thể hỏi Nuna bất cứ lúc nào về:\n- **Giải thích chi tiết câu hỏi (#1–#200)**, từ vựng, ngữ pháp & mẹo tránh bẫy TOEIC.\n- **Phân tích kết quả theo từng Part** & lộ trình ôn luyện lại câu sai.\n- **Mọi tính năng trên web**: Kho 20 đề **ETS & YBM 2026**, luyện nghe **Dictation**, **Lớp học** (xem trước PDF, mời Gmail) và thanh toán **PayOS**.',
       suggestedFollowUps: PLATFORM_QUICK_TOPICS.map((t) => t.prompt),
     },
   ]);
@@ -347,6 +348,54 @@ const AiAssistantWidget = () => {
           'Giải thích câu 1 giúp mình',
           'Giải thích câu 8 giúp mình',
           'Gợi ý lộ trình cải thiện điểm từ kết quả này',
+        ],
+      };
+    }
+
+    if (
+      lower.includes('lớp học') ||
+      lower.includes('classroom') ||
+      lower.includes('pdf') ||
+      lower.includes('xem trước') ||
+      lower.includes('gmail') ||
+      lower.includes('email')
+    ) {
+      return {
+        reply: [
+          '### Hệ thống Lớp học kiểu Google Classroom, Xem trước PDF & Thông báo Gmail (`/classrooms`)',
+          '- **4 tab trực quan**: **Bảng tin**, **Bài tập trên lớp**, **Mọi người**, và **Điểm số**.',
+          '- **Xem trước tài liệu PDF trực tiếp**: Ở mỗi tài liệu PDF trong lớp, bạn bấm nút **"Xem trước"** để mở cửa sổ đọc PDF trực tiếp ngay trên trình duyệt, hoặc bấm **"Tải PDF"** để tải về máy.',
+          '- **Mời học viên hàng loạt qua Gmail**: Giáo viên bấm **"Mời qua Gmail"** và nhập danh sách địa chỉ Gmail; học viên đã có tài khoản sẽ được **duyệt thẳng vào lớp**, đồng thời nhận email lời mời chuẩn Google Classroom kèm Mã lớp (`Class Code`).',
+          '- **Thông báo bài tập qua Gmail**: Khi Giáo viên giao bài tập mới, đổi hạn nộp hoặc đăng thông báo Bảng tin, hệ thống tự động gửi email thông báo tới Gmail của toàn bộ học viên trong lớp.',
+        ].join('\n'),
+        referencedQuestionNumber: null,
+        suggestedFollowUps: [
+          'Đề thi VIP và Đăng ký Giáo viên qua PayOS hoạt động thế nào?',
+          'Hướng dẫn luyện nghe chép chính tả Dictation',
+          'Cách làm Full Test 200 câu và tự động lưu khi F5',
+        ],
+      };
+    }
+
+    if (
+      lower.includes('vip') ||
+      lower.includes('payos') ||
+      lower.includes('thanh toán') ||
+      lower.includes('giáo viên') ||
+      lower.includes('hết hạn')
+    ) {
+      return {
+        reply: [
+          '### Đề thi VIP & Đăng ký Giáo viên qua Cổng thanh toán PayOS',
+          '- **Mua Đề VIP (Mua 1 lần — Sở hữu vĩnh viễn)**: Mỗi đề VIP có giá VND riêng do Admin thiết lập; quét mã QR VietQR qua **PayOS**, hệ thống xác nhận tự động qua Webhook và mở khóa vĩnh viễn đề đó.',
+          '- **Đăng ký Giáo viên (`/teacher/application`)**: Lệ phí xét duyệt là **2.000 ₫** qua PayOS. Nếu link thanh toán cũ hết hạn, bạn chỉ cần bấm tạo lại mã QR PayOS mới ngay trên trang để tiếp tục thanh toán; sau khi thanh toán xong, hồ sơ chuyển sang chờ Admin phê duyệt cấp quyền `ROLE_TEACHER`.',
+          '- **Tra cứu giao dịch**: Xem lịch sử biên nhận tại **Hồ sơ cá nhân (`/profile?tab=payments`)**.',
+        ].join('\n'),
+        referencedQuestionNumber: null,
+        suggestedFollowUps: [
+          'Hệ thống Lớp học, Xem trước PDF và Mời qua Gmail hoạt động thế nào?',
+          'Kho đề thi có bao nhiêu bộ đề ETS và YBM?',
+          'Hướng dẫn cách tính điểm TOEIC 990 trên web',
         ],
       };
     }
@@ -563,10 +612,10 @@ const AiAssistantWidget = () => {
           : 'Nuna đã làm mới cuộc trò chuyện rồi! 🐾 Bạn muốn hỏi Nuna về câu hỏi TOEIC hay cách sử dụng tính năng nào trên trang web?',
         suggestedFollowUps: examResult
           ? [
-              'Phân tích điểm mạnh, điểm yếu của tôi trong bài thi này',
-              'Tôi nên ưu tiên ôn tập Part nào trước để tăng điểm?',
-              'Hướng dẫn cách luyện lại các câu làm sai hiệu quả',
-            ]
+            'Phân tích điểm mạnh, điểm yếu của tôi trong bài thi này',
+            'Tôi nên ưu tiên ôn tập Part nào trước để tăng điểm?',
+            'Hướng dẫn cách luyện lại các câu làm sai hiệu quả',
+          ]
           : PLATFORM_QUICK_TOPICS.map((t) => t.prompt),
       },
     ]);
@@ -615,14 +664,6 @@ const AiAssistantWidget = () => {
               />
               <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-[#0F172A] bg-emerald-400" />
             </span>
-            <span className="pr-1.5 text-left">
-              <span className="block text-[10px] font-bold tracking-widest text-blue-200 uppercase">
-                🐾 Cún đồng hành AI
-              </span>
-              <span className="block text-sm font-bold leading-snug text-white">
-                {examResult ? 'Nuna · Giải đề TOEIC' : 'Hỏi Trợ lý AI Nuna'}
-              </span>
-            </span>
           </button>
         </div>
       )}
@@ -631,31 +672,36 @@ const AiAssistantWidget = () => {
       {isOpen && (
         <aside
           aria-label="Cửa sổ Trợ lý AI Nuna TOEIC Learning"
-          className={`ai-assistant-panel fixed z-50 flex flex-col overflow-hidden rounded-t-2xl border border-slate-200/90 bg-white shadow-[0_24px_60px_-12px_rgba(15,23,42,0.28)] transition-all duration-200 sm:rounded-2xl ${
-            isExpanded
-              ? 'inset-3 sm:inset-6 lg:left-auto lg:w-[680px]'
-              : 'inset-x-0 bottom-0 h-[86vh] sm:right-5 sm:bottom-5 sm:left-auto sm:h-[670px] sm:max-h-[calc(100vh-36px)] sm:w-[454px]'
-          }`}
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(255, 253, 249, 0.72) 0%, rgba(248, 250, 252, 0.76) 50%, rgba(255, 253, 250, 0.84) 100%), url(${nunaBgImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 35%',
+          }}
+          className={`ai-assistant-panel fixed z-50 flex flex-col overflow-hidden transition-all duration-300 ${isExpanded
+            ? 'inset-3 sm:inset-6 lg:left-auto lg:w-[680px]'
+            : 'inset-x-0 bottom-0 h-[86vh] sm:right-5 sm:bottom-5 sm:left-auto sm:h-[670px] sm:max-h-[calc(100vh-36px)] sm:w-[454px]'
+            }`}
         >
           {/* Panel Header with Nuna Mascot Avatar */}
-          <header className="ai-assistant-header flex items-center justify-between gap-3 border-b border-slate-800 bg-gradient-to-r from-[#0B1120] via-[#111827] to-[#1E3A8A] px-4 py-3 text-white">
+          <header className="ai-assistant-header flex items-center justify-between gap-3 px-4 py-3.5">
             <div className="flex min-w-0 items-center gap-3">
               <TobyAvatar
                 mood={headerTobyMood}
                 size="md"
                 showOnlineDot
-                className="border-2 border-blue-300/70 bg-[#FFFDF9]"
+                className="ai-header-avatar bg-[#FFFDF9]"
               />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <div className="ai-assistant-title truncate text-[15px] font-bold tracking-tight text-white">
+                  <div className="ai-assistant-title truncate text-[16px] font-bold tracking-tight text-slate-900">
                     Trợ lý AI Nuna
                   </div>
-                  <span className="shrink-0 rounded-full border border-blue-300/35 bg-blue-500/25 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-100 uppercase">
-                    🐾 Bạn đồng hành
+                  <span className="ai-status-pill inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Bạn đồng hành
                   </span>
                 </div>
-                <p className="mt-0.5 truncate text-xs text-slate-300">
+                <p className="mt-0.5 truncate text-xs text-slate-600">
                   {examResult
                     ? `Đang cùng bạn giải đề: ${examResult.testTitle || 'Bài thi TOEIC'}`
                     : 'Cùng Nuna học TOEIC & khám phá tính năng trang web'}
@@ -663,12 +709,12 @@ const AiAssistantWidget = () => {
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={handleResetConversation}
                 title="Làm mới hội thoại"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-white/30 hover:bg-white/20 hover:text-white"
+                className="ai-header-icon-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all"
               >
                 <RotateCcw size={14} />
               </button>
@@ -676,7 +722,7 @@ const AiAssistantWidget = () => {
                 type="button"
                 onClick={() => setIsExpanded((prev) => !prev)}
                 title={isExpanded ? 'Thu gọn khung chat' : 'Mở rộng khung chat'}
-                className="hidden h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-white/30 hover:bg-white/20 hover:text-white sm:inline-flex"
+                className="ai-header-icon-btn hidden h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all sm:inline-flex"
               >
                 {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
@@ -685,7 +731,7 @@ const AiAssistantWidget = () => {
                 onClick={() => setIsOpen(false)}
                 title="Đóng Trợ lý AI (Esc)"
                 aria-label="Đóng Trợ lý AI"
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/10 text-slate-200 transition-colors hover:border-red-400/60 hover:bg-red-500/25 hover:text-white"
+                className="ai-header-icon-btn ai-header-close-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-all"
               >
                 <X size={16} />
               </button>
@@ -694,10 +740,10 @@ const AiAssistantWidget = () => {
 
           {/* Sleek Exam Review Context Bar (Visible when viewing a completed exam on TestResultPage) */}
           {examResult && (
-            <div className="ai-assistant-context border-b border-slate-200/90 bg-gradient-to-b from-[#EFF6FF]/90 to-[#F8FAFC] px-3.5 py-2.5">
+            <div className="ai-assistant-context px-4 py-2.5">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[#1D4ED8]">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100/90 text-[#1D4ED8]">
                     <BookOpen size={13} />
                   </span>
                   {focusedQuestion ? (
@@ -706,11 +752,10 @@ const AiAssistantWidget = () => {
                         Câu #{focusedQuestion.questionNumber} · Part {focusedQuestion.partNumber}
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                          focusedQuestion.isCorrect
-                            ? 'bg-emerald-100/90 text-emerald-800'
-                            : 'bg-rose-100/90 text-rose-800'
-                        }`}
+                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${focusedQuestion.isCorrect
+                          ? 'bg-emerald-100/90 text-emerald-800'
+                          : 'bg-rose-100/90 text-rose-800'
+                          }`}
                       >
                         {focusedQuestion.isCorrect ? <CheckCircle2 size={11} /> : <CircleX size={11} />}
                         Chọn: {focusedQuestion.selectedAnswer || 'Trống'} · Đúng: {focusedQuestion.correctAnswer}
@@ -735,7 +780,7 @@ const AiAssistantWidget = () => {
                       setFocusedQuestion(found || null);
                     }
                   }}
-                  className="max-w-[165px] shrink-0 cursor-pointer rounded-lg border border-blue-200 bg-white px-2.5 py-1 text-xs font-bold text-[#1D4ED8] shadow-2xs tabular-nums transition-colors hover:border-[#1D4ED8] focus:border-[#1D4ED8] focus:outline-none"
+                  className="max-w-[165px] shrink-0 cursor-pointer rounded-full px-3 py-1 text-xs font-bold text-[#1D4ED8] tabular-nums transition-colors focus:outline-none"
                 >
                   <option value="">Cả đề ({resultQuestions.length} câu)</option>
                   {resultQuestions.map((q) => (
@@ -758,7 +803,7 @@ const AiAssistantWidget = () => {
                           `Giải thích chi tiết vì sao câu ${focusedQuestion.questionNumber} (Part ${focusedQuestion.partNumber}) chọn đáp án ${focusedQuestion.correctAnswer} và phân tích các phương án còn lại.`
                         )
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-blue-300/80 bg-[#1D4ED8] px-2.5 py-1 text-[11px] font-bold text-white shadow-2xs transition-all hover:bg-[#1E40AF] disabled:opacity-50"
+                      className="ai-context-chip-primary inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-white transition-all disabled:opacity-50"
                     >
                       <Sparkles size={11} />
                       <span>Giải thích đáp án</span>
@@ -771,7 +816,7 @@ const AiAssistantWidget = () => {
                           `Trích lọc các từ vựng, cụm từ (collocations) và cấu trúc ngữ pháp quan trọng trong câu ${focusedQuestion.questionNumber}.`
                         )
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                      className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-slate-700 transition-colors disabled:opacity-50"
                     >
                       <Languages size={11} className="text-[#1D4ED8]" />
                       <span>Từ vựng & Ngữ pháp</span>
@@ -784,7 +829,7 @@ const AiAssistantWidget = () => {
                           `Chỉ ra bẫy thường gặp trong câu ${focusedQuestion.questionNumber} (Part ${focusedQuestion.partNumber}) và mẹo làm nhanh dạng bài này.`
                         )
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200/90 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                      className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-slate-700 transition-colors disabled:opacity-50"
                     >
                       <Lightbulb size={11} className="text-amber-600" />
                       <span>Mẹo tránh bẫy</span>
@@ -800,7 +845,7 @@ const AiAssistantWidget = () => {
                           'Hãy phân tích tổng quan kết quả bài thi này của tôi, chỉ ra Part nào tôi đang làm tốt, Part nào yếu nhất và gợi ý chiến lược cải thiện.'
                         )
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-bold text-[#1D4ED8] shadow-2xs transition-colors hover:bg-blue-50 disabled:opacity-50"
+                      className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-[#1D4ED8] transition-colors disabled:opacity-50"
                     >
                       <Sparkles size={11} />
                       <span>Phân tích điểm mạnh & yếu</span>
@@ -811,7 +856,7 @@ const AiAssistantWidget = () => {
                       onClick={() =>
                         sendMessage('Tóm tắt các dạng câu hỏi tôi làm sai nhiều nhất trong bài thi này và cách khắc phục.')
                       }
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 shadow-2xs transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                      className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-slate-700 transition-colors disabled:opacity-50"
                     >
                       <Lightbulb size={11} className="text-amber-600" />
                       <span>Tổng hợp lỗi sai cần tránh</span>
@@ -823,9 +868,9 @@ const AiAssistantWidget = () => {
           )}
 
           {/* Conversation Messages List */}
-          <div className="flex-1 space-y-4 overflow-y-auto bg-[#F8FAFC] px-4 py-4">
+          <div className="ai-assistant-body flex-1 space-y-4 overflow-y-auto px-4 py-4">
             {/* Interactive Nuna Mascot Companion Card at the top of the chat */}
-            <div className="toby-chat-hero flex items-center gap-3 rounded-2xl border border-blue-200/80 bg-gradient-to-r from-[#EFF6FF] via-white to-[#FFFDF9] p-3 shadow-2xs">
+            <div className="toby-chat-hero flex items-center gap-3.5 p-3">
               <button
                 type="button"
                 onClick={() => {
@@ -834,7 +879,7 @@ const AiAssistantWidget = () => {
                   setTobyHeroMood(order[nextIdx]);
                 }}
                 title="Chạm vào Nuna để đổi biểu cảm!"
-                className="relative flex h-14 w-16 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-blue-200/70 bg-white p-1 shadow-2xs transition-transform hover:scale-105"
+                className="toby-hero-mascot-btn relative flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center p-1.5 transition-transform hover:scale-105"
               >
                 <img
                   src={
@@ -852,7 +897,7 @@ const AiAssistantWidget = () => {
                 <div className="flex items-center gap-1.5 font-bold text-[#1D4ED8]">
                   <span>🐾 Góc đồng hành của Nuna</span>
                 </div>
-                <p className="mt-0.5 leading-snug text-slate-700">
+                <p className="mt-0.5 leading-relaxed text-slate-700">
                   {focusedQuestion
                     ? focusedQuestion.isCorrect
                       ? `Tuyệt quá! Câu #${focusedQuestion.questionNumber} bạn đã chọn đúng đáp án ${focusedQuestion.correctAnswer}. Cùng Nuna mở rộng thêm từ vựng câu này nhé!`
@@ -869,15 +914,15 @@ const AiAssistantWidget = () => {
               return (
                 <div key={msg.id} className={`group flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                   {/* Sender Meta Row */}
-                  <div className="mb-1.5 flex items-center gap-1.5 px-1 text-[11px] font-bold text-slate-500">
+                  <div className="mb-1.5 flex items-center gap-1.5 px-1.5 text-[11px] font-bold text-slate-600">
                     {isUser ? (
                       <>
                         {msg.questionBadge && (
-                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
+                          <span className="rounded-full bg-white/85 px-2.5 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
                             {msg.questionBadge}
                           </span>
                         )}
-                        <span className="text-slate-600">Bạn</span>
+                        <span className="text-slate-700">Bạn</span>
                       </>
                     ) : (
                       <>
@@ -887,7 +932,7 @@ const AiAssistantWidget = () => {
                         />
                         <span className="font-bold text-slate-800">Nuna AI</span>
                         {msg.referencedQuestionNumber && (
-                          <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
+                          <span className="rounded-full bg-white/85 px-2.5 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
                             Câu #{msg.referencedQuestionNumber}
                           </span>
                         )}
@@ -896,7 +941,7 @@ const AiAssistantWidget = () => {
                             type="button"
                             onClick={() => handleCopyMessage(msg.id, msg.content)}
                             title="Sao chép câu trả lời"
-                            className="ml-1 inline-flex cursor-pointer items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-200/70 hover:text-slate-700"
+                            className="ai-copy-btn ml-1 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-slate-500 opacity-0 transition-all group-hover:opacity-100"
                           >
                             {copiedMsgId === msg.id ? (
                               <>
@@ -917,13 +962,12 @@ const AiAssistantWidget = () => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`max-w-[92%] ${
-                      isUser
-                        ? 'rounded-2xl rounded-tr-xs bg-gradient-to-br from-[#1D4ED8] to-[#1E40AF] px-4 py-2.5 text-[14px] leading-relaxed text-white shadow-xs'
-                        : msg.isError
-                          ? 'rounded-2xl rounded-tl-xs border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-900'
-                          : 'rounded-2xl rounded-tl-xs border border-slate-200/90 bg-white px-4 py-3.5 text-slate-900 shadow-[0_2px_12px_-3px_rgba(15,23,42,0.06)]'
-                    }`}
+                    className={`max-w-[92%] ${isUser
+                      ? 'ai-msg-bubble-user px-4 py-2.5 text-[14px] leading-relaxed text-white'
+                      : msg.isError
+                        ? 'ai-msg-bubble-error px-4 py-3 text-sm text-red-900'
+                        : 'ai-msg-bubble-assistant px-4 py-3.5 text-slate-900'
+                      }`}
                   >
                     {isUser ? (
                       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-white">{msg.content}</p>
@@ -934,14 +978,14 @@ const AiAssistantWidget = () => {
 
                   {/* Follow-up Suggestion Chips */}
                   {!isUser && Array.isArray(msg.suggestedFollowUps) && msg.suggestedFollowUps.length > 0 && (
-                    <div className="mt-2.5 flex max-w-[95%] flex-wrap gap-1.5">
+                    <div className="mt-2.5 flex max-w-[96%] flex-wrap gap-1.5">
                       {msg.suggestedFollowUps.map((followUp, idx) => (
                         <button
                           key={idx}
                           type="button"
                           disabled={loading}
                           onClick={() => sendMessage(followUp)}
-                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3 py-1.5 text-left text-xs font-semibold text-slate-700 shadow-2xs transition-all hover:border-[#1D4ED8] hover:bg-[#EFF6FF]/80 hover:text-[#1D4ED8] disabled:opacity-50"
+                          className="ai-quick-chip inline-flex cursor-pointer items-center gap-1.5 px-3.5 py-1.5 text-left text-xs font-semibold text-slate-700 transition-all disabled:opacity-50"
                         >
                           <ChevronRight size={12} className="shrink-0 text-[#1D4ED8]" />
                           <span>{followUp}</span>
@@ -958,9 +1002,9 @@ const AiAssistantWidget = () => {
                 <img
                   src={TOBY_IMAGES.thinking}
                   alt="Nuna đang suy nghĩ"
-                  className="h-11 w-11 shrink-0 rounded-xl border border-blue-200 bg-white object-contain p-1 shadow-2xs"
+                  className="ai-thinking-avatar h-11 w-11 shrink-0 object-contain p-1"
                 />
-                <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-xs border border-blue-200/80 bg-white px-4 py-3 text-xs font-bold text-slate-700 shadow-xs">
+                <div className="ai-msg-bubble-assistant flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700">
                   <LoaderCircle size={16} className="animate-spin text-[#1D4ED8]" />
                   <span>Nuna đang suy nghĩ và phân tích câu trả lời cho bạn...</span>
                 </div>
@@ -970,18 +1014,34 @@ const AiAssistantWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Unified Modern Composer Footer */}
+          {/* Streamlined Floating Composer Footer */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               sendMessage(inputValue);
             }}
-            className="border-t border-slate-200/90 bg-white p-3"
+            className="ai-composer-footer px-4 pt-2 pb-3.5"
           >
-            <div className="ai-composer-box flex flex-col rounded-2xl border border-slate-300/90 bg-[#F8FAFC] px-3.5 pt-2.5 pb-2 transition-all focus-within:border-[#1D4ED8] focus-within:bg-white focus-within:ring-3 focus-within:ring-blue-500/10">
+            {focusedQuestion && (
+              <div className="mb-1.5 flex items-center justify-between px-1">
+                <span className="ai-focused-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
+                  <span>🐾 Đang hỏi về Câu #{focusedQuestion.questionNumber}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFocusedQuestion(null)}
+                    title="Bỏ ghim câu này để hỏi chung cả đề"
+                    className="ml-0.5 inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-blue-600 hover:bg-blue-100"
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              </div>
+            )}
+
+            <div className="ai-composer-box flex items-end gap-2.5 px-4 py-2.5 transition-all">
               <textarea
                 ref={inputRef}
-                rows={2}
+                rows={1}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
@@ -992,46 +1052,31 @@ const AiAssistantWidget = () => {
                 }}
                 placeholder={
                   focusedQuestion
-                    ? `Hỏi Nuna về Câu #${focusedQuestion.questionNumber} (hoặc gõ "câu 15" để chuyển câu)...`
+                    ? `Hỏi Nuna về Câu #${focusedQuestion.questionNumber} (hoặc gõ "câu 15")...`
                     : examResult
-                      ? 'Hỏi Nuna bất kỳ câu nào trong đề (VD: "Giải thích câu 8", "Phân tích Part 5")...'
-                      : 'Hỏi Nuna bất kỳ điều gì về TOEIC hoặc cách sử dụng trang web...'
+                      ? 'Hỏi Nuna bất kỳ câu nào (VD: "Giải thích câu 8", "Part 5")...'
+                      : 'Nhắn cho Nuna bất kỳ điều gì về TOEIC hoặc trang web...'
                 }
                 disabled={loading}
-                className="max-h-28 min-h-[42px] w-full resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
+                className="max-h-28 min-h-[26px] flex-1 resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
               />
 
-              <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-200/70 pt-1.5">
-                <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
-                  {focusedQuestion ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-bold text-[#1D4ED8] tabular-nums">
-                      🐾 Đang chọn: Câu #{focusedQuestion.questionNumber}
-                      <button
-                        type="button"
-                        onClick={() => setFocusedQuestion(null)}
-                        title="Bỏ ghim câu này để hỏi chung cả đề"
-                        className="ml-0.5 cursor-pointer rounded-full p-0.5 text-blue-500 hover:bg-blue-100 hover:text-blue-800"
-                      >
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ) : (
-                    <span className="truncate font-medium text-slate-400">
-                      Nhấn <strong className="font-semibold text-slate-600">Enter</strong> để gửi cho Nuna ·{' '}
-                      <strong className="font-semibold text-slate-600">Shift + Enter</strong> xuống dòng
-                    </span>
-                  )}
-                </div>
+              <button
+                type="submit"
+                disabled={loading || !inputValue.trim()}
+                aria-label="Gửi câu hỏi cho Trợ lý AI Nuna"
+                className="ai-send-btn inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-white transition-all disabled:cursor-not-allowed"
+              >
+                <Send size={15} />
+              </button>
+            </div>
 
-                <button
-                  type="submit"
-                  disabled={loading || !inputValue.trim()}
-                  aria-label="Gửi câu hỏi cho Trợ lý AI Nuna"
-                  className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-[#1D4ED8] text-white shadow-xs transition-all hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-                >
-                  <Send size={14} />
-                </button>
-              </div>
+            <div className="mt-1.5 flex items-center justify-between px-2 text-[11px] text-slate-500/90">
+              <span>
+                Nhấn <strong className="font-semibold text-slate-700">Enter</strong> để gửi ·{' '}
+                <strong className="font-semibold text-slate-700">Shift + Enter</strong> xuống dòng
+              </span>
+              <span className="font-medium text-slate-500">Nuna AI · TOEIC Companion</span>
             </div>
           </form>
         </aside>

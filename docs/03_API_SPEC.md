@@ -54,27 +54,27 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 
 ### Đăng ký và duyệt giáo viên
 
-- **Đã có** `POST /api/teacher-applications`: USER tạo/tiếp tục checkout; phí lấy từ cấu hình server, response có checkout URL và mã giao dịch.
-- **Đã có** `GET /api/teacher-applications/me`: USER xem hồ sơ mới nhất của mình.
+- **Đã có** `POST /api/teacher-applications`: USER tạo hoặc tái tạo liên kết thanh toán PayOS; phí lấy từ cấu hình server (`TEACHER_APPLICATION_FEE_VND`, mặc định `2000` VND), response có `checkoutUrl` và mã đơn PayOS (`transactionReference` / `payosOrderCode`). Khi hồ sơ đang ở `PENDING_PAYMENT` mà liên kết cũ đã hết hạn, hệ thống đồng bộ trạng thái với PayOS trước rồi cấp mã đơn PayOS mới trên bản ghi giao dịch hiện có để người dùng tạo lại mã QR.
+- **Đã có** `GET /api/teacher-applications/me`: USER xem hồ sơ mới nhất của mình (tự động đồng bộ trạng thái giao dịch PayOS nếu đang chờ).
 - **Đã có** `GET /api/admin/teacher-applications?status=&page=&size=`: ADMIN lọc/phân trang.
 - **Đã có** `PATCH /api/admin/teacher-applications/{id}/approve` và `/reject`: ADMIN duyệt/từ chối (reject cần lý do); chỉ approve mới cấp role TEACHER.
-- **Đã có** `GET /api/payments/vnpay/ipn`: endpoint public nhận IPN; xác minh chữ ký, merchant, mã giao dịch, số tiền và trạng thái trước khi chuyển trạng thái. Response phải giữ đúng JSON field VNPAY yêu cầu `RspCode` và `Message`. Với thanh toán thành công, backend còn xác nhận loại sản phẩm và liên kết user/sản phẩm trong DB hợp lệ; sai liên kết được giữ để đối soát, không đánh dấu thành công.
-- **Đã có** `GET /api/payments/vnpay/return`: xác minh chữ ký để chuyển hướng UI, tuyệt đối không ghi nhận thanh toán.
-- **Đã có** `GET /api/payments/me/{transactionReference}`: chỉ chủ giao dịch đã đăng nhập đọc trạng thái.
-- Phí giáo viên cấu hình qua `TEACHER_APPLICATION_FEE_VND`; VNPAY qua `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_PAYMENT_URL`, `VNPAY_RETURN_URL`, `VNPAY_FRONTEND_RESULT_URL`. URL frontend return phải cùng origin với một origin trong `APP_CORS_ALLOWED_ORIGINS`; HTTPS bắt buộc ngoài localhost dev. Chưa xác minh với merchant/sandbox thật.
+- **Đã có** `POST /api/payments/payos/webhook` và `POST /api/payments/webhook`: endpoint public nhận Webhook từ PayOS; xác minh chữ ký HMAC-SHA256 (`PAYOS_CHECKSUM_KEY`) trên đối tượng `data` sắp xếp theo thứ tự bảng chữ cái, kiểm tra `orderCode`, số tiền VND và trạng thái trước khi chuyển sang `SUCCESS`/`FAILED`. Khi PayOS Dashboard gửi ping kiểm tra kết nối với `orderCode` mẫu không tồn tại local, endpoint xác minh chữ ký và phản hồi `200 OK` (`error: 0`).
+- **Đã có** `GET /api/payments/payos/return`: nhận redirect từ PayOS và chuyển hướng trình duyệt về trang kết quả frontend (`/payment/result?txnRef=...`), không tự ghi nhận thanh toán từ query string.
+- **Đã có** `GET /api/payments/me/{transactionReference}`: chỉ chủ giao dịch đã đăng nhập đọc trạng thái (kèm tự động đồng bộ từ PayOS API `GET /v2/payment-requests/{orderCode}`).
+- Phí giáo viên cấu hình qua `TEACHER_APPLICATION_FEE_VND` (mặc định `2000`); PayOS cấu hình qua `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_API_BASE_URL` (mặc định `https://api-merchant.payos.vn`), `PAYOS_FRONTEND_RESULT_URL` (mặc định `${FRONTEND_URL}/payment/result`).
 
-### Thanh toán/đề VIP
+### Thanh toán/đề VIP (PayOS)
 
 - Catalog JSON view không serialize `contextQuestions`; detail dùng view riêng và kiểm tra entitlement ở service trước khi trả nội dung. Không dựa vào JSON view để thay authorization.
 
 - Yêu cầu đã chốt: mỗi đề VIP có giá riêng do admin cấu hình; mua một lần, entitlement vĩnh viễn. Endpoint quản trị tạo/sửa đề validate giá VND; endpoint checkout chỉ nhận định danh đề và khóa chống gửi lặp phù hợp, tự lấy user từ Principal cùng giá/trạng thái đề từ DB. Không nhận amount, owner hoặc product type có thẩm quyền từ client.
-- `POST /api/payments/vip/checkout` (authenticated): body chỉ nhận `testId`; user lấy từ Principal, đề phải PUBLISHED/VIP, giá đọc từ DB. Tạo payment snapshot hoặc reuse pending URL còn hạn; không nhận amount từ client.
-- Checkout giới hạn 20 request/IP và 10/user mỗi 15 phút. Endpoint IPN áp dụng ngưỡng bảo vệ cao 1.000 request/IP/15 phút để giảm lạm dụng mà không cản callback retry thông thường; cấu hình IP proxy chỉ dùng khi proxy triển khai được tin cậy.
+- `POST /api/payments/vip/checkout` (authenticated): body chỉ nhận `testId`; user lấy từ Principal, đề phải PUBLISHED/VIP, giá đọc từ DB. Tạo payment snapshot và gọi PayOS API `/v2/payment-requests` tạo link thanh toán QR; không nhận amount từ client.
+- Checkout giới hạn 20 request/IP và 10/user mỗi 15 phút. Endpoint Webhook PayOS áp dụng ngưỡng bảo vệ cao 1.000 request/IP/15 phút để giảm lạm dụng mà không cản webhook retry thông thường.
 - `GET /api/payments/me?page=1&size=10`: USER/TEACHER/ADMIN đã đăng nhập xem giao dịch thuộc chính tài khoản, mới nhất trước; page size tối đa 50. Response dùng DTO allowlist, không trả payload callback/provider secrets. `GET /api/payments/me/{transactionReference}` tiếp tục hỗ trợ tra cứu từng giao dịch owner-scoped.
-- `GET /api/admin/payments`: ADMIN tìm kiếm giao dịch theo trạng thái, thời gian, payer/email/mã ref và `productType=TEACHER_APPLICATION`; response có payer, `productType`, amount, trạng thái, thời gian tạo và `paidAt`. Các giao dịch cũ có thể chưa có `productType`.
-- `GET /api/admin/payments/{paymentId}`: ADMIN xem chi tiết giao dịch; ngoài các field lịch sử, response có provider transaction number/response code/transaction status để tra cứu. Không trả signature, secret hoặc raw callback payload.
+- `GET /api/admin/payments`: ADMIN tìm kiếm giao dịch theo trạng thái, thời gian, payer/email/mã đơn PayOS (`payosOrderCode`) và `productType=TEACHER_APPLICATION|TEST_VIP`; response có payer, `productType`, amount, trạng thái, thời gian tạo và `paidAt`.
+- `GET /api/admin/payments/{paymentId}`: ADMIN xem chi tiết giao dịch; ngoài các field lịch sử, response có `payosOrderCode`, `payosReference`, `payosCode`, `payosStatus` để tra cứu đối soát. Không trả signature, secret hoặc raw callback payload.
 - `GET /tests/{id}/access` hoặc trường quyền trong catalog: báo user có quyền hay không, không trả nội dung đề bị khóa.
-- Các trạng thái tối thiểu: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`; ánh xạ mã trạng thái VNPAY phải theo tài liệu merchant đang dùng.
+- Các trạng thái tối thiểu: `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`; ánh xạ trạng thái PayOS (`PAID`, `PENDING`, `CANCELLED`, `EXPIRED`).
 
 ### Kết quả thi
 
@@ -96,7 +96,7 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 - `GET /api/exam/{testId}/access` public trả metadata + `hasAccess`, không trả nội dung. Đề chưa publish chỉ hiển thị cho người đã có entitlement VIP; entitlement vĩnh viễn vẫn cho phép chủ sở hữu mở đề đã gỡ khỏi catalog. Detail, lấy part và submit kiểm tra entitlement server-side.
 - `GET /api/exam/{testId}/dictation` authenticated trả metadata đề và context Listening cần cho dictation; chỉ gồm audio/ảnh/paragraph/transcript/translation/order/Part, không có câu hỏi, answer key hoặc explanation. Kiểm tra đề PUBLISHED, entitlement VIP và membership lớp APPROVED trước khi cấp dữ liệu/media.
 - Return URL chỉ trình bày trạng thái; không cấp quyền chỉ theo query string.
-- IPN success cho `TEST_VIP` tạo entitlement unique và notification cùng transaction với đổi trạng thái payment. Checkout dùng VNPAY gateway hiện có; entitlement vĩnh viễn.
+- Webhook PayOS báo thành công (hoặc đồng bộ API PayOS `PAID`) cho `TEST_VIP` tạo entitlement unique và notification cùng transaction với đổi trạng thái payment. Checkout dùng PayOS gateway hiện có; entitlement vĩnh viễn.
 - Upload đề private qua `POST /api/media/upload` gửi thêm `privateExamMedia=true`; server lưu Cloudinary `authenticated`, đăng ký metadata cùng user tải lên trong `ExamMediaAsset`, rồi trả URL preview ký hạn cùng `publicId`, `format`, `deliveryType`. Khi lưu đề, backend kiểm tra registry, resource/delivery type và uploader; teacher không thể tự khai public ID của người khác. Media private legacy đã gắn vào đề hiện hữu có thể giữ nguyên khi sửa nháp; để publish lại cần tải lên/đăng ký asset nếu chưa có record. Server từ chối publish đề VIP nếu media đang dùng thiếu định danh authenticated.
 - Khi user đã có quyền lấy detail/part/review, server ký URL media authenticated có thời hạn 2 giờ; không dùng callback trình duyệt làm căn cứ quyền. Media đề cũ dùng URL public vẫn có thể truy cập trực tiếp; cần upload lại thành asset authenticated trước khi gắn vào đề VIP.
 - Pending quá 15 phút bị chặn để đối soát và bảo toàn IPN muộn. Giá mới chỉ áp dụng giao dịch mới.
@@ -111,10 +111,13 @@ Các route ghi rõ “đã có” được đối chiếu với controller hiệ
 ### Lớp học và bài tập
 
 - `POST /api/classrooms`: TEACHER tạo lớp với `className` bắt buộc (tối đa 120 ký tự) và `description` tùy chọn (tối đa 2.000 ký tự); server gắn owner và tạo class code. `PUT /api/classrooms/{classroomId}` cho phép TEACHER owner cập nhật tên/mô tả; server kiểm tra ownership dưới row lock và ghi audit event. `GET /api/classrooms/mine`: TEACHER lấy lớp mình sở hữu, USER lấy membership của mình. `POST /api/classrooms/{classroomId}/join-code/rotate`: chỉ TEACHER owner; xoay mã dưới row lock, mã cũ mất hiệu lực và membership hiện có được giữ nguyên. Chưa có thao tác xóa lớp.
+- `POST /api/classrooms/{classroomId}/announcements`: chỉ TEACHER owner; đăng thông báo lên Bảng tin lớp học, gửi thông báo in-app (`CLASSROOM_ANNOUNCEMENT`) và gửi email HTML kiểu Google Classroom tới tất cả học viên `APPROVED` trong lớp.
+- `POST /api/classrooms/{classroomId}/invitations`: chỉ TEACHER owner; mời hàng loạt học viên qua danh sách Gmail (`emails`, tối đa 100 địa chỉ/lần, kèm `message` tùy chọn). Nếu Gmail đã có tài khoản học viên (`ROLE_USER`) trên hệ thống thì tự động thêm và duyệt thẳng (`APPROVED`) vào lớp, gửi thông báo `CLASSROOM_INVITED` và gửi email xác nhận; nếu chưa có tài khoản thì gửi email lời mời kèm mã lớp (`Class Code`) và liên kết `/classrooms?joinCode=...`.
 - `POST /api/classrooms/join` nhận mã và tạo membership `PENDING`; `GET /api/classrooms/{classroomId}/members?status=` và `PATCH /api/classrooms/{classroomId}/members/{memberId}` chỉ cho TEACHER owner. PATCH nhận trạng thái `APPROVED`, `BLOCKED` hoặc `REMOVED`; học sinh chỉ truy cập nội dung lớp khi APPROVED.
 - `GET /api/classrooms/{classroomId}/materials`: TEACHER owner hoặc USER có membership APPROVED; trả metadata allowlist, không trả file URL lưu trữ.
 - `POST /api/classrooms/{classroomId}/materials` (multipart `title`, `file`): chỉ TEACHER owner; PDF tối đa 10 MiB, kiểm tra signature/EOF server-side, upload Cloudinary `raw/private`, giới hạn 30 request/IP và 10 request/teacher trong 15 phút. Từ chối với `CLASSROOM_STORAGE_QUOTA_EXCEEDED` khi vượt quota lớp (mặc định 512 MiB, cấu hình `CLASSROOM_STORAGE_QUOTA_BYTES`).
-- `GET /api/classrooms/{classroomId}/materials/{materialId}/download`: TEACHER owner hoặc USER APPROVED; kiểm tra quyền từng lần và cấp Cloudinary private-download URL hết hạn sau 5 phút, ép attachment.
+- `GET /api/classrooms/{classroomId}/materials/{materialId}/preview`: TEACHER owner hoặc USER APPROVED; kiểm tra quyền từng lần, tải nội dung PDF từ nguồn Cloudinary private hợp lệ và trả `application/pdf` với `Content-Disposition: inline` để frontend hiển thị xem trước trực tiếp trong modal trình duyệt.
+- `GET /api/classrooms/{classroomId}/materials/{materialId}/download`: TEACHER owner hoặc USER APPROVED; kiểm tra quyền từng lần và cấp Cloudinary private-download URL hết hạn sau 5 phút (`attachment=true` mặc định).
 - `DELETE /api/classrooms/{classroomId}/materials/{materialId}`: chỉ TEACHER owner; soft-hide khỏi lớp, không xóa asset/provider data.
 - `GET /api/exam/classrooms/{id}/tests`: TEACHER owner liệt kê đề lớp; `GET /{testId}` trả chi tiết cho studio owner.
 - `GET /api/exam/classrooms/{id}/tests/assignable`: TEACHER owner lấy đề hệ thống PUBLISHED không VIP và đề PUBLISHED của đúng lớp để giao; response chỉ metadata public, có `classroomId` nullable để phân loại nguồn.

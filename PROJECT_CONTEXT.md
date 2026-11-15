@@ -2,17 +2,17 @@
 > Tóm tắt nhanh cho AI agent (giữ gọn ≤ 130 dòng theo `AGENTS.md`). Chi tiết nghiệp vụ, DB, API, luồng, UI/UX và bảo mật nằm tại `docs/01_OVERVIEW.md`–`docs/06_SECURITY_SPEC.md`. Mã nguồn và schema là nguồn xác nhận trạng thái thực tế.
 
 ## 1. Mục tiêu & Kiến trúc
-- Website luyện thi TOEIC thương mại: **Admin** (quản lý đề thi, người dùng, giao dịch VNPAY, duyệt giáo viên, dashboard metrics/audit), **Teacher** (quản lý lớp học, thành viên, tài liệu PDF private, đề riêng lớp, giao bài tập & nhận xét), **Student/User** (luyện Part, làm Full Test 200 câu, nghe chép chính tả Dictation, xem lại bài làm, bình luận đề, tham gia lớp, mua đề VIP qua VNPAY).
+- Website luyện thi TOEIC thương mại: **Admin** (quản lý đề thi, người dùng, giao dịch PayOS, duyệt giáo viên, dashboard metrics/audit), **Teacher** (quản lý lớp học kiểu Google Classroom, mời học viên hàng loạt qua Gmail, đăng thông báo bảng tin kèm Gmail, tài liệu PDF private có xem trước trực tiếp, đề riêng lớp, giao bài tập kèm thông báo Gmail & chấm nhận xét), **Student/User** (luyện Part, làm Full Test 200 câu, nghe chép chính tả Dictation, xem lại bài làm cùng Trợ lý AI Nuna, bình luận đề, tham gia lớp, mua đề VIP qua PayOS).
 - **Ràng buộc kiến trúc**: Giữ nguyên một **Spring Boot modular monolith** (REST API + JWT Bearer) và một **React/Vite SPA**. Mở rộng trực tiếp trên module/page/service hiện có; không tự ý tách microservice/BFF hay đổi framework.
 
 ## 2. Công nghệ & Entry Points
-- **Backend**: Java 17, Maven WAR, **Spring Boot 4.1.0**, Spring Data JPA (Hibernate 7.4), Spring Security, MySQL (`toeiclearning`), port `8080`. SQL logging mặc định tắt (`JPA_SHOW_SQL=false`).
+- **Backend**: Java 17, Maven WAR, **Spring Boot 4.1.0**, Spring Data JPA (Hibernate 7.4, 22 JPA repositories), Spring Security, MySQL (`toeiclearning`), port `8080`. SQL logging mặc định tắt (`JPA_SHOW_SQL=false`).
   - Root package: `backend/src/main/java/com/ctu_cit_nienLuanNganh/toeicLearning/`
-  - Modules: `auth`, `exam`, `user`, `admin`, `media`, `classroom`, `notification`, `ai`, cùng `common`, `config`, `security`.
+  - Modules: `auth`, `exam`, `user`, `admin`, `media`, `classroom`, `payment`, `teacher`, `notification`, `ai`, cùng `common`, `config`, `security`.
 - **Frontend**: React 19, Vite 8, React Router, Tailwind CSS, Axios; dev port `5173`/`5174`, gọi `VITE_API_BASE_URL` (mặc định `http://localhost:8080/api`).
   - Routes chính (`frontend/src/App.jsx`, tải qua `React.lazy`):
-    - Public/Catalog: `/` (`HomePage`), `/courses` (`CoursesPage`, `/practice` tự động redirect về `/courses`), `/courses/:testId` (`CourseDetailPage` gồm 4 tab: Luyện tập từng phần, Làm Full Test, Chép chính tả, Thảo luận), `/about`, `/contact`, `/login`, `/register`.
-    - Học tập & Cá nhân (Authenticated): `/exam/:testId` (`ExamTakePage`), `/dictation/:testId` (`DictationTakePage`), `/results/:resultId` (`TestResultPage`), `/profile` (`ProfilePage`, gồm tab Lịch sử làm bài `?tab=history`), `/notifications`, `/classrooms`, `/teacher-application`, `/payments/vnpay/result`.
+    - Public/Catalog: `/` (`HomePage`), `/courses` (`CoursesPage`, `/practice` tự động redirect về `/courses`), `/courses/:testId` (`CourseDetailPage` gồm 4 tab: Luyện tập từng phần, Làm Full Test, Chép chính tả, Thảo luận), `/courses/:testId/dictation` (`DictationTakePage`), `/contact`, `/login`, `/register`.
+    - Học tập & Cá nhân (Authenticated): `/courses/:testId/take` (`ExamTakePage`), `/results/:resultId` (`TestResultPage`), `/profile` (`ProfilePage`, gồm Hồ sơ, Bảo mật, Lịch sử làm bài `?tab=history`, Lịch sử thanh toán `?tab=payments`), `/notifications`, `/classrooms` (`ClassroomsPage`, hỗ trợ `?joinCode=...`), `/teacher/application` (`TeacherApplicationPage`), `/payment/result` (`PaymentResultPage`).
     - Quản trị (`ROLE_ADMIN`): `/admin/dashboard`, `/admin/tests` (`TestManagementPage`), `/admin/users`, `/admin/payments`, `/admin/teacher-applications`.
 
 ## 3. Bản đồ dữ liệu & Nghiệp vụ cốt lõi
@@ -31,32 +31,34 @@
   - Sửa đề (`PUT /api/exam/update/{id}`): cập nhật tại chỗ (`upsertTestDetailInPlace`) các `ContextQuestion` và `Question` theo ID/thứ tự, bảo toàn khóa ngoại của `UserAnswer` lịch sử mà không làm hỏng dữ liệu xem lại bài.
   - Cập nhật nhanh metadata (`PATCH /api/exam/update/{id}/metadata`): sửa tên đề, ảnh bìa (`coverImageUrl`/`clearCoverImage`), trạng thái (`PUBLISHED`/`DRAFT`) và cấu hình VIP (`isVip`, `vipPriceVnd`) không cần gửi lại 200 câu hỏi.
   - Xóa đề hệ thống (`DELETE /api/exam/delete/{id}`): nếu đã có lượt làm, giao dịch hoặc bài tập tham chiếu thì chuyển về `DRAFT` và trả `ARCHIVED`; nếu chưa có tham chiếu thì xóa cứng (`DELETED`) và dọn media không còn dùng.
-  - Autosave trình duyệt (`localStorage`) chỉ ghi khi `isDirtyRef.current === true`, tự xóa khi lưu máy chủ thành công và chỉ hiện thanh khôi phục nháp khi dữ liệu local thực sự khác dữ liệu máy chủ.
 - **Luyện nghe chép chính tả (`DictationTakePage.jsx`)**:
   - Endpoint `GET /api/exam/{testId}/dictation` kiểm tra quyền VIP/lớp học, chỉ trả context Listening + transcript/translation (không lộ answer key).
   - Hỗ trợ kiểm tra theo từng vế câu (`.`, `,`, `;`, `:`, `?`, `!`), che phần sau bằng `*****`; khi người dùng bấm/gõ tiếp vào ô nhập liệu, khung kết quả bên dưới tự ẩn đi và chỉ hiện lại khi nhấn `Enter` (`Ctrl + Enter`) hoặc bấm "Kiểm tra kết quả".
 - **Bình luận đề thi (`TestComment`)**:
   - Lưu MySQL (`test_comment`): `GET /api/exam/{testId}/comments`, `POST /api/exam/{testId}/comments`, `PUT /api/exam/comments/{commentId}`, `DELETE /api/exam/comments/{commentId}` (tác giả sửa/xóa, ADMIN xóa kiểm duyệt).
-- **Thương mại VIP & Đăng ký giáo viên (VNPAY)**:
-  - Đề VIP có `isVip` và `vipPriceVnd` riêng từng đề; mua một lần cấp `TestEntitlement` vĩnh viễn sau khi xác minh chữ ký/số tiền tại `GET /api/payments/vnpay/ipn`.
-  - Hồ sơ giáo viên (`TeacherApplication`) tách biệt bước thanh toán phí (`PENDING_REVIEW`) và bước Admin duyệt (`APPROVED` mới cấp `ROLE_TEACHER`).
-- **Trợ lý AI Học tập & Hướng dẫn hệ thống (`module/ai`, `AiAssistantWidget.jsx`)**:
-  - Endpoint `POST /api/ai/chat` tích hợp Gemini API (`gemini.api.key`, `gemini.api.url` qua header `x-goog-api-key`) kèm cơ chế Smart Local Tutor dự phòng khi mất kết nối ngoài.
-  - Khi đính kèm `resultId` trên trang Xem lại bài thi (`/results/:resultId`), server xác minh quyền sở hữu `TestResult` và tự trích xuất ngữ cảnh bài làm, đoạn văn, lời thoại (`transcript`), bản dịch (`translation`), đáp án đúng/đã chọn và giải thích của câu hỏi từ MySQL (tự động nhận diện cả số câu người dùng gõ trong tin nhắn như *"Giải thích câu 105"*). Tự động ẩn trên trang phòng thi đang làm dở (`/courses/:testId/take`) để đảm bảo tính trung thực của bài thi.
-- **Lớp học (`Classroom`, `ClassMember`, `Material`, `Assignment`) & Thông báo (`Notification`)**:
-  - Giáo viên tạo lớp, xoay mã tham gia (`join-code/rotate`), duyệt/chặn học sinh, tải tài liệu PDF private (≤ 10 MiB, quota 512 MiB/lớp, link tải ký hạn 5 phút), tạo đề riêng lớp và giao bài tập có `deadline` + `latePolicy` (`REJECT_AFTER_DEADLINE` / `ACCEPT_AND_MARK_LATE`).
-  - **Hệ thống Thông báo (`/api/notifications/**`, `NotificationsPage.jsx`)**: Tự động phát thông báo theo các chức năng thực tế của web: chào mừng đăng ký mới (`WELCOME`), đổi/đặt mật khẩu (`ACCOUNT_SECURITY`), hoàn thành bài thi Full Test/luyện Part (`EXAM_RESULT`), học viên nộp bài tập lớp cho giáo viên (`ASSIGNMENT_SUBMITTED`), giao bài tập mới (`ASSIGNMENT_CREATED`), đổi hạn nộp (`ASSIGNMENT_DEADLINE_CHANGED`), giáo viên nhận xét bài làm (`ASSIGNMENT_FEEDBACK`), học viên xin vào lớp (`CLASSROOM_JOIN_REQUEST`), duyệt/cập nhật thành viên lớp (`CLASSROOM_MEMBER_APPROVED` / `CLASSROOM_MEMBER_STATUS`), đăng tài liệu PDF mới (`CLASSROOM_MATERIAL`), thanh toán đề VIP (`TEST_VIP_PURCHASE`), thanh toán & duyệt hồ sơ giáo viên (`TEACHER_APPLICATION_PAYMENT`, `TEACHER_APPLICATION_SUBMITTED`, `TEACHER_APPLICATION`), và kiểm duyệt bình luận (`COMMENT_MODERATED`). Hỗ trợ lọc theo danh mục (`ALL`, `EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`), lọc chưa đọc, đánh dấu đã đọc từng mục/tất cả, xóa từng thông báo hoặc dọn sạch thông báo đã đọc, đồng bộ tức thời huy hiệu số chưa đọc trên `Navbar`.
+- **Thương mại VIP & Đăng ký giáo viên (PayOS)**:
+  - Tích hợp cổng thanh toán **PayOS** (`PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, cột DB `payos_order_code`, `payos_reference`, `payos_code`, `payos_status`).
+  - Đề VIP có `isVip` và `vipPriceVnd` riêng từng đề; mua một lần cấp `TestEntitlement` vĩnh viễn sau khi xác minh chữ ký HMAC-SHA256 tại `POST /api/payments/payos/webhook` (hoặc `/api/payments/webhook`) hay đồng bộ trạng thái từ PayOS API (`syncPendingPaymentIfPossible`).
+  - Hồ sơ giáo viên (`TeacherApplication`, phí mặc định `TEACHER_APPLICATION_FEE_VND=2000` VND) tách biệt bước thanh toán (`PENDING_REVIEW`) và bước Admin duyệt (`APPROVED` mới cấp `ROLE_TEACHER`). Khi link thanh toán cũ hết hạn, người dùng có thể bấm tạo lại mã QR PayOS mới ngay trên hồ sơ `PENDING_PAYMENT` hiện có.
+- **Trợ lý AI Nuna (`module/ai`, `AiAssistantWidget.jsx`, `TobyMascot.jsx`)**:
+  - Nhân vật đồng hành **Nuna** tích hợp tại `POST /api/ai/chat` (kết nối Gemini API `GEMINI_API_KEY`, `GEMINI_API_URL` kèm cơ chế Smart Local Tutor dự phòng toàn diện).
+  - Tự động nhận diện trang đang mở (`pageContext`) và khi xem lại bài thi (`/results/:resultId`), server xác minh quyền sở hữu `TestResult` rồi trích xuất chi tiết bài làm, đoạn văn, lời thoại (`transcript`), bản dịch (`translation`), đáp án đúng/đã chọn và giải thích câu hỏi từ MySQL (hỗ trợ cả chọn câu trên thanh ngữ cảnh hoặc gõ số câu trực tiếp như *"Giải thích câu 8"*). Tự động ẩn trên phòng thi đang làm (`/courses/:testId/take`).
+- **Lớp học kiểu Google Classroom (`Classroom`, `ClassMember`, `Material`, `Assignment`, `ClassroomEmailService`) & Thông báo (`Notification`)**:
+  - Giao diện `/classrooms` gồm 4 tab: **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**.
+  - **Tài liệu PDF lớp học (`Material`)**: Giáo viên tải PDF private (≤ 10 MiB, quota 512 MiB/lớp); hỗ trợ **Xem trước PDF trực tiếp trên trình duyệt** (`GET /api/classrooms/{classroomId}/materials/{materialId}/preview`) và tải về qua link ký hạn 5 phút (`GET .../download`).
+  - **Tích hợp Gmail (`ClassroomEmailService`, cấu hình `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`)**:
+    - Giáo viên mời học viên hàng loạt qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`): tự động duyệt thẳng (`APPROVED`) nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời HTML chuẩn Google Classroom kèm mã lớp và nút tham gia nhanh (`/classrooms?joinCode=...`).
+    - Khi giáo viên giao bài tập mới, cập nhật hạn nộp hoặc đăng thông báo bảng tin (`POST /api/classrooms/{classroomId}/announcements`), hệ thống tự động gửi cả thông báo in-app lẫn email thông báo tới Gmail của toàn bộ học viên trong lớp.
+  - **Hệ thống Thông báo (`/api/notifications/**`, `NotificationsPage.jsx`)**: Phát thông báo tự động theo 6 danh mục (`ALL`, `EXAM`, `ASSIGNMENT`, `CLASSROOM`, `PAYMENT`, `SYSTEM`), hỗ trợ lọc chưa đọc, đánh dấu đã đọc và xóa dọn hộp thư.
 
 ## 4. Hệ thiết kế UI/UX Editorial (`docs/05_UI_UX_SPEC.md`)
-- **Phông chữ & Chữ số**: Toàn bộ ứng dụng dùng `--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif` với `@font-face EditorialNumerals` (`unicode-range: U+0030-0039`) và `font-variant-numeric: lining-nums tabular-nums` để chữ số `0–9` luôn cao đều nhau trên một đường cơ sở; `Ubuntu Mono` chỉ dùng cho code/mã giao dịch kỹ thuật.
-- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, chữ phụ `#4B5563` / `#6B7280`, viền mảnh `1px solid #D1D5DB`, góc vuông vức `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`. Không dùng màu cầu vồng loè loẹt hay bóng đổ lệch Neo-brutalism.
-- **Studio Thêm/Sửa đề (`TestManagementPage.jsx`)**: Bề mặt phẳng sạch `#FFFFFF`/`#F8FAFC` (không đặt ảnh nền trang trí dưới vùng soạn thảo), thanh chọn một hàng Part duy nhất (`Part 1 · 6/6 câu` ... `Part 7 · 54/54 câu`), hiển thị rõ tiến độ và điều hướng câu hỏi nhanh.
-- **Trang Xem lại bài thi (`TestResultPage.jsx`)**: Bố cục 2 cột `grid-cols-[1fr_320px]` với bảng số câu bên phải (`sticky`), hover viền xanh `#1D4ED8` và khi bấm số câu sẽ cuộn mượt + phát sáng khung câu hỏi trong 1.8 giây tương tự phòng thi.
+- **Phông chữ & Chữ số**: Toàn bộ ứng dụng dùng `--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif` với `@font-face EditorialNumerals` (`unicode-range: U+0030-0039`) và `font-variant-numeric: lining-nums tabular-nums`; `Ubuntu Mono` dùng cho code/mã giao dịch kỹ thuật.
+- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, viền mảnh `1px solid #D1D5DB`, góc `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`.
 
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
-- **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion` (tăng khi đổi/đặt mật khẩu hoặc khóa/mở khóa tài khoản); tài khoản bị khóa (`isLocked == true`) khi đăng nhập cục bộ hoặc Google đều phản hồi lỗi rõ ràng `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC xác minh chữ ký RS256/JWK và liên kết theo `google_sub`; khóa bi quan dùng native `SELECT ... FOR UPDATE` tương thích MySQL/MariaDB; rate limit lưu hash bucket trong `auth_login_attempt`; nhật ký thao tác nhạy cảm lưu `audit_event`.
-- **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql`; nâng cấp DB hiện có dùng các script trong `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
-- **Trạng thái kiểm chứng gần nhất (2026-11-14)**:
+- **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion`; tài khoản bị khóa trả `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC RS256/JWK; khóa bi quan dùng native `SELECT ... FOR UPDATE`; rate limit lưu hash bucket trong `auth_login_attempt`; audit lưu `audit_event`.
+- **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql` (đồng bộ 22 bảng, tích hợp PayOS và 20 bộ đề `PUBLISHED`: `ETS TOEIC 2026 - TEST 01..10` & `YBM TOEIC 2026 - TEST 01..10`); nâng cấp DB hiện có dùng `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
+- **Trạng thái kiểm chứng gần nhất (2026-11-15)**:
   - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml -q -DskipTests compile`: **PASS (exit 0)**.
   - Frontend `npm --prefix frontend run lint` (oxlint): **PASS (0 warnings, 0 errors)**.
   - Frontend `npm --prefix frontend run build` (Vite 8): **PASS (exit 0)**.

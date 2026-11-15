@@ -6,7 +6,7 @@
 
 ## 1. Phạm vi và nguyên tắc
 
-Ứng dụng gồm React/Vite, Java/Spring Security, MySQL, JWT bearer, Cloudinary, nội dung đề/audio trả phí, VNPAY, hồ sơ giáo viên, lớp học, bài tập và dữ liệu học tập. Các rủi ro ưu tiên là chiếm tài khoản, lộ đáp án/đề VIP, truy cập chéo lớp hoặc bài làm, giả mạo thanh toán, upload độc hại, lạm dụng API và rò rỉ dữ liệu cá nhân.
+Ứng dụng gồm React/Vite, Java/Spring Security, MySQL, JWT bearer, Cloudinary, nội dung đề/audio trả phí, cổng thanh toán PayOS, hồ sơ giáo viên, lớp học (kèm gửi Gmail thông báo/lời mời và xem trước PDF), bài tập, Trợ lý AI Nuna và dữ liệu học tập. Các rủi ro ưu tiên là chiếm tài khoản, lộ đáp án/đề VIP, truy cập chéo lớp hoặc bài làm, giả mạo thanh toán, upload độc hại, lạm dụng API và rò rỉ dữ liệu cá nhân.
 
 - Mặc định từ chối; mỗi route phải được khai báo public có chủ đích hoặc yêu cầu xác thực và quyền server-side.
 - Tin cậy thấp với mọi input, ID, file, header, redirect, callback và dữ liệu từ browser. Validate theo allowlist, mã hóa output theo ngữ cảnh, phân quyền trên tài nguyên cụ thể.
@@ -55,7 +55,7 @@
 - Với JWT Bearer trong `Authorization` header như hiện tại, tiếp tục kiểm tra cách credential được gửi và CORS; CSRF token không thay thế XSS defenses. Chỉ khi có thay đổi dùng cookie tự gửi, cần thiết kế CSRF token/Origin trước khi phát hành thay đổi đó.
 - JWT validator phải cố định thuật toán cho phép; xác minh signature, `exp`, `nbf`, `iat` khi có, `iss`/`aud` theo thiết kế. Không nhận `alg=none`, không tin role claim cũ cho quyết định dài hạn; dùng trạng thái tài khoản/quyền server-side.
 - Secret ký phải entropy cao, ngoài source control, khác nhau giữa môi trường và có kế hoạch rotation/key ID. Không chép giá trị cấu hình hiện tại vào docs.
-- Secret/runtime production config phải lấy từ environment/secret manager, không dùng giá trị dự phòng local/sandbox trong `application.properties`. Backend dùng `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_PAYMENT_URL`, `VNPAY_RETURN_URL`, `VNPAY_FRONTEND_RESULT_URL`, `TEACHER_APPLICATION_FEE_VND`; OAuth audience cấu hình bằng `GOOGLE_CLIENT_ID` và phải trùng với `VITE_GOOGLE_CLIENT_ID` phía frontend. `JWT_SECRET` phải là Base64 giải mã thành tối thiểu 32 byte và `JWT_EXPIRATION` phải dương; backend fail-fast khi cấu hình không hợp lệ. Profile `prod` yêu cầu các biến này, exact CORS origin và đặt Hibernate `validate`; chỉ kích hoạt sau khi đã apply/verify migration. Google client ID là định danh công khai, không phải secret. `.env` phải được ignore và không commit.
+- Secret/runtime production config phải lấy từ environment/secret manager, không dùng giá trị dự phòng local/sandbox trong `application.properties`. Backend dùng `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `JWT_EXPIRATION`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_API_BASE_URL`, `PAYOS_FRONTEND_RESULT_URL`, `TEACHER_APPLICATION_FEE_VND`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`, `GEMINI_API_KEY`; OAuth audience cấu hình bằng `GOOGLE_CLIENT_ID` và phải trùng với `VITE_GOOGLE_CLIENT_ID` phía frontend. `JWT_SECRET` phải là Base64 giải mã thành tối thiểu 32 byte và `JWT_EXPIRATION` phải dương; backend fail-fast khi cấu hình không hợp lệ. Profile `prod` yêu cầu các biến này, exact CORS origin và đặt Hibernate `validate`; chỉ kích hoạt sau khi đã apply/verify migration. Google client ID là định danh công khai, không phải secret. `.env` phải được ignore và không commit.
 
 ## 4. Phân quyền, API và dữ liệu
 
@@ -98,14 +98,14 @@
 - Khi server tải URL do người dùng cung cấp (nếu có), chống SSRF: allowlist host, chặn IP private/link-local/metadata, kiểm soát redirect và DNS rebinding. Không phát sinh fetch tùy ý từ URL avatar/media.
 - Phải có quyền sử dụng thương mại đối với audio, ảnh, transcript, câu hỏi và lời giải; quản lý nguồn/quyền và gỡ bỏ nội dung khiếu nại hợp lệ.
 
-## 7. Thanh toán VNPAY và entitlement
+## 7. Thanh toán PayOS và entitlement
 
-- Số tiền, order ID, sản phẩm, user và trạng thái khởi tạo do server lấy từ DB; browser không tự quyết giá hay kết quả.
-- Chỉ chấp nhận kết quả callback/IPN sau khi xác minh checksum/chữ ký theo tài liệu VNPAY hiện hành, đối chiếu merchant, mã đơn, số tiền, trạng thái/order chưa xử lý và các trường bắt buộc. Không suy ra thành công chỉ từ trang return của browser.
-- Xử lý callback trong transaction idempotent; chống replay và callback trùng; chỉ cấp entitlement một lần khi điều kiện xác minh đạt. Ghi nhận payload tối thiểu/đã che dữ liệu theo chính sách audit, lưu mã tham chiếu và trạng thái đối soát.
-- Tách `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`/trạng thái cần điều tra. Sai lệch số tiền/chữ ký hoặc callback lặp phải vào luồng audit/reconciliation, không tự sửa bằng client.
-- Không lưu số thẻ/CVV/OTP; để nhà cung cấp thanh toán xử lý. Secret VNPAY chỉ ở secret manager/env; không in URL callback chứa token/secret ra log.
-- Thanh toán hồ sơ giáo viên và admin approval là hai trạng thái tách biệt; thanh toán thành công chỉ chuyển sang chờ duyệt, không tự nâng role.
+- Số tiền, mã đơn (`payosOrderCode`), sản phẩm, user và trạng thái khởi tạo do server lấy từ DB; browser không tự quyết giá hay kết quả.
+- Chỉ chấp nhận kết quả webhook PayOS (`POST /api/payments/payos/webhook` hoặc `POST /api/payments/webhook`) sau khi xác minh chữ ký HMAC-SHA256 (`PAYOS_CHECKSUM_KEY`) trên đối tượng `data` sắp xếp theo thứ tự bảng chữ cái, đối chiếu mã đơn `orderCode`, số tiền VND, trạng thái và liên kết user/sản phẩm trong DB (hoặc đối chiếu trực tiếp qua PayOS API `GET /v2/payment-requests/{orderCode}`). Không suy ra thành công chỉ từ trang return của browser.
+- Xử lý webhook trong transaction idempotent dưới khóa dòng (`SELECT ... FOR UPDATE`); chống replay và callback trùng; chỉ cấp entitlement một lần khi điều kiện xác minh đạt. Lưu mã đơn `payos_order_code`, mã tham chiếu `payos_reference` và trạng thái đối soát `payos_status`.
+- Tách `PENDING`, `SUCCESS`, `FAILED`, `CANCELLED`, `EXPIRED`.
+- Không lưu số thẻ/CVV/OTP; để nhà cung cấp thanh toán xử lý. Secret PayOS (`PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`) chỉ ở secret manager/env; không in secret ra log.
+- Thanh toán hồ sơ giáo viên và admin approval là hai trạng thái tách biệt; thanh toán thành công chỉ chuyển sang chờ duyệt (`PENDING_REVIEW`), không tự nâng role.
 
 ## 8. Dữ liệu cá nhân, secret và hạ tầng
 
@@ -114,7 +114,7 @@
 - Không log password, OTP, Authorization header, JWT, reset token, secret, dữ liệu thẻ, toàn bộ callback nhạy cảm hoặc nội dung bài làm nếu không cần. Che/giảm PII trong log; hạn chế quyền đọc, thời hạn lưu và chống log injection.
 - Secret/config qua env hoặc Secret Manager; `.env` và private key không commit/đóng gói vào image. Quét secret trước merge; nếu secret đã bị lộ, rotate/revoke và xử lý lịch sử Git theo incident plan.
 - Database dùng account ứng dụng có quyền tối thiểu, không public port, backup mã hóa và kiểm tra restore định kỳ. Tách dev/staging/prod; không đưa dữ liệu thật vào dev nếu chưa khử định danh.
-- Runtime/container chạy non-root nếu container hóa, image tối giản, patch framework/OS, firewall/private network và quản lý quyền Cloudinary/VNPAY theo least privilege.
+- Runtime/container chạy non-root nếu container hóa, image tối giản, patch framework/OS, firewall/private network và quản lý quyền Cloudinary/PayOS theo least privilege.
 - Kiểm kê dependency và lockfile; quét CVE/SCA và secret trong CI; cập nhật có review. Dùng SAST/DAST và SBOM theo mức độ trưởng thành; action CI/token bên thứ ba chỉ cấp quyền tối thiểu.
 
 ## 9. Audit, giám sát và ứng phó
@@ -134,7 +134,7 @@ Các kiểm tra dưới đây là yêu cầu cho release/review bảo mật; kh�
 - Kiểm tra BOLA cho attempt, question/media VIP, lớp, member, assignment, submission, feedback và tài liệu bằng ID của người khác/lớp khác.
 - Kiểm tra mass assignment, SQL injection, XSS, CORS, CSRF theo auth mode, redirect, upload file giả MIME/quá cỡ, rate-limit và response không lộ answer key.
 - Kiểm tra JWT hết hạn/sai chữ ký, logout/revoke, đổi role/khóa tài khoản và refresh rotation nếu đã có.
-- Kiểm tra VNPAY signature sai, amount/order mismatch, callback lặp/replay, thứ tự callback khác nhau, timeout và transaction rollback.
+- Kiểm tra PayOS signature sai, amount/order mismatch, callback lặp/replay, thứ tự callback khác nhau, timeout và transaction rollback.
 - CI/pre-release: compile/test theo yêu cầu tác vụ, dependency/secret scan; DAST trên staging có cho phép; review thủ công/penetration test trước thương mại hóa theo mức rủi ro.
 - Kiểm tra HTTPS/headers/CSP/CORS ở môi trường triển khai, restore backup và cảnh báo vận hành.
 
@@ -157,7 +157,7 @@ Các kiểm tra dưới đây là yêu cầu cho release/review bảo mật; kh�
 - Draft answers và target question IDs được xóa khi submit/hủy và sau khi active session hết TTL; scheduler 5 phút chỉ log số lượng, không log user/session IDs hay đáp án. Giá trị chu kỳ mặc định 300000 ms, cấu hình `APP_EXAM_SESSION_CLEANUP_DELAY_MS`.
 - Submit exam nhận UUID `submissionKey`; backend khóa hàng user trong transaction, giới hạn replay theo user/test/assignment/source result và lưu unique `(user_id, submission_key)` trong `test_result`. Submit mới cần sessionId thuộc user và khớp scope; elapsed time lấy từ server `startedAt`, không tin `totalTime` client. Frontend giữ key đến khi nhận kết quả. Compile/build chưa thay thế concurrency/DB integration validation.
 - `POST /api/user/setpassword` chỉ hoạt động cho tài khoản hiện tại có Google `sub`, chưa có local password và chưa bị khóa; xác thực lại ID token Google có `iat` trong 5 phút, subject khớp, sau đó BCrypt + tăng `authVersion`. UI không lưu ID token; người dùng phải đăng nhập lại. Chưa kiểm thử bằng tài khoản Google thật/tích hợp.
-- `application.properties` lấy DB/JWT/Cloudinary/VNPAY secrets từ environment; `google.client-id` là định danh OAuth công khai, không phải secret. Upload và ký link tải Cloudinary (cả public, private exam media và private classroom PDF) đều kiểm tra `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` trước khi gọi SDK; khi cấu hình thiếu, API trả `503 MEDIA_STORAGE_NOT_CONFIGURED` và log chỉ thể hiện biến nào có mặt, không ghi giá trị. Khi provider lỗi, chỉ log loại/phân loại lỗi, không ghi body phản hồi. Trước triển khai vẫn phải xác minh environment/secret manager thực tế và rotate mọi secret từng bị lộ; không sao chép giá trị vào tài liệu hay output.
+- `application.properties` lấy DB/JWT/Cloudinary/PayOS/Gmail/Gemini secrets từ environment; `google.client-id` là định danh OAuth công khai, không phải secret. Upload và ký link tải Cloudinary (cả public, private exam media và private classroom PDF) đều kiểm tra `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` trước khi gọi SDK; khi cấu hình thiếu, API trả `503 MEDIA_STORAGE_NOT_CONFIGURED` và log chỉ thể hiện biến nào có mặt, không ghi giá trị. Khi provider lỗi, chỉ log loại/phân loại lỗi, không ghi body phản hồi. Trước triển khai vẫn phải xác minh environment/secret manager thực tế và rotate mọi secret từng bị lộ; không sao chép giá trị vào tài liệu hay output.
 - Hibernate SQL logging tắt theo mặc định qua `spring.jpa.show-sql=${JPA_SHOW_SQL:false}`; chỉ bật tạm thời trong môi trường debug được kiểm soát, không bật production hoặc ghi dữ liệu/PII vào log.
 
 ## 12. Ngoài phạm vi hiện tại / kích hoạt khi cần
@@ -168,16 +168,16 @@ Các kiểm tra dưới đây là yêu cầu cho release/review bảo mật; kh�
 
 ## 13. Tài liệu tham chiếu chính
 
-### Ghi nhận triển khai VNPAY hiện tại
+### Ghi nhận triển khai PayOS hiện tại
 
-- Endpoint IPN public xác minh HMAC-SHA512, merchant, mã giao dịch, VND amount và trạng thái trước khi ghi kết quả; truy vấn giao dịch có khóa hàng để chống callback song song. Khi callback báo thành công, backend kiểm tra thêm loại sản phẩm và liên kết user/application/test trong DB; giao dịch sai liên kết không được đánh dấu SUCCESS để tránh thu tiền nhưng bỏ qua bước cấp entitlement/chuyển hồ sơ. Chỉ IPN chuyển payment sang SUCCESS/FAILED.
-- Return URL chỉ kiểm tra chữ ký và redirect; đích frontend phải cùng origin với một origin CORS được cấu hình, chỉ HTTP trên localhost dev, không userinfo/fragment. UI đọc trạng thái qua API cần đăng nhập, scope theo user sở hữu giao dịch. Không chứa hash/secret trong frontend hoặc log.
-- Checkout URL dùng cùng transaction reference khi retry giao dịch pending còn hạn. Khi URL hết hạn mà chưa có kết quả cuối, code giữ đơn pending và chặn tạo order mới; bản ghi `EXPIRED` cũ cũng chặn retry cho tới khi đối soát để IPN trễ còn được ghi nhận mà không tạo nguy cơ thu trùng. Quy trình admin/provider reconciliation vẫn chưa có UI/API chuyên dụng nên người dùng có thể phải chờ hỗ trợ. Đây là tích hợp code/config, chưa chứng minh qua sandbox, merchant production, IPN public HTTPS, replay/concurrency test hoặc review bảo mật độc lập.
-- Cấu hình cần qua `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_PAYMENT_URL`, `VNPAY_RETURN_URL`, `VNPAY_FRONTEND_RESULT_URL`; không commit giá trị bí mật. `VNPAY_RETURN_URL` cần endpoint HTTPS reachable và cấu hình đúng tại merchant.
+- Endpoint Webhook public (`POST /api/payments/payos/webhook` và `/api/payments/webhook`) xác minh HMAC-SHA256 (`PAYOS_CHECKSUM_KEY`), mã đơn `orderCode`, VND amount và trạng thái trước khi ghi kết quả; truy vấn giao dịch có khóa hàng (`SELECT ... FOR UPDATE`) để chống callback song song. Khi webhook báo thành công, backend kiểm tra thêm loại sản phẩm và liên kết user/application/test trong DB; giao dịch sai liên kết không được đánh dấu SUCCESS. Ngoài ra, khi người dùng mở trang kết quả hoặc hồ sơ giáo viên, `syncPendingPaymentIfPossible` chủ động truy vấn trạng thái đơn từ PayOS API (`GET /v2/payment-requests/{orderCode}`) để đồng bộ tức thì kể cả khi môi trường local chưa nhận được webhook.
+- Return URL chỉ chuyển hướng trình duyệt về `/payment/result?txnRef=...`; UI đọc trạng thái qua API cần đăng nhập, scope theo user sở hữu giao dịch. Không chứa secret trong frontend hoặc log.
+- Khi liên kết thanh toán đăng ký giáo viên trước đó đã hết hạn mà hồ sơ vẫn đang ở `PENDING_PAYMENT`, ứng viên có thể bấm tạo lại mã QR PayOS mới: hệ thống đồng bộ trạng thái đơn cũ trước, nếu chưa thanh toán thì tái sử dụng dòng `PaymentTransaction` hiện có với `payosOrderCode` mới để không vi phạm unique constraint và tạo liên kết thanh toán mới an toàn.
+- Cấu hình cần qua `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY`, `PAYOS_API_BASE_URL`, `PAYOS_FRONTEND_RESULT_URL`; không commit giá trị bí mật.
 
 - [OWASP API Security Top 10](https://owasp.org/www-project-api-security/): API authorization, cấu hình, tài nguyên và inventory.
 - [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html), [Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html).
 - [OWASP File Upload Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html), [Input Validation Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html), [Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html).
 - [Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html), [CORS](https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html), [Security Headers](https://docs.spring.io/spring-security/reference/features/exploits/headers.html). Đối chiếu phiên bản dependency của dự án.
 - [Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15](https://vanban.chinhphu.vn/?classid=1&docid=214590&pageid=27160&typegroup=) và [Nghị định 356/2025/NĐ-CP](https://vanban.chinhphu.vn/?classid=1&docid=216387&pageid=27160), đều hiệu lực 01-01-2026 theo Cổng văn bản Chính phủ.
-- Quy trình tích hợp VNPAY phải dùng tài liệu merchant/integration chính thức được cấp cho dự án; không suy diễn tên trường/chữ ký từ bài viết bên thứ ba.
+- Quy trình tích hợp PayOS phải dùng tài liệu merchant/integration chính thức (`https://payos.vn/docs`) được cấp cho dự án; không suy diễn tên trường/chữ ký từ bài viết bên thứ ba.
