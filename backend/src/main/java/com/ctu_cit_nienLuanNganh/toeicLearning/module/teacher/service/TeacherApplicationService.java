@@ -3,14 +3,15 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.module.teacher.service;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TeacherApplicationStatus;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Notification;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.PaymentTransaction;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Role;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TeacherApplication;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.dto.CheckoutResponse;
-import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.service.VnpayGatewayService;
-import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.service.PayosGatewayService;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.service.PayosPaymentService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.teacher.dto.TeacherApplicationResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.teacher.request.TeacherApplicationRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.NotificationRepository;
@@ -29,13 +30,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TeacherApplicationService {
     private static final String PRODUCT_TYPE = "TEACHER_APPLICATION";
-    private static final int CHECKOUT_MINUTES = 15;
     private static final ZoneId REPORTING_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final TeacherApplicationRepository applicationRepository;
@@ -43,7 +42,8 @@ public class TeacherApplicationService {
     private final NotificationRepository notificationRepository;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
-    private final VnpayGatewayService vnpayGatewayService;
+    private final PayosGatewayService payosGatewayService;
+    private final PayosPaymentService payosPaymentService;
     private final AuditEventService auditEventService;
 
     @Transactional
@@ -52,8 +52,8 @@ public class TeacherApplicationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         String roleName = applicant.getRole() == null ? "" : applicant.getRole().getRoleName();
         if (!"ROLE_USER".equals(roleName)) throw new AppException(ErrorCode.TEACHER_APPLICATION_CONFLICT);
-        long fee = vnpayGatewayService.configuredTeacherFee();
-        if (fee < 1 || fee > 99_999_999 || !vnpayGatewayService.isConfigured()) {
+        long fee = payosGatewayService.configuredTeacherFee();
+        if (fee < 1 || fee > 99_999_999 || !payosGatewayService.isConfigured()) {
             throw new AppException(ErrorCode.PAYMENT_NOT_CONFIGURED);
         }
 
@@ -67,23 +67,23 @@ public class TeacherApplicationService {
         }
 
         if (application != null && application.getStatus() == TeacherApplicationStatus.PENDING_PAYMENT) {
-            // A locally expired order can still deliver a valid, delayed IPN. Do not create another order
-            // until every such transaction has a definitive provider result.
-            if (paymentRepository.existsByTeacherApplication_IdAndStatus(application.getId(), "EXPIRED")) {
-                throw new AppException(ErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
-            }
             Optional<PaymentTransaction> latest = paymentRepository
                     .findTopByTeacherApplication_IdOrderByPaymentDateDesc(application.getId());
-            if (latest.isPresent() && "PENDING".equals(latest.get().getStatus())) {
-                PaymentTransaction pending = latest.get();
-                LocalDateTime expiresAt = pending.getPaymentDate().plusMinutes(CHECKOUT_MINUTES);
-                if (LocalDateTime.now(REPORTING_ZONE).isBefore(expiresAt)) {
-                    return checkoutResponse(application, pending, remoteAddress);
+            if (latest.isPresent()) {
+                PaymentTransaction previous = latest.get();
+                payosPaymentService.syncPendingPaymentIfPossible(previous);
+                if ("SUCCESS".equals(previous.getStatus())) {
+                    throw new AppException(ErrorCode.TEACHER_APPLICATION_CONFLICT);
                 }
-                throw new AppException(ErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
+                if ("PENDING".equals(previous.getStatus()) || "EXPIRED".equals(previous.getStatus())) {
+                    previous.setStatus("CANCELLED");
+                    previous.setVnpTransactionStatus("CANCELLED");
+                    paymentRepository.saveAndFlush(previous);
+                }
             }
             if (request.getStatement() != null && !request.getStatement().isBlank()) {
                 application.setStatement(request.getStatement().trim());
+                applicationRepository.save(application);
             }
         } else {
             application = applicationRepository.save(TeacherApplication.builder()
@@ -96,8 +96,9 @@ public class TeacherApplicationService {
         PaymentTransaction payment = PaymentTransaction.builder()
                 .user(applicant)
                 .amount(BigDecimal.valueOf(fee))
-                .vnpTxnRef(UUID.randomUUID().toString().replace("-", ""))
+                .vnpTxnRef(payosGatewayService.newOrderCode())
                 .productType(PRODUCT_TYPE)
+                .productNameSnapshot("Đăng ký giáo viên TOEIC")
                 .teacherApplication(application)
                 .status("PENDING")
                 .build();
@@ -108,7 +109,11 @@ public class TeacherApplicationService {
     @Transactional
     public Optional<TeacherApplicationResponse> getMine(User user) {
         return applicationRepository.findTopByUser_IdOrderByCreatedAtDesc(user.getId())
-                .map(this::toResponse);
+                .map(application -> {
+                    paymentRepository.findTopByTeacherApplication_IdOrderByPaymentDateDesc(application.getId())
+                            .ifPresent(payosPaymentService::syncPendingPaymentIfPossible);
+                    return toResponse(application);
+                });
     }
 
     @Transactional
@@ -170,7 +175,7 @@ public class TeacherApplicationService {
 
     private CheckoutResponse checkoutResponse(TeacherApplication application, PaymentTransaction payment,
                                                String remoteAddress) {
-        VnpayGatewayService.CheckoutLink checkout = vnpayGatewayService.createCheckout(payment, remoteAddress);
+        PayosGatewayService.CheckoutLink checkout = payosGatewayService.createCheckout(payment, remoteAddress);
         return CheckoutResponse.builder()
                 .applicationId(application.getId())
                 .transactionReference(payment.getVnpTxnRef())
@@ -194,7 +199,7 @@ public class TeacherApplicationService {
                 .status(application.getStatus())
                 .paymentStatus(payment == null ? null : payment.getStatus())
                 .transactionReference(payment == null ? null : payment.getVnpTxnRef())
-                .amount(payment == null ? null : payment.getAmount())
+                .amount(payment == null ? BigDecimal.valueOf(payosGatewayService.configuredTeacherFee()) : payment.getAmount())
                 .createdAt(application.getCreatedAt())
                 .reviewedAt(application.getReviewedAt())
                 .reviewerName(application.getReviewedBy() == null ? null : application.getReviewedBy().getUserName())

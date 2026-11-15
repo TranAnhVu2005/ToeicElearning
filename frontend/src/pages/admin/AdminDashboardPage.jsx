@@ -68,8 +68,8 @@ const TARGET_TYPE_LABELS = {
   AUTHENTICATION: 'Xác thực đăng nhập',
   TEST: 'Đề thi',
   TEACHER_APPLICATION: 'Hồ sơ giáo viên',
-  PAYMENT: 'Giao dịch VNPAY',
-  PAYMENT_TRANSACTION: 'Giao dịch VNPAY',
+  PAYMENT: 'Giao dịch PayOS',
+  PAYMENT_TRANSACTION: 'Giao dịch PayOS',
   CLASSROOM: 'Lớp học',
   ASSIGNMENT: 'Bài tập lớp',
 };
@@ -99,15 +99,17 @@ const AUDIT_ACTION_LABELS = {
   TEACHER_APPLICATION_APPROVE: { label: 'Duyệt hồ sơ giáo viên', icon: GraduationCap },
   REJECT_TEACHER_APPLICATION: { label: 'Từ chối hồ sơ giáo viên', icon: GraduationCap },
   TEACHER_APPLICATION_REJECT: { label: 'Từ chối hồ sơ giáo viên', icon: GraduationCap },
-  VNPAY_IPN: { label: 'Xác nhận thanh toán VNPAY', icon: CreditCard },
-  PAYMENT_VNPAY_IPN: { label: 'Xác nhận thanh toán VNPAY', icon: CreditCard },
+  PAYOS_WEBHOOK: { label: 'Xác nhận thanh toán PayOS', icon: CreditCard },
+  PAYMENT_PAYOS_WEBHOOK: { label: 'Xác nhận thanh toán PayOS', icon: CreditCard },
+  VNPAY_IPN: { label: 'Xác nhận thanh toán PayOS', icon: CreditCard },
+  PAYMENT_VNPAY_IPN: { label: 'Xác nhận thanh toán PayOS', icon: CreditCard },
 };
 
 const getAuditActionMeta = (action) => {
   if (!action) return { label: 'Thao tác hệ thống', icon: Activity };
   const upper = String(action).toUpperCase();
   if (AUDIT_ACTION_LABELS[upper]) return AUDIT_ACTION_LABELS[upper];
-  if (upper.includes('PAYMENT') || upper.includes('VNPAY')) return { label: action.replaceAll('_', ' '), icon: CreditCard };
+  if (upper.includes('PAYMENT') || upper.includes('PAYOS') || upper.includes('VNPAY')) return { label: action.replaceAll('_', ' '), icon: CreditCard };
   if (upper.includes('TEACHER')) return { label: action.replaceAll('_', ' '), icon: GraduationCap };
   if (upper.includes('TEST') || upper.includes('EXAM')) return { label: action.replaceAll('_', ' '), icon: BookOpen };
   if (upper.includes('USER') || upper.includes('LOCK')) return { label: action.replaceAll('_', ' '), icon: UserCog };
@@ -574,7 +576,7 @@ const AdminDashboardPage = () => {
                 Nhật ký hệ thống
               </h2>
               <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-                Ghi nhận đăng nhập, quản trị đề, khóa tài khoản, duyệt giáo viên, lớp học và trạng thái thanh toán VNPAY.
+                Ghi nhận đăng nhập, quản trị đề, khóa tài khoản, duyệt giáo viên, lớp học và trạng thái thanh toán PayOS.
               </p>
             </div>
             <div className="flex items-center gap-2">

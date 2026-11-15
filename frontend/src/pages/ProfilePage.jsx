@@ -1216,7 +1216,7 @@ const ProfilePage = () => {
                     </span>
                     <h2 className="mt-1 text-2xl font-bold text-slate-950">Lịch sử thanh toán</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Các giao dịch VNPAY gắn với tài khoản này · <strong className="tabular-nums">{paymentTotal}</strong> giao dịch
+                      Các giao dịch PayOS gắn với tài khoản này · <strong className="tabular-nums">{paymentTotal}</strong> giao dịch
                     </p>
                   </div>
                   <button
@@ -1246,7 +1246,7 @@ const ProfilePage = () => {
                     />
                     <p className="font-bold text-slate-900">Bạn chưa có giao dịch thanh toán nào</p>
                     <p className="mt-1 text-xs text-slate-500">
-                      Khi bạn mở khóa đề thi VIP hoặc thanh toán phí đăng ký Giáo viên qua VNPAY, Nuna sẽ lưu biên nhận tại đây.
+                      Khi bạn mở khóa đề thi VIP hoặc thanh toán phí đăng ký Giáo viên qua PayOS, Nuna sẽ lưu biên nhận tại đây.
                     </p>
                   </div>
                 ) : (

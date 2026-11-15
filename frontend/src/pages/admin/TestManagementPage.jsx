@@ -5765,7 +5765,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           Đề VIP có thu phí
                         </label>
                         <p className="text-xs text-[#4B5563] mt-0.5 mb-0 pl-6">
-                          Yêu cầu học viên mở khóa quyền truy cập riêng qua VNPAY
+                          Yêu cầu học viên mở khóa quyền truy cập riêng qua PayOS (giá do Admin thiết lập)
                         </p>
                       </div>
                       <span

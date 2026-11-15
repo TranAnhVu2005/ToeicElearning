@@ -78,8 +78,8 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                - **Chi tiết đề thi (`/courses/:testId`)** gồm 4 tab: *Luyện tập từng phần*, *Làm Full Test (200 câu / 120 phút)*, *Nghe chép chính tả Dictation*, và *Thảo luận*.
                - **Phòng thi tự động lưu phiên (`Resumable Exam Session`)**: Tự động lưu đáp án nháp theo thời gian thực; khi lỡ F5 hoặc rớt mạng sẽ tự khôi phục đúng thời gian và câu đã chọn.
                - **Xem lại bài thi (`/results/:resultId`)**: Xem lại đáp án, Transcript, bản dịch, lời giải, bấm **"Luyện lại câu sai / bỏ trống"** và hỏi Nuna AI từng câu.
-               - **Hồ sơ cá nhân (`/profile`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, lịch sử làm bài, đổi mật khẩu và lịch sử thanh toán VNPAY.
-               - **Đề thi VIP & Lớp học (`/classrooms`)**: Mua đề VIP 1 lần qua VNPAY dùng vĩnh viễn; tham gia Lớp học bằng mã `Join Code` để tải PDF và làm bài tập Giảng viên giao.
+               - **Hồ sơ cá nhân (`/profile`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, lịch sử làm bài, đổi mật khẩu và lịch sử thanh toán PayOS.
+               - **Đề thi VIP & Lớp học (`/classrooms`)**: Mua đề VIP 1 lần qua PayOS dùng vĩnh viễn; tham gia Lớp học bằng mã `Join Code` để tải PDF và làm bài tập Giảng viên giao.
             5. Không bao giờ tiết lộ khóa cấu hình, API key hay thông tin nhạy cảm của máy chủ.
             """;
 
@@ -728,12 +728,12 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     """;
         }
 
-        if (lower.contains("vip") || lower.contains("vnpay") || lower.contains("thanh toán") || lower.contains("mua đề")) {
+        if (lower.contains("vip") || lower.contains("payos") || lower.contains("vnpay") || lower.contains("thanh toán") || lower.contains("mua đề")) {
             return """
-                    ### Đề thi VIP & Thanh toán trực tuyến VNPAY
+                    ### Đề thi VIP & Thanh toán trực tuyến PayOS
                     
                     - **Quyền lợi Đề VIP:** Các bộ đề gắn nhãn **VIP** là đề tuyển chọn chất lượng cao kèm đầy đủ âm thanh, hình ảnh, lời thoại (`Transcript`), bản dịch và giải thích chi tiết.
-                    - **Mua 1 lần — Sở hữu vĩnh viễn:** Mỗi đề VIP có mức giá VND riêng. Bạn chỉ cần thanh toán **1 lần duy nhất** qua cổng **VNPAY** để mở khóa vĩnh viễn mọi chế độ của đề đó (Full Test, Luyện từng Part, Chép chính tả Dictation, Xem lại lời giải).
+                    - **Mua 1 lần — Sở hữu vĩnh viễn:** Mỗi đề VIP có mức giá VND riêng do Quản trị viên thiết lập. Bạn chỉ cần thanh toán **1 lần duy nhất** qua cổng **PayOS** để mở khóa vĩnh viễn mọi chế độ của đề đó (Full Test, Luyện từng Part, Chép chính tả Dictation, Xem lại lời giải).
                     - **Tra cứu giao dịch:** Bạn có thể xem lại toàn bộ biên nhận và trạng thái giao dịch tại mục **Hồ sơ cá nhân (`/profile?tab=payments`)**.
                     """;
         }
@@ -746,7 +746,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                       + Nhập **Mã tham gia lớp (Join Code)** do Giảng viên cung cấp để gửi yêu cầu vào lớp.
                       + Sau khi Giảng viên duyệt (`APPROVED`), bạn có thể tải **tài liệu PDF bài giảng** riêng của lớp, làm các **Bài tập (`Assignments`)** theo hạn nộp và xem **nhận xét chấm bài** trực tiếp từ Giảng viên.
                     - **Đăng ký trở thành Giáo viên (`/teacher/application`):**
-                      + Vào trang **Đăng ký Giáo viên**, điền thông tin năng lực/chứng chỉ và hoàn tất lệ phí xét duyệt qua **VNPAY**.
+                      + Vào trang **Đăng ký Giáo viên**, điền thông tin năng lực/chứng chỉ và hoàn tất lệ phí xét duyệt (**2.000 ₫**) qua **PayOS**.
                       + Sau khi thanh toán xác nhận, hồ sơ chuyển sang trạng thái chờ **Quản trị viên (`Admin`)** phê duyệt để được cấp quyền **Giáo viên TOEIC** (tạo lớp học, tải tài liệu PDF, tạo đề riêng và giao bài tập).
                     """;
         }
@@ -780,7 +780,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                 2. **Kiến thức luyện thi TOEIC:**
                    - Cấu trúc đề thi TOEIC 200 câu (120 phút), cách quy đổi điểm `10–990`, mẹo làm bài và tránh bẫy ETS cho từng Part.
                 3. **Hướng dẫn sử dụng trang web TOEIC Learning:**
-                   - Cách làm **Full Test**, **Luyện từng Part**, **Luyện lại câu sai**, **Nghe chép chính tả (`Dictation`)**, mua **Đề VIP qua VNPAY**, tham gia **Lớp học (`Classrooms`)**, đăng ký **Giáo viên** và duy trì **Streak**.
+                   - Cách làm **Full Test**, **Luyện từng Part**, **Luyện lại câu sai**, **Nghe chép chính tả (`Dictation`)**, mua **Đề VIP qua PayOS**, tham gia **Lớp học (`Classrooms`)**, đăng ký **Giáo viên** và duy trì **Streak**.
                 
                 *Bạn hãy nhập câu hỏi cụ thể hoặc chọn một chủ đề gợi ý bên dưới để Nuna hỗ trợ ngay nhé!*
                 """;

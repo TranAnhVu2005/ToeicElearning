@@ -622,7 +622,7 @@ const CourseDetailPage = () => {
               disabled={purchaseLoading}
               className="editorial-button-primary px-5 py-3 text-[14px] font-medium disabled:opacity-60"
             >
-              {purchaseLoading ? 'Đang tạo giao dịch…' : 'Mua đề qua VNPAY'}
+              {purchaseLoading ? 'Đang tạo giao dịch…' : 'Mua đề qua PayOS'}
             </button>
             <Link to="/courses" className="editorial-button-secondary px-5 py-3 text-[14px] font-medium">
               Quay lại danh sách đề

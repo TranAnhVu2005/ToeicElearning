@@ -58,9 +58,11 @@ public class SecurityConfig {
                                 "/api/exam/*/comments",
                                 "/api/media/local/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exam/*/dictation").authenticated()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/payments/payos/webhook",
+                                "/api/payments/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/payments/vnpay/ipn",
-                                "/api/payments/vnpay/return").permitAll()
+                                "/api/payments/payos/return").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exam/*").authenticated()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").authenticated()

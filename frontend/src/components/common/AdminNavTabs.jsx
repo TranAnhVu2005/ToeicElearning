@@ -26,7 +26,7 @@ const ADMIN_TABS = [
   },
   {
     to: '/admin/payments',
-    label: 'Giao dịch VNPAY',
+    label: 'Giao dịch PayOS',
     icon: CreditCard,
   },
   {

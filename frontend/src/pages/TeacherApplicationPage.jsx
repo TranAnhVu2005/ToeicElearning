@@ -10,11 +10,11 @@ const statusText = {
 };
 
 const paymentStatusText = {
-  PENDING: 'Đang chờ VNPAY xác nhận',
+  PENDING: 'Đang chờ PayOS xác nhận',
   SUCCESS: 'Thanh toán thành công',
   FAILED: 'Thanh toán thất bại',
   CANCELLED: 'Đã hủy giao dịch',
-  EXPIRED: 'Giao dịch hết hạn, cần đối soát',
+  EXPIRED: 'Giao dịch hết hạn',
 };
 
 const paymentStatusStyle = {
@@ -58,11 +58,11 @@ const TeacherApplicationPage = () => {
     try {
       const response = await teacherApplicationService.apply(statement.trim());
       if (response.code !== 1000 || !response.data?.checkoutUrl) {
-        throw new Error(response.message || 'Không tạo được giao dịch thanh toán.');
+        throw new Error(response.message || 'Không tạo được giao dịch thanh toán PayOS.');
       }
       window.location.assign(response.data.checkoutUrl);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không thể khởi tạo thanh toán.');
+      setError(err.response?.data?.message || err.message || 'Không thể khởi tạo thanh toán PayOS.');
       setSubmitting(false);
     }
   };
@@ -78,7 +78,7 @@ const TeacherApplicationPage = () => {
           </div>
           <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Trở thành giáo viên</h1>
           <p className="mt-2 max-w-xl text-sm text-slate-600">
-            Thanh toán phí đăng ký để gửi hồ sơ xét duyệt. Quyền giáo viên chỉ được cấp sau khi quản trị viên duyệt.
+            Thanh toán phí đăng ký <strong className="font-mono text-slate-900">2.000 ₫</strong> qua PayOS để gửi hồ sơ xét duyệt. Quyền giáo viên chỉ được cấp sau khi quản trị viên duyệt.
           </p>
         </header>
 
@@ -113,33 +113,30 @@ const TeacherApplicationPage = () => {
                     Thanh toán: {paymentStatusText[application.paymentStatus] || 'Chưa tạo'}
                   </span>
                 </div>
-                {application.amount != null && (
-                  <p className="mt-3 font-mono text-sm font-semibold text-slate-800">
-                    Phí đã ghi nhận:{' '}
-                    {new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                      maximumFractionDigits: 0,
-                    }).format(Number(application.amount))}
-                  </p>
-                )}
+                <p className="mt-3 font-mono text-sm font-semibold text-slate-800">
+                  Phí đăng ký xét duyệt:{' '}
+                  {new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND',
+                    maximumFractionDigits: 0,
+                  }).format(Number(application.amount ?? 2000))}
+                </p>
                 {application.transactionReference && (
                   <p className="mt-1.5 break-all font-mono text-xs text-slate-500">
-                    Mã giao dịch: {application.transactionReference}
+                    Mã đơn hàng PayOS: {application.transactionReference}
                   </p>
                 )}
                 {application.paymentStatus === 'EXPIRED' && (
                   <p
                     role="status"
-                    className="mt-3 border-l-4 border-red-500 bg-red-50 p-3 text-xs font-medium text-red-800"
+                    className="mt-3 border-l-4 border-amber-500 bg-amber-50 p-3 text-xs font-medium text-amber-900"
                   >
-                    Giao dịch hết thời hạn chờ xác nhận. Để tránh thanh toán trùng, hệ thống đang yêu cầu đối soát VNPAY
-                    trước khi tạo giao dịch mới. Vui lòng liên hệ quản trị viên và cung cấp mã giao dịch.
+                    Liên kết thanh toán trước đó đã hết hạn. Bạn có thể bấm nút bên dưới để tạo mã QR PayOS mới.
                   </p>
                 )}
                 {application.status === 'PENDING_REVIEW' && application.paymentStatus === 'SUCCESS' && (
                   <p className="mt-3 border-l-4 border-emerald-600 bg-emerald-50 p-3 text-xs font-medium text-emerald-900">
-                    Khoản phí đã được xác nhận. Hồ sơ đang chờ quản trị viên xét duyệt; quyền giáo viên sẽ được cấp sau khi
+                    Khoản phí đã được xác nhận qua PayOS. Hồ sơ đang chờ quản trị viên xét duyệt; quyền giáo viên sẽ được cấp sau khi
                     hồ sơ được duyệt.
                   </p>
                 )}
@@ -172,7 +169,7 @@ const TeacherApplicationPage = () => {
                   />
                 </label>
                 <p className="text-xs text-slate-500">
-                  Mức phí được máy chủ cấu hình. Trạng thái thanh toán được xác nhận qua IPN VNPAY.
+                  Mức phí xét duyệt giáo viên là <strong className="font-mono text-slate-800">2.000 ₫</strong>. Trạng thái thanh toán được xác nhận tự động qua PayOS.
                 </p>
                 <button
                   type="submit"
@@ -180,7 +177,9 @@ const TeacherApplicationPage = () => {
                   className="editorial-button-primary inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
                 >
                   {submitting ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
-                  {application?.status === 'PENDING_PAYMENT' ? 'Tiếp tục thanh toán' : 'Gửi hồ sơ và thanh toán'}
+                  {application?.status === 'PENDING_PAYMENT'
+                    ? 'Thanh toán 2.000 ₫ qua PayOS'
+                    : 'Gửi hồ sơ và thanh toán 2.000 ₫ qua PayOS'}
                 </button>
               </form>
             )}

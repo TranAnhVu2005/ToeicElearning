@@ -16,22 +16,17 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class VipPurchaseService {
     private static final String PRODUCT_TYPE = "TEST_VIP";
-    private static final int CHECKOUT_MINUTES = 15;
-    private static final ZoneId GATEWAY_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final UserRepository userRepository;
     private final TestRepository testRepository;
     private final TestEntitlementRepository entitlementRepository;
     private final PaymentTransactionRepository paymentRepository;
-    private final VnpayGatewayService gatewayService;
+    private final PayosGatewayService gatewayService;
+    private final PayosPaymentService paymentService;
 
     @Transactional
     public CheckoutResponse checkout(User user, VipCheckoutRequest request, String remoteAddress) {
@@ -54,18 +49,14 @@ public class VipPurchaseService {
                 buyer.getId(), test.getId(), PRODUCT_TYPE);
         if (latest.isPresent()) {
             PaymentTransaction previous = latest.get();
+            paymentService.syncPendingPaymentIfPossible(previous);
             if ("SUCCESS".equals(previous.getStatus())) {
-                throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
+                throw new AppException(ErrorCode.TEST_ALREADY_OWNED);
             }
-            if ("PENDING".equals(previous.getStatus())) {
-                LocalDateTime expiresAt = previous.getPaymentDate().plusMinutes(CHECKOUT_MINUTES);
-                if (LocalDateTime.now(GATEWAY_ZONE).isBefore(expiresAt)) {
-                    return checkoutResponse(previous, remoteAddress);
-                }
-                throw new AppException(ErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
-            }
-            if ("EXPIRED".equals(previous.getStatus())) {
-                throw new AppException(ErrorCode.PAYMENT_RECONCILIATION_REQUIRED);
+            if ("PENDING".equals(previous.getStatus()) || "EXPIRED".equals(previous.getStatus())) {
+                previous.setStatus("CANCELLED");
+                previous.setVnpTransactionStatus("CANCELLED");
+                paymentRepository.saveAndFlush(previous);
             }
         }
 
@@ -74,7 +65,7 @@ public class VipPurchaseService {
                 .test(test)
                 .productNameSnapshot(test.getTitleTest())
                 .amount(test.getVipPriceVnd())
-                .vnpTxnRef(UUID.randomUUID().toString().replace("-", ""))
+                .vnpTxnRef(gatewayService.newOrderCode())
                 .productType(PRODUCT_TYPE)
                 .status("PENDING")
                 .build();
@@ -83,7 +74,7 @@ public class VipPurchaseService {
     }
 
     private CheckoutResponse checkoutResponse(PaymentTransaction payment, String remoteAddress) {
-        VnpayGatewayService.CheckoutLink checkout = gatewayService.createCheckout(payment, remoteAddress);
+        PayosGatewayService.CheckoutLink checkout = gatewayService.createCheckout(payment, remoteAddress);
         return CheckoutResponse.builder()
                 .transactionReference(payment.getVnpTxnRef())
                 .checkoutUrl(checkout.url())

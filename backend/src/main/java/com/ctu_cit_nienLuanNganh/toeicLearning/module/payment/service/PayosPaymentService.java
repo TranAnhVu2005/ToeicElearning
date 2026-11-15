@@ -1,10 +1,10 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TeacherApplicationStatus;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
-import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.PageResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Notification;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.PaymentTransaction;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TeacherApplication;
@@ -12,32 +12,33 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestEntitlement;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.payment.dto.PaymentStatusResponse;
-import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.NotificationRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.PaymentTransactionRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestEntitlementRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class VnpayPaymentService {
+@Slf4j
+public class PayosPaymentService {
     private static final String TEACHER_APPLICATION = "TEACHER_APPLICATION";
     private static final ZoneId GATEWAY_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-    private static final DateTimeFormatter GATEWAY_DATE = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final DateTimeFormatter PAYOS_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final VnpayGatewayService gatewayService;
+    private final PayosGatewayService gatewayService;
     private final PaymentTransactionRepository paymentRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
@@ -45,57 +46,69 @@ public class VnpayPaymentService {
     private final AuditEventService auditEventService;
 
     @Transactional
-    public IpNResult processIpn(MultiValueMap<String, String> query) {
-        try {
-            if (!gatewayService.verify(query)) return new IpNResult("97", "Invalid Checksum");
-        } catch (RuntimeException exception) {
-            return new IpNResult("97", "Invalid Checksum");
+    public WebhookResult processWebhook(Map<String, Object> payload) {
+        if (payload == null || payload.isEmpty()) {
+            return new WebhookResult(0, "Ok", null);
         }
-        String txnRef = value(query, "vnp_TxnRef");
-        String suppliedTmnCode = value(query, "vnp_TmnCode");
-        if (!gatewayService.isExpectedMerchant(suppliedTmnCode)) return new IpNResult("97", "Invalid Merchant");
-        if (txnRef.isBlank()) return new IpNResult("01", "Order not Found");
+        String signature = payload.get("signature") != null ? String.valueOf(payload.get("signature")) : null;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = payload.get("data") instanceof Map<?, ?> map
+                ? (Map<String, Object>) map
+                : null;
+        if (data == null) {
+            return new WebhookResult(0, "Ok", null);
+        }
+        if (!gatewayService.verifyWebhookSignature(data, signature)) {
+            log.warn("Rejected PayOS webhook due to invalid signature");
+            return new WebhookResult(1, "Invalid signature", null);
+        }
+
+        Object rawOrderCode = data.get("orderCode");
+        String txnRef = rawOrderCode != null ? String.valueOf(rawOrderCode).trim() : "";
+        if (txnRef.isBlank()) {
+            return new WebhookResult(0, "Ok", null);
+        }
 
         PaymentTransaction payment = paymentRepository.findForUpdateByVnpTxnRef(txnRef).orElse(null);
-        if (payment == null) return new IpNResult("01", "Order not Found");
-        if (!"VND".equals(value(query, "vnp_CurrCode"))) {
-            return new IpNResult("04", "Invalid Currency");
-        }
-        long amountMinor;
-        try {
-            amountMinor = Long.parseLong(value(query, "vnp_Amount"));
-            long expectedMinor = payment.getAmount().multiply(BigDecimal.valueOf(100)).longValueExact();
-            if (amountMinor != expectedMinor) return new IpNResult("04", "Invalid Amount");
-        } catch (RuntimeException exception) {
-            return new IpNResult("04", "Invalid Amount");
+        if (payment == null) {
+            // PayOS Dashboard sends a test webhook with dummy orderCode (e.g., 123) when verifying the webhook URL.
+            log.info("PayOS webhook verified for non-local orderCode={} (webhook verification ping)", txnRef);
+            return new WebhookResult(0, "Webhook verified", null);
         }
 
-        if ("SUCCESS".equals(payment.getStatus())) return new IpNResult("00", "Confirm Success");
-        if (!"PENDING".equals(payment.getStatus())) return new IpNResult("02", "Order already confirmed");
-
-        String responseCode = value(query, "vnp_ResponseCode");
-        String transactionStatus = value(query, "vnp_TransactionStatus");
-        String transactionNo = value(query, "vnp_TransactionNo");
-        LocalDateTime paidAt = parsePaidAt(value(query, "vnp_PayDate"));
-        if (responseCode.isBlank() || transactionStatus.isBlank() || transactionNo.isBlank() || paidAt == null) {
-            return new IpNResult("99", "Invalid payment data");
+        if ("SUCCESS".equals(payment.getStatus())) {
+            return new WebhookResult(0, "Confirm Success", null);
         }
 
-        boolean successfulPayment = "00".equals(responseCode) && "00".equals(transactionStatus);
+        long webhookAmount = data.get("amount") instanceof Number num ? num.longValue() : -1L;
+        long expectedAmount = payment.getAmount() != null
+                ? payment.getAmount().setScale(0, RoundingMode.HALF_UP).longValue()
+                : -2L;
+        if (webhookAmount != expectedAmount) {
+            return new WebhookResult(1, "Invalid Amount", null);
+        }
+
+        String topCode = payload.get("code") != null ? String.valueOf(payload.get("code")).trim() : "00";
+        String dataCode = data.get("code") != null ? String.valueOf(data.get("code")).trim() : topCode;
+        String reference = data.get("reference") != null && !String.valueOf(data.get("reference")).isBlank()
+                ? String.valueOf(data.get("reference")).trim()
+                : (data.get("paymentLinkId") != null ? String.valueOf(data.get("paymentLinkId")).trim() : "PAYOS");
+        String txDateTime = data.get("transactionDateTime") != null
+                ? String.valueOf(data.get("transactionDateTime")).trim()
+                : null;
+
+        boolean successfulPayment = "00".equals(topCode) && "00".equals(dataCode);
         if (successfulPayment && !hasValidProductAssociation(payment)) {
-            // Do not acknowledge a successful charge if its persisted product links cannot
-            // produce the corresponding application transition or VIP entitlement. Keeping
-            // the order pending lets operations reconcile inconsistent records safely.
-            return new IpNResult("99", "Invalid payment data");
+            return new WebhookResult(1, "Invalid payment data", null);
         }
 
-        payment.setVnpResponseCode(responseCode);
-        payment.setVnpTransactionStatus(transactionStatus);
-        payment.setVnpTransactionNo(transactionNo);
+        payment.setVnpResponseCode(dataCode);
+        payment.setVnpTransactionStatus(successfulPayment ? "PAID" : "FAILED");
+        payment.setVnpTransactionNo(reference);
         String previousStatus = payment.getStatus();
         if (successfulPayment) {
             payment.setStatus("SUCCESS");
-            payment.setPaidAt(paidAt);
+            payment.setPaidAt(parsePaidAt(txDateTime));
             onSuccessfulPayment(payment);
         } else {
             payment.setStatus("FAILED");
@@ -103,7 +116,51 @@ public class VnpayPaymentService {
         paymentRepository.save(payment);
         auditEventService.record(null, "PAYMENT_STATUS_CHANGED", "PAYMENT_TRANSACTION", payment.getId(),
                 "status=" + previousStatus + "->" + payment.getStatus());
-        return new IpNResult("00", "Confirm Success");
+        return new WebhookResult(0, "Confirm Success", null);
+    }
+
+    @Transactional
+    public void syncPendingPaymentIfPossible(PaymentTransaction payment) {
+        if (payment == null || "SUCCESS".equals(payment.getStatus())) {
+            return;
+        }
+        String status = payment.getStatus();
+        if (!"PENDING".equals(status) && !"EXPIRED".equals(status)) {
+            return;
+        }
+        PayosGatewayService.PayosLinkStatus remote = gatewayService.fetchPaymentLinkInfo(payment.getVnpTxnRef());
+        if (remote == null || remote.status() == null) {
+            return;
+        }
+        long expectedAmount = payment.getAmount() != null
+                ? payment.getAmount().setScale(0, RoundingMode.HALF_UP).longValue()
+                : 0L;
+        String previousStatus = payment.getStatus();
+        if ("PAID".equalsIgnoreCase(remote.status())
+                && remote.amount() == expectedAmount
+                && hasValidProductAssociation(payment)) {
+            payment.setStatus("SUCCESS");
+            payment.setVnpResponseCode("00");
+            payment.setVnpTransactionStatus("PAID");
+            if (remote.reference() != null && !remote.reference().isBlank()) {
+                payment.setVnpTransactionNo(remote.reference());
+            }
+            if (payment.getPaidAt() == null) {
+                payment.setPaidAt(LocalDateTime.now(GATEWAY_ZONE));
+            }
+            onSuccessfulPayment(payment);
+            paymentRepository.save(payment);
+            auditEventService.record(null, "PAYMENT_STATUS_CHANGED", "PAYMENT_TRANSACTION", payment.getId(),
+                    "status=" + previousStatus + "->SUCCESS");
+        } else if ("CANCELLED".equalsIgnoreCase(remote.status())) {
+            payment.setStatus("CANCELLED");
+            payment.setVnpTransactionStatus("CANCELLED");
+            paymentRepository.save(payment);
+        } else if ("EXPIRED".equalsIgnoreCase(remote.status())) {
+            payment.setStatus("EXPIRED");
+            payment.setVnpTransactionStatus("EXPIRED");
+            paymentRepository.save(payment);
+        }
     }
 
     private boolean hasValidProductAssociation(PaymentTransaction payment) {
@@ -124,6 +181,7 @@ public class VnpayPaymentService {
     public PaymentStatusResponse getMyPayment(User user, String transactionReference) {
         PaymentTransaction payment = paymentRepository.findByVnpTxnRefAndUser_Id(transactionReference, user.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        syncPendingPaymentIfPossible(payment);
         return PaymentStatusResponse.builder()
                 .transactionReference(payment.getVnpTxnRef())
                 .status(payment.getStatus())
@@ -165,7 +223,7 @@ public class VnpayPaymentService {
             notificationRepository.save(Notification.builder()
                     .user(application.getUser())
                     .title("Đã nhận thanh toán đăng ký giáo viên")
-                    .content("Thanh toán đã được VNPAY xác nhận. Hồ sơ của bạn đang chờ quản trị viên duyệt.")
+                    .content("Thanh toán đã được PayOS xác nhận. Hồ sơ của bạn đang chờ quản trị viên duyệt.")
                     .type("TEACHER_APPLICATION_PAYMENT")
                     .link("/teacher/application")
                     .isRead(false)
@@ -173,7 +231,7 @@ public class VnpayPaymentService {
             notificationService.notifyAllAdmins(
                     "Hồ sơ đăng ký giáo viên mới chờ duyệt",
                     "Người dùng " + application.getUser().getUserName() + " (" + application.getUser().getUserEmail()
-                            + ") đã hoàn tất thanh toán phí đăng ký giáo viên và đang chờ phê duyệt.",
+                            + ") đã hoàn tất thanh toán phí đăng ký giáo viên qua PayOS và đang chờ phê duyệt.",
                     "TEACHER_APPLICATION_SUBMITTED",
                     "/admin/teacher-applications"
             );
@@ -192,7 +250,7 @@ public class VnpayPaymentService {
             notificationRepository.save(Notification.builder()
                     .user(payment.getUser())
                     .title("Đã mở khóa đề VIP")
-                    .content("Bạn đã mua thành công đề " + payment.getProductNameSnapshot() + ". Quyền truy cập không hết hạn.")
+                    .content("Bạn đã mua thành công đề " + payment.getProductNameSnapshot() + " qua PayOS. Quyền truy cập không hết hạn.")
                     .type("TEST_VIP_PURCHASE")
                     .link("/courses/" + payment.getTest().getId())
                     .isRead(false)
@@ -201,19 +259,19 @@ public class VnpayPaymentService {
     }
 
     private LocalDateTime parsePaidAt(String value) {
+        if (value == null || value.isBlank()) {
+            return LocalDateTime.now(GATEWAY_ZONE);
+        }
         try {
-            return LocalDateTime.parse(value, GATEWAY_DATE);
-        } catch (DateTimeParseException exception) {
-            return null;
+            return LocalDateTime.parse(value.trim(), PAYOS_DATE);
+        } catch (Exception exception) {
+            return LocalDateTime.now(GATEWAY_ZONE);
         }
     }
 
-    private String value(MultiValueMap<String, String> query, String key) {
-        var values = query.get(key);
-        return values == null || values.size() != 1 || values.get(0) == null ? "" : values.get(0);
+    public record WebhookResult(int error, String message, Object data) {
+        public boolean getSuccess() {
+            return error == 0;
+        }
     }
-
-    public record IpNResult(
-            @JsonProperty("RspCode") String responseCode,
-            @JsonProperty("Message") String message) { }
 }

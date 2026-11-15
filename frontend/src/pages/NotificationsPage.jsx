@@ -104,7 +104,7 @@ const TYPE_METADATA = {
     ctaLabel: 'Xem & tải tài liệu PDF',
   },
   PAYMENT: {
-    badge: 'Thanh toán VNPAY',
+    badge: 'Thanh toán PayOS',
     category: 'PAYMENT',
     icon: CreditCard,
     ctaLabel: 'Xem thông tin giao dịch',

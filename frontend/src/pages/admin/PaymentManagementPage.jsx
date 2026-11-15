@@ -141,8 +141,8 @@ const PaymentManagementPage = () => {
       <AdminPageHeader
         eyebrow="Khu vực quản trị"
         eyebrowIcon={CreditCard}
-        title="Lịch sử thanh toán VNPAY"
-        description="Tra cứu giao dịch đã ghi nhận trong hệ thống. Trạng thái chỉ do callback thanh toán đã xác minh cập nhật."
+        title="Lịch sử thanh toán PayOS"
+        description="Tra cứu giao dịch đã ghi nhận trong hệ thống. Trạng thái chỉ do Webhook thanh toán PayOS đã xác minh cập nhật."
         bannerImage={paymentsBanner}
         actions={
           <button
@@ -158,7 +158,7 @@ const PaymentManagementPage = () => {
 
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
         <div className="mb-5 border border-slate-200 bg-white p-4 text-xs text-slate-600">
-          Giao dịch cũ có thể chưa lưu loại sản phẩm. Đây là màn tra cứu chỉ đọc; mọi thay đổi trạng thái được đồng bộ từ IPN VNPAY.
+          Giao dịch cũ có thể chưa lưu loại sản phẩm. Đây là màn tra cứu chỉ đọc; mọi thay đổi trạng thái được đồng bộ từ Webhook PayOS.
         </div>
 
         {error && (
@@ -346,19 +346,19 @@ const PaymentManagementPage = () => {
                                     <dd className="admin-tech-code mt-1 break-all text-slate-900">{detail.id}</dd>
                                   </div>
                                   <div>
-                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã giao dịch VNPAY</dt>
+                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã tham chiếu PayOS</dt>
                                     <dd className="admin-tech-code mt-1 break-all text-slate-900">
                                       {detail.providerTransactionNumber || 'Chưa nhận được'}
                                     </dd>
                                   </div>
                                   <div>
-                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã phản hồi VNPAY</dt>
+                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Mã phản hồi PayOS</dt>
                                     <dd className="admin-tech-code mt-1 text-slate-900">
                                       {detail.providerResponseCode || 'Chưa nhận được'}
                                     </dd>
                                   </div>
                                   <div>
-                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Trạng thái xử lý VNPAY</dt>
+                                    <dt className="font-semibold uppercase tracking-wider text-slate-500">Trạng thái xử lý PayOS</dt>
                                     <dd className="admin-tech-code mt-1 text-slate-900">
                                       {detail.providerTransactionStatus || 'Chưa nhận được'}
                                     </dd>

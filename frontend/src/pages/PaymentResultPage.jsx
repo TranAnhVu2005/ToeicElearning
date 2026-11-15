@@ -5,15 +5,16 @@ import { teacherApplicationService } from '../services/teacherApplicationService
 
 const PaymentResultPage = () => {
   const [searchParams] = useSearchParams();
-  const transactionReference = searchParams.get('txnRef') || '';
+  const transactionReference = searchParams.get('txnRef') || searchParams.get('orderCode') || '';
   const verification = searchParams.get('verification');
+  const cancelParam = searchParams.get('cancel');
   const [payment, setPayment] = useState(null);
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (verification === 'invalid' || !/^[a-f\d]{32}$/i.test(transactionReference)) {
+    if (verification === 'invalid' || !/^([a-f\d]{32}|\d{1,16})$/i.test(transactionReference)) {
       setError('Không xác minh được thông tin điều hướng thanh toán. Hãy xem trạng thái từ hồ sơ của bạn.');
       setChecking(false);
       return undefined;
@@ -49,7 +50,7 @@ const PaymentResultPage = () => {
 
   const success = payment?.status === 'SUCCESS';
   const failed = payment?.status === 'FAILED' || payment?.status === 'EXPIRED';
-  const cancelled = payment?.status === 'CANCELLED';
+  const cancelled = payment?.status === 'CANCELLED' || (!success && cancelParam === 'true');
   const vipPurchase = payment?.productType === 'TEST_VIP';
   const retryVerification = () => {
     setPayment(null);
@@ -62,7 +63,7 @@ const PaymentResultPage = () => {
     <main className="payment-result-page min-h-[75vh] bg-white px-4 py-12 text-slate-900 sm:px-6 lg:px-8">
       <section className="mx-auto max-w-2xl border border-slate-200 bg-white p-6 sm:p-9">
         <p className="editorial-eyebrow inline-flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-          <CreditCard size={15} /> ĐỐI SOÁT GIAO DỊCH VNPAY
+          <CreditCard size={15} /> ĐỐI SOÁT GIAO DỊCH PAYOS
         </p>
 
         <div className="mt-4 flex items-center gap-3">
@@ -101,22 +102,22 @@ const PaymentResultPage = () => {
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
           {success
             ? vipPurchase
-              ? 'VNPAY đã xác nhận giao dịch. Đề VIP đã được mở khóa vĩnh viễn cho tài khoản của bạn.'
-              : 'VNPAY đã xác nhận giao dịch ở máy chủ. Hồ sơ giáo viên đang chờ quản trị viên duyệt.'
+              ? 'PayOS đã xác nhận giao dịch. Đề VIP đã được mở khóa vĩnh viễn cho tài khoản của bạn.'
+              : 'PayOS đã xác nhận giao dịch ở máy chủ. Hồ sơ giáo viên đang chờ quản trị viên duyệt.'
             : cancelled
               ? 'Giao dịch đã được ghi nhận là đã hủy. Bạn có thể bắt đầu một giao dịch mới từ trang sản phẩm hoặc hồ sơ.'
               : failed
                 ? 'Giao dịch không được ghi nhận thành công. Bạn có thể kiểm tra hồ sơ hoặc thử lại.'
                 : payment?.status === 'PENDING'
-                  ? 'Giao dịch vẫn đang chờ xác nhận từ VNPAY. Trang chuyển hướng không quyết định kết quả thanh toán.'
+                  ? 'Giao dịch vẫn đang chờ xác nhận từ PayOS. Trang chuyển hướng không quyết định kết quả thanh toán.'
                   : checking
-                    ? 'Trang chuyển hướng không quyết định kết quả. Hệ thống đang chờ xác nhận IPN từ VNPAY.'
+                    ? 'Trang chuyển hướng không quyết định kết quả. Hệ thống đang chờ xác nhận từ PayOS.'
                     : 'Chưa nhận được trạng thái xác nhận từ máy chủ. Hãy kiểm tra lại hoặc mở lịch sử thanh toán.'}
         </p>
 
         {transactionReference && (
           <p className="mt-4 break-all border border-slate-200 bg-[#F8FAFC] p-3 font-mono text-xs text-slate-700">
-            Mã giao dịch: <strong className="text-slate-900">{transactionReference}</strong>
+            Mã đơn hàng PayOS: <strong className="text-slate-900">{transactionReference}</strong>
           </p>
         )}
 
@@ -131,7 +132,7 @@ const PaymentResultPage = () => {
         )}
 
         {!checking && !success && !failed && !cancelled && payment?.status === 'PENDING' && (
-          <p className="mt-3 text-sm text-slate-500">Nếu vừa thanh toán, hãy chờ IPN hoặc kiểm tra lại sau.</p>
+          <p className="mt-3 text-sm text-slate-500">Nếu vừa thanh toán, hãy chờ Webhook PayOS hoặc kiểm tra lại sau.</p>
         )}
 
         <div className="mt-6 flex flex-wrap gap-3 border-t border-slate-200 pt-5">

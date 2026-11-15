@@ -192,8 +192,8 @@ const PLATFORM_QUICK_TOPICS = [
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Đề thi VIP & Thanh toán VNPAY',
-    prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì và cách mua đề VIP qua VNPAY như thế nào?',
+    label: 'Đề thi VIP & Thanh toán PayOS',
+    prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì và cách mua đề VIP qua PayOS như thế nào?',
   },
   {
     label: 'Tham gia Lớp học & Đăng ký Giáo viên',

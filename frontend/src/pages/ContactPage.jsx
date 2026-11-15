@@ -68,8 +68,8 @@ const supportNotes = [
   },
   {
     step: '02',
-    title: 'Hỗ trợ tài khoản, lớp học và giao dịch VNPAY',
-    detail: 'Cung cấp email đăng nhập hoặc mã giao dịch VNPAY một cách chính xác.',
+    title: 'Hỗ trợ tài khoản, lớp học và giao dịch PayOS',
+    detail: 'Cung cấp email đăng nhập hoặc mã đơn hàng PayOS một cách chính xác.',
   },
   {
     step: '03',
