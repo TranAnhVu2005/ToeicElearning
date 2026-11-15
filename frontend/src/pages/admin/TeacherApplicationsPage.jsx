@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { BadgeCheck, ClipboardCheck, RefreshCw, Search, X } from 'lucide-react';
 import { teacherApplicationService } from '../../services/teacherApplicationService';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
-import teacherAppsBanner from '../../assets/img/ctu/nhadieuhanh.jpg';
+import teacherAppsBanner from '../../assets/img/contact/nhadieuhanh.jpg';
 
 const statusNames = {
   PENDING_PAYMENT: 'Chờ thanh toán',

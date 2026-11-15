@@ -46,12 +46,12 @@ import { useAuth } from '../context/AuthContext';
 import { classroomService } from '../services/classroomService';
 import { examService } from '../services/examService';
 import TestManagementPage from './admin/TestManagementPage';
-import nunaLaptopImg from '../assets/img/gaugau/toby_using_laptop.png';
-import nunaBookImg from '../assets/img/gaugau/toby_studying_book.png';
-import presetStudyDeskImg from '../assets/img/home-optimized/lambai.jpg';
-import presetLibraryImg from '../assets/img/coursepage/thuvien.jpg';
-import presetAutumnImg from '../assets/img/homepage/muaThu.jpg';
-import presetCampusImg from '../assets/img/ctu/hoitruongrua.jpg';
+import nunaLaptopImg from '../assets/img/mascot/toby_using_laptop.png';
+import nunaBookImg from '../assets/img/mascot/toby_studying_book.png';
+import presetStudyDeskImg from '../assets/img/home/lambai.jpg';
+import presetLibraryImg from '../assets/img/courses/thuvien.jpg';
+import presetAutumnImg from '../assets/img/classrooms/muaThu.jpg';
+import presetCampusImg from '../assets/img/contact/hoitruongrua.jpg';
 
 const statusLabels = {
   OWNED: 'Lớp của tôi',

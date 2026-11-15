@@ -23,7 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 import { vipPurchaseService } from '../services/vipPurchaseService';
-import oceanBg from '../assets/img/detailtest/ocean.jpg';
+import oceanBg from '../assets/img/course-detail/ocean.jpg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 import { openAiAssistant } from '../services/aiService';
 

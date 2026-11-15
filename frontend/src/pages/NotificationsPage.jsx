@@ -7,11 +7,9 @@ import {
   Bell,
   BookOpen,
   Check,
-  CheckCheck,
   Clock,
   CreditCard,
   FileText,
-  Filter,
   GraduationCap,
   Inbox,
   MessageSquare,
@@ -22,7 +20,9 @@ import {
 import { notificationService } from '../services/notificationService';
 import Pagination from '../components/common/Pagination';
 import Toast from '../components/common/Toast';
-import headerBgImage from '../assets/img/hero/background_sach.jpg';
+import headerBgImage from '../assets/img/notifications/newspaper.jpg';
+import bodyBgImage from '../assets/img/notifications/thu_bao_quanh.png';
+import bellIcon from '../assets/img/notifications/bell.svg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const PAGE_SIZE = 12;
@@ -31,9 +31,9 @@ const CATEGORY_TABS = [
   { key: 'ALL', label: 'Tất cả thông báo', icon: Inbox },
   { key: 'EXAM', label: 'Kết quả thi', icon: Award },
   { key: 'ASSIGNMENT', label: 'Bài tập lớp', icon: FileText },
-  { key: 'CLASSROOM', label: 'Lớp học & Tài liệu', icon: GraduationCap },
-  { key: 'PAYMENT', label: 'Thanh toán & VIP', icon: CreditCard },
-  { key: 'SYSTEM', label: 'Hồ sơ & Hệ thống', icon: ShieldCheck },
+  { key: 'CLASSROOM', label: 'Lớp học và tài liệu', icon: GraduationCap },
+  { key: 'PAYMENT', label: 'Thanh toán', icon: CreditCard },
+  { key: 'SYSTEM', label: 'Hồ sơ', icon: ShieldCheck },
 ];
 
 const TYPE_METADATA = {
@@ -41,121 +41,121 @@ const TYPE_METADATA = {
     badge: 'Kết quả bài thi',
     category: 'EXAM',
     icon: Award,
-    ctaLabel: 'Xem chi tiết kết quả & lời giải',
+    ctaLabel: 'Xem kết quả',
   },
   ASSIGNMENT: {
     badge: 'Bài tập lớp',
     category: 'ASSIGNMENT',
     icon: FileText,
-    ctaLabel: 'Mở trang lớp học',
+    ctaLabel: 'Vào lớp học',
   },
   ASSIGNMENT_CREATED: {
     badge: 'Bài tập mới',
     category: 'ASSIGNMENT',
     icon: FileText,
-    ctaLabel: 'Mở bài tập trong lớp học',
+    ctaLabel: 'Làm bài tập',
   },
   ASSIGNMENT_DEADLINE_CHANGED: {
     badge: 'Cập nhật hạn nộp',
     category: 'ASSIGNMENT',
     icon: Clock,
-    ctaLabel: 'Xem hạn nộp bài tập',
+    ctaLabel: 'Xem hạn nộp',
   },
   ASSIGNMENT_FEEDBACK: {
     badge: 'Nhận xét giáo viên',
     category: 'ASSIGNMENT',
     icon: MessageSquare,
-    ctaLabel: 'Xem bài làm & nhận xét',
+    ctaLabel: 'Xem nhận xét',
   },
   ASSIGNMENT_SUBMITTED: {
     badge: 'Nộp bài tập',
     category: 'ASSIGNMENT',
     icon: FileText,
-    ctaLabel: 'Chấm & nhận xét trong lớp học',
+    ctaLabel: 'Xem bài nộp',
   },
   CLASSROOM: {
     badge: 'Lớp học',
     category: 'CLASSROOM',
     icon: GraduationCap,
-    ctaLabel: 'Mở không gian lớp học',
+    ctaLabel: 'Vào lớp học',
   },
   CLASSROOM_JOIN_REQUEST: {
     badge: 'Yêu cầu vào lớp',
     category: 'CLASSROOM',
     icon: GraduationCap,
-    ctaLabel: 'Duyệt thành viên trong lớp học',
+    ctaLabel: 'Duyệt thành viên',
   },
   CLASSROOM_MEMBER_APPROVED: {
     badge: 'Đã duyệt vào lớp',
     category: 'CLASSROOM',
     icon: GraduationCap,
-    ctaLabel: 'Truy cập lớp học ngay',
+    ctaLabel: 'Vào lớp học',
   },
   CLASSROOM_MEMBER_STATUS: {
     badge: 'Thành viên lớp học',
     category: 'CLASSROOM',
     icon: GraduationCap,
-    ctaLabel: 'Xem danh sách lớp học',
+    ctaLabel: 'Xem lớp học',
   },
   CLASSROOM_MATERIAL: {
     badge: 'Tài liệu lớp mới',
     category: 'CLASSROOM',
     icon: BookOpen,
-    ctaLabel: 'Xem & tải tài liệu PDF',
+    ctaLabel: 'Xem tài liệu',
   },
   PAYMENT: {
     badge: 'Thanh toán PayOS',
     category: 'PAYMENT',
     icon: CreditCard,
-    ctaLabel: 'Xem thông tin giao dịch',
+    ctaLabel: 'Xem giao dịch',
   },
   TEST_VIP_PURCHASE: {
     badge: 'Mở khóa đề VIP',
     category: 'PAYMENT',
     icon: CreditCard,
-    ctaLabel: 'Vào luyện đề VIP ngay',
+    ctaLabel: 'Làm đề ngay',
   },
   TEACHER_APPLICATION_PAYMENT: {
     badge: 'Phí đăng ký giáo viên',
     category: 'PAYMENT',
     icon: CreditCard,
-    ctaLabel: 'Xem trạng thái hồ sơ giáo viên',
+    ctaLabel: 'Xem hồ sơ',
   },
   TEACHER_APPLICATION: {
     badge: 'Hồ sơ giáo viên',
     category: 'SYSTEM',
     icon: GraduationCap,
-    ctaLabel: 'Xem chi tiết hồ sơ',
+    ctaLabel: 'Xem hồ sơ',
   },
   TEACHER_APPLICATION_SUBMITTED: {
     badge: 'Duyệt giáo viên',
     category: 'SYSTEM',
     icon: ShieldCheck,
-    ctaLabel: 'Mở trang duyệt hồ sơ giáo viên',
+    ctaLabel: 'Duyệt hồ sơ',
   },
   ACCOUNT_SECURITY: {
     badge: 'Bảo mật tài khoản',
     category: 'SYSTEM',
     icon: ShieldCheck,
-    ctaLabel: 'Kiểm tra hồ sơ cá nhân',
+    ctaLabel: 'Xem hồ sơ',
   },
   COMMENT_MODERATED: {
     badge: 'Thảo luận đề thi',
     category: 'SYSTEM',
     icon: MessageSquare,
-    ctaLabel: 'Mở trang đề thi',
+    ctaLabel: 'Xem đề thi',
   },
   WELCOME: {
     badge: 'Chào mừng',
     category: 'SYSTEM',
     icon: BookOpen,
-    ctaLabel: 'Khám phá thư viện đề thi TOEIC',
+    ctaLabel: 'Xem kho đề',
   },
   SYSTEM: {
     badge: 'Hệ thống',
     category: 'SYSTEM',
     icon: Bell,
-    ctaLabel: 'Xem nội dung liên quan',
+    ctaLabel: 'Xem chi tiết',
   },
 };
 
@@ -428,38 +428,55 @@ const NotificationsPage = () => {
   const activeCategoryObj = CATEGORY_TABS.find((t) => t.key === category) || CATEGORY_TABS[0];
 
   return (
-    <div className="notifications-page min-h-screen bg-[#F8FAFC] text-[#111827] pb-16">
+    <div
+      className="notifications-page min-h-screen text-[#111827]"
+      style={{
+        backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.72) 240px, rgba(248, 250, 252, 0.78) 100%), url("${bodyBgImage}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+      }}
+    >
       <Toast
         type={toast?.type}
         message={toast?.message}
         onClose={() => setToast(null)}
       />
 
-      {/* Editorial Header Banner with Photo Background */}
-      <section
-        className="relative overflow-hidden border-b border-[#CBD5E1]"
-        style={{
-          backgroundImage: `linear-gradient(120deg, rgba(255, 255, 255, 0.90) 0%, rgba(248, 250, 252, 0.80) 48%, rgba(241, 245, 249, 0.92) 100%), url("${headerBgImage}")`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center 42%',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+      {/* Header with Newspaper Photo seamlessly fading into Envelope Canvas */}
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(248, 250, 252, 0.62) 55%, rgba(248, 250, 252, 0.92) 100%), url("${headerBgImage}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 42%',
+            backgroundRepeat: 'no-repeat',
+            filter: 'grayscale(100%) contrast(0.92) brightness(1.06)',
+            WebkitMaskImage: 'linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.78) 62%, rgba(0, 0, 0, 0) 100%)',
+            maskImage: 'linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.78) 62%, rgba(0, 0, 0, 0) 100%)',
+          }}
+        />
+        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-7 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2.5">
-              <div className="inline-flex items-center gap-2 rounded-[2px] border border-[#BFDBFE] bg-white/90 px-3 py-1 text-xs font-semibold text-[#1D4ED8] backdrop-blur-sm">
-                <Bell size={14} />
-                <span>Hộp thư thông báo cá nhân</span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3.5">
+                <img
+                  src={bellIcon}
+                  alt=""
+                  className="h-10 w-10 shrink-0 object-contain sm:h-11 sm:w-11"
+                />
+                <h1
+                  className="text-3xl font-semibold tracking-tight text-[#111111] sm:text-4xl"
+                  style={{
+                    textShadow: '0 1px 10px rgba(255, 255, 255, 0.9)',
+                  }}
+                >
+                  Thông báo
+                </h1>
               </div>
-              <h1
-                className="text-3xl font-semibold tracking-tight text-[#111111] sm:text-4xl"
-                style={{
-                  textShadow: '0 1px 10px rgba(255, 255, 255, 0.9)',
-                }}
-              >
-                Thông báo
-              </h1>
               <p
                 className="max-w-2xl text-[15px] font-medium leading-relaxed text-[#334155]"
                 style={{
@@ -496,7 +513,8 @@ const NotificationsPage = () => {
       </section>
 
       {/* Main 2-Column Content Area: Left Filter Sidebar + Right Notification List */}
-      <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6 lg:px-8">
+      <div className="pb-16">
+        <div className="mx-auto max-w-6xl px-4 pt-3 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[270px_minmax(0,1fr)] lg:items-start">
           {/* Left Filter Sidebar */}
           <aside className="space-y-4 lg:sticky lg:top-24" aria-label="Bộ lọc và thao tác thông báo">
@@ -528,7 +546,6 @@ const NotificationsPage = () => {
                 aria-label="Phân loại thông báo"
               >
                 {CATEGORY_TABS.map((tab) => {
-                  const Icon = tab.icon;
                   const isActive = category === tab.key;
                   return (
                     <button
@@ -537,19 +554,18 @@ const NotificationsPage = () => {
                       role="tab"
                       aria-selected={isActive}
                       onClick={() => handleSelectCategory(tab.key)}
-                      className={`flex min-h-[40px] w-full items-center justify-between gap-2.5 rounded-[2px] border px-3 py-2 text-left text-sm font-semibold transition-colors ${isActive
-                        ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                        : 'border-transparent bg-white text-[#374151] hover:border-[#D1D5DB] hover:bg-[#F8FAFC] hover:text-[#1D4ED8]'
+                      className={`flex min-h-[40px] w-full items-center justify-between gap-2.5 border-0 border-b-2 bg-transparent px-2 py-2 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] focus-visible:ring-offset-2 ${isActive
+                        ? 'border-[#1D4ED8] text-[#1D4ED8]'
+                        : 'border-transparent text-[#374151] hover:border-[#CBD5E1] hover:text-[#1D4ED8]'
                         }`}
                     >
                       <span className="inline-flex items-center gap-2.5">
-                        <Icon size={16} className="shrink-0" />
                         <span>{tab.label}</span>
                       </span>
                       {tab.key === 'ALL' && (
                         <span
                           className={`rounded-[2px] px-1.5 py-0.5 text-xs font-semibold tabular-nums ${isActive
-                            ? 'bg-white/20 text-white'
+                            ? 'bg-[#EFF6FF] text-[#1D4ED8]'
                             : 'bg-[#F3F4F6] text-[#4B5563]'
                             }`}
                         >
@@ -580,10 +596,7 @@ const NotificationsPage = () => {
                     : 'border-[#D1D5DB] bg-white text-[#374151] hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
                     }`}
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <Filter size={14} />
-                    <span>Chỉ hiện chưa đọc</span>
-                  </span>
+                  <span>Chỉ hiện chưa đọc</span>
                   <span className="rounded-[2px] bg-[#EFF6FF] px-1.5 py-0.5 text-xs font-semibold text-[#1D4ED8] tabular-nums">
                     {unreadCount}
                   </span>
@@ -593,9 +606,8 @@ const NotificationsPage = () => {
                   type="button"
                   onClick={handleMarkAllRead}
                   disabled={unreadCount === 0 || bulkBusy}
-                  className="flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-[2px] border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[38px] w-full items-center justify-center rounded-[2px] border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#1E40AF] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <CheckCheck size={15} />
                   <span>Đánh dấu tất cả đã đọc</span>
                 </button>
 
@@ -603,10 +615,9 @@ const NotificationsPage = () => {
                   type="button"
                   onClick={() => fetchNotifications()}
                   disabled={loading}
-                  className="flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-xs font-semibold text-[#374151] transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
+                  className="flex min-h-[38px] w-full items-center justify-center rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-xs font-semibold text-[#374151] transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
                 >
-                  <RefreshCw size={14} className={loading ? 'animate-spin text-[#1D4ED8]' : ''} />
-                  <span>Làm mới danh sách</span>
+                  <span>{loading ? 'Đang làm mới...' : 'Làm mới danh sách'}</span>
                 </button>
 
                 {readTotalCount > 0 && (
@@ -614,33 +625,15 @@ const NotificationsPage = () => {
                     type="button"
                     onClick={handleDeleteReadNotifications}
                     disabled={bulkBusy}
-                    className="flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-xs font-semibold text-[#4B5563] transition-colors hover:border-[#DC2626] hover:text-[#DC2626] disabled:opacity-50"
+                    className="flex min-h-[38px] w-full items-center justify-center rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-xs font-semibold text-[#4B5563] transition-colors hover:border-[#DC2626] hover:text-[#DC2626] disabled:opacity-50"
                     title="Xóa toàn bộ các thông báo đã đọc để dọn gọn hộp thư"
                   >
-                    <Trash2 size={14} />
                     <span>Xóa đã đọc ({readTotalCount})</span>
                   </button>
                 )}
               </div>
 
-              {/* Nuna Notification Companion Card */}
-              <div className="border-t border-[#E5E7EB] bg-[#EFF6FF]/60 p-3.5">
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src={unreadCount === 0 ? TOBY_IMAGES.completion : TOBY_IMAGES.encouragement}
-                    alt="Chú cún Nuna nhắc thông báo"
-                    className="h-12 w-16 shrink-0 rounded-lg border border-blue-200 bg-white object-contain p-0.5"
-                  />
-                  <div className="text-xs leading-snug text-slate-700">
-                    <strong className="block font-bold text-[#1D4ED8]">
-                      🐾 Nuna giữ hộp thư
-                    </strong>
-                    {unreadCount === 0
-                      ? 'Tuyệt vời! Bạn đã xem hết mọi thông báo mới.'
-                      : `Bạn có ${unreadCount} thông báo chưa đọc từ kết quả thi & lớp học!`}
-                  </div>
-                </div>
-              </div>
+
             </div>
           </aside>
 
@@ -706,24 +699,24 @@ const NotificationsPage = () => {
                 </p>
               </div>
             ) : !error && items.length === 0 ? (
-              /* Empty State with Nuna */
-              <div className="rounded-[2px] border border-[#D1D5DB] bg-white p-12 text-center">
+              /* Empty State */
+              <div className="notification-feed-card bg-[#F4F6FA] p-12 text-center">
                 <img
-                  src={unreadOnly ? TOBY_IMAGES.completion : TOBY_IMAGES.sleeping}
-                  alt="Chú cún Nuna kiểm tra hộp thư"
+                  src={TOBY_IMAGES.sleeping}
+                  alt="Chưa có thông báo"
                   className="mx-auto mb-3 h-20 w-28 object-contain"
                 />
                 <h2 className="text-lg font-semibold text-[#111111]">
                   {unreadOnly
-                    ? 'Gâu! Không còn thông báo chưa đọc nào'
+                    ? 'Không có thông báo chưa đọc'
                     : category !== 'ALL'
                       ? 'Chưa có thông báo nào trong mục này'
-                      : 'Hộp thư thông báo của bạn đang trống'}
+                      : 'Chưa có thông báo nào'}
                 </h2>
-                <p className="mx-auto mt-1.5 max-w-lg text-sm leading-relaxed text-[#4B5563]">
+                <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-[#4B5563]">
                   {unreadOnly
-                    ? 'Bạn đã đọc hết tất cả thông báo trong danh mục này. Nhấn xem toàn bộ thông báo để tra cứu lịch sử cũ.'
-                    : 'Khi bạn hoàn thành bài thi TOEIC, nhận bài tập hoặc tài liệu từ lớp học, hoặc thực hiện giao dịch mở khóa đề VIP, thông báo chi tiết sẽ xuất hiện tại đây.'}
+                    ? 'Bạn đã xem hết các thông báo trong danh mục này.'
+                    : 'Các cập nhật về kết quả thi, bài tập lớp học và giao dịch sẽ hiển thị tại đây.'}
                 </p>
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
                   {(unreadOnly || category !== 'ALL') && (
@@ -739,18 +732,11 @@ const NotificationsPage = () => {
                       Xem toàn bộ thông báo
                     </button>
                   )}
-                  <Link
-                    to="/courses"
-                    className="inline-flex min-h-[38px] items-center gap-1.5 rounded-[2px] border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2 text-xs font-semibold text-white no-underline hover:bg-[#1E40AF]"
-                  >
-                    <BookOpen size={14} />
-                    <span>Vào thư viện đề thi TOEIC</span>
-                  </Link>
                 </div>
               </div>
             ) : items.length > 0 ? (
-              /* Notification List */
-              <div className="space-y-3">
+              /* Soft Rounded Notification Feed */
+              <div className="space-y-2.5">
                 {items.map((item) => {
                   const id = item.id || item.notificationId;
                   const isRead = Boolean(item.read ?? item.isRead);
@@ -761,111 +747,95 @@ const NotificationsPage = () => {
                   const { absolute, relative } = formatNotificationTimestamp(item.createdAt);
                   const isBusy = actionBusyId === id;
 
+                  const toneMap = {
+                    EXAM: 'bg-[#D1FAE5] text-[#047857]',
+                    ASSIGNMENT: 'bg-[#FFE4CC] text-[#C2410C]',
+                    CLASSROOM: 'bg-[#DBEAFE] text-[#1D4ED8]',
+                    PAYMENT: 'bg-[#EDE9FE] text-[#6D28D9]',
+                    SYSTEM: 'bg-[#E2E8F0] text-[#475569]',
+                  };
+                  const circleTone = toneMap[meta.category] || toneMap.SYSTEM;
+
                   return (
                     <article
                       key={id}
-                      className={`rounded-[2px] border p-5 transition-colors ${isRead
-                        ? 'border-[#D1D5DB] bg-white hover:border-[#9CA3AF]'
-                        : 'border-[#BFDBFE] border-l-[3px] border-l-[#1D4ED8] bg-[#EFF6FF]/65'
+                      className={`notification-feed-card group flex items-center gap-4 px-5 py-3.5 transition-colors ${isRead
+                        ? 'bg-[#F4F6FA] hover:bg-[#EAEFF7]'
+                        : 'bg-[#EBF2FF] hover:bg-[#E1ECFF]'
                         }`}
                     >
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                          {/* Icon Box */}
-                          <div
-                            className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[2px] border ${isRead
-                              ? 'border-[#D1D5DB] bg-[#F8FAFC] text-[#4B5563]'
-                              : 'border-[#BFDBFE] bg-white text-[#1D4ED8]'
+                      <div
+                        className={`notification-feed-icon flex h-10 w-10 shrink-0 items-center justify-center ${circleTone}`}
+                        aria-hidden="true"
+                      >
+                        <IconComponent size={18} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h2
+                            className={`truncate text-[15px] leading-snug ${isRead ? 'font-medium text-[#1F2937]' : 'font-semibold text-[#0F172A]'
                               }`}
-                            aria-hidden="true"
                           >
-                            <IconComponent size={18} />
-                          </div>
-
-                          {/* Content Column */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span
-                                className={`inline-flex items-center rounded-[2px] border px-2 py-0.5 text-xs font-semibold ${isRead
-                                  ? 'border-[#D1D5DB] bg-[#F8FAFC] text-[#374151]'
-                                  : 'border-[#BFDBFE] bg-white text-[#1D4ED8]'
-                                  }`}
-                              >
-                                {meta.badge}
-                              </span>
-
-                              {!isRead && (
-                                <span className="inline-flex items-center gap-1 rounded-[2px] border border-[#1D4ED8] bg-[#1D4ED8] px-2 py-0.5 text-[11px] font-semibold text-white">
-                                  Chưa đọc
-                                </span>
-                              )}
-
-                              {absolute && (
-                                <span className="inline-flex items-center gap-1 text-xs text-[#6B7280] tabular-nums">
-                                  <Clock size={12} className="shrink-0" />
-                                  <span>{absolute}</span>
-                                  {relative && <span>· {relative}</span>}
-                                </span>
-                              )}
-                            </div>
-
-                            <h2
-                              className={`mt-2 text-lg leading-snug ${isRead ? 'font-medium text-[#111827]' : 'font-semibold text-[#111111]'
-                                }`}
-                            >
-                              {item.title}
-                            </h2>
-
-                            <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-[#374151]">
-                              {item.content}
-                            </p>
-
-                            {targetLink && (
-                              <div className="mt-3">
-                                <Link
-                                  to={targetLink}
-                                  onClick={() => {
-                                    if (!isRead) {
-                                      handleMarkRead(id, { silentToast: true });
-                                    }
-                                  }}
-                                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1D4ED8] hover:text-[#1E40AF] hover:underline"
-                                >
-                                  <span>{ctaText}</span>
-                                  <ArrowRight size={14} />
-                                </Link>
-                              </div>
-                            )}
-                          </div>
+                            {item.title}
+                          </h2>
+                          {!isRead && (
+                            <span
+                              className="h-2 w-2 shrink-0 rounded-full bg-[#1D4ED8]"
+                              aria-label="Chưa đọc"
+                            />
+                          )}
                         </div>
 
-                        {/* Item Actions */}
-                        <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
-                          {!isRead && (
-                            <button
-                              type="button"
-                              disabled={isBusy}
-                              onClick={() => handleMarkRead(id)}
-                              className="inline-flex min-h-[34px] items-center gap-1.5 rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-1.5 text-xs font-semibold text-[#111827] transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8] disabled:opacity-50"
-                              title="Đánh dấu thông báo này là đã đọc"
-                            >
-                              <Check size={13} className="text-[#1D4ED8]" />
-                              <span>Đã đọc</span>
-                            </button>
-                          )}
+                        <p className="mt-0.5 line-clamp-2 text-[13.5px] leading-relaxed text-[#475569]">
+                          {item.content}
+                        </p>
 
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#64748B]">
+                          <span className="tabular-nums">
+                            {relative || absolute}
+                            {relative && absolute ? ` · ${absolute}` : ''}
+                          </span>
+                          {targetLink && (
+                            <Link
+                              to={targetLink}
+                              onClick={() => {
+                                if (!isRead) {
+                                  handleMarkRead(id, { silentToast: true });
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 font-medium text-[#1D4ED8] no-underline transition-colors hover:text-[#1E40AF] hover:underline"
+                            >
+                              <span>{ctaText}</span>
+                              <ArrowRight size={12} />
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        {!isRead && (
                           <button
                             type="button"
                             disabled={isBusy}
-                            onClick={() => handleDeleteNotification(id)}
-                            className="inline-flex min-h-[34px] items-center gap-1 rounded-[2px] border border-[#D1D5DB] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#6B7280] transition-colors hover:border-[#DC2626] hover:text-[#DC2626] disabled:opacity-50"
-                            title="Xóa thông báo này"
-                            aria-label={`Xóa thông báo: ${item.title}`}
+                            onClick={() => handleMarkRead(id)}
+                            className="notification-feed-action-btn inline-flex h-8 w-8 cursor-pointer items-center justify-center text-[#1D4ED8] transition-colors hover:bg-[#DBEAFE] disabled:opacity-50"
+                            title="Đánh dấu đã đọc"
+                            aria-label="Đánh dấu đã đọc"
                           >
-                            <Trash2 size={13} />
-                            <span className="sm:hidden">Xóa</span>
+                            <Check size={15} />
                           </button>
-                        </div>
+                        )}
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleDeleteNotification(id)}
+                          className="notification-feed-action-btn inline-flex h-8 w-8 cursor-pointer items-center justify-center text-[#64748B] transition-colors hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50"
+                          title="Xóa thông báo"
+                          aria-label={`Xóa thông báo: ${item.title}`}
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
                     </article>
                   );
@@ -873,7 +843,7 @@ const NotificationsPage = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <Pagination
                       currentPage={page}
                       totalPages={totalPages}
@@ -884,6 +854,7 @@ const NotificationsPage = () => {
               </div>
             ) : null}
           </div>
+        </div>
         </div>
       </div>
     </div>

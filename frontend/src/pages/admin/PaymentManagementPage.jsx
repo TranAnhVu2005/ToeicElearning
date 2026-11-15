@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, CreditCard, LoaderCircle, RefreshCw, Search } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
-import paymentsBanner from '../../assets/img/coursepage/biasach.jpg';
+import paymentsBanner from '../../assets/img/courses/biasach.jpg';
 
 const statusLabel = {
   PENDING: 'Đang xử lý',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageSquareText } from 'lucide-react';
-import brandLogo from '../../assets/img/logo1.png';
+import brandLogo from '../../assets/img/layout/logo1.png';
 import { TOBY_IMAGES } from '../common/TobyMascot';
 import { openAiAssistant } from '../../services/aiService';
 
@@ -9,55 +9,6 @@ const Footer = () => {
   return (
     <footer className="site-footer">
       <div className="container">
-        {/* Duolingo-inspired Nuna Daily Practice Footer Banner */}
-        <div className="mb-8 flex flex-col items-center justify-between gap-4 border border-blue-200/90 bg-gradient-to-r from-[#EFF6FF] via-white to-[#F8FAFC] p-5 sm:flex-row sm:p-6">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-            <div className="flex shrink-0 items-center gap-2">
-              <img
-                src={TOBY_IMAGES.cheering}
-                alt="Chú cún Nuna vẫy tay cổ vũ"
-                className="h-16 w-16 rounded-xl border border-blue-200 bg-white object-contain p-1 shadow-2xs"
-              />
-              <img
-                src={TOBY_IMAGES.trophy}
-                alt="Chú cún Nuna nâng cúp TOEIC"
-                className="hidden h-16 w-16 rounded-xl border border-amber-200 bg-white object-contain p-1 shadow-2xs md:block"
-              />
-            </div>
-            <div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]">
-                <span>🐾 Nuna có điều muốn nói!!!</span>
-              </span>
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
-                Tớ muốn đi dạo cùng với chứng chỉ TOEIC 990! Dắt tớ đi cùng nhé!
-              </h3>
-
-            </div>
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center justify-center gap-2.5">
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2.5 text-xs font-bold text-white no-underline transition-colors hover:bg-[#1E40AF]"
-            >
-              <span>Làm đề cùng Nuna</span>
-              <ArrowRight size={14} />
-            </Link>
-            <button
-              type="button"
-              onClick={() =>
-                openAiAssistant({
-                  autoPrompt: 'Chào Nuna! Hãy gợi ý cho mình mẹo học TOEIC mỗi ngày để giữ chuỗi Streak nhé!',
-                })
-              }
-              className="inline-flex cursor-pointer items-center gap-1.5 border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-            >
-              <MessageSquareText size={14} className="text-[#1D4ED8]" />
-              <span>Hỏi Trợ lý AI Nuna</span>
-            </button>
-          </div>
-        </div>
-
         <div className="footer-grid">
           {/* Col 1: Brand & About */}
           <div className="footer-col">

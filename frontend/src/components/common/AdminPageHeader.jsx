@@ -1,6 +1,6 @@
 import React from 'react';
 import AdminNavTabs from './AdminNavTabs';
-import defaultAdminBanner from '../../assets/img/coursepage/thuvien.jpg';
+import defaultAdminBanner from '../../assets/img/courses/thuvien.jpg';
 
 /**
  * Shared Editorial header banner for all Admin management screens.

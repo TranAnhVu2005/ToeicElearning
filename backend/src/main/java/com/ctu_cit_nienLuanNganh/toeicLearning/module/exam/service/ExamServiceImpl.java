@@ -1041,10 +1041,9 @@ public class ExamServiceImpl implements ExamService {
                 ? "Kết quả Full Test: " + test.getTitleTest()
                 : "Hoàn thành bài luyện tập: " + test.getTitleTest();
         String examResultContent = fullLengthForm
-                ? "Bạn đạt " + totalScore + "/990 điểm ước tính (Nghe: " + listeningScore
-                        + " · Đọc: " + readingScore + " · Đúng " + correctCount + "/200 câu). Nhấn để xem chi tiết đáp án và lời giải."
-                : "Bạn trả lời đúng " + correctCount + "/" + targetQuestions.size()
-                        + " câu. Nhấn để xem lại chi tiết đáp án, transcript và lời giải.";
+                ? "Điểm ước tính: " + totalScore + "/990 (Nghe: " + listeningScore
+                        + ", Đọc: " + readingScore + ") · Đúng " + correctCount + "/200 câu."
+                : "Bạn trả lời đúng " + correctCount + "/" + targetQuestions.size() + " câu.";
         notificationService.createNotification(
                 lockedUser,
                 examResultTitle,
@@ -1062,10 +1061,10 @@ public class ExamServiceImpl implements ExamService {
                     : "Đúng " + correctCount + "/" + targetQuestions.size() + " câu";
             notificationService.createNotification(
                     submittedAssignment.getClassroom().getTeacher(),
-                    "Học viên vừa nộp bài tập lớp học",
-                    "Học viên " + lockedUser.getUserName() + " đã nộp bài tập \"" + submittedAssignment.getTitle()
-                            + "\" trong lớp \"" + submittedAssignment.getClassroom().getClassName()
-                            + "\" (" + timingLabel + " · Kết quả: " + scoreLabel + ").",
+                    "Bài nộp mới từ " + lockedUser.getUserName(),
+                    lockedUser.getUserName() + " đã nộp bài \"" + submittedAssignment.getTitle()
+                            + "\" (" + submittedAssignment.getClassroom().getClassName()
+                            + ") · " + timingLabel + " · " + scoreLabel + ".",
                     "ASSIGNMENT_SUBMITTED",
                     "/classrooms"
             );

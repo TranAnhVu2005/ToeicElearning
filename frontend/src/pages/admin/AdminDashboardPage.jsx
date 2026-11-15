@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
-import auditHeaderBg from '../../assets/img/hero/background_sach.jpg';
+import auditHeaderBg from '../../assets/img/home/background_sach.jpg';
 
 const REPORTING_TIME_ZONE = 'Asia/Ho_Chi_Minh';
 const formatReportingDate = (date) => {

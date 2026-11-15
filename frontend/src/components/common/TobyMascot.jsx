@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import tobyCompletion from '../../assets/img/gaugau/toby_completion.png';
-import tobyEncouragement from '../../assets/img/gaugau/toby_encouragement.png';
-import tobyHoldingHeart from '../../assets/img/gaugau/toby_holding_heart.png';
-import tobyMainCheering from '../../assets/img/gaugau/toby_main_cheering.png';
-import tobySleeping from '../../assets/img/gaugau/toby_sleeping.png';
-import tobyStudyingBook from '../../assets/img/gaugau/toby_studying_book.png';
-import tobyThinking from '../../assets/img/gaugau/toby_thinking.png';
-import tobyUsingLaptop from '../../assets/img/gaugau/toby_using_laptop.png';
-import tobyWinningTrophy from '../../assets/img/gaugau/toby_winning_trophy.png';
+import tobyCompletion from '../../assets/img/mascot/toby_completion.png';
+import tobyEncouragement from '../../assets/img/mascot/toby_encouragement.png';
+import tobyHoldingHeart from '../../assets/img/mascot/toby_holding_heart.png';
+import tobyMainCheering from '../../assets/img/mascot/toby_main_cheering.png';
+import tobySleeping from '../../assets/img/mascot/toby_sleeping.png';
+import tobyStudyingBook from '../../assets/img/mascot/toby_studying_book.png';
+import tobyThinking from '../../assets/img/mascot/toby_thinking.png';
+import tobyUsingLaptop from '../../assets/img/mascot/toby_using_laptop.png';
+import tobyWinningTrophy from '../../assets/img/mascot/toby_winning_trophy.png';
 
 export const TOBY_IMAGES = {
   completion: tobyCompletion,

@@ -10,14 +10,14 @@ import {
   Play,
   UserCheck,
 } from 'lucide-react';
-import heroLibraryBg from '../assets/img/coursepage/thuvien.jpg';
-import ctuAdminImg from '../assets/img/ctu/nhadieuhanh.jpg';
-import ctuTurtleHallImg from '../assets/img/ctu/hoitruongrua.jpg';
-import ctuCampusImg from '../assets/img/ctu/daihoccantho.jpg';
-import ctuPanoramaImg from '../assets/img/ctu/toancanh.jpg';
-import studyDeskImg from '../assets/img/home-optimized/lambai.jpg';
-import zaloLogoImg from '../assets/img/zalo_email/zalo.png';
-import gmailLogoImg from '../assets/img/zalo_email/email.png';
+import heroLibraryBg from '../assets/img/courses/thuvien.jpg';
+import ctuAdminImg from '../assets/img/contact/nhadieuhanh.jpg';
+import ctuTurtleHallImg from '../assets/img/contact/hoitruongrua.jpg';
+import ctuCampusImg from '../assets/img/contact/daihoccantho.jpg';
+import ctuPanoramaImg from '../assets/img/contact/toancanh.jpg';
+import studyDeskImg from '../assets/img/home/lambai.jpg';
+import zaloLogoImg from '../assets/img/contact/zalo.png';
+import gmailLogoImg from '../assets/img/contact/email.png';
 
 const CTU_SLIDES = [
   {

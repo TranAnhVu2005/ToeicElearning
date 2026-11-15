@@ -36,7 +36,7 @@ import { uploadMediaFile } from '../../services/uploadService';
 import Pagination from '../../components/common/Pagination';
 import Modal from '../../components/common/Modal';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
-import testStudioBanner from '../../assets/img/hero/bangtrang.jpg';
+import testStudioBanner from '../../assets/img/home/bangtrang.jpg';
 
 import Toast from '../../components/common/Toast';
 import {

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ArrowUpRight, BadgeCheck, ClipboardList, RefreshCw } from 'lucide-react';
 import { teacherApplicationService } from '../services/teacherApplicationService';
+import teacherBgImage from '../assets/img/teacher-application/teacher.png';
 
 const statusText = {
   PENDING_PAYMENT: 'Chờ thanh toán',
@@ -70,131 +71,217 @@ const TeacherApplicationPage = () => {
   const canApply = !application || application.status === 'REJECTED' || application.status === 'PENDING_PAYMENT';
 
   return (
-    <main className="teacher-application-page min-h-[75vh] bg-white px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-8 border-b border-slate-200 pb-6">
-          <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-            <ClipboardList size={16} /> Đăng ký giảng viên
+    <div className="teacher-application-page relative min-h-[calc(100vh-72px)] overflow-hidden px-4 py-10 text-[#111827] sm:px-6 lg:px-8 lg:py-12">
+      {/* Background Classroom Illustration */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0">
+        <img
+          src={teacherBgImage}
+          alt=""
+          className="h-full w-full object-cover object-center"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(248, 250, 252, 0.56) 0%, rgba(241, 245, 249, 0.64) 55%, rgba(248, 250, 252, 0.72) 100%)',
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl">
+        {/* Editorial Page Header */}
+        <header className="mb-6 rounded-[2px] border border-[#D1D5DB] bg-white/92 p-6 backdrop-blur-sm sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
+                <ClipboardList size={15} />
+                <span>Đăng ký giảng viên</span>
+              </div>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#111111] sm:text-4xl">
+                Trở thành giáo viên
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#4B5563]">
+                Thanh toán phí đăng ký{' '}
+                <strong className="font-semibold tabular-nums text-[#111111]">2.000 ₫</strong> qua PayOS để gửi hồ sơ
+                xét duyệt. Quyền giáo viên sẽ được kích hoạt ngay sau khi quản trị viên phê duyệt.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={loadApplication}
+              disabled={loading}
+              className="editorial-button-secondary inline-flex min-h-11 items-center gap-2 rounded-[2px] px-4 py-2 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] focus-visible:ring-offset-2 disabled:opacity-60"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Cập nhật trạng thái</span>
+            </button>
           </div>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Trở thành giáo viên</h1>
-          <p className="mt-2 max-w-xl text-sm text-slate-600">
-            Thanh toán phí đăng ký <strong className="font-mono text-slate-900">2.000 ₫</strong> qua PayOS để gửi hồ sơ xét duyệt. Quyền giáo viên chỉ được cấp sau khi quản trị viên duyệt.
-          </p>
         </header>
 
         {error && (
-          <div role="alert" className="mb-5 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+          <div
+            role="alert"
+            className="mb-6 rounded-[2px] border border-red-200 bg-red-50/95 p-4 text-sm font-medium text-red-800 backdrop-blur-sm"
+          >
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="border border-slate-200 bg-[#F8FAFC] p-8 text-center text-sm text-slate-600">
+          <div className="rounded-[2px] border border-[#D1D5DB] bg-white/92 p-10 text-center text-sm text-[#5B6472] backdrop-blur-sm">
             Đang tải trạng thái hồ sơ…
           </div>
         ) : (
-          <>
-            {application && (
-              <section className="mb-6 border border-slate-200 bg-white p-5 sm:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Trạng thái hồ sơ
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+            {/* Main Column: Status & Application Form */}
+            <div className="space-y-6">
+              {application && (
+                <section className="rounded-[2px] border border-[#D1D5DB] bg-white/94 p-6 backdrop-blur-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#E5E7EB] pb-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-[#5B6472]">
+                        Trạng thái hồ sơ
+                      </p>
+                      <p className="mt-1 text-lg font-bold text-[#111111]">
+                        {statusText[application.status] || application.status}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-[2px] border px-3 py-1 text-xs font-semibold ${
+                        paymentStatusStyle[application.paymentStatus] ||
+                        'border-[#D1D5DB] bg-[#F8FAFC] text-[#374151]'
+                      }`}
+                    >
+                      Thanh toán: {paymentStatusText[application.paymentStatus] || 'Chưa tạo'}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <p className="font-semibold tabular-nums text-[#111827]">
+                      Phí đăng ký xét duyệt:{' '}
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        maximumFractionDigits: 0,
+                      }).format(Number(application.amount ?? 2000))}
                     </p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">
-                      {statusText[application.status] || application.status}
+                    {application.transactionReference && (
+                      <p className="break-all text-xs text-[#5B6472]">
+                        Mã đơn hàng PayOS:{' '}
+                        <span className="font-mono text-[#111827]">{application.transactionReference}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {application.paymentStatus === 'EXPIRED' && (
+                    <p
+                      role="status"
+                      className="mt-4 rounded-[2px] border-l-4 border-amber-500 bg-amber-50 p-3 text-xs font-medium text-amber-900"
+                    >
+                      Liên kết thanh toán trước đó đã hết hạn. Bạn có thể bấm nút bên dưới để tạo mã QR PayOS mới.
+                    </p>
+                  )}
+                  {application.status === 'PENDING_REVIEW' && application.paymentStatus === 'SUCCESS' && (
+                    <p className="mt-4 rounded-[2px] border-l-4 border-emerald-600 bg-emerald-50 p-3 text-xs font-medium text-emerald-900">
+                      Khoản phí đã được xác nhận qua PayOS. Hồ sơ đang chờ quản trị viên xét duyệt; quyền giáo viên sẽ
+                      được cấp sau khi hồ sơ được duyệt.
+                    </p>
+                  )}
+                  {application.reviewReason && (
+                    <p className="mt-4 rounded-[2px] border-l-4 border-slate-400 bg-slate-50 p-3 text-xs font-medium text-slate-700">
+                      Phản hồi: {application.reviewReason}
+                    </p>
+                  )}
+                  {application.status === 'APPROVED' && (
+                    <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                      <BadgeCheck size={18} /> Bạn có thể bắt đầu sử dụng các chức năng dành cho giáo viên.
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {canApply && (
+                <form
+                  onSubmit={startPayment}
+                  className="space-y-5 rounded-[2px] border border-[#D1D5DB] bg-white/94 p-6 backdrop-blur-sm"
+                >
+                  <label className="block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#374151]">
+                      Giới thiệu ngắn (không bắt buộc)
+                    </span>
+                    <textarea
+                      value={statement}
+                      onChange={(event) => setStatement(event.target.value)}
+                      maxLength={1000}
+                      rows={5}
+                      className="w-full rounded-[2px] border border-[#CBD5E1] bg-white p-3.5 text-sm leading-relaxed text-[#111827] outline-none transition-colors focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/15"
+                      placeholder="Kinh nghiệm hoặc mục tiêu giảng dạy của bạn"
+                    />
+                  </label>
+
+                  <div className="flex flex-col gap-4 border-t border-[#E5E7EB] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs leading-relaxed text-[#5B6472]">
+                      Mức phí xét duyệt giáo viên là{' '}
+                      <strong className="font-semibold tabular-nums text-[#111827]">2.000 ₫</strong>. Trạng thái thanh
+                      toán được xác nhận tự động qua PayOS.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="editorial-button-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-[2px] px-5 py-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D4ED8] focus-visible:ring-offset-2 disabled:opacity-60"
+                    >
+                      {submitting ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
+                      <span>
+                        {application?.status === 'PENDING_PAYMENT'
+                          ? 'Thanh toán 2.000 ₫ qua PayOS'
+                          : 'Gửi hồ sơ và thanh toán 2.000 ₫ qua PayOS'}
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Right Sidebar: Process Guide */}
+            <aside className="rounded-[2px] border border-[#D1D5DB] bg-white/92 p-6 backdrop-blur-sm">
+              <h2 className="border-b border-[#E5E7EB] pb-3 text-xs font-semibold uppercase tracking-wider text-[#374151]">
+                Quy trình xét duyệt
+              </h2>
+              <ol className="mt-4 space-y-4 text-sm">
+                <li className="flex gap-3">
+                  <span className="mt-0.5 text-xs font-semibold tabular-nums text-[#1D4ED8]">01</span>
+                  <div>
+                    <p className="font-semibold text-[#111111]">Gửi hồ sơ &amp; thanh toán</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
+                      Điền giới thiệu ngắn và hoàn tất phí xét duyệt{' '}
+                      <span className="tabular-nums font-semibold text-[#111827]">2.000 ₫</span> qua cổng PayOS.
                     </p>
                   </div>
-                  <span
-                    className={`border px-3 py-1 text-xs font-semibold ${
-                      paymentStatusStyle[application.paymentStatus] || 'border-slate-200 bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    Thanh toán: {paymentStatusText[application.paymentStatus] || 'Chưa tạo'}
-                  </span>
-                </div>
-                <p className="mt-3 font-mono text-sm font-semibold text-slate-800">
-                  Phí đăng ký xét duyệt:{' '}
-                  {new Intl.NumberFormat('vi-VN', {
-                    style: 'currency',
-                    currency: 'VND',
-                    maximumFractionDigits: 0,
-                  }).format(Number(application.amount ?? 2000))}
-                </p>
-                {application.transactionReference && (
-                  <p className="mt-1.5 break-all font-mono text-xs text-slate-500">
-                    Mã đơn hàng PayOS: {application.transactionReference}
-                  </p>
-                )}
-                {application.paymentStatus === 'EXPIRED' && (
-                  <p
-                    role="status"
-                    className="mt-3 border-l-4 border-amber-500 bg-amber-50 p-3 text-xs font-medium text-amber-900"
-                  >
-                    Liên kết thanh toán trước đó đã hết hạn. Bạn có thể bấm nút bên dưới để tạo mã QR PayOS mới.
-                  </p>
-                )}
-                {application.status === 'PENDING_REVIEW' && application.paymentStatus === 'SUCCESS' && (
-                  <p className="mt-3 border-l-4 border-emerald-600 bg-emerald-50 p-3 text-xs font-medium text-emerald-900">
-                    Khoản phí đã được xác nhận qua PayOS. Hồ sơ đang chờ quản trị viên xét duyệt; quyền giáo viên sẽ được cấp sau khi
-                    hồ sơ được duyệt.
-                  </p>
-                )}
-                {application.reviewReason && (
-                  <p className="mt-3 border-l-4 border-slate-400 bg-slate-50 p-3 text-xs font-medium text-slate-700">
-                    Phản hồi: {application.reviewReason}
-                  </p>
-                )}
-                {application.status === 'APPROVED' && (
-                  <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                    <BadgeCheck size={18} /> Bạn có thể bắt đầu sử dụng các chức năng dành cho giáo viên.
-                  </p>
-                )}
-              </section>
-            )}
-
-            {canApply && (
-              <form onSubmit={startPayment} className="space-y-4 border border-slate-200 bg-white p-5 sm:p-6">
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                    Giới thiệu ngắn (không bắt buộc)
-                  </span>
-                  <textarea
-                    value={statement}
-                    onChange={(event) => setStatement(event.target.value)}
-                    maxLength={1000}
-                    rows={4}
-                    className="w-full border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                    placeholder="Kinh nghiệm hoặc mục tiêu giảng dạy của bạn"
-                  />
-                </label>
-                <p className="text-xs text-slate-500">
-                  Mức phí xét duyệt giáo viên là <strong className="font-mono text-slate-800">2.000 ₫</strong>. Trạng thái thanh toán được xác nhận tự động qua PayOS.
-                </p>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="editorial-button-primary inline-flex min-h-11 items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold disabled:opacity-60"
-                >
-                  {submitting ? <RefreshCw size={16} className="animate-spin" /> : <ArrowUpRight size={16} />}
-                  {application?.status === 'PENDING_PAYMENT'
-                    ? 'Thanh toán 2.000 ₫ qua PayOS'
-                    : 'Gửi hồ sơ và thanh toán 2.000 ₫ qua PayOS'}
-                </button>
-              </form>
-            )}
-
-            <button
-              type="button"
-              onClick={loadApplication}
-              className="editorial-button-secondary mt-5 inline-flex min-h-10 items-center gap-2 px-4 py-2 text-xs font-semibold"
-            >
-              <RefreshCw size={14} /> Cập nhật trạng thái
-            </button>
-          </>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-0.5 text-xs font-semibold tabular-nums text-[#1D4ED8]">02</span>
+                  <div>
+                    <p className="font-semibold text-[#111111]">Xác nhận &amp; duyệt hồ sơ</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
+                      Hệ thống ghi nhận thanh toán tự động và chuyển hồ sơ tới quản trị viên xem xét.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-0.5 text-xs font-semibold tabular-nums text-[#1D4ED8]">03</span>
+                  <div>
+                    <p className="font-semibold text-[#111111]">Mở không gian giảng dạy</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
+                      Sau khi được duyệt, bạn có thể tạo lớp học, giao bài tập và đăng tài liệu cho học viên.
+                    </p>
+                  </div>
+                </li>
+              </ol>
+            </aside>
+          </div>
         )}
       </div>
-    </main>
+    </div>
   );
 };
 

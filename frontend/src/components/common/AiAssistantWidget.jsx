@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
 import { TOBY_IMAGES, TobyAvatar } from './TobyMascot';
-import nunaBgImage from '../../assets/img/gaugau/anh_cho_ban_sung.jpg';
+import nunaBgImage from '../../assets/img/mascot/anh_cho_ban_sung.jpg';
 
 /**
  * Lightweight, safe Markdown-to-JSX renderer for AI responses
@@ -652,17 +652,17 @@ const AiAssistantWidget = () => {
               setIsOpen(true);
               setTimeout(() => inputRef.current?.focus(), 120);
             }}
-            className="ai-launcher-btn group flex cursor-pointer items-center gap-3 rounded-2xl border border-blue-500/30 bg-gradient-to-r from-[#0F172A] via-[#1E3A8A] to-[#1D4ED8] px-3.5 py-2.5 text-white shadow-[0_12px_30px_-6px_rgba(29,78,216,0.45)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_36px_-6px_rgba(29,78,216,0.6)]"
+            className="ai-launcher-btn group relative flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white p-1 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_-6px_rgba(15,23,42,0.28)]"
             aria-label="Mở Trợ lý AI Nuna — Bạn đồng hành TOEIC"
           >
-            <span className="toby-launcher-avatar relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-[#FFFDF9] shadow-xs">
+            <span className="toby-launcher-avatar relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#FFFDF9]">
               <img
                 src={examResult ? TOBY_IMAGES.studying : TOBY_IMAGES.cheering}
                 alt="Chú cún Nuna — Trợ lý AI TOEIC"
-                className="h-full w-full object-contain p-0.5 transition-transform duration-200 group-hover:scale-110"
+                className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
               />
-              <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-[#0F172A] bg-emerald-400" />
             </span>
+            <span className="absolute right-0.5 bottom-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
           </button>
         </div>
       )}

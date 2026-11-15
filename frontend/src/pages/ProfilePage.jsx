@@ -29,8 +29,8 @@ import {
 import Toast from '../components/common/Toast';
 import { teacherApplicationService } from '../services/teacherApplicationService';
 import { GoogleLogin } from '@react-oauth/google';
-import heroBg from '../assets/img/coursepage/thuvien.jpg';
-import sidebarCoverBg from '../assets/img/coursepage/biasach.jpg';
+import heroBg from '../assets/img/courses/thuvien.jpg';
+import sidebarCoverBg from '../assets/img/courses/biasach.jpg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const ProfilePage = () => {

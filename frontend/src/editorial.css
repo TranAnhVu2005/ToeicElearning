@@ -1695,7 +1695,7 @@ body,
 .app-shell .home-page {
   color: var(--editorial-text) !important;
   background-color: #eadfd1 !important;
-  background-image: linear-gradient(rgb(250 249 247 / 74%), rgb(250 249 247 / 74%)), url('./assets/img/homepage/sanGo.jpg') !important;
+  background-image: linear-gradient(rgb(250 249 247 / 74%), rgb(250 249 247 / 74%)), url('./assets/img/home/sanGo.jpg') !important;
   background-position: center top;
   background-size: cover;
   background-repeat: no-repeat;

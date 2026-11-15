@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import booksBackground from '../../assets/img/hero/background_sach.jpg';
-import blankPageBackground from '../../assets/img/hero/bangtrang.jpg';
-import lettersBackground from '../../assets/img/hero/cacChuCai.jpg';
-import toeicBackground from '../../assets/img/hero/toeic_980_co_ban_tay.jpg';
+import booksBackground from '../../assets/img/home/background_sach.jpg';
+import blankPageBackground from '../../assets/img/home/bangtrang.jpg';
+import lettersBackground from '../../assets/img/home/cacChuCai.jpg';
+import toeicBackground from '../../assets/img/home/toeic_980_co_ban_tay.jpg';
 
 const HERO_SLIDES = [
   {

@@ -4,7 +4,7 @@ import { GoogleLogin } from '@react-oauth/google';
 import { Lock, Mail, Phone, User, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/common/Toast';
-import studyBackground from '../assets/img/hero/toeic_980_co_ban_tay.jpg';
+import studyBackground from '../assets/img/home/toeic_980_co_ban_tay.jpg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const RegisterPage = () => {

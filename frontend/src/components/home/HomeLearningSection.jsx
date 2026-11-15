@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, MessageSquareText } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import vocabularyPhoto from '../../assets/img/home-optimized/lambai.jpg';
+import vocabularyPhoto from '../../assets/img/home/lambai.jpg';
 import { TOBY_IMAGES } from '../common/TobyMascot';
 import { openAiAssistant } from '../../services/aiService';
 
@@ -72,38 +72,37 @@ const HomeLearningSection = () => {
           </div>
         </div>
 
-        {/* Nuna Companion Showcase Strip */}
-        <div className="mt-10 rounded-2xl border border-[#BFDBFE] bg-gradient-to-r from-[#EFF6FF] via-white to-[#F8FAFC] p-6 sm:p-8 shadow-sm">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-            <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+        {/* Nuna Editorial Companion Strip */}
+        <div className="mt-10 border border-[#E4E4E7] bg-white p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
               <button
                 type="button"
                 onClick={() => setActiveMoodIndex((prev) => (prev + 1) % TOBY_HOME_MOODS.length)}
-                className="group relative h-28 w-28 shrink-0 rounded-2xl border-2 border-[#93C5FD] bg-white p-2 shadow-md transition-transform hover:scale-105 cursor-pointer"
-                title="Bấm vào Nuna để đổi biểu cảm!"
+                className="group relative h-24 w-24 shrink-0 cursor-pointer border border-[#E4E4E7] bg-[#F8FAFC] p-2 transition-colors hover:border-[#1D4ED8]"
+                title="Bấm để đổi biểu cảm"
               >
                 <img
                   src={currentMood.img}
                   alt={currentMood.title}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
                 />
               </button>
 
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#1D4ED8]">
-                  <span>Gặp gỡ Nuna — Bạn đồng hành TOEIC của bạn</span>
-                </div>
-                <h3 className="mt-2 font-serif text-2xl font-bold text-[#0F172A]">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                  CÚN NUNA
+                </span>
+                <h3 className="mt-1.5 font-serif text-xl font-bold tracking-tight text-[#0A0A0A] sm:text-2xl">
                   {currentMood.title}
                 </h3>
-                <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#475569]">
+                <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#52525B]">
                   {currentMood.desc}
                 </p>
-
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 w-full sm:w-auto">
+            <div className="flex shrink-0 flex-wrap items-center justify-center gap-3 lg:justify-end">
               <button
                 type="button"
                 onClick={() =>
@@ -111,17 +110,17 @@ const HomeLearningSection = () => {
                     autoPrompt: 'Chào Nuna! Hãy giới thiệu lộ trình luyện thi TOEIC hiệu quả trên trang web cho mình nhé.',
                   })
                 }
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1D4ED8] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#1E40AF] transition-colors cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1E40AF]"
               >
                 <MessageSquareText size={16} />
-                <span>Trò chuyện với Nuna ngay</span>
+                <span>Trò chuyện với Nuna</span>
               </button>
               <Link
                 to="/courses"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#CBD5E1] bg-white px-5 py-2.5 text-xs font-bold text-[#0F172A] hover:border-[#1D4ED8] hover:text-[#1D4ED8] transition-colors"
+                className="inline-flex items-center justify-center gap-2 border border-[#E4E4E7] bg-white px-5 py-2.5 text-sm font-semibold text-[#0A0A0A] transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
               >
-                <span>Khám phá kho đề cùng Nuna</span>
-                <ArrowRight size={14} />
+                <span>Khám phá kho đề</span>
+                <ArrowRight size={15} />
               </Link>
             </div>
           </div>

@@ -2161,7 +2161,7 @@ h3 {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  grid-template-columns: 1.4fr 1fr 1.3fr;
   gap: 40px;
   margin-bottom: 40px;
 }
@@ -3828,7 +3828,7 @@ button, [role="button"] { border-radius: 2px; }
 .neo-practice-page > .page-header-banner,
 .editorial-about .editorial-page-header {
   background-color: #F1F1F1 !important;
-  background-image: linear-gradient(rgba(241, 241, 241, .91), rgba(241, 241, 241, .91)), url('./assets/img/hero/toeic_980_co_ban_tay.jpg') !important;
+  background-image: linear-gradient(rgba(241, 241, 241, .91), rgba(241, 241, 241, .91)), url('./assets/img/home/toeic_980_co_ban_tay.jpg') !important;
   background-position: center 42%;
   background-size: cover;
 }

@@ -17,7 +17,7 @@ import Modal from '../../components/common/Modal';
 import Toast from '../../components/common/Toast';
 import UserAvatar from '../../components/common/UserAvatar';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
-import usersBanner from '../../assets/img/ctu/daihoccantho.jpg';
+import usersBanner from '../../assets/img/contact/daihoccantho.jpg';
 
 const UserManagementPage = () => {
   const { user: currentUser } = useAuth();

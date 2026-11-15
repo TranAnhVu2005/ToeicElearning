@@ -222,8 +222,8 @@ public class PayosPaymentService {
             application.setStatus(TeacherApplicationStatus.PENDING_REVIEW);
             notificationRepository.save(Notification.builder()
                     .user(application.getUser())
-                    .title("Đã nhận thanh toán đăng ký giáo viên")
-                    .content("Thanh toán đã được PayOS xác nhận. Hồ sơ của bạn đang chờ quản trị viên duyệt.")
+                    .title("Đã xác nhận phí đăng ký giáo viên")
+                    .content("Thanh toán qua PayOS thành công. Hồ sơ của bạn đang chờ quản trị viên duyệt.")
                     .type("TEACHER_APPLICATION_PAYMENT")
                     .link("/teacher/application")
                     .isRead(false)
@@ -249,8 +249,8 @@ public class PayosPaymentService {
                     "source=PAYMENT; testId=" + payment.getTest().getId());
             notificationRepository.save(Notification.builder()
                     .user(payment.getUser())
-                    .title("Đã mở khóa đề VIP")
-                    .content("Bạn đã mua thành công đề " + payment.getProductNameSnapshot() + " qua PayOS. Quyền truy cập không hết hạn.")
+                    .title("Mua đề VIP thành công")
+                    .content("Bạn đã mở khóa vĩnh viễn đề " + payment.getProductNameSnapshot() + " qua PayOS.")
                     .type("TEST_VIP_PURCHASE")
                     .link("/courses/" + payment.getTest().getId())
                     .isRead(false)

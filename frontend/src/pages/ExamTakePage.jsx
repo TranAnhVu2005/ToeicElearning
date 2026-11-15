@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import { ETS_PART_DIRECTIONS } from '../constants/etsDirections';
-import libraryBg from '../assets/img/whentest/background.jpg';
+import libraryBg from '../assets/img/exam-take/background.jpg';
 
 const QuestionImage = ({ src, partNumber }) => {
   const [hasError, setHasError] = useState(false);

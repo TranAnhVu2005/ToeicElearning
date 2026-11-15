@@ -26,7 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { examService } from '../services/examService';
-import examHeaderBg from '../assets/img/coursepage/thuvien.jpg';
+import examHeaderBg from '../assets/img/courses/thuvien.jpg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const AUDIO_SPEED_OPTIONS = [

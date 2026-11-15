@@ -20,8 +20,8 @@ import { examService } from '../services/examService';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
-import heroBg from '../assets/img/coursepage/thuvien.jpg';
-import coursePageBg from '../assets/img/coursepage/biasach.jpg';
+import heroBg from '../assets/img/courses/thuvien.jpg';
+import coursePageBg from '../assets/img/courses/biasach.jpg';
 import { TOBY_IMAGES } from '../components/common/TobyMascot';
 import { openAiAssistant } from '../services/aiService';
 

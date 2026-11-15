@@ -325,3 +325,18 @@
      - Loại bỏ các bảng dư thừa không còn dùng (`vocabulary`, `lesson`), đồng bộ 22 bảng khớp 100% với JPA entities và thiết lập 20 bộ đề thi chính thức (`PUBLISHED`, 200 câu/đề): 10 đề `ETS TOEIC 2026 - TEST 01..10` và 10 đề `YBM TOEIC 2026 - TEST 01..10`.
   5. **Cập nhật toàn diện ngữ cảnh cho Trợ lý AI Nuna (`AiAssistantServiceImpl.java`, `AiAssistantWidget.jsx`):**
      - Nâng cấp `PLATFORM_SYSTEM_PROMPT`, `buildDynamicContext` (nhận diện chi tiết từng route người dùng đang đứng và vai trò `ROLE_USER`/`ROLE_TEACHER`/`ROLE_ADMIN`) và bộ tri thức `Smart Local Tutor` để Nuna AI nắm vững 100% chức năng hiện tại của website.
+
+- 2026-11-15: Chuẩn hóa & tái cấu trúc thư mục ảnh `frontend/src/assets/img/` theo từng trang và nhóm dùng chung (giữ nguyên toàn bộ hình ảnh hiển thị trên giao diện):
+  1. **Cấu trúc thư mục mới (33 ảnh đang dùng + 14 ảnh lưu trữ trong `_unused/`):**
+     - `layout/` (`logo1.png`, `anh_cho_co_streak.webp`) — dùng cho `Navbar.jsx`, `Footer.jsx`.
+     - `mascot/` (`anh_cho_ban_sung.jpg` và 9 ảnh `toby_*.png`) — dùng cho `TobyMascot.jsx`, `AiAssistantWidget.jsx`, `editorial-application.css`, `ClassroomsPage.jsx`.
+     - `home/` (`background_sach.jpg`, `bangtrang.jpg`, `cacChuCai.jpg`, `toeic_980_co_ban_tay.jpg`, `lambai.jpg`, `sanGo.jpg`) — dùng cho Trang chủ (`HeroSection.jsx`, `HomeLearningSection.jsx`, `editorial.css`) và tái sử dụng tại `LoginPage.jsx`, `RegisterPage.jsx`, `AdminDashboardPage.jsx`, `TestManagementPage.jsx`, `index.css`, `editorial-application.css`, `ClassroomsPage.jsx`, `ContactPage.jsx`.
+     - `courses/` (`thuvien.jpg`, `biasach.jpg`) — dùng cho `CoursesPage.jsx`, `ProfilePage.jsx`, `DictationTakePage.jsx`, `ContactPage.jsx`, `AdminPageHeader.jsx`, `PaymentManagementPage.jsx`, `ClassroomsPage.jsx`.
+     - `course-detail/` (`ocean.jpg`) — dùng cho `CourseDetailPage.jsx`.
+     - `exam-take/` (`background.jpg`) — dùng cho `ExamTakePage.jsx`.
+     - `classrooms/` (`muaThu.jpg`) — dùng cho `ClassroomsPage.jsx`.
+     - `contact/` (`toancanh.jpg`, `nhadieuhanh.jpg`, `hoitruongrua.jpg`, `daihoccantho.jpg`, `email.png`, `zalo.png`) — dùng cho `ContactPage.jsx` và làm banner/preset tại `TeacherApplicationsPage.jsx`, `UserManagementPage.jsx`, `ClassroomsPage.jsx`.
+     - `notifications/` (`bell.svg`, `newspaper.jpg`, `thu_bao_quanh.png`) — dùng cho `NotificationsPage.jsx`.
+     - `teacher-application/` (`teacher.png`) — dùng cho `TeacherApplicationPage.jsx`.
+     - `_unused/` (14 ảnh cũ không còn tham chiếu trong mã nguồn: `coursepage/*`, `gaugau/anhchocute.webp`, `gaugau/anhchovoicongday.webp`, `home-optimized/malaysia*`, `others/*`, `scroll/galaxy.jpg`).
+  2. **Cập nhật đường dẫn & kiểm chứng:** Đã cập nhật toàn bộ 55 tham chiếu trên 25 file JS/JSX/CSS liên quan; script Node kiểm tra tĩnh xác nhận 55/55 tham chiếu hợp lệ (0 broken links). Chưa chạy `npm run build`/`lint` sau chỉnh sửa theo quy tắc không tự chạy build/test khi chưa được yêu cầu.

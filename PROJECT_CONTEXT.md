@@ -54,7 +54,8 @@
 
 ## 4. Hệ thiết kế UI/UX Editorial (`docs/05_UI_UX_SPEC.md`)
 - **Phông chữ & Chữ số**: Toàn bộ ứng dụng dùng `--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif` với `@font-face EditorialNumerals` (`unicode-range: U+0030-0039`) và `font-variant-numeric: lining-nums tabular-nums`; `Ubuntu Mono` dùng cho code/mã giao dịch kỹ thuật.
-- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, viền mảnh `1px solid #D1D5DB`, góc `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`. Riêng khung chat **Trợ lý AI Nuna** dùng ảnh nền `anh_cho_ban_sung.jpg` kèm lớp phủ sáng bán trong suốt, header kính mờ và bong bóng/composer bo cong mềm mại (`editorial-application.css`).
+- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, viền mảnh `1px solid #D1D5DB`, góc `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`. Riêng khung chat **Trợ lý AI Nuna** dùng ảnh nền `mascot/anh_cho_ban_sung.jpg` kèm lớp phủ sáng bán trong suốt, header kính mờ và bong bóng/composer bo cong mềm mại (`editorial-application.css`).
+- **Tổ chức ảnh nội bộ (`frontend/src/assets/img/`)**: Chia theo trang và nhóm dùng chung (`layout/`, `mascot/`, `home/`, `courses/`, `course-detail/`, `exam-take/`, `classrooms/`, `contact/`, `notifications/`, `teacher-application/`); các ảnh cũ chưa dùng giữ riêng trong `_unused/`.
 
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
 - **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion`; tài khoản bị khóa trả `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC RS256/JWK; khóa bi quan dùng native `SELECT ... FOR UPDATE`; rate limit lưu hash bucket trong `auth_login_attempt`; audit lưu `audit_event`.
