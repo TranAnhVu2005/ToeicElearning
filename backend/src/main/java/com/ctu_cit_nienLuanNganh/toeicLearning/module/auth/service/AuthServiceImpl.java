@@ -107,7 +107,6 @@ public class AuthServiceImpl implements AuthService{
     public AuthResponseDTO loginWithGoogle(String idToken) {
         GoogleIdTokenVerifier.VerifiedGoogleIdentity identity = googleIdTokenVerifier.verify(idToken);
         Optional<User> existingUserOpt = userRepository.findByGoogleSubWithRole(identity.subject());
-        boolean matchedByGoogleSubject = existingUserOpt.isPresent();
         if (existingUserOpt.isEmpty()) {
             existingUserOpt = userRepository.findByUserEmailWithRole(identity.email());
         }
@@ -120,12 +119,13 @@ public class AuthServiceImpl implements AuthService{
             if (user.getGoogleSub() != null && !user.getGoogleSub().equals(identity.subject())) {
                 throw new AppException(ErrorCode.UNAUTHENTICATED);
             }
-            if (!matchedByGoogleSubject && user.getGoogleSub() == null
-                    && !"GOOGLE".equalsIgnoreCase(user.getAuthProvider())) {
-                // Do not silently link a Google identity to an existing local account by email alone.
-                throw new AppException(ErrorCode.EMAIL_ALREADY_EXISTS);
-            }
             user.setGoogleSub(identity.subject());
+            if (user.getUserPassword() == null || user.getUserPassword().isBlank()) {
+                user.setAuthProvider("GOOGLE");
+            }
+            if (identity.name() != null && (user.getUserName() == null || user.getUserName().isBlank())) {
+                user.setUserName(identity.name());
+            }
             if(identity.picture()!=null && (user.getUserAvatar() == null || user.getUserAvatar().isEmpty())) {
                 user.setUserAvatar(identity.picture());
             }
