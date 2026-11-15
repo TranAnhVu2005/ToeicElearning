@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import examHeaderBg from '../assets/img/coursepage/thuvien.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const AUDIO_SPEED_OPTIONS = [
   { value: 0.5, label: '0.5×', shortLabel: '0.5×' },
@@ -1324,24 +1325,36 @@ const DictationTakePage = () => {
                 {/* PROGRESSIVE CLAUSE-BY-CLAUSE RESULT PANEL (Hidden as soon as user clicks/types in textarea; shown on Enter / Check) */}
                 {(isResultVisible || showFullTranscript) && progressiveData && (
                   <div className="space-y-4 border border-slate-200/90 bg-[#F8FAFC] p-5">
-                    {/* Status & Skip Row */}
+                    {/* Status & Skip Row with Nuna Mascot Reaction */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={
+                            progressiveData.isAllCorrect
+                              ? TOBY_IMAGES.completion
+                              : progressiveData.isCurrentClauseMatched
+                                ? TOBY_IMAGES.cheering
+                                : TOBY_IMAGES.encouragement
+                          }
+                          alt="Biểu cảm chấm bài của cún Nuna"
+                          className="h-12 w-16 shrink-0 rounded-xl border border-slate-200 bg-white object-contain p-0.5 shadow-2xs"
+                        />
                         {progressiveData.isAllCorrect ? (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-emerald-700">
                             <CheckCircle2 size={18} strokeWidth={2} className="text-emerald-600" />
-                            Chính xác hoàn toàn!
+                            <span>Gâu! Chính xác hoàn toàn — Nuna khen bạn nghe siêu đỉnh! 🎉</span>
                           </span>
                         ) : progressiveData.isCurrentClauseMatched ? (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#1D4ED8]">
                             <CheckCircle2 size={18} strokeWidth={2} className="text-[#1D4ED8]" />
-                            Đã khớp vế {progressiveData.revealedClauseIndex + 1}/{progressiveData.clauses.length} — Hãy
-                            nghe tiếp phần *****
+                            <span>
+                              Tuyệt! Đã khớp vế {progressiveData.revealedClauseIndex + 1}/{progressiveData.clauses.length} — Cùng Nuna nghe tiếp phần ***** nhé!
+                            </span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-amber-700">
                             <AlertCircle size={18} strokeWidth={2} className="fill-amber-400 text-amber-900" />
-                            Chưa chính xác (Incorrect)
+                            <span>Gần đúng rồi! Cố lên, Nuna gợi ý các từ màu xanh bên dưới nhé! 💪</span>
                           </span>
                         )}
                       </div>
@@ -1513,6 +1526,23 @@ const DictationTakePage = () => {
         {/* RIGHT COLUMN: SEGMENT PALETTE / NAVIGATOR (4 COLS) */}
         <div className="space-y-6 lg:col-span-4">
           <div className="sticky top-24 space-y-4 border border-slate-200/90 bg-white p-5 shadow-xs">
+            {/* Nuna Dictation Coach Mini Banner */}
+            <div className="flex items-center gap-3 border border-blue-200/90 bg-[#EFF6FF]/75 p-3">
+              <img
+                src={stats.completed > 0 && stats.completed === stats.total ? TOBY_IMAGES.trophy : TOBY_IMAGES.studying}
+                alt="Cún Nuna luyện nghe cùng bạn"
+                className="h-12 w-12 shrink-0 rounded-lg border border-blue-200 bg-white object-contain p-0.5"
+              />
+              <div className="min-w-0 flex-1 text-xs leading-snug text-slate-700">
+                <strong className="block font-bold text-[#1D4ED8]">
+                  🐾 Nuna đồng hành luyện nghe
+                </strong>
+                {stats.completed > 0
+                  ? `Bạn đã hoàn thành ${stats.completed}/${stats.total} câu nghe (Chính xác TB: ${stats.avgAccuracy}%). Cố lên nhé!`
+                  : 'Mẹo của Nuna: Nhấn Enter sau mỗi vế câu để kiểm tra ngay mà không cần rời tay khỏi bàn phím!'}
+              </div>
+            </div>
+
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
               <h2 className="flex items-center gap-2 text-[15px] font-semibold text-slate-800">
                 <Layers size={16} strokeWidth={1.75} className="text-[#1D4ED8]" /> Danh sách câu nghe

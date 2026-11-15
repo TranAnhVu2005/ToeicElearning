@@ -3,7 +3,6 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   BookOpen,
-  Bot,
   CheckCircle2,
   CircleX,
   Clock,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { examService } from '../services/examService';
 import { openAiAssistant, syncAiExamResultContext } from '../services/aiService';
+import { TOBY_IMAGES, TobyAvatar } from '../components/common/TobyMascot';
 
 const formatDuration = (seconds = 0) => {
   const safeSeconds = Math.max(0, Number(seconds) || 0);
@@ -452,9 +452,84 @@ const TestResultPage = () => {
                   }
                   className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 border border-blue-300 bg-[#EFF6FF] px-5 py-2.5 text-sm font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
                 >
-                  <Sparkles size={16} />
-                  Phân tích bài làm cùng Trợ lý AI
+                  <TobyAvatar mood="laptop" size="xs" />
+                  Phân tích bài làm cùng Trợ lý AI Nuna
                 </button>
+              </div>
+
+              {/* Duolingo-style Post-Exam Nuna Celebration & Reminder Banner */}
+              <div className="toby-post-exam-card mt-5 rounded-2xl border border-blue-200/90 bg-gradient-to-r from-[#EFF6FF] via-[#FFFDF9] to-white p-4 sm:p-5">
+                <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                  <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <img
+                        src={accuracy >= 70 ? TOBY_IMAGES.completion : TOBY_IMAGES.encouragement}
+                        alt="Nuna chúc mừng hoàn thành bài thi"
+                        className="h-20 w-32 rounded-xl border border-blue-200/80 bg-white object-contain p-1 shadow-2xs"
+                      />
+                      <img
+                        src={
+                          accuracy >= 80
+                            ? TOBY_IMAGES.trophy
+                            : accuracy >= 50
+                              ? TOBY_IMAGES.studying
+                              : TOBY_IMAGES.heart
+                        }
+                        alt="Biểu cảm đồng hành của Nuna"
+                        className="hidden h-20 w-20 rounded-xl border border-blue-200/80 bg-white object-contain p-1 shadow-2xs sm:block"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                        <span className="rounded-full border border-blue-200 bg-blue-100/80 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#1D4ED8] uppercase">
+                          🐾 Lời nhắn từ cún Nuna
+                        </span>
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
+                          {accuracy >= 75
+                            ? 'Phong độ xuất sắc! 🏆'
+                            : accuracy >= 45
+                              ? 'Hoàn thành tốt! Tiếp tục bứt phá nhé!'
+                              : 'Đừng nản lòng! Sai ở đâu mình sửa ở đó! 💪'}
+                        </span>
+                      </div>
+
+                      <h2 className="mt-1.5 text-base font-bold text-slate-900 sm:text-lg">
+                        {accuracy >= 75
+                          ? `Gâu gâu! Bạn đạt ${accuracy}% độ chính xác — Nuna cực kỳ tự hào về bạn!`
+                          : wrongQuestions.length > 0
+                            ? `Bạn đã hoàn thành bài thi! Còn ${wrongQuestions.length} câu chưa đúng, hãy để Nuna cùng bạn gỡ từng câu nhé!`
+                            : 'Hoàn thành tuyệt đối! Bạn đã trả lời chính xác toàn bộ câu hỏi!'}
+                      </h2>
+
+                      <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
+                        Bí quyết tăng 100+ điểm TOEIC giống như trên Duolingo: ngay sau khi thi xong, hãy bấm{' '}
+                        <strong className="font-semibold text-slate-900">"Giải thích đáp án"</strong> hoặc{' '}
+                        <strong className="font-semibold text-slate-900">"Hỏi Nuna AI"</strong> ở những câu làm sai bên dưới để hiểu rõ bẫy ngữ pháp và từ vựng ngay lập tức!
+                      </p>
+                    </div>
+                  </div>
+
+                  {wrongQuestions.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterMode('WRONG');
+                        const firstWrong = wrongQuestions[0];
+                        if (firstWrong) {
+                          openAiAssistant({
+                            result,
+                            question: firstWrong,
+                            autoPrompt: `Giải thích chi tiết giúp mình câu ${firstWrong.questionNumber} (Part ${firstWrong.partNumber}) vì sao chọn ${firstWrong.correctAnswer} nhé Nuna!`,
+                          });
+                        }
+                      }}
+                      className="shrink-0 cursor-pointer rounded-full border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E40AF]"
+                    >
+                      🐾 Cùng Nuna chữa câu sai đầu tiên (#{wrongQuestions[0]?.questionNumber})
+                    </button>
+                  )}
+                </div>
               </div>
             </section>
 
@@ -704,10 +779,8 @@ const TestResultPage = () => {
                     <div className="ai-question-action-bar mt-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-slate-200/80 pt-3.5">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="inline-flex items-center gap-1.5 pr-1 text-xs font-bold text-slate-700">
-                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-blue-50 text-[#1D4ED8]">
-                            <Bot size={13} />
-                          </span>
-                          Trợ lý AI:
+                          <TobyAvatar mood={question.isCorrect ? 'heart' : 'studying'} size="xs" />
+                          <span>Nuna AI:</span>
                         </span>
                         <button
                           type="button"

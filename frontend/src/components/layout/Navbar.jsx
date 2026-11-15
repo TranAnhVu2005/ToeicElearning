@@ -16,21 +16,31 @@ import {
   ChevronDown,
   Bell,
   Clock,
+  Flame,
+  Trophy,
+  Sparkles,
 } from 'lucide-react';
 import { notificationService } from '../../services/notificationService';
 import { userService } from '../../services/userService';
+import { TOBY_IMAGES } from '../common/TobyMascot';
+import { openAiAssistant } from '../../services/aiService';
 
 const Navbar = () => {
   const { user, isAuthenticated, isAdmin, isTeacher, logout } = useAuth();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [streakPopoverOpen, setStreakPopoverOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const dropdownRef = useRef(null);
+  const streakRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminActive = location.pathname.startsWith('/admin');
+  const currentStreak = Number(user?.currentStreak) || 0;
+  const highestStreak = Math.max(Number(user?.highestStreak) || 0, currentStreak);
+  const bestScore = Number(user?.totalScore) || 0;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,11 +51,18 @@ const Navbar = () => {
       ) {
         setDropdownOpen(false);
       }
+      if (
+        streakRef.current &&
+        !streakRef.current.contains(event.target)
+      ) {
+        setStreakPopoverOpen(false);
+      }
     };
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
         setDropdownOpen(false);
+        setStreakPopoverOpen(false);
         setMobileMenuOpen(false);
       }
     };
@@ -63,6 +80,7 @@ const Navbar = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
     setDropdownOpen(false);
+    setStreakPopoverOpen(false);
   }, [location.pathname]);
 
   // Load unread notifications
@@ -174,34 +192,57 @@ const Navbar = () => {
       >
         <div className="mx-auto flex min-h-[88px] w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 
-          {/* Brand */}
-          <Link
-            to="/"
-            className="group flex shrink-0 items-center gap-3 rounded-sm no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4D35C9] focus-visible:ring-offset-4"
-          >
-            {/* Logo image */}
-            <div className="brand-logo-mark relative flex w-[88px] shrink-0 items-center justify-center overflow-hidden bg-white p-0.5 transition-colors duration-150">
-              <img
-                src={myCustomIcon}
-                alt=""
-                className="h-full w-full object-contain"
-              />
-            </div>
+          {/* Brand + Nuna Mascot Companion Badge */}
+          <div className="flex shrink-0 items-center gap-2.5">
+            <Link
+              to="/"
+              className="group flex shrink-0 items-center gap-3 rounded-sm no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4D35C9] focus-visible:ring-offset-4"
+            >
+              {/* Logo image */}
+              <div className="brand-logo-mark relative flex w-[88px] shrink-0 items-center justify-center overflow-hidden bg-white p-0.5 transition-colors duration-150">
+                <img
+                  src={myCustomIcon}
+                  alt=""
+                  className="h-full w-full object-contain"
+                />
+              </div>
 
-            {/* Brand name */}
-            <div className="flex flex-col justify-center">
-              <span
-                className="whitespace-nowrap text-[23px] font-bold leading-tight tracking-[-0.7px] text-[#17131F]"
-              >
-                <span className="font-normal">
-                  TOEIC
+              {/* Brand name */}
+              <div className="flex flex-col justify-center">
+                <span
+                  className="whitespace-nowrap text-[23px] font-bold leading-tight tracking-[-0.7px] text-[#17131F]"
+                >
+                  <span className="font-normal">
+                    TOEIC
+                  </span>
+                  <span className="ml-1 text-[#4D35C9]">
+                    ELearning
+                  </span>
                 </span>
-                <span className="ml-1 text-[#4D35C9]">
-                  ELearning
+                <span className="mt-0.5 hidden items-center gap-1 text-[11px] font-semibold text-slate-500 sm:inline-flex">
+                  🐾 Cùng Nuna chinh phục 990 nhé!
                 </span>
-              </span>
-            </div>
-          </Link>
+              </div>
+            </Link>
+
+            {/* Nuna Header Mascot Emblem (Click to chat with Nuna) */}
+            <button
+              type="button"
+              onClick={() =>
+                openAiAssistant({
+                  autoPrompt: 'Chào Nuna! Hãy gợi ý cho mình hôm nay nên luyện phần nào trên TOEIC Learning nhé!',
+                })
+              }
+              title="Gâu! Mình là Nuna — Bấm để trò chuyện cùng Nuna nhé!"
+              className="toby-navbar-mascot group hidden h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-blue-200 bg-[#EFF6FF]/80 p-1 shadow-2xs transition-all hover:-translate-y-0.5 hover:border-[#1D4ED8] hover:bg-white md:inline-flex"
+            >
+              <img
+                src={TOBY_IMAGES.cheering}
+                alt="Chú cún Nuna — Linh vật đồng hành TOEIC Learning"
+                className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
+              />
+            </button>
+          </div>
 
           {/* Desktop navigation */}
           <div className="hidden flex-1 items-center justify-center gap-1 xl:flex">
@@ -284,6 +325,130 @@ const Navbar = () => {
 
           {/* Right actions */}
           <div className="flex shrink-0 items-center gap-2">
+            {/* Duolingo-style Nuna Streak Pill (Authenticated users) */}
+            {isAuthenticated && user && (
+              <div className="relative" ref={streakRef}>
+                <button
+                  type="button"
+                  onClick={() => setStreakPopoverOpen((prev) => !prev)}
+                  aria-expanded={streakPopoverOpen}
+                  title="Xem chuỗi ngày học (Streak) cùng cún Nuna"
+                  className={`toby-streak-pill inline-flex min-h-[42px] cursor-pointer items-center gap-1.5 border px-2.5 py-1 text-xs font-bold transition-all ${currentStreak > 0
+                    ? 'border-amber-300 bg-amber-50/90 text-amber-900 hover:border-amber-400 hover:bg-amber-100/80'
+                    : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                    }`}
+                >
+                  <img
+                    src={currentStreak > 0 ? TOBY_IMAGES.heart : TOBY_IMAGES.sleeping}
+                    alt="Biểu cảm Streak của Nuna"
+                    className="h-6 w-6 shrink-0 object-contain"
+                  />
+                  <Flame
+                    size={15}
+                    className={
+                      currentStreak > 0
+                        ? 'fill-amber-500 text-amber-600'
+                        : 'text-slate-400'
+                    }
+                  />
+                  <span className="tabular-nums font-bold">
+                    {currentStreak}
+                  </span>
+                  <span className="hidden text-[11px] font-semibold md:inline">
+                    ngày
+                  </span>
+                </button>
+
+                {/* Duolingo-style Streak & Nuna Popover */}
+                {streakPopoverOpen && (
+                  <div
+                    role="dialog"
+                    aria-label="Thông tin chuỗi ngày học cùng Nuna"
+                    className="toby-streak-popover absolute right-0 top-[calc(100%+8px)] z-50 w-[310px] border border-slate-200 bg-white p-4 shadow-xl sm:w-[340px]"
+                  >
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-3.5">
+                      <img
+                        src={
+                          currentStreak >= 3
+                            ? TOBY_IMAGES.trophy
+                            : currentStreak > 0
+                              ? TOBY_IMAGES.completion
+                              : TOBY_IMAGES.encouragement
+                        }
+                        alt="Cún Nuna cổ vũ Streak"
+                        className="h-16 w-20 shrink-0 rounded-xl border border-amber-200 bg-amber-50/60 object-contain p-1"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                          🐾 Chuỗi học tập cùng Nuna
+                        </span>
+                        <h4 className="mt-0.5 text-base font-bold text-slate-900">
+                          {currentStreak > 0
+                            ? `${currentStreak} ngày học liên tiếp! 🔥`
+                            : 'Đánh thức Nuna dậy học thôi!'}
+                        </h4>
+                        <p className="mt-0.5 text-xs leading-snug text-slate-600">
+                          {currentStreak > 0
+                            ? 'Nuna rất tự hào về bạn! Duy trì 1 bài mỗi ngày để phá kỷ lục nhé.'
+                            : 'Hoàn thành 1 Part hoặc 1 đề hôm nay để mở chuỗi Streak đầu tiên cùng Nuna!'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                      <div className="border border-blue-100 bg-[#EFF6FF]/70 p-2.5">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D4ED8]">
+                          <Trophy size={12} /> Kỷ lục Streak
+                        </span>
+                        <p className="mt-0.5 text-base font-bold tabular-nums text-slate-900">
+                          {highestStreak} ngày
+                        </p>
+                      </div>
+                      <div className="border border-emerald-100 bg-emerald-50/70 p-2.5">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800">
+                          <Sparkles size={12} /> Điểm cao nhất
+                        </span>
+                        <p className="mt-0.5 text-base font-bold tabular-nums text-slate-900">
+                          {bestScore} / 990
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <Link
+                        to="/courses"
+                        onClick={() => setStreakPopoverOpen(false)}
+                        className="flex-1 border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-[#1E40AF]"
+                      >
+                        🐾 Luyện đề cùng Nuna
+                      </Link>
+                      <Link
+                        to="/profile"
+                        onClick={() => setStreakPopoverOpen(false)}
+                        className="border border-slate-300 bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                      >
+                        Xem Hồ sơ
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Quick "Hỏi Nuna AI" Header Button (Desktop) */}
+            <button
+              type="button"
+              onClick={() => openAiAssistant()}
+              title="Trò chuyện với Trợ lý AI Nuna"
+              className="toby-header-ai-btn hidden min-h-[42px] cursor-pointer items-center gap-2 border border-blue-200 bg-[#EFF6FF]/90 px-3 py-1.5 text-xs font-bold text-[#1D4ED8] transition-all hover:border-[#1D4ED8] hover:bg-blue-100/80 lg:inline-flex"
+            >
+              <img
+                src={TOBY_IMAGES.laptop}
+                alt="Trợ lý AI Nuna"
+                className="h-6 w-6 shrink-0 object-contain"
+              />
+              <span>Có gì hỏi Nuna không nè?</span>
+            </button>
 
             {/* Authenticated user */}
             {isAuthenticated && user ? (
@@ -354,6 +519,23 @@ const Navbar = () => {
                             ? 'Giảng viên'
                             : 'Học viên'}
                       </span>
+
+                      {/* Mini Nuna Companion Card inside Account Dropdown */}
+                      <div className="mt-3 flex items-center gap-2.5 border border-blue-200/80 bg-white p-2.5">
+                        <img
+                          src={currentStreak > 0 ? TOBY_IMAGES.heart : TOBY_IMAGES.encouragement}
+                          alt="Cún Nuna đồng hành"
+                          className="h-10 w-10 shrink-0 object-contain"
+                        />
+                        <div className="min-w-0 flex-1 text-[11px] leading-snug text-slate-700">
+                          <strong className="block font-bold text-[#1D4ED8]">
+                            🐾 Nuna nhắn bạn:
+                          </strong>
+                          {currentStreak > 0
+                            ? `Streak ${currentStreak} ngày đang cháy! Tiếp tục giữ vững phong độ nhé!`
+                            : 'Hôm nay làm 1 Part nhẹ nhàng cùng Nuna nhé!'}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Account links */}
@@ -526,6 +708,37 @@ const Navbar = () => {
           className="border-t border-[#2A2433]/15 bg-[#FFFCF8] xl:hidden"
         >
           <div className="mx-auto max-w-[1200px] px-4 py-3 sm:px-6 lg:px-8">
+
+            {/* Mobile Nuna Companion Banner */}
+            <div className="mb-3 flex items-center justify-between gap-3 border border-blue-200 bg-[#EFF6FF]/80 p-3">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src={currentStreak > 0 ? TOBY_IMAGES.trophy : TOBY_IMAGES.cheering}
+                  alt="Chú cún Nuna"
+                  className="h-11 w-11 shrink-0 rounded-full border border-blue-200 bg-white object-contain p-0.5"
+                />
+                <div className="text-xs">
+                  <strong className="block font-bold text-slate-900">
+                    🐾 Cún Nuna — Bạn đồng hành TOEIC
+                  </strong>
+                  <span className="text-slate-600">
+                    {isAuthenticated
+                      ? `Streak hiện tại: ${currentStreak} ngày · Kỷ lục: ${highestStreak} ngày`
+                      : 'Hỏi đáp đề thi & mẹo học TOEIC 24/7'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMobileMenu();
+                  openAiAssistant();
+                }}
+                className="shrink-0 border border-[#1D4ED8] bg-[#1D4ED8] px-3 py-1.5 text-xs font-bold text-white"
+              >
+                Hỏi Nuna AI
+              </button>
+            </div>
 
             <div className="border border-[#2A2433]/15 bg-white">
 

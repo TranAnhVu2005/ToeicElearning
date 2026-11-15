@@ -23,6 +23,7 @@ import { notificationService } from '../services/notificationService';
 import Pagination from '../components/common/Pagination';
 import Toast from '../components/common/Toast';
 import headerBgImage from '../assets/img/hero/background_sach.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const PAGE_SIZE = 12;
 
@@ -621,6 +622,25 @@ const NotificationsPage = () => {
                   </button>
                 )}
               </div>
+
+              {/* Nuna Notification Companion Card */}
+              <div className="border-t border-[#E5E7EB] bg-[#EFF6FF]/60 p-3.5">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={unreadCount === 0 ? TOBY_IMAGES.completion : TOBY_IMAGES.encouragement}
+                    alt="Chú cún Nuna nhắc thông báo"
+                    className="h-12 w-16 shrink-0 rounded-lg border border-blue-200 bg-white object-contain p-0.5"
+                  />
+                  <div className="text-xs leading-snug text-slate-700">
+                    <strong className="block font-bold text-[#1D4ED8]">
+                      🐾 Nuna giữ hộp thư
+                    </strong>
+                    {unreadCount === 0
+                      ? 'Tuyệt vời! Bạn đã xem hết mọi thông báo mới.'
+                      : `Bạn có ${unreadCount} thông báo chưa đọc từ kết quả thi & lớp học!`}
+                  </div>
+                </div>
+              </div>
             </div>
           </aside>
 
@@ -686,14 +706,16 @@ const NotificationsPage = () => {
                 </p>
               </div>
             ) : !error && items.length === 0 ? (
-              /* Empty State */
+              /* Empty State with Nuna */
               <div className="rounded-[2px] border border-[#D1D5DB] bg-white p-12 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] text-[#4B5563]">
-                  <Bell size={22} />
-                </div>
+                <img
+                  src={unreadOnly ? TOBY_IMAGES.completion : TOBY_IMAGES.sleeping}
+                  alt="Chú cún Nuna kiểm tra hộp thư"
+                  className="mx-auto mb-3 h-20 w-28 object-contain"
+                />
                 <h2 className="text-lg font-semibold text-[#111111]">
                   {unreadOnly
-                    ? 'Không có thông báo chưa đọc nào'
+                    ? 'Gâu! Không còn thông báo chưa đọc nào'
                     : category !== 'ALL'
                       ? 'Chưa có thông báo nào trong mục này'
                       : 'Hộp thư thông báo của bạn đang trống'}

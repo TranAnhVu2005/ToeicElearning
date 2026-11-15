@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Edit2,
   Trash2,
-  Lightbulb,
   Send,
   User,
   ChevronRight,
@@ -25,6 +24,8 @@ import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 import { vipPurchaseService } from '../services/vipPurchaseService';
 import oceanBg from '../assets/img/detailtest/ocean.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
+import { openAiAssistant } from '../services/aiService';
 
 // Dữ liệu chủ điểm tham khảo cho 7 Part TOEIC.
 const PART_METADATA = [
@@ -816,11 +817,15 @@ const CourseDetailPage = () => {
             {/* TAB CONTENT: LUYỆN TẬP */}
             {activeTab === 'practice' && (
               <div className="course-detail-panel p-6 space-y-6">
-                {/* Pro Tips Banner */}
-                <div className="course-detail-tip p-4 flex items-start gap-3">
-                  <Lightbulb size={20} strokeWidth={1.6} className="shrink-0 mt-0.5" />
+                {/* Pro Tips Banner with Nuna */}
+                <div className="course-detail-tip p-4 flex items-center gap-3.5">
+                  <img
+                    src={TOBY_IMAGES.studying}
+                    alt="Cún Nuna mách mẹo luyện từng Part"
+                    className="h-12 w-12 shrink-0 rounded-xl border border-amber-200 bg-white object-contain p-1"
+                  />
                   <p className="text-[14px] leading-relaxed font-normal text-amber-900">
-                    <strong className="font-semibold">Mẹo luyện tập:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực hoàn thành bài thi.
+                    <strong className="font-semibold">🐾 Nuna mách nhỏ:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực 120 phút. Nộp bài xong nhớ gọi Nuna chữa câu sai nhé!
                   </p>
                 </div>
 
@@ -1289,8 +1294,16 @@ const CourseDetailPage = () => {
                     </button>
                   </div>
                 ) : testHistory.length === 0 ? (
-                  <div className="text-center py-8 text-slate-500 text-[14px]">
-                    Bạn chưa làm đề thi này lần nào. Hãy chọn &ldquo;Luyện tập từng phần&rdquo; hoặc &ldquo;Làm full test&rdquo; ở trên để bắt đầu!
+                  <div className="text-center py-8 text-slate-600 text-[14px]">
+                    <img
+                      src={TOBY_IMAGES.sleeping}
+                      alt="Nuna đang chờ bạn làm đề này"
+                      className="mx-auto mb-2.5 h-16 w-16 object-contain"
+                    />
+                    <p className="font-semibold text-slate-800">Nuna chưa thấy lượt làm bài nào của bạn ở đề này</p>
+                    <p className="mt-1 text-slate-500">
+                      Hãy chọn &ldquo;Luyện tập từng phần&rdquo; hoặc &ldquo;Làm full test&rdquo; ở trên để đánh thức Nuna và bắt đầu nhé!
+                    </p>
                   </div>
                 ) : (
                   <div className="course-history-table overflow-x-auto rounded-[3px] border border-slate-200">
@@ -1553,6 +1566,61 @@ const CourseDetailPage = () => {
 
           {/* RIGHT SIDEBAR COLUMN: USER CARD & BANNERS (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
+            {/* Duolingo-style Nuna Pre-Exam Coach Card */}
+            <section className="border border-blue-200/90 bg-gradient-to-br from-[#EFF6FF] via-white to-[#F8FAFC] p-5 rounded-[2px] shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <img
+                  src={
+                    activeTab === 'fulltest'
+                      ? TOBY_IMAGES.encouragement
+                      : activeTab === 'dictation'
+                        ? TOBY_IMAGES.laptop
+                        : activeTab === 'discussion'
+                          ? TOBY_IMAGES.heart
+                          : TOBY_IMAGES.studying
+                  }
+                  alt="Chú cún Nuna hướng dẫn làm bài"
+                  className="h-16 w-20 shrink-0 rounded-xl border border-blue-200 bg-white object-contain p-1 shadow-2xs"
+                />
+                <div className="min-w-0 flex-1">
+                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#1D4ED8]">
+                    🐾 Góc dặn dò của Nuna
+                  </span>
+                  <h4 className="mt-0.5 text-[16px] font-bold text-slate-900 leading-snug">
+                    {activeTab === 'fulltest'
+                      ? 'Sẵn sàng 120 phút Full Test!'
+                      : activeTab === 'dictation'
+                        ? 'Luyện tai nhạy bén cùng Nuna'
+                        : activeTab === 'discussion'
+                          ? 'Cùng trao đổi câu hỏi khó'
+                          : 'Chiến thuật luyện từng Part'}
+                  </h4>
+                </div>
+              </div>
+
+              <p className="mt-3 text-[13.5px] leading-relaxed text-slate-700">
+                {activeTab === 'fulltest'
+                  ? 'Hệ thống tự động lưu đáp án theo thời gian thực. Nếu lỡ F5 hoặc rớt mạng, Nuna vẫn giữ nguyên bài đang làm cho bạn!'
+                  : activeTab === 'dictation'
+                    ? 'Nghe từng câu và gõ lại rồi nhấn Enter để Nuna kiểm tra từng vế câu cho bạn nhé!'
+                    : activeTab === 'discussion'
+                      ? 'Bạn có thể để lại bình luận trao đổi cùng mọi người hoặc bấm nút bên dưới để hỏi Nuna AI ngay lập tức.'
+                      : 'Chọn 1–2 Part bạn muốn cải thiện trước. Ngay sau khi nộp bài, Nuna sẽ giải thích ngữ pháp, từ vựng và bẫy từng câu!'}
+              </p>
+
+              <button
+                type="button"
+                onClick={() =>
+                  openAiAssistant({
+                    autoPrompt: `Mình đang chuẩn bị làm đề "${test?.titleTest || 'TOEIC'}". Nuna hãy gợi ý mẹo phân bổ thời gian và cách đạt điểm cao cho đề này nhé!`,
+                  })
+                }
+                className="mt-3.5 flex w-full cursor-pointer items-center justify-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#1E40AF]"
+              >
+                <span>🐾 Hỏi Nuna chiến thuật làm đề này</span>
+              </button>
+            </section>
+
             {/* User Profile Card */}
             <div className="course-profile-card">
               <div className="course-profile-content text-center space-y-3.5">

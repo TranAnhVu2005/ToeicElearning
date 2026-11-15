@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
@@ -23,6 +22,8 @@ import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 import heroBg from '../assets/img/coursepage/thuvien.jpg';
 import coursePageBg from '../assets/img/coursepage/biasach.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
+import { openAiAssistant } from '../services/aiService';
 
 const CoursesPage = () => {
   const { isAdmin } = useAuth();
@@ -338,6 +339,39 @@ const CoursesPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Nuna Study Companion Card in Sidebar */}
+              <div className="border border-blue-200/90 bg-white/95 backdrop-blur-sm p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={TOBY_IMAGES.studying}
+                    alt="Chú cún Nuna chăm chỉ học TOEIC"
+                    className="h-14 w-14 shrink-0 rounded-xl border border-blue-100 bg-[#EFF6FF]/60 object-contain p-1"
+                  />
+                  <div>
+                    <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#1D4ED8]">
+                      🐾 Bạn đồng hành Nuna
+                    </span>
+                    <h3 className="mt-0.5 text-sm font-bold text-slate-900">
+                      Chọn đề nào hôm nay?
+                    </h3>
+                  </div>
+                </div>
+                <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
+                  Nếu bạn có ít thời gian, hãy chọn 1 đề và luyện riêng từng Part. Sau khi nộp bài, Nuna sẽ giải thích chi tiết từng câu giúp bạn!
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openAiAssistant({
+                      autoPrompt: 'Tư vấn giúp mình cách chọn đề thi và phân bổ thời gian luyện TOEIC hiệu quả trên trang web nhé Nuna!',
+                    })
+                  }
+                  className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 border border-blue-200 bg-[#EFF6FF] py-2 text-xs font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
+                >
+                  🐾 Nhờ Nuna tư vấn lộ trình
+                </button>
+              </div>
             </aside>
 
             {/* ================= RIGHT MAIN CATALOG ================= */}
@@ -433,9 +467,13 @@ const CoursesPage = () => {
               {/* Empty State */}
               {!loading && !error && tests.length === 0 && (
                 <div className="border border-white/20 bg-white/95 backdrop-blur-md p-12 text-center shadow-md">
-                  <BookOpen size={40} className="mx-auto mb-3 text-slate-300" />
+                  <img
+                    src={TOBY_IMAGES.thinking}
+                    alt="Nuna đang tìm đề thi"
+                    className="mx-auto mb-3 h-20 w-20 object-contain"
+                  />
                   <h3 className="text-base font-bold text-slate-900">
-                    Không tìm thấy đề thi phù hợp
+                    Gâu? Nuna chưa tìm thấy đề thi phù hợp
                   </h3>
                   <p className="mx-auto mt-1 max-w-md text-xs text-slate-600">
                     {searchTerm

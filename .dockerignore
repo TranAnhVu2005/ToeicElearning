@@ -1,0 +1,10 @@
+frontend/
+docs/
+.git/
+backend/target/
+backend/node_modules/
+backend/*.sql
+*.md
+*.log
+.env
+.env.*

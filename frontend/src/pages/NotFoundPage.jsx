@@ -1,19 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Home } from 'lucide-react';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const NotFoundPage = () => {
   return (
     <main className="not-found-page min-h-[75vh] bg-white px-4 py-16 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-xl border border-slate-200 bg-white p-8 text-center sm:p-10">
+        <img
+          src={TOBY_IMAGES.thinking}
+          alt="Chú cún Nuna bối rối không tìm thấy trang"
+          className="mx-auto mb-3 h-24 w-24 object-contain"
+        />
         <p className="font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-          MÃ TRẠNG THÁI 404
+          MÃ TRẠNG THÁI 404 · NUNA ĐANG BỐI RỐI
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-900 sm:text-4xl">
-          Không tìm thấy trang yêu cầu
+          Gâu...? Không tìm thấy trang yêu cầu
         </h1>
         <p className="mt-3 text-base leading-relaxed text-slate-600">
-          Đường dẫn bạn vừa truy cập không tồn tại hoặc đã được thay đổi. Hãy quay về trang chủ hoặc mở thư viện đề thi TOEIC để tiếp tục học tập.
+          Nuna đã đánh hơi khắp nơi nhưng đường dẫn bạn vừa truy cập không tồn tại hoặc đã được thay đổi. Hãy quay về trang chủ hoặc mở thư viện đề thi TOEIC để tiếp tục học tập cùng Nuna nhé!
         </p>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

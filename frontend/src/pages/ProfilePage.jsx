@@ -31,6 +31,7 @@ import { teacherApplicationService } from '../services/teacherApplicationService
 import { GoogleLogin } from '@react-oauth/google';
 import heroBg from '../assets/img/coursepage/thuvien.jpg';
 import sidebarCoverBg from '../assets/img/coursepage/biasach.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const ProfilePage = () => {
   const { user, updateUser, logout } = useAuth();
@@ -378,7 +379,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Prominent Streak & Record Spotlight Strip */}
+          {/* Prominent Streak & Record Spotlight Strip with Nuna Mascot */}
           <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Card 1: Current Streak */}
             <div className="relative overflow-hidden border border-amber-300/90 bg-gradient-to-br from-amber-50/95 via-white to-orange-50/80 p-5 shadow-sm">
@@ -395,18 +396,22 @@ const ProfilePage = () => {
                     <span className="text-base font-bold text-amber-800">ngày liên tiếp</span>
                   </div>
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-amber-200 bg-amber-100/80 text-amber-600 shadow-xs">
-                  <Flame size={24} className={currentStreak > 0 ? 'fill-amber-500 text-amber-600' : 'text-amber-500'} />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white p-1 shadow-xs">
+                  <img
+                    src={currentStreak > 0 ? TOBY_IMAGES.heart : TOBY_IMAGES.sleeping}
+                    alt={currentStreak > 0 ? 'Nuna thả tim chúc mừng Streak' : 'Nuna đang ngủ chờ bạn học'}
+                    className="h-full w-full object-contain"
+                  />
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-amber-200/70 pt-2.5 text-xs">
                 <span className="font-semibold text-amber-900/80">
                   {currentStreak > 0
-                    ? 'Đang duy trì nhịp độ luyện thi mỗi ngày'
-                    : 'Hoàn thành 1 bài tập hôm nay để kích hoạt chuỗi'}
+                    ? 'Nuna rất vui vì bạn giữ nhịp học mỗi ngày!'
+                    : 'Nuna đang ngủ gật... Làm 1 bài để đánh thức Nuna nhé!'}
                 </span>
                 <span className="shrink-0 border border-amber-300 bg-amber-100/90 px-2 py-0.5 text-[11px] font-bold text-amber-900">
-                  {currentStreak > 0 ? 'Đang hoạt động' : 'Chưa mở chuỗi'}
+                  {currentStreak > 0 ? '🐾 Đang cháy' : '💤 Chưa mở chuỗi'}
                 </span>
               </div>
             </div>
@@ -426,18 +431,22 @@ const ProfilePage = () => {
                     <span className="text-base font-bold text-slate-700">ngày kỷ lục</span>
                   </div>
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-blue-200 bg-blue-100/80 text-[#1D4ED8] shadow-xs">
-                  <Trophy size={23} />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white p-1 shadow-xs">
+                  <img
+                    src={TOBY_IMAGES.trophy}
+                    alt="Nuna nâng cúp kỷ lục"
+                    className="h-full w-full object-contain"
+                  />
                 </div>
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-blue-200/70 pt-2.5 text-xs">
                 <span className="font-semibold text-slate-600">
                   {isAtRecordStreak
-                    ? 'Tuyệt vời! Bạn đang ở đỉnh kỷ lục cá nhân'
+                    ? 'Tuyệt vời! Bạn và Nuna đang ở đỉnh kỷ lục!'
                     : 'Mốc duy trì học tập liên tục dài nhất'}
                 </span>
                 <span className="shrink-0 border border-blue-200 bg-blue-100/80 px-2 py-0.5 text-[11px] font-bold text-[#1D4ED8]">
-                  {isAtRecordStreak ? 'Đỉnh kỷ lục' : 'Kỷ lục cá nhân'}
+                  {isAtRecordStreak ? '🏆 Đỉnh kỷ lục' : 'Kỷ lục cá nhân'}
                 </span>
               </div>
             </div>
@@ -457,13 +466,17 @@ const ProfilePage = () => {
                     <span className="text-sm font-bold text-emerald-800">/ 990 điểm</span>
                   </div>
                 </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-emerald-200 bg-emerald-100/80 text-emerald-700 shadow-xs">
-                  <Award size={24} />
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-white p-1 shadow-xs">
+                  <img
+                    src={bestScore >= 600 ? TOBY_IMAGES.cheering : TOBY_IMAGES.studying}
+                    alt="Nuna cổ vũ chinh phục 990 TOEIC"
+                    className="h-full w-full object-contain"
+                  />
                 </div>
               </div>
               <div className="mt-3 border-t border-emerald-200/70 pt-2.5">
                 <div className="mb-1.5 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-600">Tiến độ mốc 990 TOEIC</span>
+                  <span className="font-semibold text-slate-600">Tiến độ mốc 990 TOEIC cùng Nuna</span>
                   <span className="font-bold tabular-nums text-emerald-800">{bestScorePercent}%</span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden bg-emerald-100">
@@ -474,6 +487,33 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Duolingo-style Nuna Daily Streak Companion Reminder */}
+          <div className="mt-4 flex flex-col items-center justify-between gap-3 border border-blue-200/90 bg-white/95 px-4 py-3 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <img
+                src={currentStreak > 0 ? TOBY_IMAGES.completion : TOBY_IMAGES.encouragement}
+                alt="Nuna nhắc nhở luyện tập"
+                className="h-12 w-20 shrink-0 object-contain"
+              />
+              <p className="text-xs leading-relaxed text-slate-700 sm:text-sm">
+                <strong className="font-bold text-slate-950">
+                  {currentStreak > 0
+                    ? `Gâu gâu! Chuỗi ${currentStreak} ngày của bạn đang rất đẹp!`
+                    : 'Lời nhắc từ Nuna:'}
+                </strong>{' '}
+                {currentStreak > 0
+                  ? 'Chỉ cần luyện thêm 1 Part ngắn hoặc nghe chép 1 câu Dictation mỗi ngày là bạn sẽ phá kỷ lục bản thân!'
+                  : 'Mỗi ngày dành 15 phút giải 1 Part TOEIC cùng Nuna sẽ giúp điểm nghe - đọc tăng nhanh và bền vững hơn rất nhiều!'}
+              </p>
+            </div>
+            <Link
+              to="/courses"
+              className="shrink-0 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1E40AF]"
+            >
+              🐾 Luyện đề cùng Nuna ngay
+            </Link>
           </div>
         </div>
       </section>
@@ -1055,19 +1095,21 @@ const ProfilePage = () => {
                   </div>
                 ) : testHistory.length === 0 ? (
                   <div className="border border-slate-200 bg-slate-50/50 p-12 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center border border-slate-200 bg-white text-slate-400">
-                      <Clock size={26} />
-                    </div>
-                    <h3 className="mt-4 text-lg font-bold text-slate-900">Chưa có lịch sử làm bài</h3>
+                    <img
+                      src={TOBY_IMAGES.sleeping}
+                      alt="Nuna đang chờ bạn làm bài thi đầu tiên"
+                      className="mx-auto h-20 w-20 object-contain"
+                    />
+                    <h3 className="mt-3 text-lg font-bold text-slate-900">Chưa có lịch sử làm bài</h3>
                     <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-                      Bạn chưa hoàn thành bài thi thử hay bài luyện tập nào. Hãy thử sức ngay với kho đề thi TOEIC chuẩn ETS!
+                      Nuna đang ngủ gật chờ bạn khai trương bài thi đầu tiên! Hãy thử sức ngay với kho đề thi TOEIC chuẩn ETS nhé.
                     </p>
                     <div className="mt-6">
                       <Link
                         to="/courses"
                         className="inline-flex items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#173ea8]"
                       >
-                        Khám phá đề thi ngay
+                        🐾 Khám phá đề thi cùng Nuna
                       </Link>
                     </div>
                   </div>
@@ -1197,7 +1239,15 @@ const ProfilePage = () => {
                   </div>
                 ) : paymentRows.length === 0 ? (
                   <div className="border border-slate-200 bg-slate-50/60 p-10 text-center text-sm font-medium text-slate-600">
-                    Bạn chưa có giao dịch thanh toán nào.
+                    <img
+                      src={TOBY_IMAGES.thinking}
+                      alt="Nuna kiểm tra lịch sử giao dịch"
+                      className="mx-auto mb-2.5 h-16 w-16 object-contain"
+                    />
+                    <p className="font-bold text-slate-900">Bạn chưa có giao dịch thanh toán nào</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Khi bạn mở khóa đề thi VIP hoặc thanh toán phí đăng ký Giáo viên qua VNPAY, Nuna sẽ lưu biên nhận tại đây.
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto border border-slate-200 bg-white">

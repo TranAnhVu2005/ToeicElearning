@@ -5,6 +5,7 @@ import { Lock, Mail, Phone, User, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/common/Toast';
 import studyBackground from '../assets/img/hero/toeic_980_co_ban_tay.jpg';
+import { TOBY_IMAGES } from '../components/common/TobyMascot';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -110,6 +111,16 @@ const RegisterPage = () => {
 
           <section className="auth-form-side" aria-labelledby="register-title">
             <header className="auth-header">
+              <div className="mb-3 inline-flex items-center gap-2.5 border border-blue-200 bg-[#EFF6FF]/85 px-3 py-1.5 text-left">
+                <img
+                  src={TOBY_IMAGES.heart}
+                  alt="Chú cún Nuna thả tim chào thành viên mới"
+                  className="h-9 w-9 shrink-0 object-contain"
+                />
+                <span className="text-xs font-semibold text-slate-700">
+                  <strong className="text-[#1D4ED8]">🐾 Làm bạn cùng Nuna!</strong> Tạo tài khoản để luyện đề & theo dõi tiến độ.
+                </span>
+              </div>
               <p className="auth-kicker">TOEIC ELEARNING</p>
               <h1 id="register-title" className="auth-title">Đăng Ký Tài Khoản</h1>
               <p className="auth-subtitle">Trở thành thành viên ToeicElearning chỉ trong 1 phút</p>
