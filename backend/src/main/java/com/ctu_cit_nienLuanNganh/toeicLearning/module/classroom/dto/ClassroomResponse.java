@@ -3,6 +3,8 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto;
 import lombok.Builder;
 import lombok.Value;
 
+import java.time.LocalDateTime;
+
 @Value
 @Builder
 public class ClassroomResponse {
@@ -11,5 +13,9 @@ public class ClassroomResponse {
     String description;
     String classCode;
     String teacherName;
+    String teacherEmail;
     String status;
+    Long approvedMemberCount;
+    Long pendingMemberCount;
+    LocalDateTime createdAt;
 }

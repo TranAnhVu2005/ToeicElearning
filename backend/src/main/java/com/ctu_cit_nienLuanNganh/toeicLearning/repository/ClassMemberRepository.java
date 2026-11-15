@@ -25,4 +25,5 @@ public interface ClassMemberRepository extends BaseRepository<ClassMember, Strin
     List<ClassMember> findByStudent_IdOrderByJoinedAtDesc(String studentId);
     List<ClassMember> findByClassroom_IdOrderByJoinedAtAsc(String classroomId);
     List<ClassMember> findByClassroom_IdAndStatusOrderByJoinedAtAsc(String classroomId, String status);
+    long countByClassroom_IdAndStatus(String classroomId, String status);
 }

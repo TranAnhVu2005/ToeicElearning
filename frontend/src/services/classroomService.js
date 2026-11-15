@@ -22,6 +22,16 @@ export const classroomService = {
   getMaterialDownloadLink: async (classroomId, materialId) => (
     await apiClient.get(`/classrooms/${classroomId}/materials/${materialId}/download`)
   ).data,
+  getMaterialPreviewLink: async (classroomId, materialId) => (
+    await apiClient.get(`/classrooms/${classroomId}/materials/${materialId}/download`, {
+      params: { attachment: false },
+    })
+  ).data,
+  getMaterialPreviewBlob: async (classroomId, materialId) => (
+    await apiClient.get(`/classrooms/${classroomId}/materials/${materialId}/preview`, {
+      responseType: 'blob',
+    })
+  ).data,
   hideMaterial: async (classroomId, materialId) => (
     await apiClient.delete(`/classrooms/${classroomId}/materials/${materialId}`)
   ).data,
@@ -41,5 +51,8 @@ export const classroomService = {
   ).data,
   addAssignmentFeedback: async (resultId, comment) => (
     await apiClient.patch(`/classrooms/assignments/submissions/${resultId}/feedback`, { comment })
+  ).data,
+  postAnnouncement: async (classroomId, title, content) => (
+    await apiClient.post(`/classrooms/${classroomId}/announcements`, { title, content })
   ).data,
 };

@@ -20,6 +20,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -100,6 +105,12 @@ public class MaterialService {
 
     @Transactional
     public MaterialDownloadResponse createDownloadLink(User currentUser, String classroomId, String materialId) {
+        return createDownloadLink(currentUser, classroomId, materialId, true);
+    }
+
+    @Transactional
+    public MaterialDownloadResponse createDownloadLink(
+            User currentUser, String classroomId, String materialId, boolean attachment) {
         requireClassAccess(currentUser, classroomId);
         Material material = materialRepository.findByIdAndClassroom_IdAndActiveTrue(materialId, classroomId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
@@ -107,9 +118,51 @@ public class MaterialService {
             throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
         }
         CloudinaryService.PrivateDownload download = cloudinaryService.createPrivateRawDownload(
-                material.getCloudinaryPublicId(), material.getFileFormat());
+                material.getCloudinaryPublicId(), material.getFileFormat(), attachment);
         return new MaterialDownloadResponse(download.url(), Instant.ofEpochSecond(download.expiresAt()));
     }
+
+    @Transactional
+    public MaterialPreviewContent loadPreviewContent(User currentUser, String classroomId, String materialId) {
+        requireClassAccess(currentUser, classroomId);
+        Material material = materialRepository.findByIdAndClassroom_IdAndActiveTrue(materialId, classroomId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        if (material.getCloudinaryPublicId() == null || material.getFileFormat() == null) {
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
+        }
+        CloudinaryService.PrivateDownload download = cloudinaryService.createPrivateRawDownload(
+                material.getCloudinaryPublicId(), material.getFileFormat(), false);
+        URI uri = URI.create(download.url());
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        if (!"https".equalsIgnoreCase(uri.getScheme())
+                || !(host.equals("api.cloudinary.com") || host.equals("res.cloudinary.com"))) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofSeconds(15))
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder(uri)
+                    .timeout(Duration.ofSeconds(30))
+                    .GET()
+                    .build();
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            if (response.statusCode() < 200 || response.statusCode() >= 300 || response.body() == null) {
+                throw new AppException(ErrorCode.FILE_NOT_FOUND);
+            }
+            String fileName = material.getOriginalFileName() != null && !material.getOriginalFileName().isBlank()
+                    ? material.getOriginalFileName()
+                    : "Tai-lieu.pdf";
+            return new MaterialPreviewContent(response.body(), fileName);
+        } catch (AppException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+    }
+
+    public record MaterialPreviewContent(byte[] bytes, String fileName) { }
 
     @Transactional
     public void hide(User currentUser, String classroomId, String materialId) {

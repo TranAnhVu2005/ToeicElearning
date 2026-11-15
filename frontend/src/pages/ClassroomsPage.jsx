@@ -1,18 +1,114 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Check, Clipboard, FileText, GraduationCap, LoaderCircle, MessageSquare, Pencil, Plus, Save, ShieldAlert, Trash2, UserPlus, Users, X } from 'lucide-react';
+import {
+  Award,
+  Bell,
+  BookOpen,
+  Calendar,
+  Check,
+  ChevronRight,
+  Clipboard,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  FolderOpen,
+  GraduationCap,
+  Home,
+  Info,
+  LayoutGrid,
+  LoaderCircle,
+  Maximize2,
+  Megaphone,
+  Menu,
+  MessageSquare,
+  MoreVertical,
+  Palette,
+  Pencil,
+  Pin,
+  Plus,
+  RefreshCw,
+  Repeat,
+  Save,
+  Search,
+  Send,
+  Settings,
+  ShieldAlert,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserCheck,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { classroomService } from '../services/classroomService';
 import { examService } from '../services/examService';
 import TestManagementPage from './admin/TestManagementPage';
+import nunaLaptopImg from '../assets/img/gaugau/toby_using_laptop.png';
+import nunaBookImg from '../assets/img/gaugau/toby_studying_book.png';
 
-const statusLabels = { OWNED: 'Lớp của tôi', PENDING: 'Đang chờ duyệt', APPROVED: 'Đã tham gia', BLOCKED: 'Đã bị chặn', REMOVED: 'Đã rời lớp' };
-const assignmentStatusLabels = { NOT_SUBMITTED: 'Chưa nộp', SUBMITTED: 'Đã nộp', LATE: 'Đã nộp trễ', GRADED: 'Đã nhận xét', MISSING: 'Quá hạn · chưa nộp' };
+const statusLabels = {
+  OWNED: 'Lớp của tôi',
+  PENDING: 'Đang chờ duyệt',
+  APPROVED: 'Đã tham gia',
+  BLOCKED: 'Đã bị chặn',
+  REMOVED: 'Đã rời lớp',
+};
+
+const assignmentStatusLabels = {
+  NOT_SUBMITTED: 'Chưa nộp',
+  SUBMITTED: 'Đã nộp',
+  LATE: 'Đã nộp trễ',
+  GRADED: 'Đã nhận xét',
+  MISSING: 'Quá hạn · chưa nộp',
+};
+
+const BANNER_THEMES = [
+  {
+    id: 'slate-studio',
+    name: 'Xám Slate (Mặc định)',
+    bgClass: 'bg-gradient-to-r from-[#465A65] via-[#546E7A] to-[#37474F]',
+    accentColor: '#1D4ED8',
+    cardHeaderClass: 'bg-gradient-to-r from-[#465A65] to-[#37474F]',
+  },
+  {
+    id: 'editorial-blue',
+    name: 'Xanh dương Học thuật',
+    bgClass: 'bg-gradient-to-r from-[#1E3A8A] via-[#1D4ED8] to-[#2563EB]',
+    accentColor: '#1D4ED8',
+    cardHeaderClass: 'bg-gradient-to-r from-[#1E3A8A] to-[#1D4ED8]',
+  },
+  {
+    id: 'emerald-campus',
+    name: 'Xanh Ngọc lục bảo',
+    bgClass: 'bg-gradient-to-r from-[#065F46] via-[#047857] to-[#0D9488]',
+    accentColor: '#047857',
+    cardHeaderClass: 'bg-gradient-to-r from-[#065F46] to-[#047857]',
+  },
+  {
+    id: 'indigo-scholar',
+    name: 'Chàm Nghiên cứu',
+    bgClass: 'bg-gradient-to-r from-[#312E81] via-[#4338CA] to-[#4F46E5]',
+    accentColor: '#4338CA',
+    cardHeaderClass: 'bg-gradient-to-r from-[#312E81] to-[#4338CA]',
+  },
+  {
+    id: 'amber-library',
+    name: 'Cam đất Thư viện',
+    bgClass: 'bg-gradient-to-r from-[#78350F] via-[#B45309] to-[#D97706]',
+    accentColor: '#B45309',
+    cardHeaderClass: 'bg-gradient-to-r from-[#78350F] to-[#B45309]',
+  },
+];
+
 const getAssignmentStatusLabel = (status, late) => {
   if (status === 'GRADED') return late ? 'Đã nhận xét · nộp trễ' : 'Đã nhận xét';
   if (late || status === 'LATE') return 'Đã nộp trễ';
   return assignmentStatusLabels[status] || status || 'Chưa có trạng thái';
 };
+
 const formatVietnamDateTime = (value) => {
   if (!value) return '—';
   const hasZone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
@@ -24,6 +120,7 @@ const formatVietnamDateTime = (value) => {
     timeZone: 'Asia/Ho_Chi_Minh',
   }).format(date);
 };
+
 const vietnamDateTimeToLocalInput = (value) => {
   if (!value) return '';
   const hasZone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
@@ -32,17 +129,24 @@ const vietnamDateTimeToLocalInput = (value) => {
   const pad = (part) => String(part).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
+
 const localInputToVietnamDateTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Ho_Chi_Minh',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
   }).formatToParts(date);
   const values = Object.fromEntries(parts.map(({ type, value: partValue }) => [type, partValue]));
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
 };
+
 const getDeadlineHint = (value, now) => {
   if (!value) return '';
   const hasZone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value);
@@ -53,33 +157,110 @@ const getDeadlineHint = (value, now) => {
   if (difference < 24 * 60 * 60 * 1000) return `Còn ${Math.max(1, Math.ceil(difference / (60 * 60 * 1000)))} giờ`;
   return `Còn ${Math.ceil(difference / (24 * 60 * 60 * 1000))} ngày`;
 };
+
 const nextRequestVersion = (versions, key) => {
   versions.current[key] = (versions.current[key] || 0) + 1;
   return versions.current[key];
 };
+
 const isCurrentRequest = (versions, key, version) => versions.current[key] === version;
 
+const getStoredAnnouncements = (classroomId) => {
+  if (!classroomId) return [];
+  try {
+    const raw = window.localStorage.getItem(`toeic_classroom_stream_${classroomId}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveStoredAnnouncements = (classroomId, items) => {
+  if (!classroomId) return;
+  try {
+    window.localStorage.setItem(`toeic_classroom_stream_${classroomId}`, JSON.stringify(items));
+  } catch {
+    // Ignore storage quota errors
+  }
+};
+
+const getStoredThemeId = (classroomId) => {
+  if (!classroomId) return BANNER_THEMES[0].id;
+  try {
+    return window.localStorage.getItem(`toeic_classroom_theme_${classroomId}`) || BANNER_THEMES[0].id;
+  } catch {
+    return BANNER_THEMES[0].id;
+  }
+};
+
 const ClassroomsPage = () => {
-  const { isTeacher } = useAuth();
+  const { user, isTeacher } = useAuth();
   const requestVersions = useRef({});
   const [classrooms, setClassrooms] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
+  const [viewMode, setViewMode] = useState('CLASS_DETAIL'); // 'ALL_CLASSES' | 'CLASS_DETAIL'
+  const [activeTab, setActiveTab] = useState('STREAM'); // 'STREAM' | 'CLASSWORK' | 'PEOPLE' | 'GRADES'
+  const [sidebarDrawerOpen, setSidebarDrawerOpen] = useState(false);
+
+  // Modals & UI panels
+  const [createOrJoinModalOpen, setCreateOrJoinModalOpen] = useState(false);
+  const [fullscreenCodeOpen, setFullscreenCodeOpen] = useState(false);
+  const [codeMenuOpen, setCodeMenuOpen] = useState(false);
+  const [classInfoExpanded, setClassInfoExpanded] = useState(false);
+  const [customizeBannerOpen, setCustomizeBannerOpen] = useState(false);
+  const [selectedThemeId, setSelectedThemeId] = useState(BANNER_THEMES[0].id);
+
+  // Stream announcements state
+  const [announcements, setAnnouncements] = useState([]);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [repostModalOpen, setRepostModalOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementContent, setAnnouncementContent] = useState('');
+  const [notifyStudentsOnPost, setNotifyStudentsOnPost] = useState(true);
+  const [streamFilter, setStreamFilter] = useState('ALL'); // 'ALL' | 'ANNOUNCEMENTS' | 'CLASSWORK'
+
+  // Classwork filters & collapsible forms
+  const [classworkTopic, setClassworkTopic] = useState('ALL'); // 'ALL' | 'ASSIGNMENTS' | 'MATERIALS' | 'TESTS'
+  const [showAssignmentFormModal, setShowAssignmentFormModal] = useState(false);
+  const [showMaterialUploadForm, setShowMaterialUploadForm] = useState(false);
+
+  // Members state
   const [membersState, setMembersState] = useState({ key: '', items: [], error: '' });
+  const [filterStatus, setFilterStatus] = useState('APPROVED');
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+
+  // Materials state
   const [materialsState, setMaterialsState] = useState({ key: '', items: [], error: '' });
   const [materialTitle, setMaterialTitle] = useState('');
   const [materialFile, setMaterialFile] = useState(null);
   const [downloadingMaterialId, setDownloadingMaterialId] = useState('');
+  const [previewModal, setPreviewModal] = useState({
+    open: false,
+    loading: false,
+    material: null,
+    blobUrl: '',
+    googleViewerUrl: '',
+    mode: 'DIRECT',
+    error: '',
+  });
   const materialFileInputRef = useRef(null);
+
+  // Create / Edit / Join Classroom state
   const [className, setClassName] = useState('');
   const [classDescription, setClassDescription] = useState('');
   const [editingClassroom, setEditingClassroom] = useState(false);
   const [classEditForm, setClassEditForm] = useState({ className: '', description: '' });
   const [joinCode, setJoinCode] = useState('');
-  const [filterStatus, setFilterStatus] = useState('PENDING');
+
+  // Status & Feedback
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+
+  // Assignments & Submissions state
   const [assignmentsState, setAssignmentsState] = useState({ key: '', items: [], error: '' });
   const [assignmentRetry, setAssignmentRetry] = useState(0);
   const [assignmentTests, setAssignmentTests] = useState([]);
@@ -92,28 +273,52 @@ const ClassroomsPage = () => {
   const [submissionSort, setSubmissionSort] = useState({ sortBy: 'name', direction: 'ASC' });
   const [editingAssignmentId, setEditingAssignmentId] = useState('');
   const [feedbackDrafts, setFeedbackDrafts] = useState({});
-  const [assignmentForm, setAssignmentForm] = useState({ title: '', instructions: '', testId: '', deadline: '', latePolicy: '' });
+  const [assignmentForm, setAssignmentForm] = useState({
+    title: '',
+    instructions: '',
+    testId: '',
+    deadline: '',
+    latePolicy: '',
+  });
   const [clockNow, setClockNow] = useState(() => Date.now());
+
   const membersRequestKey = `${selectedClass?.id || ''}/${filterStatus}/${isTeacher}`;
-  const members = isTeacher && membersState.key === membersRequestKey ? membersState.items : [];
+  const members = useMemo(
+    () => (isTeacher && membersState.key === membersRequestKey ? membersState.items : []),
+    [isTeacher, membersRequestKey, membersState.items, membersState.key]
+  );
   const membersLoading = isTeacher && Boolean(selectedClass?.id) && membersState.key !== membersRequestKey;
   const membersError = membersState.key === membersRequestKey ? membersState.error : '';
+
   const canViewMaterials = Boolean(selectedClass && (isTeacher || selectedClass.status === 'APPROVED'));
   const materialsRequestKey = `${selectedClass?.id || ''}/${canViewMaterials}`;
-  const materials = canViewMaterials && materialsState.key === materialsRequestKey ? materialsState.items : [];
+  const materials = useMemo(
+    () => (canViewMaterials && materialsState.key === materialsRequestKey ? materialsState.items : []),
+    [canViewMaterials, materialsRequestKey, materialsState.items, materialsState.key]
+  );
   const materialsLoading = canViewMaterials && Boolean(selectedClass?.id) && materialsState.key !== materialsRequestKey;
   const materialsError = materialsState.key === materialsRequestKey ? materialsState.error : '';
+
   const canViewAssignments = Boolean(selectedClass && (isTeacher || selectedClass.status === 'APPROVED'));
   const assignmentsRequestKey = `${selectedClass?.id || ''}/${canViewAssignments}/${assignmentRetry}`;
-  const assignments = canViewAssignments && assignmentsState.key === assignmentsRequestKey ? assignmentsState.items : [];
+  const assignments = useMemo(
+    () => (canViewAssignments && assignmentsState.key === assignmentsRequestKey ? assignmentsState.items : []),
+    [ assignmentsRequestKey, assignmentsState.items, assignmentsState.key, canViewAssignments]
+  );
   const assignmentsLoading = canViewAssignments && Boolean(selectedClass?.id) && assignmentsState.key !== assignmentsRequestKey;
   const assignmentsError = assignmentsState.key === assignmentsRequestKey ? assignmentsState.error : '';
+
   const submissionsRequestKey = `${selectedAssignmentId}/${submissionSort.sortBy}/${submissionSort.direction}/${submissionRetry}`;
   const submissionsLoading = isTeacher && Boolean(selectedAssignmentId) && submissionState.key !== submissionsRequestKey;
   const submissionsError = submissionState.key === submissionsRequestKey ? submissionState.error : '';
   const submissionData = submissionState.key === submissionsRequestKey ? submissionState.data : null;
   const submissions = submissionData?.submissions || [];
   const assignmentSummary = submissionData?.summary || null;
+
+  const activeTheme = useMemo(
+    () => BANNER_THEMES.find((theme) => theme.id === selectedThemeId) || BANNER_THEMES[0],
+    [selectedThemeId]
+  );
 
   const loadClassrooms = useCallback(async () => {
     setLoading(true);
@@ -138,11 +343,11 @@ const ClassroomsPage = () => {
     try {
       const response = await classroomService.getMembers(classroomId, status);
       if (!isCurrentRequest(requestVersions, 'members', version)) return;
-      if (response.code !== 1000) throw new Error(response.message || 'Không tải được danh sách học sinh.');
+      if (response.code !== 1000) throw new Error(response.message || 'Không tải được danh sách học viên.');
       setMembersState({ key: requestKey, items: response.data || [], error: '' });
     } catch (err) {
       if (isCurrentRequest(requestVersions, 'members', version)) {
-        const message = err.response?.data?.message || err.message || 'Không tải được danh sách học sinh.';
+        const message = err.response?.data?.message || err.message || 'Không tải được danh sách học viên.';
         setMembersState({ key: requestKey, items: [], error: message });
         setError(message);
       }
@@ -177,7 +382,7 @@ const ClassroomsPage = () => {
       if (response.code !== 1000) throw new Error(response.message || 'Không tải được bài tập.');
       const list = response.data || [];
       setAssignmentsState({ key: requestKey, items: list, error: '' });
-      setSelectedAssignmentId((current) => list.find((item) => item.id === current)?.id || '');
+      setSelectedAssignmentId((current) => list.find((item) => item.id === current)?.id || (list[0]?.id ?? ''));
     } catch (err) {
       if (isCurrentRequest(requestVersions, 'assignments', version)) {
         const message = err.response?.data?.message || err.message || 'Không tải được bài tập.';
@@ -212,23 +417,55 @@ const ClassroomsPage = () => {
     }
   }, [isTeacher, submissionRetry]);
 
-  useEffect(() => { loadClassrooms(); }, [loadClassrooms]);
+  useEffect(() => {
+    loadClassrooms();
+  }, [loadClassrooms]);
+
   useEffect(() => {
     const timer = window.setInterval(() => setClockNow(Date.now()), 60_000);
     return () => window.clearInterval(timer);
   }, []);
-  useEffect(() => { loadMembers(selectedClass?.id, filterStatus); }, [filterStatus, loadMembers, selectedClass?.id]);
+
+  useEffect(() => {
+    if (selectedClass?.id) {
+      setAnnouncements(getStoredAnnouncements(selectedClass.id));
+      setSelectedThemeId(getStoredThemeId(selectedClass.id));
+      if (isTeacher && selectedClass.pendingMemberCount > 0) {
+        setFilterStatus('PENDING');
+      } else {
+        setFilterStatus('APPROVED');
+      }
+    } else {
+      setAnnouncements([]);
+    }
+  }, [isTeacher, selectedClass?.id, selectedClass?.pendingMemberCount]);
+
+  useEffect(() => {
+    loadMembers(selectedClass?.id, filterStatus);
+  }, [filterStatus, loadMembers, selectedClass?.id]);
+
   useEffect(() => {
     loadMaterials(selectedClass?.id, isTeacher || selectedClass?.status === 'APPROVED');
   }, [isTeacher, loadMaterials, selectedClass?.id, selectedClass?.status]);
+
   useEffect(() => {
-    if (selectedClass?.id && (isTeacher || selectedClass.status === 'APPROVED')) loadAssignments(selectedClass.id);
-    else setSelectedAssignmentId('');
+    if (selectedClass?.id && (isTeacher || selectedClass.status === 'APPROVED')) {
+      loadAssignments(selectedClass.id);
+    } else {
+      setSelectedAssignmentId('');
+    }
   }, [isTeacher, loadAssignments, selectedClass?.id, selectedClass?.status]);
-  useEffect(() => { loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction); }, [loadSubmissions, selectedAssignmentId, submissionSort]);
+
+  useEffect(() => {
+    loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction);
+  }, [loadSubmissions, selectedAssignmentId, submissionSort]);
+
   const loadAssignableTests = useCallback(async (classroomId) => {
     const version = nextRequestVersion(requestVersions, 'assignableTests');
-    if (!isTeacher || !classroomId) { setAssignmentTests([]); return; }
+    if (!isTeacher || !classroomId) {
+      setAssignmentTests([]);
+      return;
+    }
     try {
       const response = await classroomService.getAssignableTests(classroomId);
       if (!isCurrentRequest(requestVersions, 'assignableTests', version)) return;
@@ -243,7 +480,10 @@ const ClassroomsPage = () => {
 
   const loadClassroomTests = useCallback(async (classroomId) => {
     const version = nextRequestVersion(requestVersions, 'classroomTests');
-    if (!isTeacher || !classroomId) { setClassroomTests([]); return; }
+    if (!isTeacher || !classroomId) {
+      setClassroomTests([]);
+      return;
+    }
     try {
       const response = await examService.getClassroomTests(classroomId, 1, 100);
       if (!isCurrentRequest(requestVersions, 'classroomTests', version)) return;
@@ -266,50 +506,188 @@ const ClassroomsPage = () => {
     }
   }, [isTeacher, loadAssignableTests, loadClassroomTests, selectedClass?.id]);
 
+  // Upcoming assignments within next 7 days (or not yet expired)
+  const upcomingAssignments = useMemo(() => {
+    return assignments
+      .filter((item) => {
+        if (!item.deadline) return false;
+        const hasZone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(item.deadline);
+        const deadlineMs = new Date(hasZone ? item.deadline : `${item.deadline}+07:00`).getTime();
+        return Number.isFinite(deadlineMs) && deadlineMs >= clockNow;
+      })
+      .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+      .slice(0, 3);
+  }, [assignments, clockNow]);
+
+  // Unified Stream Feed combining Announcements + Assignments + Materials
+  const unifiedStreamItems = useMemo(() => {
+    const annItems = announcements.map((ann) => ({
+      id: `ann-${ann.id}`,
+      rawId: ann.id,
+      type: 'ANNOUNCEMENT',
+      title: ann.title || 'Thông báo lớp học',
+      content: ann.content,
+      authorName: ann.authorName || selectedClass?.teacherName || 'Giáo viên',
+      createdAt: ann.createdAt,
+      pinned: Boolean(ann.pinned),
+    }));
+
+    const assignItems = assignments.map((assign) => ({
+      id: `assign-${assign.id}`,
+      rawId: assign.id,
+      type: 'ASSIGNMENT',
+      title: `${selectedClass?.teacherName || 'Giáo viên'} đã đăng một bài tập mới: ${assign.title}`,
+      subtitle: `${assign.testTitle} · Hạn nộp: ${formatVietnamDateTime(assign.deadline)}`,
+      createdAt: assign.createdAt || assign.deadline,
+      assignment: assign,
+      pinned: false,
+    }));
+
+    const matItems = materials.map((mat) => ({
+      id: `mat-${mat.id}`,
+      rawId: mat.id,
+      type: 'MATERIAL',
+      title: `${selectedClass?.teacherName || 'Giáo viên'} đã đăng một tài liệu mới: ${mat.title}`,
+      subtitle: `${mat.originalFileName || 'Tài liệu PDF'} ${mat.sizeBytes ? `· ${(mat.sizeBytes / (1024 * 1024)).toFixed(1)} MiB` : ''}`,
+      createdAt: mat.createdAt,
+      material: mat,
+      pinned: false,
+    }));
+
+    let combined = [...annItems, ...assignItems, ...matItems];
+    if (streamFilter === 'ANNOUNCEMENTS') {
+      combined = annItems;
+    } else if (streamFilter === 'CLASSWORK') {
+      combined = [...assignItems, ...matItems];
+    }
+
+    return combined.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [announcements, assignments, materials, selectedClass?.teacherName, streamFilter]);
+
+  const filteredMembers = useMemo(() => {
+    const q = memberSearchQuery.trim().toLowerCase();
+    if (!q) return members;
+    return members.filter(
+      (m) =>
+        (m.studentName || '').toLowerCase().includes(q) ||
+        (m.studentEmail || '').toLowerCase().includes(q)
+    );
+  }, [memberSearchQuery, members]);
+
+  // Student personal grade summary
+  const studentGradeSummary = useMemo(() => {
+    if (isTeacher || assignments.length === 0) return { total: 0, submitted: 0, avgScore: null };
+    const submittedList = assignments.filter((a) => a.myLatestResultId != null);
+    const scoredList = submittedList.filter((a) => typeof a.myLatestScore === 'number');
+    const avgScore =
+      scoredList.length > 0
+        ? (scoredList.reduce((acc, item) => acc + Number(item.myLatestScore || 0), 0) / scoredList.length).toFixed(1)
+        : null;
+    return {
+      total: assignments.length,
+      submitted: submittedList.length,
+      avgScore,
+    };
+  }, [assignments, isTeacher]);
+
+  const handleSelectTheme = (themeId) => {
+    setSelectedThemeId(themeId);
+    if (selectedClass?.id) {
+      try {
+        window.localStorage.setItem(`toeic_classroom_theme_${selectedClass.id}`, themeId);
+      } catch {
+        // Ignore storage error
+      }
+    }
+  };
+
   const handleCreate = async (event) => {
     event.preventDefault();
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true);
+    setError('');
+    setNotice('');
     try {
       const response = await classroomService.create(className, classDescription);
       if (response.code !== 1000) throw new Error(response.message || 'Không tạo được lớp.');
-      setClassName(''); setClassDescription(''); setNotice('Đã tạo lớp. Gửi mã tham gia cho học sinh của bạn.');
+      setClassName('');
+      setClassDescription('');
+      setCreateOrJoinModalOpen(false);
+      setNotice('Đã tạo lớp mới thành công! Hãy chia sẻ mã lớp trên Bảng tin cho học viên của bạn.');
       await loadClassrooms();
+      setViewMode('CLASS_DETAIL');
+      setActiveTab('STREAM');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không tạo được lớp.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const beginEditClassroom = () => {
     if (!selectedClass || !isTeacher) return;
-    setClassEditForm({ className: selectedClass.className || '', description: selectedClass.description || '' });
+    setClassEditForm({
+      className: selectedClass.className || '',
+      description: selectedClass.description || '',
+    });
     setEditingClassroom(true);
+    setCustomizeBannerOpen(true);
   };
 
   const saveClassroomDetails = async (event) => {
     event.preventDefault();
     if (!selectedClass?.id || !isTeacher) return;
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true);
+    setError('');
+    setNotice('');
     try {
-      const response = await classroomService.update(selectedClass.id, classEditForm.className, classEditForm.description);
+      const response = await classroomService.update(
+        selectedClass.id,
+        classEditForm.className,
+        classEditForm.description
+      );
       if (response.code !== 1000) throw new Error(response.message || 'Không cập nhật được thông tin lớp.');
       const updatedClass = response.data;
       setSelectedClass(updatedClass);
-      setClassrooms((items) => items.map((item) => item.id === updatedClass.id ? updatedClass : item));
+      setClassrooms((items) => items.map((item) => (item.id === updatedClass.id ? updatedClass : item)));
       setEditingClassroom(false);
-      setNotice('Đã cập nhật thông tin lớp.');
+      setCustomizeBannerOpen(false);
+      setNotice('Đã cập nhật thông tin lớp học.');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không cập nhật được thông tin lớp.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSelectClassroom = (classroom) => {
-    if (classroom.id === selectedClass?.id) return;
-    const hasAssignmentDraft = Boolean(editingAssignmentId || assignmentForm.title.trim()
-      || assignmentForm.instructions.trim() || assignmentForm.testId || assignmentForm.deadline);
-    if ((editingClassroom || hasAssignmentDraft)
-      && !window.confirm('Đổi lớp sẽ bỏ các thay đổi chưa lưu. Bạn có muốn tiếp tục không?')) return;
+  const handleSelectClassroom = (classroom, targetTab = 'STREAM') => {
+    if (classroom.id === selectedClass?.id) {
+      setViewMode('CLASS_DETAIL');
+      setActiveTab(targetTab);
+      setSidebarDrawerOpen(false);
+      return;
+    }
+    const hasAssignmentDraft = Boolean(
+      editingAssignmentId ||
+        assignmentForm.title.trim() ||
+        assignmentForm.instructions.trim() ||
+        assignmentForm.testId ||
+        assignmentForm.deadline
+    );
+    if (
+      (editingClassroom || hasAssignmentDraft) &&
+      !window.confirm('Đổi lớp sẽ bỏ các thay đổi chưa lưu. Bạn có muốn tiếp tục không?')
+    ) {
+      return;
+    }
 
     setEditingClassroom(false);
+    setCustomizeBannerOpen(false);
     setClassEditForm({ className: '', description: '' });
     setEditingAssignmentId('');
     setAssignmentForm({ title: '', instructions: '', testId: '', deadline: '', latePolicy: '' });
@@ -319,63 +697,239 @@ const ClassroomsPage = () => {
     setMaterialFile(null);
     if (materialFileInputRef.current) materialFileInputRef.current.value = '';
     setSelectedClass(classroom);
+    setViewMode('CLASS_DETAIL');
+    setActiveTab(targetTab);
+    setSidebarDrawerOpen(false);
   };
 
   const handleJoin = async (event) => {
     event.preventDefault();
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true);
+    setError('');
+    setNotice('');
     try {
       const response = await classroomService.join(joinCode.trim().toUpperCase());
       if (response.code !== 1000) throw new Error(response.message || 'Không gửi được yêu cầu tham gia.');
-      setJoinCode(''); setNotice('Yêu cầu đã gửi. Bạn sẽ thấy lớp sau khi giáo viên xử lý.');
+      setJoinCode('');
+      setCreateOrJoinModalOpen(false);
+      setNotice('Yêu cầu tham gia lớp đã được gửi. Giáo viên sẽ duyệt yêu cầu của bạn.');
       await loadClassrooms();
+      setViewMode('CLASS_DETAIL');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không gửi được yêu cầu tham gia.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePostAnnouncement = async (event) => {
+    event.preventDefault();
+    if (!selectedClass?.id || !announcementContent.trim()) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      if (isTeacher && notifyStudentsOnPost) {
+        await classroomService.postAnnouncement(
+          selectedClass.id,
+          announcementTitle.trim() || `Thông báo từ lớp ${selectedClass.className}`,
+          announcementContent.trim()
+        );
+      }
+      const newEntry = {
+        id: `${Date.now()}`,
+        title: announcementTitle.trim() || 'Thông báo lớp học',
+        content: announcementContent.trim(),
+        authorName: user?.name || selectedClass.teacherName || (isTeacher ? 'Giáo viên' : 'Học viên'),
+        createdAt: new Date().toISOString(),
+        pinned: false,
+      };
+      const nextList = [newEntry, ...announcements];
+      setAnnouncements(nextList);
+      saveStoredAnnouncements(selectedClass.id, nextList);
+      setAnnouncementTitle('');
+      setAnnouncementContent('');
+      setComposerOpen(false);
+      setNotice(
+        isTeacher && notifyStudentsOnPost
+          ? 'Đã đăng thông báo lên Bảng tin và gửi chuông thông báo cho toàn bộ học viên!'
+          : 'Đã đăng nội dung lên Bảng tin lớp học.'
+      );
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không gửi được thông báo lớp học.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const togglePinAnnouncement = (id) => {
+    const nextList = announcements.map((item) =>
+      item.id === id ? { ...item, pinned: !item.pinned } : item
+    );
+    setAnnouncements(nextList);
+    saveStoredAnnouncements(selectedClass?.id, nextList);
+  };
+
+  const deleteAnnouncement = (id) => {
+    if (!window.confirm('Xóa thông báo này khỏi Bảng tin?')) return;
+    const nextList = announcements.filter((item) => item.id !== id);
+    setAnnouncements(nextList);
+    saveStoredAnnouncements(selectedClass?.id, nextList);
   };
 
   const handleMemberStatus = async (member, status) => {
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
       const response = await classroomService.changeMemberStatus(selectedClass.id, member.id, status);
       if (response.code !== 1000) throw new Error(response.message || 'Không cập nhật được thành viên.');
-      await loadMembers(selectedClass.id, filterStatus);
+      await Promise.all([loadMembers(selectedClass.id, filterStatus), loadClassrooms()]);
+      setNotice('Đã cập nhật trạng thái thành viên.');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không cập nhật được thành viên.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleUploadMaterial = async (event) => {
     event.preventDefault();
     if (!selectedClass || !materialFile) return;
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true);
+    setError('');
+    setNotice('');
     try {
       const response = await classroomService.uploadMaterial(selectedClass.id, materialTitle, materialFile);
       if (response.code !== 1000) throw new Error(response.message || 'Không tải được tài liệu lên.');
-      setMaterialTitle(''); setMaterialFile(null);
+      setMaterialTitle('');
+      setMaterialFile(null);
       if (materialFileInputRef.current) materialFileInputRef.current.value = '';
-      setNotice('Đã tải tài liệu PDF riêng tư lên lớp.');
+      setShowMaterialUploadForm(false);
+      setNotice('Đã tải tài liệu PDF lên lớp học và hiển thị trên Bảng tin.');
       await loadMaterials(selectedClass.id, true);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không tải được tài liệu lên.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const closePreviewModal = useCallback(() => {
+    setPreviewModal((current) => {
+      if (current.blobUrl) {
+        try {
+          window.URL.revokeObjectURL(current.blobUrl);
+        } catch {
+          // Ignore revoke error
+        }
+      }
+      return {
+        open: false,
+        loading: false,
+        material: null,
+        blobUrl: '',
+        googleViewerUrl: '',
+        mode: 'DIRECT',
+        error: '',
+      };
+    });
+  }, []);
+
+  const handlePreviewMaterial = async (material) => {
+    if (!selectedClass || !material?.downloadable) return;
+    setError('');
+    setPreviewModal((current) => {
+      if (current.blobUrl) {
+        try {
+          window.URL.revokeObjectURL(current.blobUrl);
+        } catch {
+          // Ignore revoke error
+        }
+      }
+      return {
+        open: true,
+        loading: true,
+        material,
+        blobUrl: '',
+        googleViewerUrl: '',
+        mode: 'DIRECT',
+        error: '',
+      };
+    });
+
+    try {
+      const [blobResult, linkResult] = await Promise.allSettled([
+        classroomService.getMaterialPreviewBlob(selectedClass.id, material.id),
+        classroomService.getMaterialPreviewLink(selectedClass.id, material.id),
+      ]);
+
+      let nextBlobUrl = '';
+      if (blobResult.status === 'fulfilled' && blobResult.value) {
+        const pdfBlob = new Blob([blobResult.value], { type: 'application/pdf' });
+        nextBlobUrl = window.URL.createObjectURL(pdfBlob);
+      }
+
+      let nextGoogleViewerUrl = '';
+      if (
+        linkResult.status === 'fulfilled' &&
+        linkResult.value?.code === 1000 &&
+        linkResult.value?.data?.url
+      ) {
+        nextGoogleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+          linkResult.value.data.url
+        )}&embedded=true`;
+      } else {
+        const fallbackLink = await classroomService.getMaterialDownloadLink(
+          selectedClass.id,
+          material.id
+        );
+        if (fallbackLink?.code === 1000 && fallbackLink?.data?.url) {
+          nextGoogleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+            fallbackLink.data.url
+          )}&embedded=true`;
+        }
+      }
+
+      if (!nextBlobUrl && !nextGoogleViewerUrl) {
+        throw new Error('Không tạo được dữ liệu xem trước tài liệu PDF.');
+      }
+
+      setPreviewModal((current) => ({
+        ...current,
+        loading: false,
+        blobUrl: nextBlobUrl,
+        googleViewerUrl: nextGoogleViewerUrl,
+        mode: nextBlobUrl ? 'DIRECT' : 'GOOGLE',
+        error: '',
+      }));
+    } catch (err) {
+      setPreviewModal((current) => ({
+        ...current,
+        loading: false,
+        error: err.response?.data?.message || err.message || 'Không thể mở bản xem trước PDF.',
+      }));
+    }
   };
 
   const handleDownloadMaterial = async (material) => {
     if (!selectedClass || !material.downloadable) return;
-    setDownloadingMaterialId(material.id); setError('');
+    setDownloadingMaterialId(material.id);
+    setError('');
     try {
       const response = await classroomService.getMaterialDownloadLink(selectedClass.id, material.id);
       if (response.code !== 1000 || !response.data?.url) throw new Error(response.message || 'Không tạo được link tải.');
       window.location.assign(response.data.url);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không tải được tài liệu.');
-    } finally { setDownloadingMaterialId(''); }
+    } finally {
+      setDownloadingMaterialId('');
+    }
   };
 
   const handleHideMaterial = async (material) => {
     if (!selectedClass || !window.confirm(`Ẩn tài liệu “${material.title}” khỏi lớp?`)) return;
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     try {
       const response = await classroomService.hideMaterial(selectedClass.id, material.id);
       if (response.code !== 1000) throw new Error(response.message || 'Không ẩn được tài liệu.');
@@ -383,13 +937,17 @@ const ClassroomsPage = () => {
       await loadMaterials(selectedClass.id, true);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không ẩn được tài liệu.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSaveAssignment = async (event) => {
     event.preventDefault();
     if (!selectedClass || !assignmentForm.testId || !assignmentForm.deadline) return;
-    setBusy(true); setError(''); setNotice('');
+    setBusy(true);
+    setError('');
+    setNotice('');
     const payload = {
       ...assignmentForm,
       deadline: localInputToVietnamDateTime(assignmentForm.deadline),
@@ -399,13 +957,16 @@ const ClassroomsPage = () => {
         ? await classroomService.updateAssignment(editingAssignmentId, payload)
         : await classroomService.createAssignment(selectedClass.id, payload);
       if (response.code !== 1000) throw new Error(response.message || 'Không lưu được bài tập.');
-      setNotice(editingAssignmentId ? 'Đã cập nhật bài tập và hạn nộp.' : 'Đã giao bài tập cho lớp.');
+      setNotice(editingAssignmentId ? 'Đã cập nhật bài tập và hạn nộp.' : 'Đã giao bài tập mới cho lớp.');
       setEditingAssignmentId('');
+      setShowAssignmentFormModal(false);
       setAssignmentForm({ title: '', instructions: '', testId: '', deadline: '', latePolicy: '' });
       await loadAssignments(selectedClass.id);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không lưu được bài tập.');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const refreshClassTests = async () => {
@@ -413,12 +974,97 @@ const ClassroomsPage = () => {
     await Promise.all([loadClassroomTests(selectedClass.id), loadAssignableTests(selectedClass.id)]);
   };
 
+  const editAssignment = (assignment) => {
+    setEditingAssignmentId(assignment.id);
+    setAssignmentForm({
+      title: assignment.title || '',
+      instructions: assignment.instructions || '',
+      testId: assignment.testId || '',
+      deadline: vietnamDateTimeToLocalInput(assignment.deadline),
+      latePolicy: assignment.latePolicy || '',
+    });
+    setActiveTab('CLASSWORK');
+    setShowAssignmentFormModal(true);
+  };
+
+  const archiveAssignment = async (assignment) => {
+    if (!window.confirm(`Ẩn bài tập “${assignment.title}” khỏi lớp học?`)) return;
+    setBusy(true);
+    setError('');
+    try {
+      const response = await classroomService.archiveAssignment(assignment.id);
+      if (response.code !== 1000) throw new Error(response.message || 'Không ẩn được bài tập.');
+      setNotice('Đã ẩn bài tập; dữ liệu các lượt nộp được giữ lại.');
+      await loadAssignments(selectedClass.id);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không ẩn được bài tập.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveFeedback = async (submission) => {
+    if (!submission.resultId) return;
+    const comment = feedbackDrafts[submission.resultId] ?? submission.teacherComment ?? '';
+    setBusy(true);
+    setError('');
+    try {
+      const response = await classroomService.addAssignmentFeedback(submission.resultId, comment);
+      if (response.code !== 1000) throw new Error(response.message || 'Không lưu được nhận xét.');
+      setNotice('Đã lưu nhận xét và tạo thông báo cho học viên.');
+      await loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không lưu được nhận xét.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const copyCode = async (code) => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setNotice(`Đã sao chép mã lớp: ${code}`);
+    } catch {
+      setNotice(`Mã lớp: ${code}`);
+    }
+  };
+
+  const rotateJoinCode = async () => {
+    if (
+      !selectedClass?.id ||
+      !isTeacher ||
+      !window.confirm(
+        'Đổi mã tham gia? Mã hiện tại sẽ ngừng hoạt động; học viên đã tham gia và yêu cầu đang chờ vẫn được giữ nguyên.'
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await classroomService.rotateJoinCode(selectedClass.id);
+      if (response.code !== 1000) throw new Error(response.message || 'Không đổi được mã tham gia.');
+      const updatedClass = response.data;
+      setSelectedClass(updatedClass);
+      setClassrooms((items) => items.map((item) => (item.id === updatedClass.id ? updatedClass : item)));
+      setNotice('Đã đổi mã tham gia mới. Mã cũ không còn hiệu lực.');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không đổi được mã tham gia.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (studioOpen && selectedClass && isTeacher) {
     return (
       <div className="classrooms-page min-h-screen bg-white px-4 py-6 sm:px-6">
-        <div className="mx-auto mb-5 flex max-w-7xl items-center justify-between gap-3 border border-slate-200 bg-[#F8FAFC] p-4">
+        <div className="mx-auto mb-5 flex max-w-7xl items-center justify-between gap-3 rounded-xl border border-slate-200 bg-[#F8FAFC] p-4">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">Studio đề riêng của lớp</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+              Studio đề riêng của lớp
+            </p>
             <p className="mt-0.5 text-lg font-bold text-slate-900">{selectedClass.className}</p>
           </div>
           <button
@@ -438,493 +1084,1832 @@ const ClassroomsPage = () => {
     );
   }
 
-  const editAssignment = (assignment) => {
-    setEditingAssignmentId(assignment.id);
-    setAssignmentForm({
-      title: assignment.title || '',
-      instructions: assignment.instructions || '',
-      testId: assignment.testId || '',
-      deadline: vietnamDateTimeToLocalInput(assignment.deadline),
-      latePolicy: assignment.latePolicy || '',
-    });
-  };
-
-  const archiveAssignment = async (assignment) => {
-    setBusy(true); setError('');
-    try {
-      const response = await classroomService.archiveAssignment(assignment.id);
-      if (response.code !== 1000) throw new Error(response.message || 'Không ẩn được bài tập.');
-      setNotice('Đã ẩn bài tập; dữ liệu các lượt nộp được giữ lại.');
-      await loadAssignments(selectedClass.id);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không ẩn được bài tập.');
-    } finally { setBusy(false); }
-  };
-
-  const saveFeedback = async (submission) => {
-    if (!submission.resultId) return;
-    const comment = feedbackDrafts[submission.resultId] ?? submission.teacherComment ?? '';
-    setBusy(true); setError('');
-    try {
-      const response = await classroomService.addAssignmentFeedback(submission.resultId, comment);
-      if (response.code !== 1000) throw new Error(response.message || 'Không lưu được nhận xét.');
-      setNotice('Đã lưu nhận xét và tạo thông báo cho học sinh.');
-      await loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không lưu được nhận xét.');
-    } finally { setBusy(false); }
-  };
-
-  const copyCode = async (code) => {
-    try { await navigator.clipboard.writeText(code); setNotice('Đã sao chép mã lớp.'); }
-    catch { setNotice(`Mã lớp: ${code}`); }
-  };
-
-  const rotateJoinCode = async () => {
-    if (!selectedClass?.id || !isTeacher || !window.confirm('Đổi mã tham gia? Mã hiện tại sẽ ngừng hoạt động; học sinh đã tham gia và yêu cầu đang chờ vẫn được giữ nguyên.')) return;
-    setBusy(true);
-    setError('');
-    setNotice('');
-    try {
-      const response = await classroomService.rotateJoinCode(selectedClass.id);
-      if (response.code !== 1000) throw new Error(response.message || 'Không đổi được mã tham gia.');
-      const updatedClass = response.data;
-      setSelectedClass(updatedClass);
-      setClassrooms((items) => items.map((item) => item.id === updatedClass.id ? updatedClass : item));
-      setNotice('Đã đổi mã tham gia. Mã cũ không còn hiệu lực.');
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không đổi được mã tham gia.');
-    } finally { setBusy(false); }
-  };
-
   return (
-    <div className="classrooms-page min-h-[75vh] bg-white px-4 py-10 text-slate-900 sm:px-6">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8 border-b border-slate-200 pb-6">
-          <div className="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-            <GraduationCap size={18} />
-            <span>Không gian lớp học</span>
-          </div>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Lớp học của bạn</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            {isTeacher
-              ? 'Tạo lớp, chia sẻ mã tham gia, quản lý thành viên, tài liệu PDF, đề riêng và bài tập của lớp.'
-              : 'Tham gia lớp học bằng mã mời 8 ký tự, tải tài liệu PDF và hoàn thành bài tập được giao.'}
-          </p>
-        </header>
+    <div className="classrooms-page min-h-[85vh] bg-white text-slate-900">
+      {/* GOOGLE CLASSROOM TOP SUB-HEADER BAR */}
+      <div className="sticky top-16 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 sm:px-6">
+          {/* Left: Hamburger + Classroom Brand + Breadcrumb */}
+          <div className="flex min-w-0 items-center gap-2.5 py-3">
+            <button
+              type="button"
+              onClick={() => setSidebarDrawerOpen((prev) => !prev)}
+              aria-label="Mở danh sách lớp học"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <Menu size={20} />
+            </button>
 
-        {(error || notice) && (
-          <div
-            role={error ? 'alert' : 'status'}
-            className={`mb-6 border p-4 text-sm font-medium ${
-              error
-                ? 'border-red-300 bg-red-50 text-red-800'
-                : 'border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]'
+            <button
+              type="button"
+              onClick={() => setViewMode('ALL_CLASSES')}
+              className="flex items-center gap-2.5 text-left transition hover:opacity-80"
+            >
+              <span className="grid h-8 w-9 shrink-0 place-items-center rounded-md border border-emerald-700 bg-emerald-600 text-white shadow-xs">
+                <GraduationCap size={18} />
+              </span>
+              <span className="text-lg font-medium tracking-tight text-slate-700">Lớp học</span>
+            </button>
+
+            {selectedClass && viewMode === 'CLASS_DETAIL' && (
+              <>
+                <ChevronRight size={18} className="shrink-0 text-slate-400" />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('STREAM')}
+                  className="truncate text-lg font-semibold tracking-tight text-slate-900 hover:text-[#1D4ED8]"
+                >
+                  {selectedClass.className}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Center: 4 Google Classroom Navigation Tabs */}
+          {selectedClass && viewMode === 'CLASS_DETAIL' && (
+            <nav
+              aria-label="Điều hướng trong lớp học"
+              className="order-3 flex w-full items-center gap-1 overflow-x-auto border-t border-slate-100 lg:order-2 lg:w-auto lg:border-t-0"
+            >
+              {[
+                { id: 'STREAM', label: 'Bảng tin' },
+                {
+                  id: 'CLASSWORK',
+                  label: 'Bài tập trên lớp',
+                  badge: assignments.length + materials.length || null,
+                },
+                {
+                  id: 'PEOPLE',
+                  label: 'Mọi người',
+                  badge: isTeacher && selectedClass.pendingMemberCount > 0 ? selectedClass.pendingMemberCount : null,
+                  badgeUrgent: true,
+                },
+                { id: 'GRADES', label: 'Điểm' },
+              ].map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative inline-flex shrink-0 items-center gap-2 px-5 py-3.5 text-sm font-semibold transition ${
+                      isActive ? 'text-[#1D4ED8]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    {tab.badge ? (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 font-mono text-[11px] font-bold ${
+                          tab.badgeUrgent
+                            ? 'bg-red-600 text-white'
+                            : isActive
+                              ? 'bg-blue-100 text-[#1D4ED8]'
+                              : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {tab.badge}
+                      </span>
+                    ) : null}
+                    {isActive && (
+                      <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t-full bg-[#1D4ED8]" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+
+          {/* Right: Action Icons (Create/Join, All Classes Grid, Studio, Settings) */}
+          <div className="order-2 flex items-center gap-2 py-2 lg:order-3">
+            <button
+              type="button"
+              onClick={() => setCreateOrJoinModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-2xs transition hover:border-[#1D4ED8] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]"
+            >
+              <Plus size={16} />
+              <span>{isTeacher ? 'Tạo lớp mới' : 'Tham gia lớp'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode(viewMode === 'ALL_CLASSES' ? 'CLASS_DETAIL' : 'ALL_CLASSES')}
+              title="Danh sách tất cả lớp học"
+              className={`grid h-9 w-9 place-items-center rounded-full transition ${
+                viewMode === 'ALL_CLASSES'
+                  ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <LayoutGrid size={18} />
+            </button>
+
+            {isTeacher && selectedClass && viewMode === 'CLASS_DETAIL' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingClassroomTest(null);
+                    setStudioOpen(true);
+                  }}
+                  title="Mở Studio soạn đề riêng của lớp"
+                  className="grid h-9 w-9 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-[#1D4ED8]"
+                >
+                  <FolderOpen size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={beginEditClassroom}
+                  title="Cài đặt & tùy chỉnh lớp học"
+                  className="grid h-9 w-9 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-[#1D4ED8]"
+                >
+                  <Settings size={18} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN BODY WITH GOOGLE CLASSROOM LEFT ICON RAIL + CONTENT */}
+      <div className="mx-auto flex max-w-[1440px]">
+        {/* Left Compact Icon Rail (Desktop) */}
+        <aside className="hidden w-16 shrink-0 flex-col items-center gap-2 border-r border-slate-200 bg-white py-4 md:flex">
+          <button
+            type="button"
+            onClick={() => setViewMode('ALL_CLASSES')}
+            title="Màn hình chính Lớp học"
+            className={`grid h-11 w-11 place-items-center rounded-full transition ${
+              viewMode === 'ALL_CLASSES'
+                ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
             }`}
           >
-            {error || notice}
+            <Home size={20} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedClass) {
+                setViewMode('CLASS_DETAIL');
+                setActiveTab('CLASSWORK');
+              }
+            }}
+            title="Lịch & Bài tập trên lớp"
+            className={`grid h-11 w-11 place-items-center rounded-full transition ${
+              viewMode === 'CLASS_DETAIL' && activeTab === 'CLASSWORK'
+                ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Calendar size={20} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedClass) {
+                setViewMode('CLASS_DETAIL');
+                setActiveTab('PEOPLE');
+              }
+            }}
+            title="Mọi người trong lớp"
+            className={`relative grid h-11 w-11 place-items-center rounded-full transition ${
+              viewMode === 'CLASS_DETAIL' && activeTab === 'PEOPLE'
+                ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Users size={20} />
+            {isTeacher && selectedClass?.pendingMemberCount > 0 && (
+              <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red-600" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedClass) {
+                setViewMode('CLASS_DETAIL');
+                setActiveTab('GRADES');
+              }
+            }}
+            title="Sổ điểm lớp học"
+            className={`grid h-11 w-11 place-items-center rounded-full transition ${
+              viewMode === 'CLASS_DETAIL' && activeTab === 'GRADES'
+                ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Award size={20} />
+          </button>
+
+          <div className="my-1 h-px w-8 bg-slate-200" />
+
+          {/* Quick Class Avatar Initials in Left Rail */}
+          <div className="flex flex-col items-center gap-2">
+            {classrooms.slice(0, 6).map((cls) => {
+              const isSelected = selectedClass?.id === cls.id && viewMode === 'CLASS_DETAIL';
+              const initial = (cls.className || 'L').trim().charAt(0).toUpperCase();
+              return (
+                <button
+                  key={cls.id}
+                  type="button"
+                  onClick={() => handleSelectClassroom(cls, 'STREAM')}
+                  title={cls.className}
+                  className={`grid h-9 w-9 place-items-center rounded-full font-mono text-xs font-bold transition ${
+                    isSelected
+                      ? 'bg-[#1D4ED8] text-white ring-2 ring-blue-200'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {initial}
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* SLIDE-OVER CLASS SWITCHER DRAWER (When Menu is clicked) */}
+        {sidebarDrawerOpen && (
+          <div className="fixed inset-0 z-50 flex">
+            <div
+              className="fixed inset-0 bg-slate-900/30 backdrop-blur-[1px]"
+              onClick={() => setSidebarDrawerOpen(false)}
+            />
+            <aside className="relative z-10 flex w-80 max-w-[85vw] flex-col border-r border-slate-200 bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-8 w-8 place-items-center rounded-md bg-emerald-600 text-white">
+                    <GraduationCap size={18} />
+                  </span>
+                  <span className="font-bold text-slate-900">Google Classroom Style</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSidebarDrawerOpen(false)}
+                  className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('ALL_CLASSES');
+                    setSidebarDrawerOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-3 rounded-r-full px-4 py-3 text-left text-sm font-semibold transition ${
+                    viewMode === 'ALL_CLASSES'
+                      ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Home size={18} />
+                  <span>Màn hình chính (Tất cả lớp)</span>
+                </button>
+
+                <div className="my-3 border-t border-slate-200 pt-3">
+                  <p className="px-4 font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    {isTeacher ? 'Lớp đang giảng dạy' : 'Lớp đã đăng ký'} ({classrooms.length})
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {classrooms.map((classroom) => {
+                      const isSelected = selectedClass?.id === classroom.id && viewMode === 'CLASS_DETAIL';
+                      const initial = (classroom.className || 'L').trim().charAt(0).toUpperCase();
+                      return (
+                        <button
+                          key={classroom.id}
+                          type="button"
+                          onClick={() => handleSelectClassroom(classroom, 'STREAM')}
+                          className={`flex w-full items-center gap-3 rounded-r-full px-4 py-2.5 text-left transition ${
+                            isSelected
+                              ? 'bg-[#EFF6FF] text-[#1D4ED8]'
+                              : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span
+                            className={`grid h-8 w-8 shrink-0 place-items-center rounded-full font-mono text-xs font-bold ${
+                              isSelected ? 'bg-[#1D4ED8] text-white' : 'bg-slate-200 text-slate-700'
+                            }`}
+                          >
+                            {initial}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{classroom.className}</p>
+                            <p className="truncate font-mono text-[11px] text-slate-500">
+                              {isTeacher ? `Mã: ${classroom.classCode}` : statusLabels[classroom.status] || classroom.status}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSidebarDrawerOpen(false);
+                    setCreateOrJoinModalOpen(true);
+                  }}
+                  className="editorial-button-primary flex w-full items-center justify-center gap-2 py-2.5 text-xs font-semibold"
+                >
+                  <Plus size={15} />
+                  {isTeacher ? 'Tạo lớp học mới' : 'Tham gia lớp bằng mã'}
+                </button>
+              </div>
+            </aside>
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr]">
-          <section className="space-y-6">
-            <form onSubmit={isTeacher ? handleCreate : handleJoin} className="border border-slate-200 bg-white p-5">
-              <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-900">
-                {isTeacher ? <><Plus size={18} className="text-[#1D4ED8]" /> Tạo lớp mới</> : <><UserPlus size={18} className="text-[#1D4ED8]" /> Tham gia lớp</>}
-              </h2>
-              {isTeacher ? (
-                <>
-                  <label htmlFor="class-name" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Tên lớp</label>
-                  <input
-                    id="class-name"
-                    maxLength={120}
-                    required
-                    value={className}
-                    onChange={(event) => setClassName(event.target.value)}
-                    placeholder="Ví dụ: TOEIC mục tiêu 650+"
-                    className="w-full border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                  />
-                  <label htmlFor="class-description" className="mb-1.5 mt-3.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                    Mô tả lớp <span className="font-normal normal-case text-slate-500">(không bắt buộc)</span>
-                  </label>
-                  <textarea
-                    id="class-description"
-                    rows={3}
-                    maxLength={2000}
-                    value={classDescription}
-                    onChange={(event) => setClassDescription(event.target.value)}
-                    placeholder="Mục tiêu, lịch học hoặc thông tin dành cho học sinh"
-                    className="w-full border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                  />
-                </>
-              ) : (
-                <>
-                  <label htmlFor="class-code" className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">Mã tham gia 8 ký tự</label>
-                  <input
-                    id="class-code"
-                    required
-                    minLength={8}
-                    maxLength={8}
-                    value={joinCode}
-                    onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                    placeholder="Nhập mã do giáo viên cung cấp"
-                    className="w-full border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-sm uppercase tracking-widest text-slate-900 outline-none focus:border-[#1D4ED8]"
-                  />
-                </>
-              )}
+        {/* MAIN WORKSPACE CONTENT */}
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-8">
+          {/* Status / Error Banner */}
+          {(error || notice) && (
+            <div
+              role={error ? 'alert' : 'status'}
+              className={`mx-auto mb-6 flex max-w-5xl items-center justify-between gap-3 rounded-xl border p-4 text-sm font-medium ${
+                error
+                  ? 'border-red-300 bg-red-50 text-red-800'
+                  : 'border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]'
+              }`}
+            >
+              <span>{error || notice}</span>
               <button
-                disabled={busy}
-                className="editorial-button-primary mt-4 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setError('');
+                  setNotice('');
+                }}
+                className="rounded-full p-1 hover:bg-black/5"
               >
-                {busy ? <LoaderCircle className="animate-spin" size={16} /> : null}
-                {isTeacher ? 'Tạo lớp' : 'Gửi yêu cầu'}
+                <X size={16} />
               </button>
-            </form>
+            </div>
+          )}
 
-            <section className="border border-slate-200 bg-white p-5">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
-                  <BookOpen size={18} className="text-[#1D4ED8]" /> Danh sách lớp
-                </h2>
-                <span className="font-mono text-xs font-semibold text-slate-500">{classrooms.length} lớp</span>
+          {/* LOADING OR EMPTY STATE */}
+          {loading ? (
+            <div className="mx-auto flex max-w-5xl items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-12 text-slate-600">
+              <LoaderCircle className="animate-spin text-[#1D4ED8]" size={22} />
+              <span className="text-sm font-semibold">Đang tải không gian lớp học…</span>
+            </div>
+          ) : classrooms.length === 0 ? (
+            <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
+              <img
+                src={nunaBookImg}
+                alt="Nuna đồng hành lớp học"
+                className="mx-auto h-28 w-28 object-contain"
+              />
+              <h1 className="mt-4 text-2xl font-bold text-slate-900">
+                Chào mừng bạn đến với Không gian Lớp học TOEIC
+              </h1>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-slate-600">
+                {isTeacher
+                  ? 'Bạn chưa có lớp học nào. Tạo lớp học đầu tiên để nhận mã lớp 8 ký tự, đăng thông báo trên Bảng tin, tải tài liệu PDF và giao bài tập cho học viên.'
+                  : 'Bạn chưa tham gia lớp học nào. Nhập mã lớp 8 ký tự do giáo viên cung cấp để tham gia lớp học.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setCreateOrJoinModalOpen(true)}
+                className="editorial-button-primary mt-6 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold"
+              >
+                <Plus size={18} />
+                {isTeacher ? 'Tạo lớp học đầu tiên' : 'Nhập mã tham gia lớp'}
+              </button>
+            </div>
+          ) : viewMode === 'ALL_CLASSES' || !selectedClass ? (
+            /* GOOGLE CLASSROOM HOME: ALL CLASSES GRID VIEW */
+            <div className="mx-auto max-w-6xl">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
+                    Tổng quan lớp học
+                  </p>
+                  <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+                    Tất cả lớp học của bạn ({classrooms.length})
+                  </h1>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreateOrJoinModalOpen(true)}
+                  className="editorial-button-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold"
+                >
+                  <Plus size={16} />
+                  {isTeacher ? 'Tạo lớp mới' : 'Tham gia lớp bằng mã'}
+                </button>
               </div>
-              {loading ? (
-                <p className="text-sm text-slate-500">Đang tải lớp học…</p>
-              ) : classrooms.length === 0 ? (
-                <p className="border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-                  Chưa có lớp học nào. {isTeacher ? 'Tạo lớp đầu tiên ở phía trên.' : 'Nhập mã lớp để gửi yêu cầu tham gia.'}
-                </p>
-              ) : (
-                <div className="space-y-2.5">
-                  {classrooms.map((classroom) => {
-                    const isSelected = selectedClass?.id === classroom.id;
-                    return (
-                      <button
-                        key={classroom.id}
-                        type="button"
-                        onClick={() => handleSelectClassroom(classroom)}
-                        className={`block w-full border p-4 text-left transition ${
-                          isSelected
-                            ? 'border-[#1D4ED8] bg-[#EFF6FF] text-slate-900'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="block font-bold text-slate-900">{classroom.className}</span>
-                        <span className="mt-1 block font-mono text-xs font-semibold uppercase tracking-wide text-slate-600">
-                          {isTeacher ? `Mã: ${classroom.classCode}` : (statusLabels[classroom.status] || classroom.status)}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          </section>
 
-          <section className="min-h-72 border border-slate-200 bg-white p-5 sm:p-6">
-            {selectedClass ? (
-              <>
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
-                  <div>
-                    <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-                      {isTeacher ? 'Quản lý lớp' : 'Thông tin lớp'}
-                    </p>
-                    <h2 className="mt-1 text-2xl font-bold text-slate-900">{selectedClass.className}</h2>
-                    <p className="mt-1 text-sm text-slate-600">Giáo viên: <strong className="text-slate-900">{selectedClass.teacherName}</strong></p>
-                    {selectedClass.description && (
-                      <p className="mt-2 max-w-2xl whitespace-pre-wrap text-sm text-slate-600">{selectedClass.description}</p>
-                    )}
-                  </div>
-                  {isTeacher && (
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={beginEditClassroom}
-                        className="editorial-button-secondary inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold disabled:opacity-50"
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {classrooms.map((cls) => {
+                  const clsThemeId = getStoredThemeId(cls.id);
+                  const clsTheme =
+                    BANNER_THEMES.find((t) => t.id === clsThemeId) || BANNER_THEMES[0];
+                  return (
+                    <article
+                      key={cls.id}
+                      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs transition hover:border-slate-300 hover:shadow-md"
+                    >
+                      <div
+                        onClick={() => handleSelectClassroom(cls, 'STREAM')}
+                        className={`relative cursor-pointer p-5 text-white ${clsTheme.cardHeaderClass}`}
                       >
-                        <Pencil size={14} /> Sửa thông tin
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => copyCode(selectedClass.classCode)}
-                        className="inline-flex items-center gap-1.5 border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-2 font-mono text-xs font-bold text-[#1D4ED8] hover:bg-blue-100 disabled:opacity-50"
-                      >
-                        <Clipboard size={14} /> {selectedClass.classCode}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={rotateJoinCode}
-                        className="editorial-button-secondary px-3 py-2 text-xs font-semibold disabled:opacity-50"
-                      >
-                        Đổi mã tham gia
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {isTeacher && editingClassroom && (
-                  <form onSubmit={saveClassroomDetails} className="mt-4 grid gap-3 border border-slate-200 bg-[#F8FAFC] p-4 sm:grid-cols-2">
-                    <label htmlFor="class-edit-name" className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2">
-                      Tên lớp
-                      <input
-                        id="class-edit-name"
-                        required
-                        maxLength={120}
-                        value={classEditForm.className}
-                        onChange={(event) => setClassEditForm((form) => ({ ...form, className: event.target.value }))}
-                        className="mt-1 block min-h-10 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900"
-                      />
-                    </label>
-                    <label htmlFor="class-edit-description" className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2">
-                      Mô tả lớp
-                      <textarea
-                        id="class-edit-description"
-                        rows={3}
-                        maxLength={2000}
-                        value={classEditForm.description}
-                        onChange={(event) => setClassEditForm((form) => ({ ...form, description: event.target.value }))}
-                        className="mt-1 block w-full border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900"
-                      />
-                    </label>
-                    <div className="flex gap-2 sm:col-span-2">
-                      <button
-                        type="submit"
-                        disabled={busy}
-                        className="editorial-button-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                      >
-                        <Save size={14} /> Lưu thông tin
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => setEditingClassroom(false)}
-                        className="editorial-button-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                      >
-                        <X size={14} /> Hủy
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {(isTeacher || selectedClass.status === 'APPROVED') && (
-                  <section className="mt-6 border border-slate-200 bg-[#F8FAFC] p-4 sm:p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
-                          <FileText size={17} className="text-[#1D4ED8]" /> Tài liệu lớp
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-600">
-                          PDF tối đa 10 MiB. Link tải được cấp sau khi kiểm tra quyền và hết hạn sau 5 phút.
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="line-clamp-1 text-xl font-bold tracking-tight text-white group-hover:underline">
+                            {cls.className}
+                          </h2>
+                          <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-white backdrop-blur-xs">
+                            {isTeacher ? `Mã: ${cls.classCode}` : statusLabels[cls.status] || cls.status}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-xs font-medium text-white/90">
+                          GV: {cls.teacherName}
                         </p>
                       </div>
-                      <span className="border border-slate-200 bg-white px-2.5 py-1 font-mono text-xs font-semibold text-slate-700">
-                        {materials.length} tài liệu
-                      </span>
+
+                      <div className="flex flex-1 flex-col justify-between p-5">
+                        <div>
+                          <p className="line-clamp-2 text-xs text-slate-600">
+                            {cls.description || 'Không gian bảng tin, tài liệu PDF và bài tập luyện thi TOEIC của lớp.'}
+                          </p>
+                          <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-xs text-slate-500">
+                            <span className="inline-flex items-center gap-1">
+                              <Users size={14} className="text-[#1D4ED8]" />
+                              {cls.approvedMemberCount ?? 0} học viên
+                            </span>
+                            {isTeacher && cls.pendingMemberCount > 0 && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-700">
+                                {cls.pendingMemberCount} chờ duyệt
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectClassroom(cls, 'STREAM')}
+                            className="text-xs font-bold text-[#1D4ED8] hover:underline"
+                          >
+                            Mở Bảng tin →
+                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectClassroom(cls, 'CLASSWORK')}
+                              title="Bài tập trên lớp"
+                              className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            >
+                              <FileText size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectClassroom(cls, 'PEOPLE')}
+                              title="Mọi người"
+                              className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            >
+                              <Users size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectClassroom(cls, 'GRADES')}
+                              title="Điểm số"
+                              className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            >
+                              <Award size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            /* SELECTED CLASSROOM DETAIL VIEW */
+            <div className="mx-auto max-w-5xl">
+              {/* =========================================================
+                  TAB 1: BẢNG TIN (STREAM) — GOOGLE CLASSROOM STYLE
+              ========================================================= */}
+              {activeTab === 'STREAM' && (
+                <div>
+                  {/* HERO BANNER (Matching Google Classroom Screenshot) */}
+                  <div
+                    className={`relative min-h-[220px] overflow-hidden rounded-2xl p-6 text-white shadow-sm sm:min-h-[240px] sm:p-8 ${activeTheme.bgClass}`}
+                  >
+                    {/* Right Decorative Vector Laptop / Tablet / Phone Illustration (like Google Classroom) */}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 420 240"
+                      className="pointer-events-none absolute right-0 top-0 hidden h-full w-auto opacity-85 sm:block"
+                    >
+                      {/* Tablet */}
+                      <g transform="translate(115, 10) rotate(28)">
+                        <rect x="0" y="0" width="90" height="125" rx="8" fill="#1E293B" opacity="0.7" />
+                        <rect x="6" y="8" width="78" height="109" rx="3" fill="#38BDF8" opacity="0.85" />
+                        <rect x="14" y="18" width="46" height="6" rx="2" fill="#E0F2FE" />
+                        <rect x="14" y="30" width="60" height="4" rx="2" fill="#BAE6FD" />
+                        <rect x="14" y="40" width="52" height="4" rx="2" fill="#BAE6FD" />
+                      </g>
+                      {/* Smartphone */}
+                      <g transform="translate(150, 145) rotate(-25)">
+                        <rect x="0" y="0" width="54" height="96" rx="7" fill="#0F172A" opacity="0.8" />
+                        <rect x="4" y="7" width="46" height="82" rx="3" fill="#0284C7" opacity="0.9" />
+                        <rect x="10" y="16" width="34" height="22" rx="2" fill="#7DD3FC" opacity="0.7" />
+                      </g>
+                      {/* Open Laptop */}
+                      <g transform="translate(245, 30) rotate(-32)">
+                        <rect x="0" y="0" width="160" height="100" rx="6" fill="#334155" />
+                        <rect x="6" y="6" width="148" height="88" rx="3" fill="#2563EB" />
+                        <rect x="18" y="18" width="65" height="6" rx="2" fill="#93C5FD" />
+                        <rect x="18" y="30" width="95" height="5" rx="2" fill="#60A5FA" />
+                        <rect x="18" y="40" width="80" height="5" rx="2" fill="#60A5FA" />
+                        <rect x="-10" y="100" width="180" height="72" rx="8" fill="#CBD5E1" opacity="0.9" />
+                        <rect x="6" y="110" width="148" height="36" rx="3" fill="#64748B" opacity="0.75" />
+                        <rect x="64" y="150" width="32" height="16" rx="2" fill="#94A3B8" />
+                      </g>
+                    </svg>
+
+                    {/* Top Right Customize Button */}
+                    {isTeacher && (
+                      <div className="relative z-10 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setClassEditForm({
+                              className: selectedClass.className || '',
+                              description: selectedClass.description || '',
+                            });
+                            setCustomizeBannerOpen((prev) => !prev);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#1D4ED8] shadow-xs transition hover:bg-blue-50"
+                        >
+                          <Pencil size={14} />
+                          <span>Tùy chỉnh</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Class Name & Subtitle */}
+                    <div className="relative z-10 mt-4 max-w-2xl sm:mt-6">
+                      <h1 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
+                        {selectedClass.className}
+                      </h1>
+                      <p className="mt-2 text-sm font-medium text-white/90 sm:text-base">
+                        Giáo viên: {selectedClass.teacherName}
+                        {selectedClass.approvedMemberCount != null
+                          ? ` · ${selectedClass.approvedMemberCount} học viên`
+                          : ''}
+                      </p>
                     </div>
 
-                    {isTeacher && (
-                      <form onSubmit={handleUploadMaterial} className="mt-4 grid gap-3 border border-slate-200 bg-white p-3.5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                          Tên tài liệu
+                    {/* Bottom Right Info Toggle Button (ⓘ) */}
+                    <button
+                      type="button"
+                      onClick={() => setClassInfoExpanded((prev) => !prev)}
+                      title="Hiển thị thông tin lớp học"
+                      aria-expanded={classInfoExpanded}
+                      className="absolute bottom-4 right-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/20 text-white backdrop-blur-xs transition hover:bg-black/35"
+                    >
+                      <Info size={18} />
+                    </button>
+                  </div>
+
+                  {/* EXPANDABLE BANNER INFO BAR (When ⓘ is clicked) */}
+                  {classInfoExpanded && (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        <div>
+                          <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            Tên lớp học
+                          </span>
+                          <span className="mt-1 block text-sm font-bold text-slate-900">
+                            {selectedClass.className}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            Giáo viên phụ trách
+                          </span>
+                          <span className="mt-1 block text-sm font-semibold text-slate-900">
+                            {selectedClass.teacherName}
+                            {selectedClass.teacherEmail ? ` (${selectedClass.teacherEmail})` : ''}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            Trạng thái / Quy mô
+                          </span>
+                          <span className="mt-1 block font-mono text-sm font-semibold text-[#1D4ED8]">
+                            {statusLabels[selectedClass.status] || selectedClass.status} ·{' '}
+                            {selectedClass.approvedMemberCount ?? 0} học viên
+                          </span>
+                        </div>
+                      </div>
+                      {selectedClass.description && (
+                        <div className="mt-4 border-t border-slate-100 pt-3">
+                          <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                            Mô tả & Mục tiêu lớp học
+                          </span>
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                            {selectedClass.description}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* CUSTOMIZE THEME & CLASS INFO PANEL (When "✏️ Tùy chỉnh" is clicked) */}
+                  {isTeacher && customizeBannerOpen && (
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                          <Palette size={16} className="text-[#1D4ED8]" />
+                          Tùy chỉnh giao diện & thông tin lớp học
+                        </h2>
+                        <button
+                          type="button"
+                          onClick={() => setCustomizeBannerOpen(false)}
+                          className="rounded-full p-1 text-slate-500 hover:bg-slate-200"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-600">
+                          Chọn màu chủ đề Banner
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2.5">
+                          {BANNER_THEMES.map((theme) => (
+                            <button
+                              key={theme.id}
+                              type="button"
+                              onClick={() => handleSelectTheme(theme.id)}
+                              className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+                                selectedThemeId === theme.id
+                                  ? 'border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]'
+                                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                              }`}
+                            >
+                              <span className={`h-3.5 w-3.5 rounded-full ${theme.cardHeaderClass}`} />
+                              <span>{theme.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <form onSubmit={saveClassroomDetails} className="mt-5 grid gap-3 sm:grid-cols-2">
+                        <label
+                          htmlFor="class-edit-name"
+                          className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2"
+                        >
+                          Tên lớp học
                           <input
+                            id="class-edit-name"
                             required
                             maxLength={120}
-                            value={materialTitle}
-                            onChange={(event) => setMaterialTitle(event.target.value)}
-                            placeholder="Ví dụ: Tài liệu ôn Part 5"
-                            className="mt-1 block min-h-10 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900"
+                            value={classEditForm.className}
+                            onChange={(event) =>
+                              setClassEditForm((form) => ({ ...form, className: event.target.value }))
+                            }
+                            className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
                           />
                         </label>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                          Tệp PDF
+                        <label
+                          htmlFor="class-edit-description"
+                          className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2"
+                        >
+                          Mô tả / Lịch học
+                          <textarea
+                            id="class-edit-description"
+                            rows={3}
+                            maxLength={2000}
+                            value={classEditForm.description}
+                            onChange={(event) =>
+                              setClassEditForm((form) => ({ ...form, description: event.target.value }))
+                            }
+                            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          />
+                        </label>
+                        <div className="flex gap-2 sm:col-span-2">
+                          <button
+                            type="submit"
+                            disabled={busy}
+                            className="editorial-button-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold disabled:opacity-50"
+                          >
+                            <Save size={14} /> Lưu thông tin
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => setCustomizeBannerOpen(false)}
+                            className="editorial-button-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
+                          >
+                            Đóng
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Pending student notice */}
+                  {!isTeacher && selectedClass.status !== 'APPROVED' && (
+                    <div className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-medium text-amber-900">
+                      Trạng thái tham gia: <strong>{statusLabels[selectedClass.status] || selectedClass.status}</strong>.
+                      Giáo viên cần duyệt yêu cầu trước khi bạn truy cập bài tập và tài liệu của lớp.
+                    </div>
+                  )}
+
+                  {/* GOOGLE CLASSROOM 2-COLUMN STREAM LAYOUT */}
+                  <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
+                    {/* LEFT SIDEBAR: MÃ LỚP + SẮP ĐẾN HẠN + NUNA */}
+                    <div className="space-y-4">
+                      {/* Card 1: Mã lớp (Teacher) or Thông tin thành viên (Student) */}
+                      {isTeacher ? (
+                        <div className="relative rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-slate-800">Mã lớp</span>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setCodeMenuOpen((prev) => !prev)}
+                                aria-label="Tùy chọn mã lớp"
+                                className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
+                              >
+                                <MoreVertical size={16} />
+                              </button>
+                              {codeMenuOpen && (
+                                <div className="absolute right-0 top-9 z-20 w-48 rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCodeMenuOpen(false);
+                                      copyCode(selectedClass.classCode);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                  >
+                                    <Clipboard size={14} className="text-[#1D4ED8]" />
+                                    Sao chép mã lớp
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCodeMenuOpen(false);
+                                      rotateJoinCode();
+                                    }}
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                  >
+                                    <RefreshCw size={14} className="text-amber-600" />
+                                    Đổi mã tham gia
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCodeMenuOpen(false);
+                                      setFullscreenCodeOpen(true);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50"
+                                  >
+                                    <Maximize2 size={14} className="text-slate-600" />
+                                    Phóng to mã lớp
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => copyCode(selectedClass.classCode)}
+                              title="Nhấn để sao chép mã lớp"
+                              className="font-mono text-2xl font-bold tracking-wider text-[#1D4ED8] hover:underline"
+                            >
+                              {selectedClass.classCode}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFullscreenCodeOpen(true)}
+                              title="Phóng to mã lớp trên màn hình"
+                              className="grid h-8 w-8 place-items-center rounded-lg text-[#1D4ED8] hover:bg-[#EFF6FF]"
+                            >
+                              <Maximize2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                          <span className="text-sm font-bold text-slate-800">Thành viên lớp</span>
+                          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-bold text-[#1D4ED8]">
+                            <UserCheck size={14} />
+                            {statusLabels[selectedClass.status] || selectedClass.status}
+                          </p>
+                          <p className="mt-2 text-xs text-slate-500">
+                            Giáo viên: <strong className="text-slate-800">{selectedClass.teacherName}</strong>
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Card 2: Sắp đến hạn (Upcoming Deadlines — Matching Screenshot) */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
+                        <h3 className="text-sm font-bold text-slate-800">Sắp đến hạn</h3>
+                        {upcomingAssignments.length === 0 ? (
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            Không có bài tập nào sắp đến hạn
+                          </p>
+                        ) : (
+                          <ul className="mt-2.5 space-y-2.5">
+                            {upcomingAssignments.map((item) => (
+                              <li key={item.id} className="border-l-2 border-[#1D4ED8] pl-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveTab('CLASSWORK');
+                                    setSelectedAssignmentId(item.id);
+                                  }}
+                                  className="block text-left text-xs font-bold text-slate-800 hover:text-[#1D4ED8] hover:underline"
+                                >
+                                  {item.title}
+                                </button>
+                                <span className="mt-0.5 block font-mono text-[11px] text-slate-500">
+                                  Hạn: {formatVietnamDateTime(item.deadline)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setActiveTab('CLASSWORK')}
+                            className="text-xs font-bold text-[#1D4ED8] hover:underline"
+                          >
+                            Xem tất cả
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Trợ giảng Nuna AI */}
+                      <div className="rounded-xl border border-blue-100 bg-[#F8FAFC] p-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={nunaLaptopImg}
+                            alt="Trợ giảng Nuna"
+                            className="h-12 w-12 shrink-0 rounded-full border border-blue-200 bg-white object-contain p-1"
+                          />
+                          <div>
+                            <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#1D4ED8]">
+                              Trợ giảng lớp học
+                            </p>
+                            <p className="text-xs font-bold text-slate-900">Cún Nuna đồng hành</p>
+                          </div>
+                        </div>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                          {isTeacher
+                            ? 'Mẹo: Bạn có thể đăng thông báo nhắc lịch thi thử hoặc giao đề riêng cho lớp tại tab Bài tập trên lớp!'
+                            : 'Cần giải thích ngữ pháp Part 5 hay mẹo nghe Part 3 trước khi nộp bài? Hỏi Nuna ngay nhé!'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => window.dispatchEvent(new CustomEvent('open-ai-assistant'))}
+                          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-[#1D4ED8] transition hover:bg-[#EFF6FF]"
+                        >
+                          <Sparkles size={14} />
+                          Hỏi Trợ lý AI Nuna
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* RIGHT MAIN STREAM COLUMN */}
+                    <div className="space-y-4">
+                      {/* Action Pills Row: "✏️ Thông báo mới" + "🔁 Đăng lại" + Filter */}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          {(isTeacher || selectedClass.status === 'APPROVED') && (
+                            <button
+                              type="button"
+                              onClick={() => setComposerOpen((prev) => !prev)}
+                              className="inline-flex items-center gap-2 rounded-full bg-[#D3E3FD] px-5 py-2.5 text-sm font-semibold text-[#0B57D0] shadow-2xs transition hover:bg-[#C2D7FC]"
+                            >
+                              <Pencil size={16} />
+                              <span>Thông báo mới</span>
+                            </button>
+                          )}
+
+                          {isTeacher && (
+                            <button
+                              type="button"
+                              onClick={() => setRepostModalOpen(true)}
+                              className="inline-flex items-center gap-2 rounded-full border border-transparent px-4 py-2.5 text-sm font-semibold text-[#0B57D0] transition hover:bg-blue-50"
+                            >
+                              <Repeat size={16} />
+                              <span>Đăng lại</span>
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            ['ALL', 'Tất cả'],
+                            ['ANNOUNCEMENTS', 'Thông báo'],
+                            ['CLASSWORK', 'Bài tập & PDF'],
+                          ].map(([key, label]) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setStreamFilter(key)}
+                              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                                streamFilter === key
+                                  ? 'bg-slate-900 text-white'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* INLINE STREAM ANNOUNCEMENT COMPOSER */}
+                      {composerOpen && (
+                        <form
+                          onSubmit={handlePostAnnouncement}
+                          className="rounded-2xl border border-blue-200 bg-white p-5 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <span className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                              <Megaphone size={16} className="text-[#1D4ED8]" />
+                              Đăng thông báo cho lớp {selectedClass.className}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setComposerOpen(false)}
+                              className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+
+                          <div className="mt-3 space-y-3">
+                            <input
+                              maxLength={160}
+                              value={announcementTitle}
+                              onChange={(event) => setAnnouncementTitle(event.target.value)}
+                              placeholder="Tiêu đề thông báo (ví dụ: Lịch chữa đề ETS 2026 tối thứ 6)"
+                              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-[#1D4ED8]"
+                            />
+                            <textarea
+                              required
+                              rows={4}
+                              maxLength={3000}
+                              value={announcementContent}
+                              onChange={(event) => setAnnouncementContent(event.target.value)}
+                              placeholder="Thông báo nội dung nào đó cho lớp học của bạn..."
+                              className="w-full rounded-lg border border-slate-300 bg-[#F8FAFC] px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#1D4ED8] focus:bg-white"
+                            />
+                            {isTeacher && (
+                              <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
+                                <input
+                                  type="checkbox"
+                                  checked={notifyStudentsOnPost}
+                                  onChange={(event) => setNotifyStudentsOnPost(event.target.checked)}
+                                  className="h-4 w-4 rounded border-slate-300 text-[#1D4ED8]"
+                                />
+                                <Bell size={13} className="text-[#1D4ED8]" />
+                                Đồng thời gửi chuông thông báo hệ thống tới tất cả học viên đã duyệt trong lớp
+                              </label>
+                            )}
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setComposerOpen(false)}
+                              className="rounded-full px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                            >
+                              Hủy
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={busy || !announcementContent.trim()}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                            >
+                              {busy ? <LoaderCircle size={14} className="animate-spin" /> : <Send size={14} />}
+                              Đăng lên Bảng tin
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* STREAM FEED ITEMS */}
+                      {unifiedStreamItems.length === 0 ? (
+                        /* Google Classroom Empty Stream Welcome Box (Matching Screenshot!) */
+                        <div className="flex flex-col items-center gap-6 rounded-2xl border border-slate-200 bg-white p-6 sm:flex-row sm:p-8">
+                          <img
+                            src={nunaBookImg}
+                            alt="Bảng tin lớp học"
+                            className="h-28 w-28 shrink-0 object-contain"
+                          />
+                          <div className="flex-1 text-center sm:text-left">
+                            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                              Đây là nơi bạn giao tiếp với lớp học của mình
+                            </h2>
+                            <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                              Sử dụng bảng tin để thông báo, đăng bài tập, chia sẻ tài liệu PDF và trả lời câu hỏi của học viên.
+                            </p>
+                            {isTeacher && (
+                              <div className="mt-4 flex flex-wrap justify-center gap-2.5 sm:justify-start">
+                                <button
+                                  type="button"
+                                  onClick={() => setCustomizeBannerOpen(true)}
+                                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-[#1D4ED8] transition hover:bg-slate-50"
+                                >
+                                  <Settings size={15} />
+                                  <span>Cài đặt bảng tin</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveTab('CLASSWORK');
+                                    setShowAssignmentFormModal(true);
+                                  }}
+                                  className="inline-flex items-center gap-2 rounded-full bg-[#EFF6FF] px-4 py-2 text-xs font-semibold text-[#1D4ED8] transition hover:bg-blue-100"
+                                >
+                                  <Plus size={15} />
+                                  <span>Giao bài tập đầu tiên</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3.5">
+                          {unifiedStreamItems.map((item) => {
+                            if (item.type === 'ANNOUNCEMENT') {
+                              return (
+                                <article
+                                  key={item.id}
+                                  className={`rounded-2xl border bg-white p-5 shadow-2xs transition ${
+                                    item.pinned ? 'border-blue-300 bg-[#F8FAFC]' : 'border-slate-200'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1D4ED8] text-white">
+                                        <Megaphone size={18} />
+                                      </span>
+                                      <div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="text-sm font-bold text-slate-900">
+                                            {item.authorName}
+                                          </span>
+                                          {item.pinned && (
+                                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 font-mono text-[10px] font-bold text-[#1D4ED8]">
+                                              <Pin size={11} /> Đã ghim
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className="font-mono text-xs text-slate-500">
+                                          {formatVietnamDateTime(item.createdAt)}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {isTeacher && (
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => togglePinAnnouncement(item.rawId)}
+                                          title={item.pinned ? 'Bỏ ghim' : 'Ghim lên đầu Bảng tin'}
+                                          className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-[#1D4ED8]"
+                                        >
+                                          <Pin size={15} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => deleteAnnouncement(item.rawId)}
+                                          title="Xóa thông báo"
+                                          className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-red-50 hover:text-red-600"
+                                        >
+                                          <Trash2 size={15} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {item.title && (
+                                    <h3 className="mt-3 text-base font-bold text-slate-900">{item.title}</h3>
+                                  )}
+                                  <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                                    {item.content}
+                                  </p>
+                                </article>
+                              );
+                            }
+
+                            if (item.type === 'ASSIGNMENT') {
+                              const assign = item.assignment;
+                              const deadlineExpired =
+                                getDeadlineHint(assign.deadline, clockNow) === 'Đã quá hạn';
+                              const canSubmit = !(
+                                assign.latePolicy === 'REJECT_AFTER_DEADLINE' && deadlineExpired
+                              );
+                              return (
+                                <article
+                                  key={item.id}
+                                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300"
+                                >
+                                  <div className="flex min-w-0 items-center gap-3.5">
+                                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1D4ED8] text-white">
+                                      <FileText size={18} />
+                                    </span>
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-bold text-slate-900">{item.title}</p>
+                                      <p className="mt-0.5 font-mono text-xs text-slate-500">{item.subtitle}</p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    {isTeacher ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedAssignmentId(assign.id);
+                                          setActiveTab('GRADES');
+                                        }}
+                                        className="rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                      >
+                                        Xem bài nộp & Chấm điểm
+                                      </button>
+                                    ) : (
+                                      <>
+                                        {assign.myLatestResultId && (
+                                          <Link
+                                            to={`/results/${assign.myLatestResultId}`}
+                                            className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                          >
+                                            Xem kết quả
+                                          </Link>
+                                        )}
+                                        {canSubmit && (
+                                          <Link
+                                            to={`/courses/${assign.testId}/take?assignmentId=${assign.id}`}
+                                            className="rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                                          >
+                                            {assign.myLatestResultId ? 'Làm lại' : 'Làm bài ngay'}
+                                          </Link>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                </article>
+                              );
+                            }
+
+                            const mat = item.material;
+                            return (
+                              <article
+                                key={item.id}
+                                className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300"
+                              >
+                                <div className="flex min-w-0 items-center gap-3.5">
+                                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-700 text-white">
+                                    <BookOpen size={18} />
+                                  </span>
+                                  <div className="min-w-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => mat.downloadable && handlePreviewMaterial(mat)}
+                                      className="truncate text-left text-sm font-bold text-slate-900 hover:text-[#1D4ED8] hover:underline"
+                                    >
+                                      {item.title}
+                                    </button>
+                                    <p className="mt-0.5 font-mono text-xs text-slate-500">{item.subtitle}</p>
+                                  </div>
+                                </div>
+
+                                {mat.downloadable && (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePreviewMaterial(mat)}
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
+                                    >
+                                      <Eye size={14} />
+                                      Xem trước
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={downloadingMaterialId === mat.id}
+                                      onClick={() => handleDownloadMaterial(mat)}
+                                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                    >
+                                      <Download size={14} />
+                                      Tải PDF
+                                    </button>
+                                  </div>
+                                )}
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* =========================================================
+                  TAB 2: BÀI TẬP TRÊN LỚP (CLASSWORK)
+              ========================================================= */}
+              {activeTab === 'CLASSWORK' && (
+                <div>
+                  {/* Teacher Creation Bar + Topic Filter */}
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                    {isTeacher ? (
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAssignmentId('');
+                            setAssignmentForm({
+                              title: '',
+                              instructions: '',
+                              testId: '',
+                              deadline: '',
+                              latePolicy: '',
+                            });
+                            setShowAssignmentFormModal((prev) => !prev);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition hover:bg-blue-800"
+                        >
+                          <Plus size={18} />
+                          <span>Giao bài tập mới</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowMaterialUploadForm((prev) => !prev)}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                        >
+                          <Upload size={15} />
+                          <span>Tải tài liệu PDF</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingClassroomTest(null);
+                            setStudioOpen(true);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-800 transition hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                        >
+                          <BookOpen size={15} />
+                          <span>Soạn đề riêng của lớp</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900">Bài tập & Tài liệu trên lớp</h2>
+                        <p className="text-xs text-slate-600">
+                          Hoàn thành các bài tập đúng hạn và tải về tài liệu ôn tập PDF của lớp.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Topic Filter Pills */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[
+                        ['ALL', 'Tất cả chủ đề'],
+                        ['ASSIGNMENTS', `Bài tập (${assignments.length})`],
+                        ['MATERIALS', `Tài liệu PDF (${materials.length})`],
+                        ...(isTeacher ? [['TESTS', `Đề riêng (${classroomTests.length})`]] : []),
+                      ].map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setClassworkTopic(key)}
+                          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                            classworkTopic === key
+                              ? 'bg-[#EFF6FF] text-[#1D4ED8] ring-1 ring-[#1D4ED8]'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* TEACHER ASSIGNMENT FORM PANEL */}
+                  {isTeacher && (showAssignmentFormModal || editingAssignmentId) && (
+                    <form
+                      onSubmit={handleSaveAssignment}
+                      className="mb-6 space-y-3.5 rounded-2xl border border-blue-200 bg-[#F8FAFC] p-5 shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-base font-bold text-slate-900">
+                          {editingAssignmentId ? 'Sửa bài tập / Gia hạn thời gian' : 'Giao bài tập TOEIC mới cho lớp'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAssignmentId('');
+                            setShowAssignmentFormModal(false);
+                            setAssignmentForm({
+                              title: '',
+                              instructions: '',
+                              testId: '',
+                              deadline: '',
+                              latePolicy: '',
+                            });
+                          }}
+                          className="rounded-full p-1 text-slate-500 hover:bg-slate-200"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="grid gap-3.5 sm:grid-cols-2">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2">
+                          Tiêu đề bài tập
                           <input
-                            ref={materialFileInputRef}
                             required
-                            type="file"
-                            accept=".pdf,application/pdf"
-                            onChange={(event) => setMaterialFile(event.target.files?.[0] || null)}
-                            className="mt-1 block min-h-10 w-full border border-slate-300 bg-white px-2 py-1.5 text-xs font-normal normal-case text-slate-700 file:mr-2 file:border-0 file:bg-[#EFF6FF] file:px-2.5 file:py-1 file:font-semibold file:text-[#1D4ED8]"
+                            maxLength={255}
+                            value={assignmentForm.title}
+                            onChange={(event) =>
+                              setAssignmentForm((form) => ({ ...form, title: event.target.value }))
+                            }
+                            placeholder="Ví dụ: Tuần 3 — Full Test ETS 2026 Test 1"
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
                           />
                         </label>
+
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2">
+                          Đề thi áp dụng
+                          <select
+                            required
+                            value={assignmentForm.testId}
+                            onChange={(event) =>
+                              setAssignmentForm((form) => ({ ...form, testId: event.target.value }))
+                            }
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          >
+                            <option value="">Chọn đề đã phát hành cho lớp</option>
+                            <optgroup label="Đề chung của hệ thống">
+                              {assignmentTests
+                                .filter((test) => !test.classroomId)
+                                .map((test) => (
+                                  <option key={test.id} value={test.id}>
+                                    {test.titleTest}
+                                  </option>
+                                ))}
+                            </optgroup>
+                            <optgroup label="Đề riêng của lớp">
+                              {assignmentTests
+                                .filter((test) => test.classroomId === selectedClass?.id)
+                                .map((test) => (
+                                  <option key={test.id} value={test.id}>
+                                    {test.titleTest}
+                                  </option>
+                                ))}
+                            </optgroup>
+                          </select>
+                        </label>
+
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2">
+                          Hướng dẫn làm bài (không bắt buộc)
+                          <textarea
+                            maxLength={5000}
+                            rows={2}
+                            value={assignmentForm.instructions}
+                            onChange={(event) =>
+                              setAssignmentForm((form) => ({ ...form, instructions: event.target.value }))
+                            }
+                            placeholder="Lưu ý cho học viên về mục tiêu điểm số, thời gian làm bài..."
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          />
+                        </label>
+
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                          Hạn nộp (Giờ Việt Nam, Asia/Ho_Chi_Minh)
+                          <input
+                            required
+                            type="datetime-local"
+                            value={assignmentForm.deadline}
+                            onChange={(event) =>
+                              setAssignmentForm((form) => ({ ...form, deadline: event.target.value }))
+                            }
+                            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 font-mono text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          />
+                        </label>
+
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                          Chính sách nộp trễ
+                          <select
+                            required
+                            value={assignmentForm.latePolicy}
+                            onChange={(event) =>
+                              setAssignmentForm((form) => ({ ...form, latePolicy: event.target.value }))
+                            }
+                            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          >
+                            <option value="">Chọn chính sách nộp trễ</option>
+                            <option value="REJECT_AFTER_DEADLINE">Hết hạn thì từ chối bài nộp</option>
+                            <option value="ACCEPT_AND_MARK_LATE">Vẫn nhận và đánh dấu nộp trễ</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          disabled={busy || assignmentTests.length === 0 || !assignmentForm.latePolicy}
+                          className="editorial-button-primary px-5 py-2 text-xs font-semibold disabled:opacity-50"
+                        >
+                          {busy ? 'Đang lưu…' : editingAssignmentId ? 'Lưu thay đổi' : 'Giao bài tập'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAssignmentId('');
+                            setShowAssignmentFormModal(false);
+                            setAssignmentForm({
+                              title: '',
+                              instructions: '',
+                              testId: '',
+                              deadline: '',
+                              latePolicy: '',
+                            });
+                          }}
+                          className="editorial-button-secondary px-4 py-2 text-xs font-semibold"
+                        >
+                          Hủy
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* TEACHER PDF UPLOAD FORM PANEL */}
+                  {isTeacher && showMaterialUploadForm && (
+                    <form
+                      onSubmit={handleUploadMaterial}
+                      className="mb-6 grid gap-3 rounded-2xl border border-blue-200 bg-[#F8FAFC] p-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+                    >
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Tên tài liệu PDF
+                        <input
+                          required
+                          maxLength={120}
+                          value={materialTitle}
+                          onChange={(event) => setMaterialTitle(event.target.value)}
+                          placeholder="Ví dụ: Tổng hợp từ vựng Part 5–6"
+                          className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900"
+                        />
+                      </label>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                        Tệp PDF (Tối đa 10 MiB)
+                        <input
+                          ref={materialFileInputRef}
+                          required
+                          type="file"
+                          accept=".pdf,application/pdf"
+                          onChange={(event) => setMaterialFile(event.target.files?.[0] || null)}
+                          className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs font-normal normal-case text-slate-700 file:mr-2 file:border-0 file:bg-[#EFF6FF] file:px-2.5 file:py-1 file:font-semibold file:text-[#1D4ED8]"
+                        />
+                      </label>
+                      <div className="flex gap-2">
                         <button
                           type="submit"
                           disabled={busy || !materialFile}
                           className="editorial-button-primary inline-flex min-h-10 items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold disabled:opacity-50"
                         >
-                          {busy ? <LoaderCircle className="animate-spin" size={15} /> : <Plus size={15} />} Tải lên
+                          {busy ? <LoaderCircle className="animate-spin" size={15} /> : <Upload size={15} />}
+                          Tải lên
                         </button>
-                      </form>
-                    )}
+                        <button
+                          type="button"
+                          onClick={() => setShowMaterialUploadForm(false)}
+                          className="editorial-button-secondary min-h-10 px-3 py-2 text-xs font-semibold"
+                        >
+                          Đóng
+                        </button>
+                      </div>
+                    </form>
+                  )}
 
-                    <div className="mt-4 space-y-2.5">
+                  {/* SECTION 1: BÀI TẬP TOEIC */}
+                  {(classworkTopic === 'ALL' || classworkTopic === 'ASSIGNMENTS') && (
+                    <section className="mb-8">
+                      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2.5">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-[#1D4ED8]">
+                          <FileText size={20} />
+                          <span>Bài tập TOEIC</span>
+                        </h3>
+                        <span className="font-mono text-xs font-semibold text-slate-500">
+                          {assignments.length} bài tập
+                        </span>
+                      </div>
+
+                      {assignmentsLoading ? (
+                        <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                          Đang tải danh sách bài tập…
+                        </p>
+                      ) : assignmentsError ? (
+                        <div
+                          role="alert"
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
+                        >
+                          <span>{assignmentsError}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAssignmentRetry((retry) => retry + 1)}
+                            className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold"
+                          >
+                            Thử lại
+                          </button>
+                        </div>
+                      ) : assignments.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                          Chưa có bài tập nào được giao trong lớp.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {assignments.map((assignment) => {
+                            const status = assignment.mySubmissionStatus;
+                            const deadlineExpired =
+                              getDeadlineHint(assignment.deadline, clockNow) === 'Đã quá hạn';
+                            const displayStatus =
+                              status === 'NOT_SUBMITTED' && deadlineExpired ? 'MISSING' : status;
+                            const canSubmit = !(
+                              assignment.latePolicy === 'REJECT_AFTER_DEADLINE' && deadlineExpired
+                            );
+
+                            return (
+                              <article
+                                key={assignment.id}
+                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 sm:p-5"
+                              >
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div className="flex min-w-0 items-start gap-3.5">
+                                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1D4ED8] text-white">
+                                      <FileText size={18} />
+                                    </span>
+                                    <div>
+                                      <h4 className="text-base font-bold text-slate-900">{assignment.title}</h4>
+                                      <p className="mt-0.5 text-xs font-medium text-slate-600">
+                                        Đề thi: <strong>{assignment.testTitle}</strong> · Hạn nộp:{' '}
+                                        <span className="font-mono">
+                                          {formatVietnamDateTime(assignment.deadline)}
+                                        </span>
+                                      </p>
+                                      {assignment.instructions && (
+                                        <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                                          {assignment.instructions}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {!isTeacher && (
+                                    <span
+                                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                                        assignment.myLatestSubmissionLate || displayStatus === 'LATE'
+                                          ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                          : displayStatus === 'MISSING'
+                                            ? 'border-red-200 bg-red-50 text-red-700'
+                                            : displayStatus === 'GRADED' || displayStatus === 'SUBMITTED'
+                                              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                              : 'border-slate-200 bg-slate-50 text-slate-700'
+                                      }`}
+                                    >
+                                      {getAssignmentStatusLabel(displayStatus, assignment.myLatestSubmissionLate)}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                                  <span className="font-mono text-xs text-slate-500">
+                                    {getDeadlineHint(assignment.deadline, clockNow) || 'Đang mở'}
+                                    {!isTeacher && assignment.myLatestScore != null
+                                      ? ` · Điểm gần nhất: ${assignment.myLatestScore}`
+                                      : ''}
+                                  </span>
+
+                                  {isTeacher ? (
+                                    <div className="flex flex-wrap gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedAssignmentId(assignment.id);
+                                          setActiveTab('GRADES');
+                                        }}
+                                        className="rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                                      >
+                                        Xem bài nộp & Nhận xét
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => editAssignment(assignment)}
+                                        className="editorial-button-secondary rounded-full px-3.5 py-1.5 text-xs font-semibold"
+                                      >
+                                        Sửa / gia hạn
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() => archiveAssignment(assignment)}
+                                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                      >
+                                        <Trash2 size={13} /> Ẩn bài
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                      {assignment.myLatestResultId && (
+                                        <Link
+                                          to={`/results/${assignment.myLatestResultId}`}
+                                          className="text-xs font-bold text-[#1D4ED8] hover:underline"
+                                        >
+                                          Xem bài đã nộp{assignment.myLatestSubmissionLate ? ' (trễ)' : ''} →
+                                        </Link>
+                                      )}
+                                      {canSubmit && (
+                                        <Link
+                                          to={`/courses/${assignment.testId}/take?assignmentId=${assignment.id}`}
+                                          className="rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                                        >
+                                          {assignment.myLatestResultId ? 'Làm lại bài' : 'Bắt đầu làm'}
+                                        </Link>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </section>
+                  )}
+
+                  {/* SECTION 2: TÀI LIỆU HỌC TẬP PDF */}
+                  {(classworkTopic === 'ALL' || classworkTopic === 'MATERIALS') && (
+                    <section className="mb-8">
+                      <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-2.5">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-[#1D4ED8]">
+                          <BookOpen size={20} />
+                          <span>Tài liệu lớp học (PDF)</span>
+                        </h3>
+                        <span className="font-mono text-xs font-semibold text-slate-500">
+                          {materials.length} tài liệu
+                        </span>
+                      </div>
+
                       {materialsLoading ? (
-                        <p role="status" className="border border-slate-200 bg-white p-3 text-sm text-slate-600">Đang tải tài liệu…</p>
+                        <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                          Đang tải tài liệu…
+                        </p>
                       ) : materialsError ? (
-                        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
+                        <div
+                          role="alert"
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
+                        >
                           <span>{materialsError}</span>
-                          <button type="button" onClick={() => loadMaterials(selectedClass.id, true)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
+                          <button
+                            type="button"
+                            onClick={() => loadMaterials(selectedClass.id, true)}
+                            className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold"
+                          >
+                            Thử lại
+                          </button>
                         </div>
                       ) : materials.length === 0 ? (
-                        <p className="border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-500">Chưa có tài liệu trong lớp.</p>
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                          Chưa có tài liệu PDF nào trong lớp.
+                        </p>
                       ) : (
-                        materials.map((material) => (
-                          <article key={material.id} className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white p-3.5">
-                            <div className="flex min-w-0 items-start gap-3">
-                              <span className="grid h-10 w-10 shrink-0 place-items-center border border-blue-200 bg-[#EFF6FF] text-[#1D4ED8]">
-                                <FileText size={18} />
-                              </span>
-                              <div className="min-w-0">
-                                <p className="break-words font-bold text-slate-900">{material.title}</p>
-                                <p className="mt-0.5 break-all font-mono text-xs text-slate-500">
-                                  {material.originalFileName || 'Tài liệu PDF'} · {material.sizeBytes ? `${(material.sizeBytes / (1024 * 1024)).toFixed(1)} MiB` : 'Dung lượng cũ chưa có'} · {material.createdAt ? new Date(material.createdAt).toLocaleDateString('vi-VN') : ''}
-                                </p>
-                                {!material.downloadable && (
-                                  <p className="mt-1 text-xs font-medium text-red-700">Tệp cũ chưa có link tải riêng; giáo viên cần tải lại.</p>
+                        <div className="space-y-3">
+                          {materials.map((material) => (
+                            <article
+                              key={material.id}
+                              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs"
+                            >
+                              <div className="flex min-w-0 items-start gap-3.5">
+                                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#EFF6FF] text-[#1D4ED8]">
+                                  <FileText size={18} />
+                                </span>
+                                <div className="min-w-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => material.downloadable && handlePreviewMaterial(material)}
+                                    className="break-words text-left font-bold text-slate-900 hover:text-[#1D4ED8] hover:underline"
+                                  >
+                                    {material.title}
+                                  </button>
+                                  <p className="mt-0.5 break-all font-mono text-xs text-slate-500">
+                                    {material.originalFileName || 'Tài liệu PDF'} ·{' '}
+                                    {material.sizeBytes
+                                      ? `${(material.sizeBytes / (1024 * 1024)).toFixed(1)} MiB`
+                                      : 'Dung lượng cũ chưa có'}{' '}
+                                    ·{' '}
+                                    {material.createdAt
+                                      ? new Date(material.createdAt).toLocaleDateString('vi-VN')
+                                      : ''}
+                                  </p>
+                                  {!material.downloadable && (
+                                    <p className="mt-1 text-xs font-medium text-red-700">
+                                      Tệp cũ chưa có link tải riêng; giáo viên cần tải lại.
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {material.downloadable && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePreviewMaterial(material)}
+                                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#EFF6FF] px-4 py-1.5 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
+                                    >
+                                      <Eye size={14} />
+                                      Xem trước
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={downloadingMaterialId === material.id}
+                                      onClick={() => handleDownloadMaterial(material)}
+                                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                                    >
+                                      {downloadingMaterialId === material.id ? (
+                                        <LoaderCircle className="animate-spin" size={14} />
+                                      ) : (
+                                        <Download size={14} />
+                                      )}
+                                      Tải PDF
+                                    </button>
+                                  </>
+                                )}
+                                {isTeacher && (
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => handleHideMaterial(material)}
+                                    className="min-h-9 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                  >
+                                    Ẩn
+                                  </button>
                                 )}
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {material.downloadable && (
-                                <button
-                                  type="button"
-                                  disabled={downloadingMaterialId === material.id}
-                                  onClick={() => handleDownloadMaterial(material)}
-                                  className="editorial-button-primary inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
-                                >
-                                  {downloadingMaterialId === material.id ? <LoaderCircle className="animate-spin" size={14} /> : <FileText size={14} />} Tải PDF
-                                </button>
-                              )}
-                              {isTeacher && (
-                                <button
-                                  type="button"
-                                  disabled={busy}
-                                  onClick={() => handleHideMaterial(material)}
-                                  className="min-h-9 border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
-                                >
-                                  Ẩn
-                                </button>
-                              )}
-                            </div>
-                          </article>
-                        ))
-                      )}
-                    </div>
-                  </section>
-                )}
-
-                {isTeacher ? (
-                  <>
-                    <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
-                        <Users size={18} className="text-[#1D4ED8]" /> Học sinh
-                      </h3>
-                      <select
-                        value={filterStatus}
-                        onChange={(event) => setFilterStatus(event.target.value)}
-                        className="border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-[#1D4ED8]"
-                      >
-                        <option value="PENDING">Chờ duyệt</option>
-                        <option value="APPROVED">Đã duyệt</option>
-                        <option value="BLOCKED">Đã chặn</option>
-                        <option value="REMOVED">Đã gỡ</option>
-                      </select>
-                    </div>
-
-                    <div className="mt-3 space-y-2.5">
-                      {membersLoading ? (
-                        <p role="status" className="border border-slate-200 bg-white p-4 text-sm text-slate-600">Đang tải danh sách học sinh…</p>
-                      ) : membersError ? (
-                        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800">
-                          <span>{membersError}</span>
-                          <button type="button" onClick={() => loadMembers(selectedClass.id, filterStatus)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
+                            </article>
+                          ))}
                         </div>
-                      ) : members.length === 0 ? (
-                        <p className="border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Không có học sinh trong trạng thái này.</p>
-                      ) : (
-                        members.map((member) => (
-                          <div key={member.id} className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white p-3.5">
-                            <div>
-                              <p className="font-bold text-slate-900">{member.studentName}</p>
-                              <p className="font-mono text-xs text-slate-500">{member.studentEmail}</p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {member.status === 'PENDING' && (
-                                <>
-                                  <button
-                                    disabled={busy}
-                                    onClick={() => handleMemberStatus(member, 'APPROVED')}
-                                    className="inline-flex items-center gap-1 border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                                  >
-                                    <Check size={14} /> Duyệt
-                                  </button>
-                                  <button
-                                    disabled={busy}
-                                    onClick={() => handleMemberStatus(member, 'REMOVED')}
-                                    className="inline-flex items-center gap-1 border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-                                  >
-                                    <X size={14} /> Từ chối
-                                  </button>
-                                </>
-                              )}
-                              {member.status === 'APPROVED' && (
-                                <>
-                                  <button
-                                    disabled={busy}
-                                    onClick={() => handleMemberStatus(member, 'BLOCKED')}
-                                    className="inline-flex items-center gap-1 border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
-                                  >
-                                    <ShieldAlert size={14} /> Chặn
-                                  </button>
-                                  <button
-                                    disabled={busy}
-                                    onClick={() => handleMemberStatus(member, 'REMOVED')}
-                                    className="border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-                                  >
-                                    Gỡ
-                                  </button>
-                                </>
-                              )}
-                              {member.status === 'BLOCKED' && (
-                                <button
-                                  disabled={busy}
-                                  onClick={() => handleMemberStatus(member, 'APPROVED')}
-                                  className="inline-flex items-center gap-1 border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
-                                >
-                                  <Check size={14} /> Mở chặn
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))
                       )}
-                    </div>
+                    </section>
+                  )}
 
-                    <div className="mt-8 border-t border-slate-200 pt-6">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                  {/* SECTION 3: ĐỀ RIÊNG CỦA LỚP (TEACHER ONLY) */}
+                  {isTeacher && (classworkTopic === 'ALL' || classworkTopic === 'TESTS') && (
+                    <section>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2.5">
                         <div>
-                          <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
-                            <BookOpen size={18} className="text-[#1D4ED8]" /> Đề riêng của lớp
+                          <h3 className="flex items-center gap-2 text-lg font-bold text-[#1D4ED8]">
+                            <GraduationCap size={20} />
+                            <span>Kho đề riêng của lớp</span>
                           </h3>
-                          <p className="mt-1 text-xs text-slate-600">Chỉ giáo viên lớp này và học sinh đã duyệt mới có quyền mở đề.</p>
+                          <p className="text-xs text-slate-500">
+                            Chỉ giáo viên lớp này và học viên đã duyệt mới có quyền mở đề.
+                          </p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => { setEditingClassroomTest(null); setStudioOpen(true); }}
-                          className="editorial-button-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
+                          onClick={() => {
+                            setEditingClassroomTest(null);
+                            setStudioOpen(true);
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[#1D4ED8] bg-[#EFF6FF] px-4 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
                         >
-                          <Plus size={15} /> Soạn đề riêng
+                          <Plus size={14} /> Soạn đề riêng mới
                         </button>
                       </div>
 
-                      <div className="mt-3 space-y-2.5">
-                        {classroomTests.length === 0 ? (
-                          <p className="border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">Lớp chưa có đề riêng.</p>
-                        ) : (
-                          classroomTests.map((test) => (
-                            <article key={test.id} className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 bg-white p-3.5">
+                      {classroomTests.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                          Lớp chưa có đề riêng nào. Nhấn “Soạn đề riêng mới” để mở Studio.
+                        </p>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {classroomTests.map((test) => (
+                            <article
+                              key={test.id}
+                              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs"
+                            >
                               <div>
                                 <p className="font-bold text-slate-900">{test.titleTest}</p>
                                 <p className="mt-0.5 text-xs font-medium text-slate-600">
@@ -934,8 +2919,11 @@ const ClassroomsPage = () => {
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => { setEditingClassroomTest(test); setStudioOpen(true); }}
-                                  className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold"
+                                  onClick={() => {
+                                    setEditingClassroomTest(test);
+                                    setStudioOpen(true);
+                                  }}
+                                  className="editorial-button-secondary rounded-full px-3.5 py-1.5 text-xs font-semibold"
                                 >
                                   Sửa đề
                                 </button>
@@ -943,17 +2931,29 @@ const ClassroomsPage = () => {
                                   type="button"
                                   disabled={busy}
                                   onClick={async () => {
-                                    setBusy(true); setError('');
+                                    setBusy(true);
+                                    setError('');
                                     try {
-                                      const response = await examService.publishClassroomTest(selectedClass.id, test.id);
-                                      if (response.code !== 1000) throw new Error(response.message || 'Không phát hành được đề.');
-                                      setNotice('Đã phát hành đề cho học sinh trong lớp.');
+                                      const response = await examService.publishClassroomTest(
+                                        selectedClass.id,
+                                        test.id
+                                      );
+                                      if (response.code !== 1000) {
+                                        throw new Error(response.message || 'Không phát hành được đề.');
+                                      }
+                                      setNotice('Đã phát hành đề cho học viên trong lớp.');
                                       await refreshClassTests();
                                     } catch (err) {
-                                      setError(err.response?.data?.message || err.message || 'Không phát hành được đề.');
-                                    } finally { setBusy(false); }
+                                      setError(
+                                        err.response?.data?.message ||
+                                          err.message ||
+                                          'Không phát hành được đề.'
+                                      );
+                                    } finally {
+                                      setBusy(false);
+                                    }
                                   }}
-                                  className="border border-[#1D4ED8] bg-[#EFF6FF] px-3 py-1.5 text-xs font-semibold text-[#1D4ED8] hover:bg-blue-100 disabled:opacity-50"
+                                  className="rounded-full border border-[#1D4ED8] bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-semibold text-[#1D4ED8] hover:bg-blue-100 disabled:opacity-50"
                                 >
                                   {test.status === 'PUBLISHED' ? 'Đã phát hành' : 'Phát hành'}
                                 </button>
@@ -962,186 +2962,301 @@ const ClassroomsPage = () => {
                                   disabled={busy}
                                   onClick={async () => {
                                     if (!window.confirm(`Xóa đề “${test.titleTest}” khỏi lớp?`)) return;
-                                    setBusy(true); setError('');
+                                    setBusy(true);
+                                    setError('');
                                     try {
-                                      const response = await examService.deleteClassroomTest(selectedClass.id, test.id);
-                                      if (response.code !== 1000) throw new Error(response.message || 'Không xóa được đề.');
+                                      const response = await examService.deleteClassroomTest(
+                                        selectedClass.id,
+                                        test.id
+                                      );
+                                      if (response.code !== 1000) {
+                                        throw new Error(response.message || 'Không xóa được đề.');
+                                      }
                                       setNotice('Đã xóa đề riêng của lớp.');
                                       await refreshClassTests();
                                     } catch (err) {
-                                      setError(err.response?.data?.message || err.message || 'Đề đã giao hoặc đã có kết quả; dữ liệu được giữ nguyên.');
-                                    } finally { setBusy(false); }
+                                      setError(
+                                        err.response?.data?.message ||
+                                          err.message ||
+                                          'Đề đã giao hoặc đã có kết quả; dữ liệu được giữ nguyên.'
+                                      );
+                                    } finally {
+                                      setBusy(false);
+                                    }
                                   }}
-                                  className="border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                  className="rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
                                 >
                                   Xóa
                                 </button>
                               </div>
                             </article>
-                          ))
+                          ))}
+                        </div>
+                      )}
+                    </section>
+                  )}
+                </div>
+              )}
+
+              {/* =========================================================
+                  TAB 3: MỌI NGƯỜI (PEOPLE) — GOOGLE CLASSROOM ROSTER
+              ========================================================= */}
+              {activeTab === 'PEOPLE' && (
+                <div className="mx-auto max-w-4xl space-y-8">
+                  {/* Teacher Section */}
+                  <section>
+                    <div className="flex items-center justify-between border-b-2 border-[#1D4ED8] pb-3">
+                      <h2 className="text-2xl font-bold text-[#1D4ED8]">Giáo viên</h2>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="flex items-center gap-3.5">
+                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1D4ED8] font-mono text-base font-bold text-white">
+                          {(selectedClass.teacherName || 'G').trim().charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-900">{selectedClass.teacherName}</p>
+                          {selectedClass.teacherEmail && (
+                            <p className="font-mono text-xs text-slate-500">{selectedClass.teacherEmail}</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-semibold text-[#1D4ED8]">
+                        Chủ lớp học
+                      </span>
+                    </div>
+                  </section>
+
+                  {/* Students Section */}
+                  <section>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1D4ED8] pb-3">
+                      <h2 className="text-2xl font-bold text-[#1D4ED8]">Bạn học / Học viên</h2>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-sm font-bold text-slate-600">
+                          {selectedClass.approvedMemberCount ?? 0} học viên đã duyệt
+                        </span>
+                        {isTeacher && (
+                          <button
+                            type="button"
+                            onClick={() => copyCode(selectedClass.classCode)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 font-mono text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                          >
+                            <UserPlus size={14} />
+                            Mã mời: {selectedClass.classCode}
+                          </button>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-8 border-t border-slate-200 pt-6">
-                      <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-slate-900">
-                        <FileText size={18} className="text-[#1D4ED8]" /> Bài tập
-                      </h3>
-                      <form onSubmit={handleSaveAssignment} className="space-y-3.5 border border-slate-200 bg-[#F8FAFC] p-4">
-                        <p className="text-sm font-bold text-slate-900">
-                          {editingAssignmentId ? 'Sửa bài tập / gia hạn' : 'Giao đề cho lớp'}
-                        </p>
-                        <input
-                          required
-                          maxLength={255}
-                          value={assignmentForm.title}
-                          onChange={(event) => setAssignmentForm((form) => ({ ...form, title: event.target.value }))}
-                          placeholder="Tên bài tập"
-                          className="w-full border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                        />
-                        <select
-                          required
-                          value={assignmentForm.testId}
-                          onChange={(event) => setAssignmentForm((form) => ({ ...form, testId: event.target.value }))}
-                          className="w-full border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                        >
-                          <option value="">Chọn đề đã phát hành cho lớp</option>
-                          <optgroup label="Đề chung của hệ thống">
-                            {assignmentTests.filter((test) => !test.classroomId).map((test) => <option key={test.id} value={test.id}>{test.titleTest}</option>)}
-                          </optgroup>
-                          <optgroup label="Đề riêng của lớp">
-                            {assignmentTests.filter((test) => test.classroomId === selectedClass?.id).map((test) => <option key={test.id} value={test.id}>{test.titleTest}</option>)}
-                          </optgroup>
-                        </select>
-                        <textarea
-                          maxLength={5000}
-                          rows={2}
-                          value={assignmentForm.instructions}
-                          onChange={(event) => setAssignmentForm((form) => ({ ...form, instructions: event.target.value }))}
-                          placeholder="Hướng dẫn làm bài (không bắt buộc)"
-                          className="w-full border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-                        />
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                          Hạn nộp (giờ Việt Nam, Asia/Ho_Chi_Minh)
-                          <input
-                            required
-                            type="datetime-local"
-                            value={assignmentForm.deadline}
-                            onChange={(event) => setAssignmentForm((form) => ({ ...form, deadline: event.target.value }))}
-                            className="mt-1 block w-full border border-slate-300 bg-white px-3.5 py-2 font-mono text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
-                          />
-                          <span className="mt-1 block text-xs font-normal normal-case text-slate-500">
-                            Thời điểm hiển thị cho học sinh theo giờ Việt Nam, không theo múi giờ thiết bị.
-                          </span>
-                        </label>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                          Chính sách nộp trễ
-                          <select
-                            required
-                            value={assignmentForm.latePolicy}
-                            onChange={(event) => setAssignmentForm((form) => ({ ...form, latePolicy: event.target.value }))}
-                            className="mt-1 block w-full border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
-                          >
-                            <option value="">Chọn chính sách nộp trễ</option>
-                            <option value="REJECT_AFTER_DEADLINE">Hết hạn thì từ chối bài nộp</option>
-                            <option value="ACCEPT_AND_MARK_LATE">Vẫn nhận và đánh dấu nộp trễ</option>
-                          </select>
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            disabled={busy || assignmentTests.length === 0 || !assignmentForm.latePolicy}
-                            className="editorial-button-primary px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                          >
-                            {busy ? 'Đang lưu…' : editingAssignmentId ? 'Lưu thay đổi' : 'Giao bài tập'}
-                          </button>
-                          {editingAssignmentId && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingAssignmentId('');
-                                setAssignmentForm({ title: '', instructions: '', testId: '', deadline: '', latePolicy: '' });
-                              }}
-                              className="editorial-button-secondary px-4 py-2 text-xs font-semibold"
-                            >
-                              Hủy sửa
-                            </button>
-                          )}
-                        </div>
-                      </form>
-
-                      <div className="mt-4 space-y-2.5">
-                        {assignmentsLoading ? (
-                          <p role="status" className="border border-slate-200 bg-white p-3 text-sm text-slate-600">Đang tải bài tập…</p>
-                        ) : assignmentsError ? (
-                          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-3 text-sm font-medium text-red-800">
-                            <span>{assignmentsError}</span>
-                            <button type="button" onClick={() => setAssignmentRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
-                          </div>
-                        ) : assignments.length === 0 ? (
-                          <p className="border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-500">Lớp chưa có bài tập đang mở.</p>
-                        ) : (
-                          assignments.map((assignment) => {
-                            const isSelected = selectedAssignmentId === assignment.id;
-                            return (
-                              <div
-                                key={assignment.id}
-                                className={`border p-4 transition ${
-                                  isSelected
-                                    ? 'border-[#1D4ED8] bg-[#EFF6FF]'
-                                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    {isTeacher ? (
+                      <>
+                        {/* Status Filter Tabs & Search */}
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              ['APPROVED', 'Đã duyệt'],
+                              [
+                                'PENDING',
+                                `Chờ duyệt${selectedClass.pendingMemberCount ? ` (${selectedClass.pendingMemberCount})` : ''}`,
+                              ],
+                              ['BLOCKED', 'Đã chặn'],
+                              ['REMOVED', 'Đã gỡ'],
+                            ].map(([st, label]) => (
+                              <button
+                                key={st}
+                                type="button"
+                                onClick={() => setFilterStatus(st)}
+                                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                                  filterStatus === st
+                                    ? 'bg-[#1D4ED8] text-white'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                               >
-                                <button type="button" onClick={() => setSelectedAssignmentId(assignment.id)} className="w-full text-left">
-                                  <span className="block font-bold text-slate-900">{assignment.title}</span>
-                                  <span className="mt-1 block font-mono text-xs text-slate-600">
-                                    {assignment.testTitle} · Hạn: {formatVietnamDateTime(assignment.deadline)}
-                                  </span>
-                                </button>
-                                <div className="mt-3 flex gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => editAssignment(assignment)}
-                                    className="editorial-button-secondary px-3 py-1 text-xs font-semibold"
-                                  >
-                                    Sửa / gia hạn
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() => archiveAssignment(assignment)}
-                                    className="inline-flex items-center gap-1 border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-100"
-                                  >
-                                    <Trash2 size={13} /> Ẩn bài
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-
-                      {selectedAssignmentId && (
-                        <div className="mt-6 border-t border-slate-200 pt-5">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <h4 className="text-sm font-bold text-slate-900">Bài nộp mới nhất mỗi học sinh</h4>
-                            <select
-                              aria-label="Sắp xếp danh sách bài nộp"
-                              value={`${submissionSort.sortBy}:${submissionSort.direction}`}
-                              onChange={(event) => {
-                                const [sortBy, direction] = event.target.value.split(':');
-                                setSubmissionSort({ sortBy, direction });
-                              }}
-                              className="border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800"
-                            >
-                              <option value="name:ASC">Tên A–Z</option>
-                              <option value="name:DESC">Tên Z–A</option>
-                              <option value="score:DESC">Điểm cao đến thấp</option>
-                              <option value="score:ASC">Điểm thấp đến cao</option>
-                            </select>
+                                {label}
+                              </button>
+                            ))}
                           </div>
 
+                          <div className="relative min-w-[220px]">
+                            <Search
+                              size={15}
+                              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                            <input
+                              value={memberSearchQuery}
+                              onChange={(event) => setMemberSearchQuery(event.target.value)}
+                              placeholder="Tìm tên hoặc email học viên..."
+                              className="w-full rounded-full border border-slate-300 bg-white py-1.5 pl-9 pr-3.5 text-xs text-slate-900 outline-none focus:border-[#1D4ED8]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-4 space-y-2.5">
+                          {membersLoading ? (
+                            <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                              Đang tải danh sách học viên…
+                            </p>
+                          ) : membersError ? (
+                            <div
+                              role="alert"
+                              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
+                            >
+                              <span>{membersError}</span>
+                              <button
+                                type="button"
+                                onClick={() => loadMembers(selectedClass.id, filterStatus)}
+                                className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold"
+                              >
+                                Thử lại
+                              </button>
+                            </div>
+                          ) : filteredMembers.length === 0 ? (
+                            <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                              Không có học viên nào trong danh sách này.
+                            </p>
+                          ) : (
+                            filteredMembers.map((member) => (
+                              <div
+                                key={member.id}
+                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-sm font-bold text-slate-700">
+                                    {(member.studentName || 'H').trim().charAt(0).toUpperCase()}
+                                  </span>
+                                  <div>
+                                    <p className="font-bold text-slate-900">{member.studentName}</p>
+                                    <p className="font-mono text-xs text-slate-500">{member.studentEmail}</p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {member.status === 'PENDING' && (
+                                    <>
+                                      <button
+                                        disabled={busy}
+                                        onClick={() => handleMemberStatus(member, 'APPROVED')}
+                                        className="inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                                      >
+                                        <Check size={14} /> Duyệt vào lớp
+                                      </button>
+                                      <button
+                                        disabled={busy}
+                                        onClick={() => handleMemberStatus(member, 'REMOVED')}
+                                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                      >
+                                        <X size={14} /> Từ chối
+                                      </button>
+                                    </>
+                                  )}
+                                  {member.status === 'APPROVED' && (
+                                    <>
+                                      <button
+                                        disabled={busy}
+                                        onClick={() => handleMemberStatus(member, 'BLOCKED')}
+                                        className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+                                      >
+                                        <ShieldAlert size={14} /> Chặn
+                                      </button>
+                                      <button
+                                        disabled={busy}
+                                        onClick={() => handleMemberStatus(member, 'REMOVED')}
+                                        className="rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                      >
+                                        Gỡ khỏi lớp
+                                      </button>
+                                    </>
+                                  )}
+                                  {member.status === 'BLOCKED' && (
+                                    <button
+                                      disabled={busy}
+                                      onClick={() => handleMemberStatus(member, 'APPROVED')}
+                                      className="inline-flex items-center gap-1 rounded-full border border-emerald-600 bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                                    >
+                                      <Check size={14} /> Mở chặn
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#EFF6FF] font-mono text-sm font-bold text-[#1D4ED8]">
+                              {(user?.name || 'B').trim().charAt(0).toUpperCase()}
+                            </span>
+                            <div>
+                              <p className="font-bold text-slate-900">{user?.name || 'Bạn'} (Bạn)</p>
+                              <p className="font-mono text-xs text-slate-500">{user?.email || ''}</p>
+                            </div>
+                          </div>
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 font-mono text-xs font-semibold text-emerald-800">
+                            {statusLabels[selectedClass.status] || selectedClass.status}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                </div>
+              )}
+
+              {/* =========================================================
+                  TAB 4: ĐIỂM (GRADES) — TEACHER & STUDENT GRADEBOOK
+              ========================================================= */}
+              {activeTab === 'GRADES' && (
+                <div>
+                  {isTeacher ? (
+                    <div>
+                      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                        <div>
+                          <h2 className="text-xl font-bold text-slate-900">Sổ điểm & Nhận xét bài nộp</h2>
+                          <p className="text-xs text-slate-600">
+                            Chọn một bài tập để xem thống kê nộp bài, chấm điểm và gửi nhận xét cho từng học viên.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            aria-label="Chọn bài tập để xem điểm"
+                            value={selectedAssignmentId}
+                            onChange={(event) => setSelectedAssignmentId(event.target.value)}
+                            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-900 outline-none focus:border-[#1D4ED8]"
+                          >
+                            <option value="">-- Chọn bài tập --</option>
+                            {assignments.map((a) => (
+                              <option key={a.id} value={a.id}>
+                                {a.title} (Hạn: {formatVietnamDateTime(a.deadline)})
+                              </option>
+                            ))}
+                          </select>
+
+                          <select
+                            aria-label="Sắp xếp danh sách bài nộp"
+                            value={`${submissionSort.sortBy}:${submissionSort.direction}`}
+                            onChange={(event) => {
+                              const [sortBy, direction] = event.target.value.split(':');
+                              setSubmissionSort({ sortBy, direction });
+                            }}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:border-[#1D4ED8]"
+                          >
+                            <option value="name:ASC">Tên A–Z</option>
+                            <option value="name:DESC">Tên Z–A</option>
+                            <option value="score:DESC">Điểm cao đến thấp</option>
+                            <option value="score:ASC">Điểm thấp đến cao</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {!selectedAssignmentId ? (
+                        <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                          Hãy chọn một bài tập ở thanh phía trên để xem bảng điểm và bài làm của học viên.
+                        </p>
+                      ) : (
+                        <>
                           {!submissionsLoading && !submissionsError && assignmentSummary && (
-                            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-7">
+                            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                               {[
                                 ['Đủ điều kiện', assignmentSummary.eligibleStudents],
                                 ['Đã nộp', assignmentSummary.submittedCount],
@@ -1149,14 +3264,26 @@ const ClassroomsPage = () => {
                                 ['Chưa nộp', assignmentSummary.notSubmittedCount],
                                 ['Quá hạn', assignmentSummary.missingCount],
                                 ['Đã nhận xét', assignmentSummary.reviewedCount],
-                                ['Điểm TB đã nhận xét', assignmentSummary.averageScore == null ? '—' : Number(assignmentSummary.averageScore).toFixed(1)],
+                                [
+                                  'Điểm TB đã nhận xét',
+                                  assignmentSummary.averageScore == null
+                                    ? '—'
+                                    : Number(assignmentSummary.averageScore).toFixed(1),
+                                ],
                               ].map(([label, value]) => (
-                                <div key={label} className="border border-slate-200 bg-[#F8FAFC] p-2.5">
-                                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</span>
-                                  <span className="mt-1 block font-mono text-lg font-bold text-slate-900">{value}</span>
+                                <div
+                                  key={label}
+                                  className="rounded-xl border border-slate-200 bg-[#F8FAFC] p-3"
+                                >
+                                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                    {label}
+                                  </span>
+                                  <span className="mt-1 block font-mono text-xl font-bold text-slate-900">
+                                    {value}
+                                  </span>
                                   {label === 'Điểm TB đã nhận xét' && (
                                     <span className="mt-0.5 block text-[10px] text-slate-500">
-                                      {assignmentSummary.averageScoreSubmissionCount} bài, không gồm bài trễ chưa nhận xét
+                                      {assignmentSummary.averageScoreSubmissionCount} bài hợp lệ
                                     </span>
                                   )}
                                 </div>
@@ -1164,26 +3291,42 @@ const ClassroomsPage = () => {
                             </div>
                           )}
 
-                          <div className="mt-3 space-y-3">
+                          <div className="space-y-3">
                             {submissionsLoading ? (
-                              <p role="status" className="border border-slate-200 bg-white p-4 text-sm text-slate-600">Đang tải bài nộp…</p>
+                              <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                                Đang tải bài nộp của học viên…
+                              </p>
                             ) : submissionsError ? (
-                              <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800">
+                              <div
+                                role="alert"
+                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
+                              >
                                 <span>{submissionsError}</span>
-                                <button type="button" onClick={() => setSubmissionRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSubmissionRetry((retry) => retry + 1)}
+                                  className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold"
+                                >
+                                  Thử lại
+                                </button>
                               </div>
                             ) : submissions.length === 0 ? (
-                              <p className="border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Chưa có học sinh đủ điều kiện trong danh sách này.</p>
+                              <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                                Chưa có học viên đủ điều kiện trong danh sách này.
+                              </p>
                             ) : (
                               submissions.map((submission) => (
-                                <div key={submission.studentId} className="border border-slate-200 bg-white p-3.5">
-                                  <div className="flex flex-wrap justify-between gap-2">
+                                <div
+                                  key={submission.studentId}
+                                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs sm:p-5"
+                                >
+                                  <div className="flex flex-wrap items-start justify-between gap-2">
                                     <div>
                                       <p className="font-bold text-slate-900">{submission.studentName}</p>
                                       <p className="font-mono text-xs text-slate-500">{submission.studentEmail}</p>
                                     </div>
                                     <span
-                                      className={`h-fit border px-2 py-0.5 text-xs font-semibold ${
+                                      className={`h-fit rounded-full border px-3 py-0.5 text-xs font-semibold ${
                                         submission.late || submission.status === 'LATE'
                                           ? 'border-amber-200 bg-amber-50 text-amber-800'
                                           : submission.status === 'MISSING'
@@ -1194,83 +3337,142 @@ const ClassroomsPage = () => {
                                       {getAssignmentStatusLabel(submission.status, submission.late)}
                                     </span>
                                   </div>
+
                                   {submission.resultId ? (
                                     <>
-                                      <p className="mt-2 font-mono text-sm font-semibold text-slate-800">
-                                        Điểm: {submission.score} · {submission.correctCount}/{submission.totalCount} câu · {submission.submittedAt ? formatVietnamDateTime(submission.submittedAt) : ''}
-                                      </p>
-                                      <Link
-                                        to={`/results/${submission.resultId}?classroomReview=1`}
-                                        className="mt-1.5 inline-block text-xs font-bold text-[#1D4ED8] hover:underline"
-                                      >
-                                        Mở bài làm →
-                                      </Link>
+                                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#F8FAFC] px-3.5 py-2.5">
+                                        <p className="font-mono text-sm font-bold text-slate-900">
+                                          Điểm: <span className="text-[#1D4ED8]">{submission.score}</span> ·{' '}
+                                          {submission.correctCount}/{submission.totalCount} câu đúng ·{' '}
+                                          {submission.submittedAt
+                                            ? formatVietnamDateTime(submission.submittedAt)
+                                            : ''}
+                                        </p>
+                                        <Link
+                                          to={`/results/${submission.resultId}?classroomReview=1`}
+                                          className="text-xs font-bold text-[#1D4ED8] hover:underline"
+                                        >
+                                          Mở chi tiết bài làm →
+                                        </Link>
+                                      </div>
+
                                       <label className="mt-3 block text-xs font-semibold uppercase tracking-wider text-slate-700">
-                                        Nhận xét
+                                        Nhận xét của giáo viên
                                         <textarea
                                           rows={2}
                                           maxLength={5000}
-                                          value={feedbackDrafts[submission.resultId] ?? submission.teacherComment ?? ''}
-                                          onChange={(event) => setFeedbackDrafts((drafts) => ({ ...drafts, [submission.resultId]: event.target.value }))}
-                                          className="mt-1 w-full border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                                          value={
+                                            feedbackDrafts[submission.resultId] ??
+                                            submission.teacherComment ??
+                                            ''
+                                          }
+                                          onChange={(event) =>
+                                            setFeedbackDrafts((drafts) => ({
+                                              ...drafts,
+                                              [submission.resultId]: event.target.value,
+                                            }))
+                                          }
+                                          placeholder="Nhập nhận xét chi tiết cho học viên..."
+                                          className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
                                         />
                                       </label>
                                       <button
-                                        disabled={busy || !(feedbackDrafts[submission.resultId] ?? submission.teacherComment ?? '').trim()}
+                                        disabled={
+                                          busy ||
+                                          !(
+                                            feedbackDrafts[submission.resultId] ??
+                                            submission.teacherComment ??
+                                            ''
+                                          ).trim()
+                                        }
                                         onClick={() => saveFeedback(submission)}
-                                        className="editorial-button-primary mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                                        className="editorial-button-primary mt-2 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold disabled:opacity-50"
                                       >
                                         <MessageSquare size={13} /> Lưu nhận xét
                                       </button>
                                     </>
                                   ) : (
-                                    <p className="mt-2 text-sm text-slate-500">Học sinh chưa nộp bài.</p>
+                                    <p className="mt-2 text-sm text-slate-500">Học viên chưa nộp bài.</p>
                                   )}
                                 </div>
                               ))
                             )}
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-5 border border-blue-200 bg-[#EFF6FF] p-4 text-sm font-medium text-[#1D4ED8]">
-                      Trạng thái: <strong>{statusLabels[selectedClass.status] || selectedClass.status}</strong>. Giáo viên cần duyệt yêu cầu trước khi bạn truy cập nội dung lớp.
-                    </p>
-                    {selectedClass.status === 'APPROVED' && (
-                      <div className="mt-6">
-                        <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-slate-900">
-                          <FileText size={18} className="text-[#1D4ED8]" /> Bài tập được giao
-                        </h3>
-                        {assignmentsLoading ? (
-                          <p role="status" className="border border-slate-200 bg-white p-4 text-sm text-slate-600">Đang tải bài tập…</p>
-                        ) : assignmentsError ? (
-                          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800">
-                            <span>{assignmentsError}</span>
-                            <button type="button" onClick={() => setAssignmentRetry((retry) => retry + 1)} className="editorial-button-secondary px-3 py-1.5 text-xs font-semibold">Thử lại</button>
-                          </div>
-                        ) : assignments.length === 0 ? (
-                          <p className="border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">Chưa có bài tập.</p>
-                        ) : (
-                          <div className="space-y-3">
-                            {assignments.map((assignment) => {
-                              const status = assignment.mySubmissionStatus;
-                              const deadlineExpired = getDeadlineHint(assignment.deadline, clockNow) === 'Đã quá hạn';
-                              const displayStatus = status === 'NOT_SUBMITTED' && deadlineExpired ? 'MISSING' : status;
-                              const canSubmit = !(assignment.latePolicy === 'REJECT_AFTER_DEADLINE' && deadlineExpired);
-                              return (
-                                <article key={assignment.id} className="border border-slate-200 bg-white p-4">
-                                  <div className="flex flex-wrap justify-between gap-2">
-                                    <h4 className="font-bold text-slate-900">{assignment.title}</h4>
+                  ) : (
+                    /* STUDENT PERSONAL GRADEBOOK */
+                    <div>
+                      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-[#F8FAFC] p-4">
+                          <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            Tổng số bài tập
+                          </span>
+                          <p className="mt-1 font-mono text-2xl font-bold text-slate-900">
+                            {studentGradeSummary.total}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-[#F8FAFC] p-4">
+                          <span className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            Đã hoàn thành
+                          </span>
+                          <p className="mt-1 font-mono text-2xl font-bold text-emerald-700">
+                            {studentGradeSummary.submitted} / {studentGradeSummary.total}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200 bg-[#EFF6FF] p-4">
+                          <span className="font-mono text-xs font-semibold uppercase tracking-wider text-[#1D4ED8]">
+                            Điểm trung bình của bạn
+                          </span>
+                          <p className="mt-1 font-mono text-2xl font-bold text-[#1D4ED8]">
+                            {studentGradeSummary.avgScore ?? '—'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {assignments.length === 0 ? (
+                        <p className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                          Chưa có bài tập nào để hiển thị điểm số.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {assignments.map((assignment) => {
+                            const status = assignment.mySubmissionStatus;
+                            const deadlineExpired =
+                              getDeadlineHint(assignment.deadline, clockNow) === 'Đã quá hạn';
+                            const displayStatus =
+                              status === 'NOT_SUBMITTED' && deadlineExpired ? 'MISSING' : status;
+
+                            return (
+                              <article
+                                key={assignment.id}
+                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs sm:p-5"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  <div>
+                                    <h3 className="font-bold text-slate-900">{assignment.title}</h3>
+                                    <p className="mt-0.5 font-mono text-xs text-slate-500">
+                                      {assignment.testTitle} · Hạn: {formatVietnamDateTime(assignment.deadline)}
+                                    </p>
+                                  </div>
+
+                                  <div className="flex items-center gap-3">
+                                    {assignment.myLatestScore != null && (
+                                      <span className="rounded-lg bg-[#EFF6FF] px-3 py-1 font-mono text-sm font-bold text-[#1D4ED8]">
+                                        Điểm: {assignment.myLatestScore}
+                                        {assignment.myTotalCount
+                                          ? ` (${assignment.myCorrectCount}/${assignment.myTotalCount})`
+                                          : ''}
+                                      </span>
+                                    )}
                                     <span
-                                      className={`border px-2 py-0.5 text-xs font-semibold ${
+                                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                                         assignment.myLatestSubmissionLate || displayStatus === 'LATE'
                                           ? 'border-amber-200 bg-amber-50 text-amber-800'
                                           : displayStatus === 'MISSING'
                                             ? 'border-red-200 bg-red-50 text-red-700'
-                                            : displayStatus === 'GRADED'
+                                            : displayStatus === 'GRADED' || displayStatus === 'SUBMITTED'
                                               ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
                                               : 'border-slate-200 bg-slate-50 text-slate-700'
                                       }`}
@@ -1278,51 +3480,380 @@ const ClassroomsPage = () => {
                                       {getAssignmentStatusLabel(displayStatus, assignment.myLatestSubmissionLate)}
                                     </span>
                                   </div>
-                                  <p className="mt-1 text-sm font-medium text-slate-700">{assignment.testTitle}</p>
-                                  <p className="mt-0.5 font-mono text-xs text-slate-500">Hạn nộp: {formatVietnamDateTime(assignment.deadline)}</p>
-                                  {['NOT_SUBMITTED', 'MISSING'].includes(status) && (
-                                    <p className="mt-1 font-mono text-xs font-semibold text-[#1D4ED8]">{getDeadlineHint(assignment.deadline, clockNow)}</p>
-                                  )}
-                                  {assignment.instructions && (
-                                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{assignment.instructions}</p>
-                                  )}
-                                  <div className="mt-3 flex flex-wrap items-center gap-3">
-                                    {assignment.myLatestResultId && (
-                                      <Link
-                                        to={`/results/${assignment.myLatestResultId}`}
-                                        className="text-xs font-bold text-[#1D4ED8] hover:underline"
-                                      >
-                                        Xem bài đã nộp{assignment.myLatestSubmissionLate ? ' (trễ)' : ''} →
-                                      </Link>
-                                    )}
-                                    {canSubmit && (
-                                      <Link
-                                        to={`/courses/${assignment.testId}/take?assignmentId=${assignment.id}`}
-                                        className="editorial-button-primary inline-flex px-4 py-2 text-xs font-semibold"
-                                      >
-                                        {assignment.myLatestResultId ? 'Làm lại bài' : 'Bắt đầu làm'}
-                                      </Link>
-                                    )}
+                                </div>
+
+                                {assignment.myTeacherComment && (
+                                  <div className="mt-3 rounded-xl border border-blue-100 bg-[#F8FAFC] p-3 text-xs text-slate-700">
+                                    <strong className="text-[#1D4ED8]">Nhận xét của giáo viên:</strong>{' '}
+                                    {assignment.myTeacherComment}
                                   </div>
-                                </article>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                                )}
+
+                                {assignment.myLatestResultId && (
+                                  <div className="mt-3">
+                                    <Link
+                                      to={`/results/${assignment.myLatestResultId}`}
+                                      className="text-xs font-bold text-[#1D4ED8] hover:underline"
+                                    >
+                                      Xem chi tiết bài nộp →
+                                    </Link>
+                                  </div>
+                                )}
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* =========================================================
+          MODAL 1: CREATE OR JOIN CLASSROOM
+      ========================================================= */}
+      {createOrJoinModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                {isTeacher ? (
+                  <>
+                    <Plus size={18} className="text-[#1D4ED8]" /> Tạo lớp học mới
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={18} className="text-[#1D4ED8]" /> Tham gia lớp học
                   </>
                 )}
-              </>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setCreateOrJoinModalOpen(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={isTeacher ? handleCreate : handleJoin} className="mt-4">
+              {isTeacher ? (
+                <>
+                  <label
+                    htmlFor="modal-class-name"
+                    className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700"
+                  >
+                    Tên lớp học *
+                  </label>
+                  <input
+                    id="modal-class-name"
+                    maxLength={120}
+                    required
+                    value={className}
+                    onChange={(event) => setClassName(event.target.value)}
+                    placeholder="Ví dụ: Luyện thi TOEIC 650+ — CTU"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+                  />
+
+                  <label
+                    htmlFor="modal-class-description"
+                    className="mb-1.5 mt-4 block text-xs font-semibold uppercase tracking-wider text-slate-700"
+                  >
+                    Mô tả / Phòng học / Mục tiêu{' '}
+                    <span className="font-normal normal-case text-slate-500">(không bắt buộc)</span>
+                  </label>
+                  <textarea
+                    id="modal-class-description"
+                    rows={3}
+                    maxLength={2000}
+                    value={classDescription}
+                    onChange={(event) => setClassDescription(event.target.value)}
+                    placeholder="Lịch học, mục tiêu đầu ra hoặc lưu ý cho học viên"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+                  />
+                </>
+              ) : (
+                <>
+                  <p className="mb-3 text-xs leading-relaxed text-slate-600">
+                    Đề nghị giáo viên của bạn cung cấp mã lớp gồm 8 ký tự, sau đó nhập mã vào bên dưới.
+                  </p>
+                  <label
+                    htmlFor="modal-class-code"
+                    className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700"
+                  >
+                    Mã lớp (8 ký tự)
+                  </label>
+                  <input
+                    id="modal-class-code"
+                    required
+                    minLength={8}
+                    maxLength={8}
+                    value={joinCode}
+                    onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                    placeholder="Ví dụ: GGVCN5HX"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-base uppercase tracking-widest text-slate-900 outline-none focus:border-[#1D4ED8]"
+                  />
+                </>
+              )}
+
+              <div className="mt-6 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCreateOrJoinModalOpen(false)}
+                  className="rounded-full px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                >
+                  {busy && <LoaderCircle size={14} className="animate-spin" />}
+                  {isTeacher ? 'Tạo lớp học' : 'Gửi yêu cầu tham gia'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          MODAL 2: FULLSCREEN CLASS CODE PROJECTION (Like Google Classroom [ ⛶ ])
+      ========================================================= */}
+      {fullscreenCodeOpen && selectedClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-2xl sm:p-12">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <span className="font-bold text-slate-700">{selectedClass.className}</span>
+              <button
+                type="button"
+                onClick={() => setFullscreenCodeOpen(false)}
+                className="rounded-full p-1.5 text-slate-500 hover:bg-slate-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p className="mt-6 font-mono text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Mã tham gia lớp học
+            </p>
+            <p className="my-6 select-all font-mono text-5xl font-bold tracking-[0.16em] text-[#1D4ED8] sm:text-7xl">
+              {selectedClass.classCode}
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => copyCode(selectedClass.classCode)}
+                className="inline-flex items-center gap-2 rounded-full bg-[#EFF6FF] px-5 py-2.5 text-sm font-bold text-[#1D4ED8] hover:bg-blue-100"
+              >
+                <Clipboard size={16} />
+                Sao chép mã mời
+              </button>
+              <button
+                type="button"
+                onClick={() => setFullscreenCodeOpen(false)}
+                className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          MODAL 3: REUSE / REPOST ANNOUNCEMENT ("🔁 Đăng lại")
+      ========================================================= */}
+      {repostModalOpen && selectedClass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
+                <Repeat size={18} className="text-[#1D4ED8]" />
+                Sử dụng lại bài đăng trên Bảng tin
+              </h2>
+              <button
+                type="button"
+                onClick={() => setRepostModalOpen(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {announcements.length === 0 ? (
+              <p className="my-6 text-center text-sm text-slate-500">
+                Chưa có thông báo cũ nào trong lớp này để sử dụng lại.
+              </p>
             ) : (
-              <div className="flex h-full min-h-60 flex-col items-center justify-center text-center text-slate-500">
-                <BookOpen size={36} className="text-slate-400" />
-                <p className="mt-3 font-semibold text-slate-700">Chọn một lớp để xem chi tiết</p>
+              <div className="my-4 max-h-72 space-y-2 overflow-y-auto">
+                {announcements.map((ann) => (
+                  <button
+                    key={ann.id}
+                    type="button"
+                    onClick={() => {
+                      setAnnouncementTitle(ann.title || '');
+                      setAnnouncementContent(ann.content || '');
+                      setRepostModalOpen(false);
+                      setComposerOpen(true);
+                    }}
+                    className="block w-full rounded-xl border border-slate-200 p-3.5 text-left transition hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
+                  >
+                    <p className="text-sm font-bold text-slate-900">{ann.title}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-600">{ann.content}</p>
+                  </button>
+                ))}
               </div>
             )}
-          </section>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setRepostModalOpen(false)}
+                className="rounded-full px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* =========================================================
+          MODAL 4: GOOGLE CLASSROOM PDF PREVIEWER MODAL
+      ========================================================= */}
+      {previewModal.open && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/90 backdrop-blur-xs">
+          {/* Top Viewer Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900 px-4 py-3 text-white sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-red-600 text-white">
+                <FileText size={18} />
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-bold text-white sm:text-base">
+                  {previewModal.material?.title || 'Xem trước tài liệu PDF'}
+                </h2>
+                <p className="truncate font-mono text-[11px] text-slate-300">
+                  {previewModal.material?.originalFileName || 'Tai-lieu.pdf'}
+                  {previewModal.material?.sizeBytes
+                    ? ` · ${(previewModal.material.sizeBytes / (1024 * 1024)).toFixed(1)} MiB`
+                    : ''}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {previewModal.blobUrl && previewModal.googleViewerUrl && (
+                <div className="flex items-center rounded-full bg-slate-800 p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewModal((current) => ({ ...current, mode: 'DIRECT' }))
+                    }
+                    className={`rounded-full px-3 py-1 font-semibold transition ${
+                      previewModal.mode === 'DIRECT'
+                        ? 'bg-[#1D4ED8] text-white'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Trình xem trực tiếp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewModal((current) => ({ ...current, mode: 'GOOGLE' }))
+                    }
+                    className={`rounded-full px-3 py-1 font-semibold transition ${
+                      previewModal.mode === 'GOOGLE'
+                        ? 'bg-[#1D4ED8] text-white'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    Google Viewer
+                  </button>
+                </div>
+              )}
+
+              {(previewModal.blobUrl || previewModal.googleViewerUrl) && (
+                <a
+                  href={
+                    previewModal.mode === 'DIRECT' && previewModal.blobUrl
+                      ? previewModal.blobUrl
+                      : previewModal.googleViewerUrl
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-100 hover:bg-slate-700"
+                >
+                  <ExternalLink size={14} />
+                  Mở tab mới
+                </a>
+              )}
+
+              {previewModal.material?.downloadable && (
+                <button
+                  type="button"
+                  onClick={() => handleDownloadMaterial(previewModal.material)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+                >
+                  <Download size={14} />
+                  Tải PDF
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={closePreviewModal}
+                aria-label="Đóng bản xem trước"
+                className="grid h-9 w-9 place-items-center rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* PDF Iframe Content */}
+          <div className="flex flex-1 items-center justify-center p-2 sm:p-5">
+            {previewModal.loading ? (
+              <div className="flex flex-col items-center gap-3 text-center text-white">
+                <LoaderCircle size={32} className="animate-spin text-blue-400" />
+                <p className="text-sm font-semibold">Đang tải bản xem trước tài liệu PDF…</p>
+              </div>
+            ) : previewModal.error ? (
+              <div className="max-w-md rounded-2xl border border-slate-700 bg-slate-800 p-6 text-center text-white">
+                <p className="text-sm font-semibold text-red-300">{previewModal.error}</p>
+                {previewModal.material?.downloadable && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadMaterial(previewModal.material)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                  >
+                    <Download size={14} />
+                    Tải trực tiếp tệp PDF
+                  </button>
+                )}
+              </div>
+            ) : (
+              <iframe
+                title={previewModal.material?.title || 'PDF Preview'}
+                src={
+                  previewModal.mode === 'DIRECT' && previewModal.blobUrl
+                    ? previewModal.blobUrl
+                    : previewModal.googleViewerUrl
+                }
+                className="h-full w-full max-w-6xl rounded-xl border border-slate-700 bg-white shadow-2xl"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

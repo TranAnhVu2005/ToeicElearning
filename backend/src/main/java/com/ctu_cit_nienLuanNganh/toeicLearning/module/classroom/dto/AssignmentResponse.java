@@ -18,8 +18,13 @@ public class AssignmentResponse {
     LocalDateTime deadline;
     LatePolicy latePolicy;
     Boolean active;
+    LocalDateTime createdAt;
     String myLatestResultId;
     String mySubmissionStatus;
     Boolean myLatestSubmissionLate;
     LocalDateTime myLatestSubmittedAt;
+    Integer myLatestScore;
+    Integer myCorrectCount;
+    Integer myTotalCount;
+    String myTeacherComment;
 }

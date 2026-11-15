@@ -345,10 +345,15 @@ public class AssignmentService {
                 .testTitle(assignment.getTest() == null ? null : assignment.getTest().getTitleTest())
                 .deadline(assignment.getDeadline()).latePolicy(assignment.getLatePolicy())
                 .active(assignment.getIsActive())
+                .createdAt(assignment.getCreatedAt())
                 .myLatestResultId(includeSubmission && latest != null ? latest.getId() : null)
                 .mySubmissionStatus(includeSubmission ? status : null)
                 .myLatestSubmissionLate(includeSubmission && latest != null ? late : null)
                 .myLatestSubmittedAt(includeSubmission ? submittedAt : null)
+                .myLatestScore(includeSubmission && latest != null ? latest.getTotalScore() : null)
+                .myCorrectCount(includeSubmission && latest != null ? latest.getCorrectCount() : null)
+                .myTotalCount(includeSubmission && latest != null ? latest.getTotalCount() : null)
+                .myTeacherComment(includeSubmission && latest != null ? latest.getTeacherComment() : null)
                 .build();
     }
 

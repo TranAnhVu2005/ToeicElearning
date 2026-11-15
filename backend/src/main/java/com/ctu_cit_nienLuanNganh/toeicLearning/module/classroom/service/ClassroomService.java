@@ -3,6 +3,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassMemberResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
@@ -217,14 +218,49 @@ public class ClassroomService {
         return normalized.isBlank() ? null : normalized;
     }
 
+    @Transactional
+    public int postAnnouncement(User currentUser, String classroomId, ClassroomAnnouncementRequest request) {
+        Classroom classroom = requireOwnedClassroom(currentUser, classroomId);
+        String content = request.getContent() == null ? "" : request.getContent().trim();
+        if (content.isBlank()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        String customTitle = request.getTitle() == null ? "" : request.getTitle().trim();
+        String notificationTitle = customTitle.isBlank()
+                ? "Thông báo mới từ lớp " + classroom.getClassName()
+                : "[" + classroom.getClassName() + "] " + customTitle;
+        List<ClassMember> approvedMembers = classMemberRepository
+                .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED);
+        for (ClassMember member : approvedMembers) {
+            notificationService.createNotification(
+                    member.getStudent(),
+                    notificationTitle,
+                    "Giáo viên " + currentUser.getUserName() + ": " + content,
+                    "CLASSROOM_ANNOUNCEMENT",
+                    "/classrooms"
+            );
+        }
+        auditEventService.record(currentUser, "CLASSROOM_ANNOUNCEMENT_POSTED", "CLASSROOM", classroom.getId(),
+                "recipients=" + approvedMembers.size());
+        return approvedMembers.size();
+    }
+
     private ClassroomResponse toClassroomResponse(Classroom classroom, String status, boolean includeCode) {
+        long approvedCount = classMemberRepository.countByClassroom_IdAndStatus(classroom.getId(), APPROVED);
+        Long pendingCount = includeCode
+                ? classMemberRepository.countByClassroom_IdAndStatus(classroom.getId(), PENDING)
+                : null;
         return ClassroomResponse.builder()
                 .id(classroom.getId())
                 .className(classroom.getClassName())
                 .description(classroom.getDescription())
                 .classCode(includeCode ? classroom.getClassCode() : null)
                 .teacherName(classroom.getTeacher().getUserName())
+                .teacherEmail(classroom.getTeacher().getUserEmail())
                 .status(status)
+                .approvedMemberCount(approvedCount)
+                .pendingMemberCount(pendingCount)
+                .createdAt(classroom.getCreatedAt())
                 .build();
     }
 

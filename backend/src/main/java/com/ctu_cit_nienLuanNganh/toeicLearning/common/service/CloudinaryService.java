@@ -365,6 +365,10 @@ public class CloudinaryService {
     public record PrivateMediaUpload(String url, String publicId, String format, String deliveryType) { }
 
     public PrivateDownload createPrivateRawDownload(String publicId, String format) {
+        return createPrivateRawDownload(publicId, format, true);
+    }
+
+    public PrivateDownload createPrivateRawDownload(String publicId, String format, boolean attachment) {
         requireCloudinaryConfiguration();
         if (publicId == null || publicId.isBlank() || publicId.length() > 512 || !"pdf".equalsIgnoreCase(format)) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
@@ -374,7 +378,7 @@ public class CloudinaryService {
             String url = cloudinary.privateDownload(publicId, "pdf", ObjectUtils.asMap(
                     "resource_type", "raw",
                     "type", "private",
-                    "attachment", true,
+                    "attachment", attachment,
                     "expires_at", expiresAt
             ));
             return new PrivateDownload(url, expiresAt);

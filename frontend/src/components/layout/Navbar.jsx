@@ -220,7 +220,7 @@ const Navbar = () => {
                   </span>
                 </span>
                 <span className="mt-0.5 hidden items-center gap-1 text-[11px] font-semibold text-slate-500 sm:inline-flex">
-                  🐾 Cùng Nuna chinh phục 990 nhé!
+                  🐾 Cùng Nuna chinh phục 990 TOEIC nhé!
                 </span>
               </div>
             </Link>
@@ -435,20 +435,7 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Quick "Hỏi Nuna AI" Header Button (Desktop) */}
-            <button
-              type="button"
-              onClick={() => openAiAssistant()}
-              title="Trò chuyện với Trợ lý AI Nuna"
-              className="toby-header-ai-btn hidden min-h-[42px] cursor-pointer items-center gap-2 border border-blue-200 bg-[#EFF6FF]/90 px-3 py-1.5 text-xs font-bold text-[#1D4ED8] transition-all hover:border-[#1D4ED8] hover:bg-blue-100/80 lg:inline-flex"
-            >
-              <img
-                src={TOBY_IMAGES.laptop}
-                alt="Trợ lý AI Nuna"
-                className="h-6 w-6 shrink-0 object-contain"
-              />
-              <span>Có gì hỏi Nuna không nè?</span>
-            </button>
+
 
             {/* Authenticated user */}
             {isAuthenticated && user ? (

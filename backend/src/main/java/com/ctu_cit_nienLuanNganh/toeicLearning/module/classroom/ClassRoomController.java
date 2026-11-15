@@ -12,6 +12,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.MaterialResp
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.AssignmentFeedbackRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.AssignmentRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service.ClassroomService;
@@ -67,9 +68,24 @@ public class ClassRoomController {
     public ResponseEntity<ApiResponse<MaterialDownloadResponse>> createMaterialDownloadLink(
             @AuthenticationPrincipal User currentUser,
             @PathVariable String classroomId,
-            @PathVariable String materialId) {
+            @PathVariable String materialId,
+            @RequestParam(name = "attachment", defaultValue = "true") boolean attachment) {
         return ResponseEntity.ok(ApiResponse.success(
-                materialService.createDownloadLink(currentUser, classroomId, materialId)));
+                materialService.createDownloadLink(currentUser, classroomId, materialId, attachment)));
+    }
+
+    @GetMapping(value = "/{classroomId}/materials/{materialId}/preview", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'USER')")
+    public ResponseEntity<byte[]> previewMaterial(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String classroomId,
+            @PathVariable String materialId) {
+        MaterialService.MaterialPreviewContent content =
+                materialService.loadPreviewContent(currentUser, classroomId, materialId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header("Content-Disposition", "inline; filename=\"" + content.fileName().replace("\"", "") + "\"")
+                .body(content.bytes());
     }
 
     @DeleteMapping("/{classroomId}/materials/{materialId}")
@@ -106,6 +122,17 @@ public class ClassRoomController {
             @AuthenticationPrincipal User currentUser, @PathVariable String classroomId) {
         return ResponseEntity.ok(ApiResponse.success("Đã đổi mã tham gia; mã cũ không còn hiệu lực",
                 classroomService.rotateJoinCode(currentUser, classroomId)));
+    }
+
+    @PostMapping("/{classroomId}/announcements")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<Integer>> postAnnouncement(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String classroomId,
+            @Valid @RequestBody ClassroomAnnouncementRequest request) {
+        int count = classroomService.postAnnouncement(currentUser, classroomId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
+                "Đã đăng thông báo lên bảng tin và gửi tới " + count + " học viên trong lớp", count));
     }
 
     @GetMapping("/mine")
