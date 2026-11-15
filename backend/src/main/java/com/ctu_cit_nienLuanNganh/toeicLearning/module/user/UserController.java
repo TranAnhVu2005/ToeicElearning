@@ -1,6 +1,5 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.user;
 
-import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.CloudinaryService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.dto.UserResponseDTO;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.user.request.UserChangePasswordRequest;

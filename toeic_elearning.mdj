@@ -670,7 +670,7 @@
 									"parentStyle": true,
 									"left": 652.5,
 									"top": 429,
-									"width": 98.11181640625,
+									"width": 97,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhywljqZ/HlEc="
@@ -880,7 +880,7 @@
 									"parentStyle": true,
 									"left": 692.5,
 									"top": 93,
-									"width": 136.97216796875,
+									"width": 136,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhywrHAp/5E7o="
@@ -1950,7 +1950,7 @@
 									"parentStyle": true,
 									"left": 502,
 									"top": 733,
-									"width": 143.6435546875,
+									"width": 143,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhyzLp87CaGzs="
@@ -2653,7 +2653,7 @@
 									"parentStyle": true,
 									"left": 1319.5,
 									"top": 269,
-									"width": 149.9912109375,
+									"width": 149,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhyzUGF8Y5zrM="
@@ -2863,7 +2863,7 @@
 									"parentStyle": true,
 									"left": 1320.5,
 									"top": 333,
-									"width": 118.19580078125,
+									"width": 118,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhyzXqxNSL8PI="
@@ -3283,7 +3283,7 @@
 									"parentStyle": true,
 									"left": 1403.5,
 									"top": 469,
-									"width": 131.34814453125,
+									"width": 130,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzj80D7EMWAQ="
@@ -3493,7 +3493,7 @@
 									"parentStyle": true,
 									"left": 1468.5,
 									"top": 133,
-									"width": 97.8896484375,
+									"width": 97.0390625,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzj9c2LG4b2k="
@@ -3703,7 +3703,7 @@
 									"parentStyle": true,
 									"left": 1416.5,
 									"top": 405,
-									"width": 156.63720703125,
+									"width": 156,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzj+2rLNhCnQ="
@@ -3913,7 +3913,7 @@
 									"parentStyle": true,
 									"left": 1367.5,
 									"top": 581,
-									"width": 151.8828125,
+									"width": 151,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzj/kWLUKk48="
@@ -4409,7 +4409,7 @@
 									"parentStyle": true,
 									"left": 1319,
 									"top": 669,
-									"width": 147.97265625,
+									"width": 147,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzkDAd8BtgOU="
@@ -4619,7 +4619,7 @@
 									"parentStyle": true,
 									"left": 686.5,
 									"top": 605,
-									"width": 108.8076171875,
+									"width": 108,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzkD+18IZ43U="
@@ -4829,7 +4829,7 @@
 									"parentStyle": true,
 									"left": 688.5,
 									"top": 173,
-									"width": 118.34814453125,
+									"width": 118,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzkFY38LvYjw="
@@ -5039,7 +5039,7 @@
 									"parentStyle": true,
 									"left": 1262.5,
 									"top": 189,
-									"width": 223.814453125,
+									"width": 223,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzkF9N8PFVTQ="
@@ -9678,7 +9678,7 @@
 									"parentStyle": true,
 									"left": 627.5,
 									"top": 277,
-									"width": 169.66259765625,
+									"width": 168,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhznla166icbE="
@@ -10169,7 +10169,7 @@
 									"parentStyle": true,
 									"left": 1307,
 									"top": 69,
-									"width": 206.3583984375,
+									"width": 205,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhzn5AanB9OlY="
@@ -11435,7 +11435,7 @@
 									"parentStyle": true,
 									"left": 516.5,
 									"top": 525,
-									"width": 175.2548828125,
+									"width": 174,
 									"height": 25,
 									"stereotypeLabel": {
 										"$ref": "AAAAAAGhztlErgZS2B8="
@@ -18519,18 +18519,19 @@
 											"_parent": {
 												"$ref": "AAAAAAGh18Wb12nwwS4="
 											},
-											"visible": false,
 											"font": "Arial;13;0",
 											"parentStyle": false,
-											"left": 1217,
+											"left": 1150,
 											"top": 1060,
+											"width": 135.1162109375,
 											"height": 13,
 											"alpha": 1.5707963267948966,
 											"distance": 15,
 											"hostEdge": {
 												"$ref": "AAAAAAGh18Wb12nwwS4="
 											},
-											"edgePosition": 1
+											"edgePosition": 1,
+											"text": "test has exam sessions"
 										},
 										{
 											"_type": "EdgeLabelView",
@@ -19398,15 +19399,17 @@
 											},
 											"font": "Arial;13;0",
 											"parentStyle": false,
-											"left": 1653,
-											"top": 1099,
+											"left": 2216,
+											"top": 1127,
+											"width": 223.29150390625,
 											"height": 13,
-											"alpha": 0.5235987755982988,
-											"distance": 30,
+											"alpha": -0.02002593453331033,
+											"distance": 699.1401862287706,
 											"hostEdge": {
 												"$ref": "AAAAAAGh184l0Wr1i7I="
 											},
-											"edgePosition": 2
+											"edgePosition": 2,
+											"text": "\ttest is purchased through transactions"
 										},
 										{
 											"_type": "EdgeLabelView",
@@ -19568,15 +19571,17 @@
 											},
 											"font": "Arial;13;0",
 											"parentStyle": false,
-											"left": 1653,
-											"top": 1059,
+											"left": 1848,
+											"top": 1087,
+											"width": 166.91162109375,
 											"height": 13,
-											"alpha": 0.5235987755982988,
-											"distance": 30,
+											"alpha": -0.046171780754148045,
+											"distance": 303.3232599059953,
 											"hostEdge": {
 												"$ref": "AAAAAAGh19RWqGsnOuA="
 											},
-											"edgePosition": 2
+											"edgePosition": 2,
+											"text": "\ttest has access entitlements"
 										},
 										{
 											"_type": "EdgeLabelView",
@@ -20267,6 +20272,7 @@
 									"_parent": {
 										"$ref": "AAAAAAGhxJd/Gxyb4iE="
 									},
+									"name": "test has exam sessions",
 									"end1": {
 										"_type": "ERDRelationshipEnd",
 										"_id": "AAAAAAGh18Wb1mntTts=",
@@ -20301,6 +20307,7 @@
 										"_parent": {
 											"$ref": "AAAAAAGh184l0GrxSfc="
 										},
+										"name": "\ttest is purchased through transactions",
 										"reference": {
 											"$ref": "AAAAAAGhxJd/Gxyb4iE="
 										}
@@ -20329,6 +20336,7 @@
 										"_parent": {
 											"$ref": "AAAAAAGh19RWqGsjUe0="
 										},
+										"name": "\ttest has access entitlements",
 										"reference": {
 											"$ref": "AAAAAAGhxJd/Gxyb4iE="
 										}

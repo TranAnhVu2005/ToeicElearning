@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight,
-  GraduationCap,
   MapPin,
   Pause,
   Phone,

@@ -1,6 +1,5 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.repository;
 
-import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestResult;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.UserAnswer;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.base.BaseRepository;
 import org.springframework.data.jpa.repository.Query;

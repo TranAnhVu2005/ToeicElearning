@@ -7,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.TestCatalogCategory;
 
 public interface TestRepository extends BaseRepository<Test, String>{
     Page<Test> findByClassroom_IdAndOwnerTeacher_Id(String classroomId, String teacherId, Pageable pageable);

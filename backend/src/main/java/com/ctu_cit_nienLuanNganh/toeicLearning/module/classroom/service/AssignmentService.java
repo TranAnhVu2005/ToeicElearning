@@ -304,13 +304,6 @@ public class AssignmentService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
     }
 
-    private Test requirePublishedTest(String testId) {
-        return testRepository.findById(testId)
-                .filter(test -> test.getStatus() == TestStatus.PUBLISHED && test.getClassroom() == null
-                        && !Boolean.TRUE.equals(test.getIsVip()))
-                .orElseThrow(() -> new AppException(ErrorCode.TEST_NOT_FOUND));
-    }
-
     private Test requireAssignableTest(String testId, Classroom classroom) {
         Test test = testRepository.findById(testId)
                 .filter(candidate -> candidate.getStatus() == TestStatus.PUBLISHED

@@ -206,7 +206,6 @@ const formatPeriodFull = (period, mode) => {
  */
 const ActivityColumnChart = ({
   title,
-  subtitle,
   data,
   mode,
   series,
@@ -543,7 +542,6 @@ const AdminDashboardPage = () => {
                 : `Tháng này: ${overview?.submittedAttemptsThisMonth ?? 0} bài`,
             },
           ].map((kpi) => {
-            const KpiIcon = kpi.icon;
             return (
               <div key={kpi.label} className="flex flex-col justify-between px-4 py-3.5">
                 <div className="flex items-center justify-between gap-2">

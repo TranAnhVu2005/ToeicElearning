@@ -1,7 +1,6 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.entity;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.base.BaseCreatedEntity;
-import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
