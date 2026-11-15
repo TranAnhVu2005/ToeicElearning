@@ -5,6 +5,16 @@ export const classroomService = {
   create: async (className, description) => (await apiClient.post('/classrooms', { className, description })).data,
   update: async (classroomId, className, description) =>
     (await apiClient.put(`/classrooms/${classroomId}`, { className, description })).data,
+  customizeAppearance: async (classroomId, payload) =>
+    (await apiClient.patch(`/classrooms/${classroomId}/appearance`, payload)).data,
+  uploadBannerImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'Resource/toeic-learning/images');
+    return (await apiClient.post('/media/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).data;
+  },
   rotateJoinCode: async (classroomId) => (await apiClient.post(`/classrooms/${classroomId}/join-code/rotate`)).data,
   join: async (classCode) => (await apiClient.post('/classrooms/join', { classCode })).data,
   getMembers: async (classroomId, status) => (await apiClient.get(`/classrooms/${classroomId}/members`, {

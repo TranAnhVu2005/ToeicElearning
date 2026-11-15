@@ -45,6 +45,7 @@
   - Tự động nhận diện trang đang mở (`pageContext`) và khi xem lại bài thi (`/results/:resultId`), server xác minh quyền sở hữu `TestResult` rồi trích xuất chi tiết bài làm, đoạn văn, lời thoại (`transcript`), bản dịch (`translation`), đáp án đúng/đã chọn và giải thích câu hỏi từ MySQL (hỗ trợ cả chọn câu trên thanh ngữ cảnh hoặc gõ số câu trực tiếp như *"Giải thích câu 8"*). Tự động ẩn trên phòng thi đang làm (`/courses/:testId/take`).
 - **Lớp học kiểu Google Classroom (`Classroom`, `ClassMember`, `Material`, `Assignment`, `ClassroomEmailService`) & Thông báo (`Notification`)**:
   - Giao diện `/classrooms` gồm 4 tab: **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**.
+  - **Tuỳ chỉnh giao diện lớp học (`PATCH /api/classrooms/{classroomId}/appearance`)**: Giáo viên có thể mở hộp thoại **Tuỳ chỉnh giao diện** kiểu Google Classroom để chọn 1 trong 8 màu chủ đề (`themeColor`), chọn ảnh bìa mẫu (`Chọn ảnh`) hoặc tải ảnh bìa riêng lên Cloudinary/local (`Tải ảnh lên` qua `/api/media/upload`); lưu xuống DB (`classroom.theme_color`, `classroom.banner_url`) để hiển thị đồng bộ cho cả giáo viên và học viên.
   - **Tài liệu PDF lớp học (`Material`)**: Giáo viên tải PDF private (≤ 10 MiB, quota 512 MiB/lớp); hỗ trợ **Xem trước PDF trực tiếp trên trình duyệt** (`GET /api/classrooms/{classroomId}/materials/{materialId}/preview`) và tải về qua link ký hạn 5 phút (`GET .../download`).
   - **Tích hợp Gmail (`ClassroomEmailService`, cấu hình `MAIL_USERNAME`, `MAIL_PASSWORD`, `FRONTEND_URL`)**:
     - Giáo viên mời học viên hàng loạt qua danh sách Gmail (`POST /api/classrooms/{classroomId}/invitations`): tự động duyệt thẳng (`APPROVED`) nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời HTML chuẩn Google Classroom kèm mã lớp và nút tham gia nhanh (`/classrooms?joinCode=...`).
@@ -53,7 +54,7 @@
 
 ## 4. Hệ thiết kế UI/UX Editorial (`docs/05_UI_UX_SPEC.md`)
 - **Phông chữ & Chữ số**: Toàn bộ ứng dụng dùng `--editorial-font: 'EditorialNumerals', 'Gelasio', 'Times New Roman', Georgia, serif` với `@font-face EditorialNumerals` (`unicode-range: U+0030-0039`) và `font-variant-numeric: lining-nums tabular-nums`; `Ubuntu Mono` dùng cho code/mã giao dịch kỹ thuật.
-- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, viền mảnh `1px solid #D1D5DB`, góc `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`.
+- **Màu sắc & Bề mặt**: Nền trắng `#FFFFFF` / xám sáng `#F8FAFC`, chữ chính `#111111` / `#111827`, viền mảnh `1px solid #D1D5DB`, góc `2px`, điểm nhấn xanh dương `#1D4ED8` / nền nhẹ `#EFF6FF`. Riêng khung chat **Trợ lý AI Nuna** dùng ảnh nền `anh_cho_ban_sung.jpg` kèm lớp phủ sáng bán trong suốt, header kính mờ và bong bóng/composer bo cong mềm mại (`editorial-application.css`).
 
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
 - **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion`; tài khoản bị khóa trả `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC RS256/JWK; khóa bi quan dùng native `SELECT ... FOR UPDATE`; rate limit lưu hash bucket trong `auth_login_attempt`; audit lưu `audit_event`.

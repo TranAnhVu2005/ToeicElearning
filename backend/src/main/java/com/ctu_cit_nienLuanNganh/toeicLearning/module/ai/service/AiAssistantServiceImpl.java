@@ -83,9 +83,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                - **Phòng thi tự động lưu phiên (`/courses/:testId/take` — `Resumable Exam Session`)**: Tự động lưu đáp án nháp hai lớp (`sessionStorage` + máy chủ theo thời gian thực); khi lỡ nhấn F5, tải lại trang hoặc rớt mạng tạm thời sẽ tự động khôi phục đúng thời gian còn lại, câu đã chọn và câu cắm cờ đánh dấu (`Flag`). Chỉ khi chủ động bấm "Thoát phòng thi" và xác nhận rời bài không nộp thì phiên nháp mới bị hủy.
                - **Xem lại bài thi (`/results/:resultId`)**: Xem lại điểm số, độ chính xác từng Part, lời thoại `Transcript`, bản dịch `Translation`, lời giải chi tiết, bảng điều hướng 200 câu bên phải, bấm **"Luyện lại câu sai"** để tạo đề ôn tập riêng từ các câu sai/bỏ trống, và hỏi **Nuna AI** từng câu.
                - **Đề thi VIP & Thanh toán qua PayOS (`/payment/result`)**: Mỗi đề VIP có mức giá VND riêng do Admin thiết lập; mua **1 lần duy nhất** bằng quét mã QR VietQR qua cổng **PayOS** (xác thực tự động qua Webhook PayOS và đồng bộ trạng thái đơn hàng) để mở khóa **vĩnh viễn** đề thi đó.
-               - **Hệ thống Lớp học kiểu Google Classroom (`/classrooms`)**: Gồm 4 tab **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**:
+               - **Hệ thống Lớp học trực tuyến (`/classrooms`)**: Gồm 4 tab **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**:
                  + *Dành cho Học viên*: Tham gia lớp bằng **Mã tham gia lớp (`Class Code`)** hoặc bấm trực tiếp từ **Email lời mời trong Gmail** (`/classrooms?joinCode=...`). Theo dõi bảng tin, hạn nộp sắp tới, **Xem trước tài liệu PDF trực tiếp ngay trên trình duyệt** (nút *"Xem trước"*) hoặc **Tải PDF**, làm bài tập giáo viên giao (hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`), xem điểm và nhận xét của giáo viên.
-                 + *Dành cho Giáo viên (`ROLE_TEACHER`)*: Tạo/cập nhật lớp học, xoay mã tham gia lớp, **Mời học viên hàng loạt qua danh sách Gmail** (tự động thêm và duyệt thẳng `APPROVED` vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời chuẩn Google Classroom kèm mã lớp), **Đăng thông báo lên Bảng tin** (gửi thông báo in-app + gửi Gmail cho cả lớp), **Tải tài liệu PDF private** (≤ 10 MiB/file, quota 512 MiB/lớp, hỗ trợ xem trước trực tiếp), **Tạo đề thi riêng cho lớp**, **Giao bài tập** (tự động gửi thông báo Gmail kèm nút *"Mở bài tập ngay"* cho học viên), xem thống kê bảng điểm và chấm nhận xét bài làm.
+                 + *Dành cho Giáo viên (`ROLE_TEACHER`)*: Tạo/cập nhật lớp học, xoay mã tham gia lớp, **Mời học viên hàng loạt qua danh sách Gmail** (tự động thêm và duyệt thẳng `APPROVED` vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời kèm mã lớp), **Đăng thông báo lên Bảng tin** (gửi thông báo in-app + gửi Gmail cho cả lớp), **Tải tài liệu PDF private** (≤ 10 MiB/file, quota 512 MiB/lớp, hỗ trợ xem trước trực tiếp), **Tạo đề thi riêng cho lớp**, **Giao bài tập** (tự động gửi thông báo Gmail kèm nút *"Mở bài tập ngay"* cho học viên), xem thống kê bảng điểm và chấm nhận xét bài làm.
                - **Đăng ký trở thành Giáo viên (`/teacher/application`)**: Gửi hồ sơ giới thiệu kinh nghiệm/mục tiêu giảng dạy và thanh toán phí xét duyệt **2.000 ₫** qua **PayOS** (nếu mã QR cũ hết hạn có thể bấm tạo lại mã QR PayOS mới ngay trên trang). Sau khi thanh toán xác nhận, hồ sơ chuyển sang `PENDING_REVIEW` chờ Admin phê duyệt để cấp quyền `ROLE_TEACHER`.
                - **Hồ sơ cá nhân (`/profile`) & Thông báo (`/notifications`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, cập nhật thông tin/ảnh đại diện, đổi mật khẩu (hoặc đặt mật khẩu cục bộ cho tài khoản Google), xem **Lịch sử làm bài (`?tab=history`)**, **Lịch sử thanh toán PayOS (`?tab=payments`)**, và quản lý hộp thư thông báo 6 danh mục tại `/notifications`.
                - **Quản trị viên (`/admin/**` — dành cho `ROLE_ADMIN`)**: Dashboard thống kê người dùng đang online & biểu đồ lượt thi (`/admin/dashboard`), Quản trị đề thi (`/admin/tests`), Quản lý người dùng (`/admin/users`), Quản lý giao dịch PayOS (`/admin/payments`), Duyệt hồ sơ giáo viên (`/admin/teacher-applications`).
@@ -760,13 +760,13 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
         if (lower.contains("gmail") || lower.contains("email") || lower.contains("mời học viên") || lower.contains("mời tham gia") || lower.contains("bảng tin") || lower.contains("announcement")) {
             return """
-                    ### Tính năng Mời qua Gmail & Thông báo Email kiểu Google Classroom
+                    ### Tính năng Mời qua Gmail & Thông báo Email Lớp học
                     
-                    Hệ thống **Lớp học (`/classrooms`)** được thiết kế theo mô hình **Google Classroom** tích hợp gửi email tự động qua Gmail:
+                    Hệ thống **Lớp học (`/classrooms`)** tích hợp gửi email tự động qua Gmail:
                     - **Mời học viên hàng loạt qua Gmail (`Mời qua Gmail`):**
                       + Giảng viên bấm nút **"Mời qua Gmail"** (trên Bảng tin hoặc tab Mọi người) và nhập danh sách nhiều địa chỉ Gmail (phân tách bằng dấu phẩy, chấm phẩy hoặc xuống dòng, tối đa 100 email/lần) kèm lời nhắn.
                       + **Tự động duyệt vào lớp:** Nếu địa chỉ Gmail đó đã có tài khoản học viên (`ROLE_USER`) trên hệ thống, học viên được **thêm và duyệt thẳng (`APPROVED`) vào lớp ngay lập tức**, đồng thời nhận thông báo trên web và email xác nhận.
-                      + **Email lời mời kèm Mã lớp:** Nếu người nhận chưa có tài khoản, hệ thống gửi email chuẩn Google Classroom chứa **Mã tham gia lớp (`Class Code`)** và nút **"Tham gia lớp học"** dẫn tới `/classrooms?joinCode=...`.
+                      + **Email lời mời kèm Mã lớp:** Nếu người nhận chưa có tài khoản, hệ thống gửi email lời mời chứa **Mã tham gia lớp (`Class Code`)** và nút **"Tham gia lớp học"** dẫn tới `/classrooms?joinCode=...`.
                     - **Thông báo Bài tập & Bảng tin qua Gmail:**
                       + Khi Giảng viên **Giao bài tập mới**, **Cập nhật hạn nộp (`Deadline`)**, hoặc **Đăng thông báo mới lên Bảng tin**, hệ thống tự động gửi email thông báo tới Gmail của toàn bộ học viên trong lớp kèm nút **"Mở bài tập ngay"**.
                     """;
@@ -790,9 +790,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
         if (lower.contains("lớp học") || lower.contains("classroom") || lower.contains("join code") || lower.contains("mã tham gia") || lower.contains("giáo viên") || lower.contains("teacher") || lower.contains("bài tập")) {
             return """
-                    ### Hệ thống Lớp học kiểu Google Classroom (`/classrooms`) & Đăng ký Giáo viên
+                    ### Hệ thống Lớp học trực tuyến (`/classrooms`) & Đăng ký Giáo viên
                     
-                    Giao diện **Lớp học (`/classrooms`)** gồm **4 tab** trực quan tương tự Google Classroom:
+                    Giao diện **Lớp học (`/classrooms`)** gồm **4 tab** trực quan:
                     1. **Bảng tin (`Stream`):** Hiển thị thông tin lớp, **Mã lớp (`Class Code`)**, hộp **Sắp đến hạn** (các bài tập đến hạn trong 7 ngày), luồng thông báo của Giảng viên và danh sách bài tập/tài liệu mới đăng.
                     2. **Bài tập trên lớp (`Classwork`):**
                        - Làm bài tập được giao (Đề hệ thống hoặc Đề riêng của lớp) theo hạn nộp (`Deadline` — hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`).
@@ -886,7 +886,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                    - Ngân hàng **10 đề ETS 2026** & **10 đề YBM 2026**, cấu trúc đề thi TOEIC 200 câu (120 phút), cách quy đổi điểm `10–990`, mẹo làm bài và tránh bẫy ETS cho từng Part.
                 3. **Hướng dẫn đầy đủ các tính năng của TOEIC Learning:**
                    - **Làm Full Test & Luyện từng Part** (tự động lưu phiên khi F5/rớt mạng), **Nghe chép chính tả (`Dictation`)**, thảo luận đề thi.
-                   - **Lớp học kiểu Google Classroom (`/classrooms`):** Xem trước tài liệu PDF trực tiếp trên trình duyệt, mời học viên hàng loạt qua Gmail, nhận thông báo bài tập qua Gmail, làm bài tập và xem nhận xét của Giảng viên.
+                   - **Lớp học trực tuyến (`/classrooms`):** Xem trước tài liệu PDF trực tiếp trên trình duyệt, mời học viên hàng loạt qua Gmail, nhận thông báo bài tập qua Gmail, làm bài tập và xem nhận xét của Giảng viên.
                    - **Mua Đề VIP & Đăng ký Giáo viên qua PayOS**, theo dõi **Streak** và quản lý **Hồ sơ cá nhân (`/profile`)**.
                 
                 *Bạn hãy nhập câu hỏi cụ thể hoặc chọn một chủ đề gợi ý bên dưới để Nuna hỗ trợ ngay nhé!*
@@ -1204,7 +1204,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             return "Thư viện 20 bộ đề thi TOEIC (ETS 2026 & YBM 2026)";
         }
         if (lower.startsWith("/classrooms")) {
-            return "Trang Lớp học kiểu Google Classroom (Bảng tin, Bài tập & PDF, Mọi người, Điểm số)";
+            return "Trang Lớp học trực tuyến (Bảng tin, Bài tập & PDF, Mọi người, Điểm số)";
         }
         if (lower.startsWith("/teacher/application")) {
             return "Trang Đăng ký trở thành Giáo viên qua PayOS";

@@ -15,6 +15,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.Assignme
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CustomizeClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.InviteStudentsRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service.ClassroomService;
@@ -116,6 +117,16 @@ public class ClassRoomController {
             @Valid @RequestBody CreateClassroomRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật lớp học thành công",
                 classroomService.updateClassroom(currentUser, classroomId, request)));
+    }
+
+    @PatchMapping("/{classroomId}/appearance")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<ClassroomResponse>> customizeAppearance(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String classroomId,
+            @Valid @RequestBody CustomizeClassroomRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Đã lưu giao diện lớp học",
+                classroomService.customizeAppearance(currentUser, classroomId, request)));
     }
 
     @PostMapping("/{classroomId}/join-code/rotate")

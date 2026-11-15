@@ -6,6 +6,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomRes
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CustomizeClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.InviteStudentsRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
@@ -40,6 +41,9 @@ public class ClassroomService {
     private static final String BLOCKED = "BLOCKED";
     private static final String REMOVED = "REMOVED";
     private static final String CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final Set<String> ALLOWED_THEME_COLORS = Set.of(
+            "blue", "green", "pink", "orange", "cyan", "purple", "royal", "slate"
+    );
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final ClassroomRepository classroomRepository;
@@ -79,6 +83,49 @@ public class ClassroomService {
         auditEventService.record(currentUser, "CLASSROOM_UPDATED", "CLASSROOM", saved.getId(),
                 "fields=className,description");
         return toClassroomResponse(saved, "OWNED", true);
+    }
+
+    @Transactional
+    public ClassroomResponse customizeAppearance(User currentUser, String classroomId, CustomizeClassroomRequest request) {
+        Classroom classroom = requireOwnedClassroomForUpdate(currentUser, classroomId);
+        String normalizedTheme = normalizeThemeColor(request.getThemeColor());
+        String normalizedBanner = normalizeBannerUrl(request.getBannerUrl());
+
+        classroom.setThemeColor(normalizedTheme);
+        classroom.setBannerUrl(normalizedBanner);
+        Classroom saved = classroomRepository.save(classroom);
+        auditEventService.record(currentUser, "CLASSROOM_APPEARANCE_UPDATED", "CLASSROOM", saved.getId(),
+                "themeColor=" + (normalizedTheme == null ? "default" : normalizedTheme));
+        return toClassroomResponse(saved, "OWNED", true);
+    }
+
+    private String normalizeThemeColor(String rawThemeColor) {
+        if (rawThemeColor == null || rawThemeColor.isBlank()) {
+            return null;
+        }
+        String normalized = rawThemeColor.trim().toLowerCase(Locale.ROOT);
+        if (!ALLOWED_THEME_COLORS.contains(normalized)) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        return normalized;
+    }
+
+    private String normalizeBannerUrl(String rawBannerUrl) {
+        if (rawBannerUrl == null || rawBannerUrl.isBlank()) {
+            return null;
+        }
+        String trimmed = rawBannerUrl.trim();
+        if (trimmed.startsWith("preset:")) {
+            String presetKey = trimmed.substring("preset:".length()).trim();
+            if (presetKey.isEmpty() || presetKey.length() > 40 || !presetKey.matches("^[a-z0-9-]+$")) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            return "preset:" + presetKey;
+        }
+        if (trimmed.startsWith("https://res.cloudinary.com/") || trimmed.startsWith("/api/media/local/")) {
+            return trimmed;
+        }
+        throw new AppException(ErrorCode.VALIDATION_ERROR);
     }
 
     @Transactional
@@ -371,6 +418,8 @@ public class ClassroomService {
                 .className(classroom.getClassName())
                 .description(classroom.getDescription())
                 .classCode(includeCode ? classroom.getClassCode() : null)
+                .themeColor(classroom.getThemeColor())
+                .bannerUrl(classroom.getBannerUrl())
                 .teacherName(classroom.getTeacher().getUserName())
                 .teacherEmail(classroom.getTeacher().getUserEmail())
                 .status(status)

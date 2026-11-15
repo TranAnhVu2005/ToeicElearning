@@ -12,6 +12,8 @@ public class ClassroomResponse {
     String className;
     String description;
     String classCode;
+    String themeColor;
+    String bannerUrl;
     String teacherName;
     String teacherEmail;
     String status;

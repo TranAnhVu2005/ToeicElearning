@@ -15,6 +15,7 @@ import {
   FolderOpen,
   GraduationCap,
   Home,
+  Image as ImageIcon,
   Info,
   LayoutGrid,
   LoaderCircle,
@@ -24,13 +25,11 @@ import {
   Menu,
   MessageSquare,
   MoreVertical,
-  Palette,
   Pencil,
   Pin,
   Plus,
   RefreshCw,
   Repeat,
-  Save,
   Search,
   Send,
   Settings,
@@ -49,6 +48,10 @@ import { examService } from '../services/examService';
 import TestManagementPage from './admin/TestManagementPage';
 import nunaLaptopImg from '../assets/img/gaugau/toby_using_laptop.png';
 import nunaBookImg from '../assets/img/gaugau/toby_studying_book.png';
+import presetStudyDeskImg from '../assets/img/home-optimized/lambai.jpg';
+import presetLibraryImg from '../assets/img/coursepage/thuvien.jpg';
+import presetAutumnImg from '../assets/img/homepage/muaThu.jpg';
+import presetCampusImg from '../assets/img/ctu/hoitruongrua.jpg';
 
 const statusLabels = {
   OWNED: 'Lớp của tôi',
@@ -68,41 +71,107 @@ const assignmentStatusLabels = {
 
 const BANNER_THEMES = [
   {
-    id: 'slate-studio',
-    name: 'Xám Slate (Mặc định)',
-    bgClass: 'bg-gradient-to-r from-[#465A65] via-[#546E7A] to-[#37474F]',
-    accentColor: '#1D4ED8',
-    cardHeaderClass: 'bg-gradient-to-r from-[#465A65] to-[#37474F]',
+    id: 'blue',
+    name: 'Xanh dương nhẹ',
+    swatchBg: '#D2E3FC',
+    swatchBorder: '#1967D2',
+    checkColor: '#1967D2',
+    bgClass: 'bg-gradient-to-r from-[#1967D2] via-[#1A73E8] to-[#4285F4]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#1967D2] to-[#1A73E8]',
+    accentColor: '#1967D2',
   },
   {
-    id: 'editorial-blue',
-    name: 'Xanh dương Học thuật',
+    id: 'green',
+    name: 'Xanh lá',
+    swatchBg: '#CEEAD6',
+    swatchBorder: '#1E8E3E',
+    checkColor: '#1E8E3E',
+    bgClass: 'bg-gradient-to-r from-[#137333] via-[#1E8E3E] to-[#34A853]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#137333] to-[#1E8E3E]',
+    accentColor: '#1E8E3E',
+  },
+  {
+    id: 'pink',
+    name: 'Hồng phấn',
+    swatchBg: '#FDCFE8',
+    swatchBorder: '#E52592',
+    checkColor: '#B80672',
+    bgClass: 'bg-gradient-to-r from-[#B80672] via-[#E52592] to-[#F439A0]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#B80672] to-[#E52592]',
+    accentColor: '#B80672',
+  },
+  {
+    id: 'orange',
+    name: 'Cam ấm',
+    swatchBg: '#FEDFC8',
+    swatchBorder: '#E8710A',
+    checkColor: '#C26401',
+    bgClass: 'bg-gradient-to-r from-[#B06000] via-[#E8710A] to-[#FA903E]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#B06000] to-[#E8710A]',
+    accentColor: '#C26401',
+  },
+  {
+    id: 'cyan',
+    name: 'Xanh ngọc',
+    swatchBg: '#CBF0F8',
+    swatchBorder: '#129EAF',
+    checkColor: '#007B83',
+    bgClass: 'bg-gradient-to-r from-[#007B83] via-[#129EAF] to-[#24C1E0]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#007B83] to-[#129EAF]',
+    accentColor: '#007B83',
+  },
+  {
+    id: 'purple',
+    name: 'Tím học thuật',
+    swatchBg: '#E9D2FD',
+    swatchBorder: '#8430CE',
+    checkColor: '#7627BB',
+    bgClass: 'bg-gradient-to-r from-[#681DA8] via-[#8430CE] to-[#A142F4]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#681DA8] to-[#8430CE]',
+    accentColor: '#7627BB',
+  },
+  {
+    id: 'royal',
+    name: 'Xanh dương đậm',
+    swatchBg: '#DBEAFE',
+    swatchBorder: '#1D4ED8',
+    checkColor: '#1D4ED8',
     bgClass: 'bg-gradient-to-r from-[#1E3A8A] via-[#1D4ED8] to-[#2563EB]',
-    accentColor: '#1D4ED8',
     cardHeaderClass: 'bg-gradient-to-r from-[#1E3A8A] to-[#1D4ED8]',
+    accentColor: '#1D4ED8',
   },
   {
-    id: 'emerald-campus',
-    name: 'Xanh Ngọc lục bảo',
-    bgClass: 'bg-gradient-to-r from-[#065F46] via-[#047857] to-[#0D9488]',
-    accentColor: '#047857',
-    cardHeaderClass: 'bg-gradient-to-r from-[#065F46] to-[#047857]',
-  },
-  {
-    id: 'indigo-scholar',
-    name: 'Chàm Nghiên cứu',
-    bgClass: 'bg-gradient-to-r from-[#312E81] via-[#4338CA] to-[#4F46E5]',
-    accentColor: '#4338CA',
-    cardHeaderClass: 'bg-gradient-to-r from-[#312E81] to-[#4338CA]',
-  },
-  {
-    id: 'amber-library',
-    name: 'Cam đất Thư viện',
-    bgClass: 'bg-gradient-to-r from-[#78350F] via-[#B45309] to-[#D97706]',
-    accentColor: '#B45309',
-    cardHeaderClass: 'bg-gradient-to-r from-[#78350F] to-[#B45309]',
+    id: 'slate',
+    name: 'Xám Slate (Mặc định)',
+    swatchBg: '#E2E8F0',
+    swatchBorder: '#475569',
+    checkColor: '#334155',
+    bgClass: 'bg-gradient-to-r from-[#37474F] via-[#455A64] to-[#546E7A]',
+    cardHeaderClass: 'bg-gradient-to-r from-[#37474F] to-[#455A64]',
+    accentColor: '#1D4ED8',
   },
 ];
+
+const BANNER_PRESETS = [
+  { id: '', label: 'Minh họa mặc định', image: null },
+  { id: 'preset:study-desk', label: 'Góc ôn luyện TOEIC', image: presetStudyDeskImg },
+  { id: 'preset:library', label: 'Thư viện học thuật', image: presetLibraryImg },
+  { id: 'preset:autumn', label: 'Không gian mùa thu', image: presetAutumnImg },
+  { id: 'preset:campus', label: 'Hội trường Đại học', image: presetCampusImg },
+];
+
+const resolveBannerImageSrc = (bannerUrl) => {
+  if (!bannerUrl) return '';
+  if (bannerUrl.startsWith('preset:')) {
+    return BANNER_PRESETS.find((item) => item.id === bannerUrl)?.image || '';
+  }
+  return bannerUrl;
+};
+
+const findBannerTheme = (themeColor, fallbackId = 'slate') =>
+  BANNER_THEMES.find((theme) => theme.id === themeColor) ||
+  BANNER_THEMES.find((theme) => theme.id === fallbackId) ||
+  BANNER_THEMES[BANNER_THEMES.length - 1];
 
 const getAssignmentStatusLabel = (status, late) => {
   if (status === 'GRADED') return late ? 'Đã nhận xét · nộp trễ' : 'Đã nhận xét';
@@ -188,11 +257,11 @@ const saveStoredAnnouncements = (classroomId, items) => {
 };
 
 const getStoredThemeId = (classroomId) => {
-  if (!classroomId) return BANNER_THEMES[0].id;
+  if (!classroomId) return 'slate';
   try {
-    return window.localStorage.getItem(`toeic_classroom_theme_${classroomId}`) || BANNER_THEMES[0].id;
+    return window.localStorage.getItem(`toeic_classroom_theme_${classroomId}`) || 'slate';
   } catch {
-    return BANNER_THEMES[0].id;
+    return 'slate';
   }
 };
 
@@ -216,7 +285,13 @@ const ClassroomsPage = () => {
   const [codeMenuOpen, setCodeMenuOpen] = useState(false);
   const [classInfoExpanded, setClassInfoExpanded] = useState(false);
   const [customizeBannerOpen, setCustomizeBannerOpen] = useState(false);
-  const [selectedThemeId, setSelectedThemeId] = useState(BANNER_THEMES[0].id);
+  const [selectedThemeId, setSelectedThemeId] = useState('slate');
+  const [draftThemeColor, setDraftThemeColor] = useState('slate');
+  const [draftBannerUrl, setDraftBannerUrl] = useState('');
+  const [presetPickerOpen, setPresetPickerOpen] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [editInfoExpanded, setEditInfoExpanded] = useState(false);
+  const bannerFileInputRef = useRef(null);
 
   // Stream announcements state
   const [announcements, setAnnouncements] = useState([]);
@@ -322,8 +397,13 @@ const ClassroomsPage = () => {
   const assignmentSummary = submissionData?.summary || null;
 
   const activeTheme = useMemo(
-    () => BANNER_THEMES.find((theme) => theme.id === selectedThemeId) || BANNER_THEMES[0],
-    [selectedThemeId]
+    () => findBannerTheme(selectedClass?.themeColor || selectedThemeId, 'slate'),
+    [selectedClass?.themeColor, selectedThemeId]
+  );
+
+  const activeBannerSrc = useMemo(
+    () => resolveBannerImageSrc(selectedClass?.bannerUrl || ''),
+    [selectedClass?.bannerUrl]
   );
 
   const loadClassrooms = useCallback(async () => {
@@ -613,14 +693,93 @@ const ClassroomsPage = () => {
     };
   }, [assignments, isTeacher]);
 
-  const handleSelectTheme = (themeId) => {
-    setSelectedThemeId(themeId);
-    if (selectedClass?.id) {
+  const openCustomizeModal = () => {
+    if (!selectedClass || !isTeacher) return;
+    setClassEditForm({
+      className: selectedClass.className || '',
+      description: selectedClass.description || '',
+    });
+    setDraftThemeColor(selectedClass.themeColor || selectedThemeId || 'slate');
+    setDraftBannerUrl(selectedClass.bannerUrl || '');
+    setPresetPickerOpen(false);
+    setEditInfoExpanded(false);
+    setCustomizeBannerOpen(true);
+  };
+
+  const handleBannerUploadFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setError('Vui lòng chọn ảnh định dạng JPG, PNG hoặc WebP.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Ảnh bìa lớp học tối đa 5 MB.');
+      return;
+    }
+    setBannerUploading(true);
+    setError('');
+    try {
+      const response = await classroomService.uploadBannerImage(file);
+      if (response.code !== 1000 || !response.data?.url) {
+        throw new Error(response.message || 'Không tải được ảnh bìa lên.');
+      }
+      setDraftBannerUrl(response.data.url);
+      setPresetPickerOpen(false);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không tải được ảnh bìa lên.');
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const handleSaveCustomizeModal = async (event) => {
+    event?.preventDefault();
+    if (!selectedClass?.id || !isTeacher) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      let updatedClass = selectedClass;
+      const trimmedName = (classEditForm.className || '').trim();
+      const trimmedDesc = (classEditForm.description || '').trim();
+      if (
+        editInfoExpanded &&
+        trimmedName &&
+        (trimmedName !== (selectedClass.className || '') ||
+          trimmedDesc !== (selectedClass.description || ''))
+      ) {
+        const infoRes = await classroomService.update(selectedClass.id, trimmedName, trimmedDesc);
+        if (infoRes.code !== 1000) throw new Error(infoRes.message || 'Không cập nhật được thông tin lớp.');
+        updatedClass = infoRes.data;
+      }
+
+      const appRes = await classroomService.customizeAppearance(selectedClass.id, {
+        themeColor: draftThemeColor,
+        bannerUrl: draftBannerUrl || null,
+      });
+      if (appRes.code !== 1000) throw new Error(appRes.message || 'Không lưu được giao diện lớp học.');
+      updatedClass = appRes.data;
+
+      setSelectedThemeId(updatedClass.themeColor || draftThemeColor);
       try {
-        window.localStorage.setItem(`toeic_classroom_theme_${selectedClass.id}`, themeId);
+        window.localStorage.setItem(
+          `toeic_classroom_theme_${selectedClass.id}`,
+          updatedClass.themeColor || draftThemeColor
+        );
       } catch {
         // Ignore storage error
       }
+      setSelectedClass(updatedClass);
+      setClassrooms((items) => items.map((item) => (item.id === updatedClass.id ? updatedClass : item)));
+      setCustomizeBannerOpen(false);
+      setNotice('Đã lưu giao diện lớp học thành công.');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không lưu được giao diện lớp học.');
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -647,39 +806,7 @@ const ClassroomsPage = () => {
   };
 
   const beginEditClassroom = () => {
-    if (!selectedClass || !isTeacher) return;
-    setClassEditForm({
-      className: selectedClass.className || '',
-      description: selectedClass.description || '',
-    });
-    setEditingClassroom(true);
-    setCustomizeBannerOpen(true);
-  };
-
-  const saveClassroomDetails = async (event) => {
-    event.preventDefault();
-    if (!selectedClass?.id || !isTeacher) return;
-    setBusy(true);
-    setError('');
-    setNotice('');
-    try {
-      const response = await classroomService.update(
-        selectedClass.id,
-        classEditForm.className,
-        classEditForm.description
-      );
-      if (response.code !== 1000) throw new Error(response.message || 'Không cập nhật được thông tin lớp.');
-      const updatedClass = response.data;
-      setSelectedClass(updatedClass);
-      setClassrooms((items) => items.map((item) => (item.id === updatedClass.id ? updatedClass : item)));
-      setEditingClassroom(false);
-      setCustomizeBannerOpen(false);
-      setNotice('Đã cập nhật thông tin lớp học.');
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không cập nhật được thông tin lớp.');
-    } finally {
-      setBusy(false);
-    }
+    openCustomizeModal();
   };
 
   const handleSelectClassroom = (classroom, targetTab = 'STREAM') => {
@@ -1446,7 +1573,7 @@ const ClassroomsPage = () => {
                   <span className="grid h-8 w-8 place-items-center rounded-md bg-emerald-600 text-white">
                     <GraduationCap size={18} />
                   </span>
-                  <span className="font-bold text-slate-900">Google Classroom Style</span>
+                  <span className="font-bold text-slate-900">Lớp học trực tuyến</span>
                 </div>
                 <button
                   type="button"
@@ -1610,9 +1737,8 @@ const ClassroomsPage = () => {
 
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {classrooms.map((cls) => {
-                  const clsThemeId = getStoredThemeId(cls.id);
-                  const clsTheme =
-                    BANNER_THEMES.find((t) => t.id === clsThemeId) || BANNER_THEMES[0];
+                  const clsTheme = findBannerTheme(cls.themeColor || getStoredThemeId(cls.id), 'slate');
+                  const clsBannerSrc = resolveBannerImageSrc(cls.bannerUrl || '');
                   return (
                     <article
                       key={cls.id}
@@ -1620,7 +1746,16 @@ const ClassroomsPage = () => {
                     >
                       <div
                         onClick={() => handleSelectClassroom(cls, 'STREAM')}
-                        className={`relative cursor-pointer p-5 text-white ${clsTheme.cardHeaderClass}`}
+                        style={
+                          clsBannerSrc
+                            ? {
+                                backgroundImage: `linear-gradient(135deg, rgba(15,23,42,0.72), rgba(15,23,42,0.38)), url(${clsBannerSrc})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                              }
+                            : undefined
+                        }
+                        className={`relative cursor-pointer p-5 text-white ${clsBannerSrc ? 'bg-slate-800' : clsTheme.cardHeaderClass}`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <h2 className="line-clamp-1 text-xl font-bold tracking-tight text-white group-hover:underline">
@@ -1704,54 +1839,61 @@ const ClassroomsPage = () => {
                 <div>
                   {/* HERO BANNER (Matching Google Classroom Screenshot) */}
                   <div
-                    className={`relative min-h-[220px] overflow-hidden rounded-2xl p-6 text-white shadow-sm sm:min-h-[240px] sm:p-8 ${activeTheme.bgClass}`}
+                    style={
+                      activeBannerSrc
+                        ? {
+                            backgroundImage: `linear-gradient(115deg, rgba(15, 23, 42, 0.72) 0%, rgba(15, 23, 42, 0.36) 55%, rgba(15, 23, 42, 0.25) 100%), url(${activeBannerSrc})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }
+                        : undefined
+                    }
+                    className={`relative min-h-[220px] overflow-hidden rounded-2xl p-6 text-white shadow-sm sm:min-h-[240px] sm:p-8 ${
+                      activeBannerSrc ? 'bg-slate-800' : activeTheme.bgClass
+                    }`}
                   >
-                    {/* Right Decorative Vector Laptop / Tablet / Phone Illustration (like Google Classroom) */}
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 420 240"
-                      className="pointer-events-none absolute right-0 top-0 hidden h-full w-auto opacity-85 sm:block"
-                    >
-                      {/* Tablet */}
-                      <g transform="translate(115, 10) rotate(28)">
-                        <rect x="0" y="0" width="90" height="125" rx="8" fill="#1E293B" opacity="0.7" />
-                        <rect x="6" y="8" width="78" height="109" rx="3" fill="#38BDF8" opacity="0.85" />
-                        <rect x="14" y="18" width="46" height="6" rx="2" fill="#E0F2FE" />
-                        <rect x="14" y="30" width="60" height="4" rx="2" fill="#BAE6FD" />
-                        <rect x="14" y="40" width="52" height="4" rx="2" fill="#BAE6FD" />
-                      </g>
-                      {/* Smartphone */}
-                      <g transform="translate(150, 145) rotate(-25)">
-                        <rect x="0" y="0" width="54" height="96" rx="7" fill="#0F172A" opacity="0.8" />
-                        <rect x="4" y="7" width="46" height="82" rx="3" fill="#0284C7" opacity="0.9" />
-                        <rect x="10" y="16" width="34" height="22" rx="2" fill="#7DD3FC" opacity="0.7" />
-                      </g>
-                      {/* Open Laptop */}
-                      <g transform="translate(245, 30) rotate(-32)">
-                        <rect x="0" y="0" width="160" height="100" rx="6" fill="#334155" />
-                        <rect x="6" y="6" width="148" height="88" rx="3" fill="#2563EB" />
-                        <rect x="18" y="18" width="65" height="6" rx="2" fill="#93C5FD" />
-                        <rect x="18" y="30" width="95" height="5" rx="2" fill="#60A5FA" />
-                        <rect x="18" y="40" width="80" height="5" rx="2" fill="#60A5FA" />
-                        <rect x="-10" y="100" width="180" height="72" rx="8" fill="#CBD5E1" opacity="0.9" />
-                        <rect x="6" y="110" width="148" height="36" rx="3" fill="#64748B" opacity="0.75" />
-                        <rect x="64" y="150" width="32" height="16" rx="2" fill="#94A3B8" />
-                      </g>
-                    </svg>
+                    {/* Right Decorative Vector Laptop / Tablet / Phone Illustration (when no custom photo) */}
+                    {!activeBannerSrc && (
+                      <svg
+                        aria-hidden="true"
+                        viewBox="0 0 420 240"
+                        className="pointer-events-none absolute right-0 top-0 hidden h-full w-auto opacity-85 sm:block"
+                      >
+                        {/* Tablet */}
+                        <g transform="translate(115, 10) rotate(28)">
+                          <rect x="0" y="0" width="90" height="125" rx="8" fill="#1E293B" opacity="0.7" />
+                          <rect x="6" y="8" width="78" height="109" rx="3" fill="#38BDF8" opacity="0.85" />
+                          <rect x="14" y="18" width="46" height="6" rx="2" fill="#E0F2FE" />
+                          <rect x="14" y="30" width="60" height="4" rx="2" fill="#BAE6FD" />
+                          <rect x="14" y="40" width="52" height="4" rx="2" fill="#BAE6FD" />
+                        </g>
+                        {/* Smartphone */}
+                        <g transform="translate(150, 145) rotate(-25)">
+                          <rect x="0" y="0" width="54" height="96" rx="7" fill="#0F172A" opacity="0.8" />
+                          <rect x="4" y="7" width="46" height="82" rx="3" fill="#0284C7" opacity="0.9" />
+                          <rect x="10" y="16" width="34" height="22" rx="2" fill="#7DD3FC" opacity="0.7" />
+                        </g>
+                        {/* Open Laptop */}
+                        <g transform="translate(245, 30) rotate(-32)">
+                          <rect x="0" y="0" width="160" height="100" rx="6" fill="#334155" />
+                          <rect x="6" y="6" width="148" height="88" rx="3" fill="#2563EB" />
+                          <rect x="18" y="18" width="65" height="6" rx="2" fill="#93C5FD" />
+                          <rect x="18" y="30" width="95" height="5" rx="2" fill="#60A5FA" />
+                          <rect x="18" y="40" width="80" height="5" rx="2" fill="#60A5FA" />
+                          <rect x="-10" y="100" width="180" height="72" rx="8" fill="#CBD5E1" opacity="0.9" />
+                          <rect x="6" y="110" width="148" height="36" rx="3" fill="#64748B" opacity="0.75" />
+                          <rect x="64" y="150" width="32" height="16" rx="2" fill="#94A3B8" />
+                        </g>
+                      </svg>
+                    )}
 
                     {/* Top Right Customize Button */}
                     {isTeacher && (
                       <div className="relative z-10 flex justify-end">
                         <button
                           type="button"
-                          onClick={() => {
-                            setClassEditForm({
-                              className: selectedClass.className || '',
-                              description: selectedClass.description || '',
-                            });
-                            setCustomizeBannerOpen((prev) => !prev);
-                          }}
-                          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#1D4ED8] shadow-xs transition hover:bg-blue-50"
+                          onClick={openCustomizeModal}
+                          className="inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-xs font-semibold text-[#1D4ED8] shadow-xs backdrop-blur-xs transition hover:bg-white"
                         >
                           <Pencil size={14} />
                           <span>Tùy chỉnh</span>
@@ -1825,100 +1967,6 @@ const ClassroomsPage = () => {
                           </p>
                         </div>
                       )}
-                    </div>
-                  )}
-
-                  {/* CUSTOMIZE THEME & CLASS INFO PANEL (When "✏️ Tùy chỉnh" is clicked) */}
-                  {isTeacher && customizeBannerOpen && (
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-[#F8FAFC] p-5 shadow-xs">
-                      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                          <Palette size={16} className="text-[#1D4ED8]" />
-                          Tùy chỉnh giao diện & thông tin lớp học
-                        </h2>
-                        <button
-                          type="button"
-                          onClick={() => setCustomizeBannerOpen(false)}
-                          className="rounded-full p-1 text-slate-500 hover:bg-slate-200"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-
-                      <div className="mt-4">
-                        <p className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-600">
-                          Chọn màu chủ đề Banner
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2.5">
-                          {BANNER_THEMES.map((theme) => (
-                            <button
-                              key={theme.id}
-                              type="button"
-                              onClick={() => handleSelectTheme(theme.id)}
-                              className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
-                                selectedThemeId === theme.id
-                                  ? 'border-[#1D4ED8] bg-[#EFF6FF] text-[#1D4ED8]'
-                                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
-                              }`}
-                            >
-                              <span className={`h-3.5 w-3.5 rounded-full ${theme.cardHeaderClass}`} />
-                              <span>{theme.name}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <form onSubmit={saveClassroomDetails} className="mt-5 grid gap-3 sm:grid-cols-2">
-                        <label
-                          htmlFor="class-edit-name"
-                          className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2"
-                        >
-                          Tên lớp học
-                          <input
-                            id="class-edit-name"
-                            required
-                            maxLength={120}
-                            value={classEditForm.className}
-                            onChange={(event) =>
-                              setClassEditForm((form) => ({ ...form, className: event.target.value }))
-                            }
-                            className="mt-1 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
-                          />
-                        </label>
-                        <label
-                          htmlFor="class-edit-description"
-                          className="text-xs font-semibold uppercase tracking-wider text-slate-700 sm:col-span-2"
-                        >
-                          Mô tả / Lịch học
-                          <textarea
-                            id="class-edit-description"
-                            rows={3}
-                            maxLength={2000}
-                            value={classEditForm.description}
-                            onChange={(event) =>
-                              setClassEditForm((form) => ({ ...form, description: event.target.value }))
-                            }
-                            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
-                          />
-                        </label>
-                        <div className="flex gap-2 sm:col-span-2">
-                          <button
-                            type="submit"
-                            disabled={busy}
-                            className="editorial-button-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold disabled:opacity-50"
-                          >
-                            <Save size={14} /> Lưu thông tin
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => setCustomizeBannerOpen(false)}
-                            className="editorial-button-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold"
-                          >
-                            Đóng
-                          </button>
-                        </div>
-                      </form>
                     </div>
                   )}
 
@@ -3120,56 +3168,59 @@ const ClassroomsPage = () => {
                   TAB 3: MỌI NGƯỜI (PEOPLE) — GOOGLE CLASSROOM ROSTER
               ========================================================= */}
               {activeTab === 'PEOPLE' && (
-                <div className="mx-auto max-w-4xl space-y-8">
-                  {/* Teacher Section */}
+                <div className="mx-auto max-w-3xl space-y-10 py-2">
+                  {/* Teacher Section (Google Classroom clean row layout) */}
                   <section>
-                    <div className="flex items-center justify-between border-b-2 border-[#1D4ED8] pb-3">
-                      <h2 className="text-2xl font-bold text-[#1D4ED8]">Giáo viên</h2>
+                    <div className="flex items-center justify-between border-b border-slate-300 pb-3.5">
+                      <h2 className="text-[28px] font-normal tracking-tight text-slate-900">Giáo viên</h2>
                     </div>
-                    <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
-                      <div className="flex items-center gap-3.5">
-                        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1D4ED8] font-mono text-base font-bold text-white">
-                          {(selectedClass.teacherName || 'G').trim().charAt(0).toUpperCase()}
-                        </span>
-                        <div>
-                          <p className="font-bold text-slate-900">{selectedClass.teacherName}</p>
-                          {selectedClass.teacherEmail && (
-                            <p className="font-mono text-xs text-slate-500">{selectedClass.teacherEmail}</p>
-                          )}
+                    <div className="divide-y divide-slate-200">
+                      <div className="flex items-center justify-between gap-4 py-3.5">
+                        <div className="flex items-center gap-4">
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#1D4ED8] font-mono text-sm font-bold text-white">
+                            {(selectedClass.teacherName || 'G').trim().charAt(0).toUpperCase()}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{selectedClass.teacherName}</p>
+                            {selectedClass.teacherEmail && (
+                              <p className="font-mono text-xs text-slate-500">{selectedClass.teacherEmail}</p>
+                            )}
+                          </div>
                         </div>
+                        <span className="rounded-full bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-semibold text-[#1D4ED8]">
+                          Chủ lớp học
+                        </span>
                       </div>
-                      <span className="rounded-full bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-semibold text-[#1D4ED8]">
-                        Chủ lớp học
-                      </span>
                     </div>
                   </section>
 
-                  {/* Students Section */}
+                  {/* Students Section (Google Classroom clean row & empty state layout) */}
                   <section>
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1D4ED8] pb-3">
-                      <h2 className="text-2xl font-bold text-[#1D4ED8]">Bạn học / Học viên</h2>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 pb-3.5">
+                      <h2 className="text-[28px] font-normal tracking-tight text-slate-900">Học viên</h2>
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="font-mono text-sm font-bold text-slate-600">
-                          {selectedClass.approvedMemberCount ?? 0} học viên đã duyệt
+                        <span className="font-mono text-xs font-semibold text-slate-500">
+                          {selectedClass.approvedMemberCount ?? 0} học viên
                         </span>
                         {isTeacher && (
                           <>
                             <button
                               type="button"
-                              onClick={() => setInviteModalOpen(true)}
-                              title="Mời học viên qua danh sách Gmail"
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-blue-800"
+                              onClick={() => copyCode(selectedClass.classCode)}
+                              title="Sao chép mã lớp"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-semibold text-[#1D4ED8] transition hover:bg-blue-100"
                             >
-                              <UserPlus size={15} />
-                              Mời học viên (Gmail)
+                              <Clipboard size={13} />
+                              {selectedClass.classCode}
                             </button>
                             <button
                               type="button"
-                              onClick={() => copyCode(selectedClass.classCode)}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 font-mono text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                              onClick={() => setInviteModalOpen(true)}
+                              title="Mời học viên qua Gmail"
+                              aria-label="Mời học viên qua Gmail"
+                              className="grid h-9 w-9 place-items-center rounded-full text-slate-700 transition hover:bg-slate-100 hover:text-[#1D4ED8]"
                             >
-                              <Clipboard size={13} />
-                              Mã: {selectedClass.classCode}
+                              <UserPlus size={18} />
                             </button>
                           </>
                         )}
@@ -3219,15 +3270,15 @@ const ClassroomsPage = () => {
                           </div>
                         </div>
 
-                        <div className="mt-4 space-y-2.5">
+                        <div className="mt-3">
                           {membersLoading ? (
-                            <p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+                            <p role="status" className="py-6 text-sm text-slate-600">
                               Đang tải danh sách học viên…
                             </p>
                           ) : membersError ? (
                             <div
                               role="alert"
-                              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
+                              className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800"
                             >
                               <span>{membersError}</span>
                               <button
@@ -3239,25 +3290,45 @@ const ClassroomsPage = () => {
                               </button>
                             </div>
                           ) : filteredMembers.length === 0 ? (
-                            <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
-                              Không có học viên nào trong danh sách này.
-                            </p>
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                              <img
+                                src={nunaBookImg}
+                                alt=""
+                                className="h-28 w-28 object-contain opacity-90"
+                              />
+                              <p className="mt-3 text-sm font-medium text-slate-700">
+                                {filterStatus === 'APPROVED' && !memberSearchQuery
+                                  ? 'Thêm học viên vào lớp này'
+                                  : 'Không có học viên nào trong danh sách này.'}
+                              </p>
+                              {filterStatus === 'APPROVED' && !memberSearchQuery && (
+                                <button
+                                  type="button"
+                                  onClick={() => setInviteModalOpen(true)}
+                                  className="mt-3 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-[#1D4ED8] transition hover:bg-[#EFF6FF]"
+                                >
+                                  <UserPlus size={16} />
+                                  Mời học viên
+                                </button>
+                              )}
+                            </div>
                           ) : (
-                            filteredMembers.map((member) => (
-                              <div
-                                key={member.id}
-                                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-2xs"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-sm font-bold text-slate-700">
-                                    {(member.studentName || 'H').trim().charAt(0).toUpperCase()}
-                                  </span>
-                                  <div>
-                                    <p className="font-bold text-slate-900">{member.studentName}</p>
-                                    <p className="font-mono text-xs text-slate-500">{member.studentEmail}</p>
+                            <div className="divide-y divide-slate-200">
+                              {filteredMembers.map((member) => (
+                                <div
+                                  key={member.id}
+                                  className="flex flex-wrap items-center justify-between gap-3 py-3.5"
+                                >
+                                  <div className="flex items-center gap-3.5">
+                                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-sm font-bold text-slate-700">
+                                      {(member.studentName || 'H').trim().charAt(0).toUpperCase()}
+                                    </span>
+                                    <div>
+                                      <p className="text-sm font-medium text-slate-900">{member.studentName}</p>
+                                      <p className="font-mono text-xs text-slate-500">{member.studentEmail}</p>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
+                                  <div className="flex flex-wrap gap-2">
                                   {member.status === 'PENDING' && (
                                     <>
                                       <button
@@ -3305,7 +3376,8 @@ const ClassroomsPage = () => {
                                   )}
                                 </div>
                               </div>
-                            ))
+                              ))}
+                            </div>
                           )}
                         </div>
                       </>
@@ -4020,7 +4092,7 @@ const ClassroomsPage = () => {
                   Danh sách địa chỉ Gmail học viên *
                 </label>
                 <p className="mb-2 text-xs leading-relaxed text-slate-500">
-                  Nhập hoặc dán hàng loạt Gmail (cách nhau bằng dấu phẩy, khoảng trắng hoặc xuống dòng). Học viên đã có tài khoản sẽ được thêm thẳng vào lớp và nhận email thông báo như Google Classroom.
+                  Nhập hoặc dán hàng loạt Gmail (cách nhau bằng dấu phẩy, khoảng trắng hoặc xuống dòng). Học viên đã có tài khoản sẽ được thêm thẳng vào lớp và nhận email thông báo qua Gmail.
                 </p>
 
                 <div className="min-h-[104px] rounded-xl border border-slate-300 bg-[#F8FAFC] p-2.5 focus-within:border-[#1D4ED8] focus-within:bg-white">
@@ -4129,6 +4201,235 @@ const ClassroomsPage = () => {
           </div>
         </div>
       )}
+      {/* =========================================================
+          MODAL 6: GOOGLE CLASSROOM CUSTOMIZE APPEARANCE ("Tuỳ chỉnh giao diện")
+      ========================================================= */}
+      {customizeBannerOpen && selectedClass && isTeacher && (() => {
+        const previewTheme = findBannerTheme(draftThemeColor, 'slate');
+        const previewBannerSrc = resolveBannerImageSrc(draftBannerUrl);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+            <form
+              onSubmit={handleSaveCustomizeModal}
+              className="w-full max-w-[540px] rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-slate-900">Tuỳ chỉnh giao diện</h2>
+                <button
+                  type="button"
+                  onClick={() => setCustomizeBannerOpen(false)}
+                  aria-label="Đóng hộp thoại tuỳ chỉnh giao diện"
+                  className="grid h-8 w-8 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Live Banner Preview (matching Google Classroom screenshot) */}
+              <div
+                style={
+                  previewBannerSrc
+                    ? {
+                        backgroundImage: `linear-gradient(115deg, rgba(15, 23, 42, 0.65) 0%, rgba(15, 23, 42, 0.25) 100%), url(${previewBannerSrc})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }
+                    : undefined
+                }
+                className={`relative mt-4 flex h-32 items-end overflow-hidden rounded-xl p-4 text-white ${
+                  previewBannerSrc ? 'bg-slate-800' : previewTheme.bgClass
+                }`}
+              >
+                {!previewBannerSrc && (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 360 140"
+                    className="pointer-events-none absolute right-0 top-0 h-full w-auto opacity-85"
+                  >
+                    <g transform="translate(135, 18) rotate(12)">
+                      <rect x="0" y="18" width="52" height="72" rx="6" fill="#0F172A" opacity="0.25" />
+                      <rect x="4" y="22" width="44" height="62" rx="3" fill="#E0F2FE" opacity="0.9" />
+                    </g>
+                    <g transform="translate(215, 14) rotate(-10)">
+                      <rect x="0" y="0" width="110" height="76" rx="8" fill="#1E293B" opacity="0.25" />
+                      <rect x="6" y="6" width="98" height="64" rx="4" fill="#BAE6FD" opacity="0.9" />
+                      <circle cx="88" cy="54" r="18" fill="#FFFFFF" opacity="0.35" />
+                    </g>
+                  </svg>
+                )}
+                <div className="relative z-10 min-w-0">
+                  <p className="truncate text-base font-bold text-white drop-shadow-xs">
+                    {classEditForm.className || selectedClass.className}
+                  </p>
+                  <p className="truncate text-xs text-white/90">
+                    GV: {selectedClass.teacherName}
+                  </p>
+                </div>
+              </div>
+
+              {/* Row 1: Select header image (Chọn ảnh / Tải ảnh lên) */}
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-sm font-normal text-slate-700">
+                  Chọn hình ảnh tiêu đề cho bảng tin
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPresetPickerOpen((prev) => !prev)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition ${
+                      presetPickerOpen
+                        ? 'bg-[#1D4ED8] text-white'
+                        : 'bg-[#D2E3FC]/75 text-[#1967D2] hover:bg-[#D2E3FC]'
+                    }`}
+                  >
+                    <ImageIcon size={14} />
+                    Chọn ảnh
+                  </button>
+                  <button
+                    type="button"
+                    disabled={bannerUploading}
+                    onClick={() => bannerFileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#D2E3FC]/75 px-4 py-2 text-xs font-semibold text-[#1967D2] transition hover:bg-[#D2E3FC] disabled:opacity-50"
+                  >
+                    {bannerUploading ? (
+                      <LoaderCircle size={14} className="animate-spin" />
+                    ) : (
+                      <Upload size={14} />
+                    )}
+                    {bannerUploading ? 'Đang tải...' : 'Tải ảnh lên'}
+                  </button>
+                  <input
+                    ref={bannerFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleBannerUploadFile}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Preset Gallery Picker (shown when "Chọn ảnh" is clicked) */}
+              {presetPickerOpen && (
+                <div className="mt-3 grid grid-cols-2 gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3">
+                  {BANNER_PRESETS.map((preset) => {
+                    const isSelected = (draftBannerUrl || '') === preset.id;
+                    return (
+                      <button
+                        key={preset.id || 'default'}
+                        type="button"
+                        onClick={() => setDraftBannerUrl(preset.id)}
+                        className={`group relative overflow-hidden rounded-lg border text-left transition ${
+                          isSelected
+                            ? 'border-[#1D4ED8] ring-2 ring-[#1D4ED8]/25'
+                            : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {preset.image ? (
+                          <img
+                            src={preset.image}
+                            alt={preset.label}
+                            className="h-14 w-full object-cover"
+                          />
+                        ) : (
+                          <div className={`h-14 w-full ${previewTheme.bgClass}`} />
+                        )}
+                        <span className="block truncate bg-white px-2 py-1 text-[11px] font-medium text-slate-700">
+                          {preset.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Row 2: 8 Circular Theme Color Swatches */}
+              <div className="mt-5">
+                <p className="text-sm font-normal text-slate-700">Chọn màu giao diện</p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {BANNER_THEMES.map((theme) => {
+                    const isSelected = draftThemeColor === theme.id;
+                    return (
+                      <button
+                        key={theme.id}
+                        type="button"
+                        title={theme.name}
+                        aria-label={theme.name}
+                        aria-pressed={isSelected}
+                        onClick={() => setDraftThemeColor(theme.id)}
+                        style={{
+                          backgroundColor: theme.swatchBg,
+                          borderColor: theme.swatchBorder,
+                        }}
+                        className={`grid h-10 w-10 place-items-center rounded-full border-2 transition ${
+                          isSelected ? 'scale-105 ring-2 ring-[#1967D2]/30 ring-offset-1' : 'hover:scale-105'
+                        }`}
+                      >
+                        {isSelected && <Check size={18} style={{ color: theme.checkColor }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Optional Collapsible Class Name & Description Editor */}
+              <div className="mt-5 border-t border-slate-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setEditInfoExpanded((prev) => !prev)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#1D4ED8]"
+                >
+                  <Pencil size={13} />
+                  <span>{editInfoExpanded ? 'Ẩn chỉnh sửa tên & mô tả lớp' : 'Chỉnh sửa tên & mô tả lớp học'}</span>
+                </button>
+                {editInfoExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    <input
+                      required
+                      maxLength={120}
+                      value={classEditForm.className}
+                      onChange={(event) =>
+                        setClassEditForm((form) => ({ ...form, className: event.target.value }))
+                      }
+                      placeholder="Tên lớp học"
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+                    />
+                    <textarea
+                      rows={2}
+                      maxLength={2000}
+                      value={classEditForm.description}
+                      onChange={(event) =>
+                        setClassEditForm((form) => ({ ...form, description: event.target.value }))
+                      }
+                      placeholder="Mô tả hoặc lịch học của lớp..."
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer: Huỷ & Lưu */}
+              <div className="mt-6 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  disabled={busy || bannerUploading}
+                  onClick={() => setCustomizeBannerOpen(false)}
+                  className="rounded-full px-4 py-2 text-xs font-semibold text-[#1967D2] transition hover:bg-blue-50"
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy || bannerUploading}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#1967D2] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#1557B0] disabled:opacity-50"
+                >
+                  {busy && <LoaderCircle size={14} className="animate-spin" />}
+                  Lưu
+                </button>
+              </div>
+            </form>
+          </div>
+        );
+      })()}
     </div>
   );
 };

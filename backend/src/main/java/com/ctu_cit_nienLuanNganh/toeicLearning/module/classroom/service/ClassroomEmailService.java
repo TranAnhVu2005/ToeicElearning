@@ -402,7 +402,7 @@ public class ClassroomEmailService {
                 + "<body style=\"margin:0;padding:24px 12px;background:#f1f3f4;font-family:'Google Sans',Roboto,Arial,sans-serif;\">"
                 + "<div style=\"max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #dadce0;overflow:hidden;\">"
                 + "  <div style=\"background:#1967d2;padding:22px 24px;color:#ffffff;\">"
-                + "    <div style=\"font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.9;\">TOEIC E-LEARNING · GOOGLE CLASSROOM STYLE</div>"
+                + "    <div style=\"font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;opacity:0.9;\">TOEIC ELEARNING</div>"
                 + "    <div style=\"font-size:22px;font-weight:700;margin-top:6px;\">" + className + "</div>"
                 + "  </div>"
                 + "  <div style=\"padding:24px;\">"

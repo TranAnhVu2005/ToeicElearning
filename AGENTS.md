@@ -1,25 +1,28 @@
 # Hướng dẫn AI khi làm việc với TOEIC Learning
 
-## Mục tiêu tài liệu
+## Mục tiêu tài liệu & Nguyên tắc bàn giao ngữ cảnh giữa các Agents
 
-Đây là chỉ dẫn dành cho AI agent làm việc trong repository. Bắt đầu từ `PROJECT_CONTEXT.md` (tóm tắt gọn, mục tiêu không quá khoảng 130 dòng), rồi đọc bộ tài liệu chi tiết trong `docs/` theo tác vụ. Bộ `docs/01`–`06` là đặc tả sản phẩm hiện hành cần được chủ dự án duyệt. Khi tài liệu khác nhau, `AGENTS.md` quy định cách làm, docs mô tả ý định sản phẩm, mã nguồn/schema mô tả trạng thái thực tế.
+Đây là chỉ dẫn tối cao dành cho mọi AI agent làm việc trong repository này. Hệ thống tài liệu `.md` (`AGENTS.md` → `PROJECT_CONTEXT.md` → `docs/01_OVERVIEW.md`..`07_IMPLEMENTATION_STATUS.md`) được thiết kế làm **bộ nhớ ngữ cảnh chuẩn xác của toàn dự án** để khi chủ dự án chuyển đổi giữa các AI Agents hoặc mở phiên chat mới, Agent mới chỉ cần đọc bộ tài liệu `.md` này là nắm trọn vẹn dự án mà **không cần phải đọc lại toàn bộ mã nguồn**.
 
-Người dùng đang duyệt và chỉnh sửa bộ đặc tả trong `docs/`. **Không triển khai hoặc sửa code chỉ dựa trên docs cho đến khi người dùng yêu cầu rõ ràng.** Khi được yêu cầu code, hãy đọc bản docs mới nhất và xác minh lại trạng thái mã nguồn.
+Khi tài liệu khác nhau: `AGENTS.md` quy định quy trình và nguyên tắc làm việc, `PROJECT_CONTEXT.md` tóm tắt trạng thái thực tế toàn hệ thống, `docs/01`–`07` mô tả chi tiết đặc tả & trạng thái triển khai từng phân hệ, và mã nguồn/schema là nơi đối chiếu trực tiếp khi sửa file.
 
-## Quy trình bắt đầu mỗi tác vụ
+## Quy trình bắt buộc trước và sau mỗi tác vụ
 
-1. Đọc `AGENTS.md`, sau đó `PROJECT_CONTEXT.md`.
-2. Trước mọi tác vụ làm thay đổi dự án, đọc đủ sáu tài liệu `docs/01_OVERVIEW.md` đến `docs/06_SECURITY_SPEC.md`; sau đó xác định phần áp dụng trực tiếp. Đây là yêu cầu bắt buộc để giữ nhất quán giữa nghiệp vụ, dữ liệu, API, luồng, UI và bảo mật.
-3. Kiểm tra `git status`, rồi đọc controller/service/entity/request/response hoặc component liên quan trong mã nguồn.
-4. Phân biệt trạng thái code, yêu cầu đã chốt, và đề xuất/câu hỏi mở. Không coi đề xuất là quyết định.
-5. Nếu đặc tả mâu thuẫn hoặc thiếu chi tiết, tiếp tục phần độc lập; hỏi khi quyết định ảnh hưởng lớn tới dữ liệu/hành vi.
-6. Chỉ sửa trong phạm vi tác vụ. Không chạy script SQL có `DROP DATABASE`, không thay đổi dữ liệu ngoài ý muốn.
+1. **Bước 1 — Đọc `AGENTS.md` đầu tiên (Bắt buộc)**: Mọi phiên chat hoặc tác vụ mới bắt buộc phải đọc `AGENTS.md` trước tiên để nắm quy trình, ràng buộc kiến trúc, thiết kế UI và bảo mật.
+2. **Bước 2 — Đọc `PROJECT_CONTEXT.md` tiếp theo (Bắt buộc)**: Đọc `PROJECT_CONTEXT.md` (tóm tắt gọn ≤ 130 dòng) ngay sau `AGENTS.md` để nắm toàn cảnh dự án hiện hành (công nghệ, routes, modules, cấu trúc DB, các chức năng đã hoàn thiện, trạng thái kiểm chứng) mà không phải quét lại toàn bộ dự án.
+3. **Bước 3 — Xem qua bộ tài liệu `docs/` trước khi thực hiện bất kỳ chức năng nào (Bắt buộc)**: Trước khi bắt đầu thiết kế, code hoặc chỉnh sửa bất kỳ chức năng nào, phải xem qua bộ tài liệu trong `docs/` (`docs/01_OVERVIEW.md` đến `docs/06_SECURITY_SPEC.md`, kèm `docs/07_IMPLEMENTATION_STATUS.md`) và đọc kỹ tài liệu thuộc phân hệ liên quan để giữ nhất quán tuyệt đối giữa nghiệp vụ, dữ liệu, API, luồng, UI/UX và bảo mật.
+4. **Bước 4 — Kiểm tra mã nguồn mục tiêu**: Dựa trên định vị từ `PROJECT_CONTEXT.md` và `docs/`, kiểm tra `git status` và chỉ đọc các controller/service/entity/request/response hoặc component/CSS trực tiếp liên quan đến tác vụ đang thực hiện.
+5. **Bước 5 — Phân biệt yêu cầu đã chốt và đề xuất**: Không tự ý triển khai các mục đang gắn nhãn đề xuất/câu hỏi mở trong docs cho đến khi người dùng yêu cầu rõ ràng. Nếu đặc tả thiếu chi tiết hoặc ảnh hưởng lớn tới dữ liệu/hành vi, hỏi lại người dùng trước khi quyết định. Chỉ sửa trong phạm vi tác vụ; tuyệt đối không chạy script SQL có `DROP DATABASE`.
+6. **Bước 6 — Cập nhật đồng bộ các file `.md` sau khi thực hiện (Bắt buộc)**:
+   - Mỗi khi thêm mới, thay đổi hoặc hoàn thiện bất kỳ chức năng, API, bảng/cột DB, luồng nghiệp vụ hoặc giao diện UI/UX nào, AI agent **bắt buộc phải cập nhật ngay vào `PROJECT_CONTEXT.md` và các file tương ứng trong `docs/` (`01`–`07`, cùng `AGENTS.md` nếu có quy ước mới)** ngay trong cùng tác vụ.
+   - Đảm bảo các file `.md` luôn phản ánh **đúng 100% trạng thái thực tế của dự án tại mọi thời điểm**, giúp bất kỳ AI Agent kế tiếp nào đọc vào cũng hiểu đúng hệ thống ngay lập tức mà không cần đọc lại toàn bộ source code.
 
 ## Công nghệ và quy ước dự án
 
 - Backend Java 17, Spring Boot, Maven, Spring Data JPA, Spring Security, MySQL. Xem version thực trong `backend/pom.xml` (hiện 4.1.0); đừng dùng mô tả Spring Boot 3 trong tài liệu cũ như sự thật hiện hành.
 - Frontend React, Vite, Tailwind CSS; dùng JavaScript/JSX hiện có, Axios và React Router. Đừng chuyển framework hoặc tạo ứng dụng thứ hai nếu không được yêu cầu.
 - Tên bảng snake_case, field Java/JSON theo mapping hiện có; kiểm tra DTO và response thật trước khi tích hợp UI.
+- **Quy ước cập nhật SQL / Schema DB**: Khi thêm mới hoặc thay đổi bảng/cột DB cho một chức năng, agent có thể tạo file migration SQL chạy riêng trong `backend/migrations/` (viết kiểu idempotent, không `DROP DATABASE`) để chủ dự án chạy bổ sung từng phần trên DB đang có; **đồng thời bắt buộc phải cập nhật đồng bộ ngay vào `backend/toeic_learning_fresh_install.sql`** để khi cần cài lại hoặc chạy toàn bộ script thì DB vẫn khớp 100% với backend.
 - Giữ các quy ước `ApiResponse<T>`, error handling, JWT và RBAC hiện tại trừ khi tác vụ yêu cầu thay đổi.
 - Dữ liệu câu hỏi theo quan hệ `Test -> ContextQuestion -> Question`; `orderIndex` là số câu đầu của cụm, `questionNumber` là số thứ tự toàn bài.
 - Không đưa bí mật trong `application.properties` vào tài liệu, output, log hoặc frontend. Cấu hình mới nên qua biến môi trường.
@@ -71,21 +74,24 @@ Người dùng đang duyệt và chỉnh sửa bộ đặc tả trong `docs/`. *
 - Trước khi kết thúc UI task, rà trạng thái loading/empty/error/success/disabled, keyboard focus, contrast, reduced motion và responsive; nêu rõ viewport/trạng thái nào chưa quan sát. Không báo visual QA nếu chưa thực hiện.
 - Giữ nguyên React/Vite SPA, React Router, Tailwind, Axios và cấu trúc page/component/context/service hiện có.
 
-## Kiểm chứng và báo cáo
+## Kiểm chứng, cập nhật tài liệu và báo cáo
 
 - Không tự thêm/chạy test trừ khi người dùng yêu cầu kiểm thử hoặc xác minh. Nếu không chạy, ghi rõ.
 - Khi được yêu cầu chạy, chọn kiểm tra phù hợp vùng đổi (frontend build/lint, backend compile/test); báo nguyên văn lỗi môi trường quan trọng.
-- Kết thúc tác vụ implementation bằng danh sách file và thay đổi chính, kiểm chứng đã chạy/chưa chạy, và các giới hạn còn lại.
+- **Trước khi kết thúc bất kỳ tác vụ thay đổi code/UI/DB/API nào**: bắt buộc rà soát và cập nhật `PROJECT_CONTEXT.md` cùng các file đặc tả trong `docs/` liên quan để tài liệu `.md` luôn khớp 100% với dự án thực tế, phục vụ bàn giao ngữ cảnh liền mạch khi chuyển sang AI Agent khác.
+- Kết thúc tác vụ implementation bằng danh sách file (bao gồm cả file code và file `.md` đã đồng bộ), các thay đổi chính, kiểm chứng đã chạy/chưa chạy, và các giới hạn còn lại.
 - Khi tác vụ chỉ yêu cầu viết/duyệt tài liệu, không sửa code.
 
-## Bản đồ tài liệu đặc tả
+## Bản đồ tài liệu đặc tả (Thứ tự đọc: `AGENTS.md` → `PROJECT_CONTEXT.md` → `docs/01`..`07`)
 
+- `PROJECT_CONTEXT.md`: bản tóm tắt toàn cảnh dự án (kiến trúc, công nghệ, routes, modules, DB, tính năng cốt lõi, UI/UX, trạng thái kiểm chứng).
 - `docs/01_OVERVIEW.md`: mục tiêu, vai trò, hệ thống và thứ tự đọc.
 - `docs/02_DATABASE.md`: entity, quan hệ, câu TOEIC, payment PayOS, lớp, bài tập, dữ liệu học tập, quyền và migration.
 - `docs/03_API_SPEC.md`: API hiện có/mục tiêu cho thi, PayOS, teacher onboarding, lớp, Gmail notification/invitation, xem trước PDF, trợ lý AI, học tập cá nhân, metrics, thông báo.
 - `docs/04_FLOW_LOGIC.md`: luồng catalog, thi/review, lớp/assignment/Gmail, xem trước PDF, PayOS, diagnostic, ôn tập, resume và vận hành.
-- `docs/05_UI_UX_SPEC.md`: visual system và màn hình user/teacher/admin, cá nhân hóa, quality queue, responsive/accessibility.
+- `docs/05_UI_UX_SPEC.md`: visual system và màn hình user/teacher/admin, Trợ lý AI Nuna, cá nhân hóa, quality queue, responsive/accessibility.
 - `docs/06_SECURITY_SPEC.md`: threat model, auth/session, authorization, API, upload, PayOS, privacy, vận hành và security acceptance checklist.
+- `docs/07_IMPLEMENTATION_STATUS.md`: bảng tổng hợp trạng thái hoàn thiện thực tế của từng phân hệ, migrations và kết quả build/lint gần nhất.
 
 Khi áp dụng mọi tài liệu trên, phải tuân thủ mục “Giữ nguyên kiến trúc hiện tại”; đặc tả tính năng/bảo mật không tự cho phép thay framework, auth architecture hay cấu trúc ứng dụng.
 
