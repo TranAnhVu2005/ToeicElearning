@@ -55,4 +55,7 @@ export const classroomService = {
   postAnnouncement: async (classroomId, title, content) => (
     await apiClient.post(`/classrooms/${classroomId}/announcements`, { title, content })
   ).data,
+  inviteStudents: async (classroomId, emails, message) => (
+    await apiClient.post(`/classrooms/${classroomId}/invitations`, { emails, message })
+  ).data,
 };

@@ -1,10 +1,12 @@
 package com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassMemberResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomInvitationResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.InviteStudentsRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.enums.ErrorCode;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.exception.AppException;
@@ -15,13 +17,18 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.notification.service.NotificationService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassMemberRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassroomRepository;
+import com.ctu_cit_nienLuanNganh.toeicLearning.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -33,11 +40,14 @@ public class ClassroomService {
     private static final String BLOCKED = "BLOCKED";
     private static final String REMOVED = "REMOVED";
     private static final String CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final ClassroomRepository classroomRepository;
     private final ClassMemberRepository classMemberRepository;
+    private final UserRepository userRepository;
     private final AuditEventService auditEventService;
     private final NotificationService notificationService;
+    private final ClassroomEmailService classroomEmailService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -231,7 +241,11 @@ public class ClassroomService {
                 : "[" + classroom.getClassName() + "] " + customTitle;
         List<ClassMember> approvedMembers = classMemberRepository
                 .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED);
+        List<User> approvedStudents = new ArrayList<>();
         for (ClassMember member : approvedMembers) {
+            if (member.getStudent() != null) {
+                approvedStudents.add(member.getStudent());
+            }
             notificationService.createNotification(
                     member.getStudent(),
                     notificationTitle,
@@ -240,9 +254,111 @@ public class ClassroomService {
                     "/classrooms"
             );
         }
+        classroomEmailService.sendAnnouncementEmails(classroom, customTitle, content, currentUser, approvedStudents);
         auditEventService.record(currentUser, "CLASSROOM_ANNOUNCEMENT_POSTED", "CLASSROOM", classroom.getId(),
                 "recipients=" + approvedMembers.size());
         return approvedMembers.size();
+    }
+
+    @Transactional
+    public ClassroomInvitationResponse inviteStudentsByEmail(
+            User currentUser,
+            String classroomId,
+            InviteStudentsRequest request
+    ) {
+        Classroom classroom = requireOwnedClassroom(currentUser, classroomId);
+        Set<String> normalizedEmails = new LinkedHashSet<>();
+        if (request.getEmails() != null) {
+            for (String rawEntry : request.getEmails()) {
+                if (rawEntry == null || rawEntry.isBlank()) continue;
+                for (String token : rawEntry.split("[,;\\s\\n\\r]+")) {
+                    String candidate = token.trim().toLowerCase(Locale.ROOT);
+                    if (!candidate.isEmpty() && EMAIL_PATTERN.matcher(candidate).matches()) {
+                        normalizedEmails.add(candidate);
+                    }
+                }
+            }
+        }
+        if (normalizedEmails.isEmpty()) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        if (normalizedEmails.size() > 100) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+
+        String customMessage = request.getMessage() == null ? null : request.getMessage().trim();
+        String teacherEmail = currentUser.getUserEmail() == null ? "" : currentUser.getUserEmail().trim().toLowerCase(Locale.ROOT);
+
+        int emailedCount = 0;
+        int autoApprovedCount = 0;
+        int alreadyMemberCount = 0;
+        List<String> invitedEmails = new ArrayList<>();
+
+        for (String email : normalizedEmails) {
+            if (email.equals(teacherEmail)) {
+                continue;
+            }
+            User existingUser = userRepository.findByUserEmailWithRole(email).orElse(null);
+            boolean autoApproved = false;
+
+            if (existingUser != null && ROLE_USER.equals(roleName(existingUser))) {
+                ClassMember member = classMemberRepository
+                        .findByClassroom_IdAndStudent_Id(classroom.getId(), existingUser.getId())
+                        .orElse(null);
+                if (member != null && APPROVED.equals(member.getStatus())) {
+                    alreadyMemberCount++;
+                    continue;
+                }
+                if (member == null) {
+                    classMemberRepository.save(ClassMember.builder()
+                            .classroom(classroom)
+                            .student(existingUser)
+                            .status(APPROVED)
+                            .build());
+                } else {
+                    member.setStatus(APPROVED);
+                    classMemberRepository.save(member);
+                }
+                autoApproved = true;
+                autoApprovedCount++;
+                notificationService.createNotification(
+                        existingUser,
+                        "Lời mời tham gia lớp học: " + classroom.getClassName(),
+                        "Giáo viên " + currentUser.getUserName() + " đã mời và thêm bạn vào lớp \""
+                                + classroom.getClassName() + "\"."
+                                + (customMessage != null && !customMessage.isBlank() ? " Lời nhắn: " + customMessage : ""),
+                        "CLASSROOM_INVITED",
+                        "/classrooms"
+                );
+            }
+
+            classroomEmailService.sendClassroomInvitationEmail(
+                    classroom,
+                    currentUser,
+                    email,
+                    customMessage,
+                    autoApproved
+            );
+            emailedCount++;
+            invitedEmails.add(email);
+        }
+
+        auditEventService.record(
+                currentUser,
+                "CLASSROOM_INVITATIONS_SENT",
+                "CLASSROOM",
+                classroom.getId(),
+                "emailed=" + emailedCount + ";autoApproved=" + autoApprovedCount + ";alreadyMember=" + alreadyMemberCount
+        );
+
+        return ClassroomInvitationResponse.builder()
+                .totalProcessed(normalizedEmails.size())
+                .emailedCount(emailedCount)
+                .autoApprovedCount(autoApprovedCount)
+                .alreadyMemberCount(alreadyMemberCount)
+                .mailConfigured(classroomEmailService.isConfigured())
+                .invitedEmails(invitedEmails)
+                .build();
     }
 
     private ClassroomResponse toClassroomResponse(Classroom classroom, String status, boolean includeCode) {

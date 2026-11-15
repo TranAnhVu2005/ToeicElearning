@@ -36,6 +36,9 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://127.0.0.1:5173}")
     private String allowedOrigins;
 
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -81,8 +84,23 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration config = new CorsConfiguration();
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim).filter(origin -> !origin.isEmpty()).toList();
+        java.util.LinkedHashSet<String> originSet = new java.util.LinkedHashSet<>();
+        Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty() && !origin.contains("your-frontend-domain.example"))
+                .forEach(originSet::add);
+        if (frontendUrl != null && !frontendUrl.isBlank() && !frontendUrl.contains("your-frontend-domain.example")) {
+            String normalizedFrontend = frontendUrl.trim();
+            if (normalizedFrontend.endsWith("/")) {
+                normalizedFrontend = normalizedFrontend.substring(0, normalizedFrontend.length() - 1);
+            }
+            originSet.add(normalizedFrontend);
+        }
+        if (originSet.isEmpty()) {
+            originSet.add("http://localhost:5173");
+            originSet.add("http://127.0.0.1:5173");
+        }
+        List<String> origins = List.copyOf(originSet);
         if (origins.isEmpty() || origins.contains("*") || origins.stream().anyMatch(origin -> origin.contains("*"))) {
             throw new IllegalStateException("APP_CORS_ALLOWED_ORIGINS must contain exact origins and cannot use wildcards");
         }

@@ -3,6 +3,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom;
 import com.ctu_cit_nienLuanNganh.toeicLearning.common.dto.ApiResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.User;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassMemberResponse;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomInvitationResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.ClassroomResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.AssignmentResponse;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.dto.AssignmentSubmissionResponse;
@@ -14,6 +15,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.Assignme
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ChangeClassMemberStatusRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.ClassroomAnnouncementRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.CreateClassroomRequest;
+import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.InviteStudentsRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.JoinClassroomRequest;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service.ClassroomService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.service.AssignmentService;
@@ -133,6 +135,18 @@ public class ClassRoomController {
         int count = classroomService.postAnnouncement(currentUser, classroomId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
                 "Đã đăng thông báo lên bảng tin và gửi tới " + count + " học viên trong lớp", count));
+    }
+
+    @PostMapping("/{classroomId}/invitations")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<ClassroomInvitationResponse>> inviteStudents(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String classroomId,
+            @Valid @RequestBody InviteStudentsRequest request) {
+        ClassroomInvitationResponse result = classroomService.inviteStudentsByEmail(currentUser, classroomId, request);
+        String msg = "Đã gửi lời mời tới " + result.getEmailedCount() + " địa chỉ Gmail"
+                + (result.getAutoApprovedCount() > 0 ? " (tự động duyệt " + result.getAutoApprovedCount() + " học viên đã có tài khoản)" : "");
+        return ResponseEntity.ok(ApiResponse.success(msg, result));
     }
 
     @GetMapping("/mine")

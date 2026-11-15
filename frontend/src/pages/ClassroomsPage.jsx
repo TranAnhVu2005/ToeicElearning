@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Award,
   Bell,
@@ -18,6 +18,7 @@ import {
   Info,
   LayoutGrid,
   LoaderCircle,
+  Mail,
   Maximize2,
   Megaphone,
   Menu,
@@ -197,6 +198,7 @@ const getStoredThemeId = (classroomId) => {
 
 const ClassroomsPage = () => {
   const { user, isTeacher } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const requestVersions = useRef({});
   const [classrooms, setClassrooms] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
@@ -206,6 +208,10 @@ const ClassroomsPage = () => {
 
   // Modals & UI panels
   const [createOrJoinModalOpen, setCreateOrJoinModalOpen] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteEmailInput, setInviteEmailInput] = useState('');
+  const [inviteEmailChips, setInviteEmailChips] = useState([]);
+  const [inviteMessage, setInviteMessage] = useState('');
   const [fullscreenCodeOpen, setFullscreenCodeOpen] = useState(false);
   const [codeMenuOpen, setCodeMenuOpen] = useState(false);
   const [classInfoExpanded, setClassInfoExpanded] = useState(false);
@@ -420,6 +426,17 @@ const ClassroomsPage = () => {
   useEffect(() => {
     loadClassrooms();
   }, [loadClassrooms]);
+
+  useEffect(() => {
+    const codeFromUrl = (searchParams.get('joinCode') || '').trim().toUpperCase();
+    if (codeFromUrl && !isTeacher) {
+      setJoinCode(codeFromUrl.slice(0, 8));
+      setCreateOrJoinModalOpen(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('joinCode');
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [isTeacher, searchParams, setSearchParams]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClockNow(Date.now()), 60_000);
@@ -787,6 +804,92 @@ const ClassroomsPage = () => {
       setNotice('Đã cập nhật trạng thái thành viên.');
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không cập nhật được thành viên.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const parseEmailsFromRaw = (rawText) => {
+    if (!rawText) return [];
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    return rawText
+      .split(/[,;\s\n\r]+/)
+      .map((item) => item.trim().toLowerCase())
+      .filter((item) => emailRegex.test(item));
+  };
+
+  const commitEmailInputToChips = (rawText) => {
+    const valid = parseEmailsFromRaw(rawText);
+    if (valid.length === 0) return;
+    setInviteEmailChips((prev) => Array.from(new Set([...prev, ...valid])));
+    setInviteEmailInput('');
+  };
+
+  const handleInviteInputKeyDown = (event) => {
+    if (['Enter', ',', ';', ' '].includes(event.key)) {
+      const parsed = parseEmailsFromRaw(inviteEmailInput);
+      if (parsed.length > 0) {
+        event.preventDefault();
+        commitEmailInputToChips(inviteEmailInput);
+      }
+    } else if (event.key === 'Backspace' && !inviteEmailInput && inviteEmailChips.length > 0) {
+      setInviteEmailChips((prev) => prev.slice(0, -1));
+    }
+  };
+
+  const handleInviteInputPaste = (event) => {
+    const pastedText = event.clipboardData?.getData('text') || '';
+    const parsed = parseEmailsFromRaw(pastedText);
+    if (parsed.length > 0) {
+      event.preventDefault();
+      setInviteEmailChips((prev) => Array.from(new Set([...prev, ...parsed])));
+    }
+  };
+
+  const removeInviteChip = (targetEmail) => {
+    setInviteEmailChips((prev) => prev.filter((item) => item !== targetEmail));
+  };
+
+  const handleInviteStudents = async (event) => {
+    event.preventDefault();
+    if (!selectedClass?.id) return;
+    const pendingFromInput = parseEmailsFromRaw(inviteEmailInput);
+    const allEmails = Array.from(new Set([...inviteEmailChips, ...pendingFromInput]));
+    if (allEmails.length === 0) {
+      setError('Vui lòng nhập hoặc dán ít nhất một địa chỉ Gmail hợp lệ.');
+      return;
+    }
+
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await classroomService.inviteStudents(
+        selectedClass.id,
+        allEmails,
+        inviteMessage.trim()
+      );
+      if (response.code !== 1000) {
+        throw new Error(response.message || 'Không gửi được lời mời qua Gmail.');
+      }
+      const data = response.data || {};
+      setInviteEmailInput('');
+      setInviteEmailChips([]);
+      setInviteMessage('');
+      setInviteModalOpen(false);
+      await Promise.all([loadMembers(selectedClass.id, filterStatus), loadClassrooms()]);
+      const summaryParts = [
+        `Đã gửi lời mời Gmail tới ${data.emailedCount ?? allEmails.length} học viên`,
+      ];
+      if (data.autoApprovedCount > 0) {
+        summaryParts.push(`tự động thêm ${data.autoApprovedCount} tài khoản đã có trên hệ thống vào lớp`);
+      }
+      if (data.alreadyMemberCount > 0) {
+        summaryParts.push(`${data.alreadyMemberCount} email đã ở trong lớp`);
+      }
+      setNotice(`${summaryParts.join(' · ')}.`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không gửi được lời mời qua Gmail.');
     } finally {
       setBusy(false);
     }
@@ -1903,6 +2006,15 @@ const ClassroomsPage = () => {
                               <Maximize2 size={16} />
                             </button>
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setInviteModalOpen(true)}
+                            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-[#EFF6FF] px-3 py-2 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
+                          >
+                            <UserPlus size={14} />
+                            Mời học viên qua Gmail
+                          </button>
                         </div>
                       ) : (
                         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
@@ -2528,30 +2640,36 @@ const ClassroomsPage = () => {
                         </label>
                       </div>
 
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          disabled={busy || assignmentTests.length === 0 || !assignmentForm.latePolicy}
-                          className="editorial-button-primary px-5 py-2 text-xs font-semibold disabled:opacity-50"
-                        >
-                          {busy ? 'Đang lưu…' : editingAssignmentId ? 'Lưu thay đổi' : 'Giao bài tập'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingAssignmentId('');
-                            setShowAssignmentFormModal(false);
-                            setAssignmentForm({
-                              title: '',
-                              instructions: '',
-                              testId: '',
-                              deadline: '',
-                              latePolicy: '',
-                            });
-                          }}
-                          className="editorial-button-secondary px-4 py-2 text-xs font-semibold"
-                        >
-                          Hủy
-                        </button>
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <div className="flex gap-2">
+                          <button
+                            disabled={busy || assignmentTests.length === 0 || !assignmentForm.latePolicy}
+                            className="editorial-button-primary px-5 py-2 text-xs font-semibold disabled:opacity-50"
+                          >
+                            {busy ? 'Đang lưu…' : editingAssignmentId ? 'Lưu thay đổi' : 'Giao bài tập'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingAssignmentId('');
+                              setShowAssignmentFormModal(false);
+                              setAssignmentForm({
+                                title: '',
+                                instructions: '',
+                                testId: '',
+                                deadline: '',
+                                latePolicy: '',
+                              });
+                            }}
+                            className="editorial-button-secondary px-4 py-2 text-xs font-semibold"
+                          >
+                            Hủy
+                          </button>
+                        </div>
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#1D4ED8]">
+                          <Mail size={14} />
+                          Tự động gửi thông báo bài tập tới Gmail của toàn bộ học viên trong lớp
+                        </span>
                       </div>
                     </form>
                   )}
@@ -3030,19 +3148,30 @@ const ClassroomsPage = () => {
                   <section>
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1D4ED8] pb-3">
                       <h2 className="text-2xl font-bold text-[#1D4ED8]">Bạn học / Học viên</h2>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         <span className="font-mono text-sm font-bold text-slate-600">
                           {selectedClass.approvedMemberCount ?? 0} học viên đã duyệt
                         </span>
                         {isTeacher && (
-                          <button
-                            type="button"
-                            onClick={() => copyCode(selectedClass.classCode)}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 font-mono text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
-                          >
-                            <UserPlus size={14} />
-                            Mã mời: {selectedClass.classCode}
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setInviteModalOpen(true)}
+                              title="Mời học viên qua danh sách Gmail"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-bold text-white shadow-2xs transition hover:bg-blue-800"
+                            >
+                              <UserPlus size={15} />
+                              Mời học viên (Gmail)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => copyCode(selectedClass.classCode)}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 font-mono text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                            >
+                              <Clipboard size={13} />
+                              Mã: {selectedClass.classCode}
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -3851,6 +3980,152 @@ const ClassroomsPage = () => {
                 className="h-full w-full max-w-6xl rounded-xl border border-slate-700 bg-white shadow-2xl"
               />
             )}
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          MODAL 5: GOOGLE CLASSROOM BULK GMAIL INVITATION MODAL ("👤+ Mời học viên")
+      ========================================================= */}
+      {inviteModalOpen && selectedClass && isTeacher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#EFF6FF] text-[#1D4ED8]">
+                  <UserPlus size={18} />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Mời học viên vào lớp học</h2>
+                  <p className="text-xs text-slate-500">
+                    Lớp: <strong className="text-slate-700">{selectedClass.className}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInviteModalOpen(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleInviteStudents} className="mt-4 space-y-4">
+              <div>
+                <label
+                  htmlFor="invite-emails-input"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700"
+                >
+                  Danh sách địa chỉ Gmail học viên *
+                </label>
+                <p className="mb-2 text-xs leading-relaxed text-slate-500">
+                  Nhập hoặc dán hàng loạt Gmail (cách nhau bằng dấu phẩy, khoảng trắng hoặc xuống dòng). Học viên đã có tài khoản sẽ được thêm thẳng vào lớp và nhận email thông báo như Google Classroom.
+                </p>
+
+                <div className="min-h-[104px] rounded-xl border border-slate-300 bg-[#F8FAFC] p-2.5 focus-within:border-[#1D4ED8] focus-within:bg-white">
+                  {inviteEmailChips.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {inviteEmailChips.map((email) => (
+                        <span
+                          key={email}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-[#EFF6FF] px-3 py-1 font-mono text-xs font-semibold text-[#1D4ED8]"
+                        >
+                          <Mail size={12} />
+                          <span>{email}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeInviteChip(email)}
+                            className="rounded-full p-0.5 text-[#1D4ED8] hover:bg-blue-200/60"
+                            aria-label={`Xóa ${email}`}
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <textarea
+                    id="invite-emails-input"
+                    rows={inviteEmailChips.length > 0 ? 2 : 3}
+                    value={inviteEmailInput}
+                    onChange={(event) => setInviteEmailInput(event.target.value)}
+                    onKeyDown={handleInviteInputKeyDown}
+                    onPaste={handleInviteInputPaste}
+                    onBlur={() => {
+                      if (inviteEmailInput.trim()) {
+                        commitEmailInputToChips(inviteEmailInput);
+                      }
+                    }}
+                    placeholder="Ví dụ: hocvien1@gmail.com, hocvien2@gmail.com, hocvien3@student.ctu.edu.vn..."
+                    className="w-full resize-none bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                  />
+                </div>
+
+                {inviteEmailChips.length > 0 && (
+                  <div className="mt-1.5 flex items-center justify-between text-xs text-slate-500">
+                    <span>
+                      Đã chọn <strong className="text-[#1D4ED8]">{inviteEmailChips.length}</strong> địa chỉ Gmail
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setInviteEmailChips([])}
+                      className="font-semibold text-red-600 hover:underline"
+                    >
+                      Xóa tất cả
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="invite-custom-message"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700"
+                >
+                  Lời nhắn gửi kèm trong Gmail{' '}
+                  <span className="font-normal normal-case text-slate-500">(không bắt buộc)</span>
+                </label>
+                <textarea
+                  id="invite-custom-message"
+                  rows={2}
+                  maxLength={1000}
+                  value={inviteMessage}
+                  onChange={(event) => setInviteMessage(event.target.value)}
+                  placeholder="Ví dụ: Chào các em, đây là lớp luyện đề TOEIC học kỳ này. Các em vào lớp để xem lịch học và làm bài tập tuần 1 nhé!"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+                />
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-[#F8FAFC] p-3 text-xs text-slate-600">
+                <div className="flex items-center justify-between">
+                  <span>Liên kết mời trực tiếp kèm mã lớp:</span>
+                  <span className="font-mono font-bold text-[#1D4ED8]">{selectedClass.classCode}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setInviteModalOpen(false)}
+                  className="rounded-full px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    busy ||
+                    (inviteEmailChips.length === 0 && parseEmailsFromRaw(inviteEmailInput).length === 0)
+                  }
+                  className="inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                >
+                  {busy ? <LoaderCircle size={14} className="animate-spin" /> : <Send size={14} />}
+                  Gửi lời mời qua Gmail
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

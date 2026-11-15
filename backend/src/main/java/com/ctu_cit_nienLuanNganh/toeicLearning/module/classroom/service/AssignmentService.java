@@ -47,6 +47,7 @@ public class AssignmentService {
     private final TestResultRepository testResultRepository;
     private final NotificationRepository notificationRepository;
     private final AuditEventService auditEventService;
+    private final ClassroomEmailService classroomEmailService;
     @Autowired
     private EntityManager entityManager;
 
@@ -66,10 +67,11 @@ public class AssignmentService {
         Assignment saved = assignmentRepository.save(assignment);
         auditEventService.record(teacher, "ASSIGNMENT_CREATED", "ASSIGNMENT", saved.getId(), "active=true; latePolicy=" + saved.getLatePolicy());
         String formattedDeadline = saved.getDeadline() != null ? saved.getDeadline().format(DEADLINE_FMT) : "Chưa đặt";
-        notifyApprovedMembers(classroom, "Bài tập mới trong lớp " + classroom.getClassName(),
+        List<User> approvedStudents = notifyApprovedMembers(classroom, "Bài tập mới trong lớp " + classroom.getClassName(),
                 "Giáo viên " + teacher.getUserName() + " vừa giao bài tập \"" + saved.getTitle()
                         + "\" (Hạn nộp: " + formattedDeadline + ").",
                 "ASSIGNMENT_CREATED");
+        classroomEmailService.sendNewAssignmentEmails(classroom, saved, teacher, approvedStudents);
         return toResponse(saved, null, false);
     }
 
@@ -118,10 +120,11 @@ public class AssignmentService {
                         + "; latePolicy=" + previousPolicy + "->" + saved.getLatePolicy());
         if (deadlineChanged) {
             String formattedDeadline = saved.getDeadline() != null ? saved.getDeadline().format(DEADLINE_FMT) : "Chưa đặt";
-            notifyApprovedMembers(saved.getClassroom(), "Cập nhật hạn nộp bài tập",
+            List<User> approvedStudents = notifyApprovedMembers(saved.getClassroom(), "Cập nhật hạn nộp bài tập",
                     "Bài tập \"" + saved.getTitle() + "\" trong lớp \"" + saved.getClassroom().getClassName()
                             + "\" được cập nhật hạn nộp mới: " + formattedDeadline + ".",
                     "ASSIGNMENT_DEADLINE_CHANGED");
+            classroomEmailService.sendDeadlineUpdatedEmails(saved.getClassroom(), saved, teacher, approvedStudents);
         }
         return toResponse(saved, null, false);
     }
@@ -381,14 +384,19 @@ public class AssignmentService {
                 .teacherComment(result.getTeacherComment()).build();
     }
 
-    private void notifyApprovedMembers(Classroom classroom, String title, String content, String type) {
+    private List<User> notifyApprovedMembers(Classroom classroom, String title, String content, String type) {
         List<Notification> notifications = new ArrayList<>();
+        List<User> students = new ArrayList<>();
         for (ClassMember member : classMemberRepository
                 .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)) {
-            notifications.add(Notification.builder().user(member.getStudent()).title(title)
-                    .content(content).type(type).link("/classrooms").isRead(false).build());
+            if (member.getStudent() != null) {
+                students.add(member.getStudent());
+                notifications.add(Notification.builder().user(member.getStudent()).title(title)
+                        .content(content).type(type).link("/classrooms").isRead(false).build());
+            }
         }
         if (!notifications.isEmpty()) notificationRepository.saveAll(notifications);
+        return students;
     }
 
     private String normalizeText(String value) {
