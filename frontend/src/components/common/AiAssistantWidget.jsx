@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   Send,
@@ -16,10 +16,30 @@ import {
   Check,
   Lightbulb,
   Languages,
+  Mic,
+  Square,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { aiService } from '../../services/aiService';
+import { useAuth } from '../../context/AuthContext';
 import { TOBY_IMAGES, TobyAvatar } from './TobyMascot';
 import nunaBgImage from '../../assets/img/mascot/anh_cho_ban_sung.jpg';
+import {
+  MAX_VOICE_AUDIO_BYTES,
+  MAX_VOICE_RECORD_SECONDS,
+  buildHistoryPayload,
+  convertAudioBlobToWav,
+  detectSpeechLocale,
+  formatRecordingDuration,
+  getSpeechRecognitionConstructor,
+  getVoiceCapabilities,
+  normalizeSpokenVietnameseNumbers,
+  pickSupportedRecorderMimeType,
+  sanitizeMarkdownForSpeech,
+  selectSpeechVoice,
+  splitTextIntoSpeechChunks,
+} from '../../utils/aiVoiceHelpers';
 
 /**
  * Lightweight, safe Markdown-to-JSX renderer for AI responses
@@ -186,24 +206,38 @@ const AiMarkdownMessage = ({ content }) => {
 const PLATFORM_QUICK_TOPICS = [
   {
     label: 'Cách làm Full Test & Điểm 990',
+    subtitle: 'Tự lưu khi F5 & quy đổi thang điểm',
+    iconType: 'exam',
     prompt: 'Hướng dẫn chi tiết cách làm bài Full Test 200 câu, cơ chế tự lưu khi F5 và cách quy đổi điểm TOEIC 990 trên trang web.',
   },
   {
-    label: 'Luyện nghe chép chính tả Dictation',
+    label: 'Nghe chép chính tả Dictation',
+    subtitle: 'Cách luyện từng câu & phím tắt nhanh',
+    iconType: 'dictation',
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Lớp học, Xem trước PDF & Mời Gmail',
+    label: 'Lớp học & Xem trước PDF',
+    subtitle: 'Bài tập, tài liệu & mời qua Gmail',
+    iconType: 'classroom',
     prompt: 'Hệ thống Lớp học trực tuyến, tính năng Xem trước PDF trực tiếp và Mời học viên qua Gmail hoạt động như thế nào?',
   },
   {
-    label: 'Đề thi VIP, Đăng ký GV & PayOS',
+    label: 'Đề thi VIP & Đăng ký Giáo viên',
+    subtitle: 'Quyền lợi nâng cấp & thanh toán PayOS',
+    iconType: 'vip',
     prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì, cách mua đề VIP hoặc đăng ký Giáo viên qua PayOS như thế nào?',
   },
 ];
 
+const AUTO_SPEAK_STORAGE_KEY = 'nuna_ai_auto_speak_voice';
+
 const AiAssistantWidget = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const voiceCapabilities = useMemo(() => getVoiceCapabilities(), []);
+
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [examResult, setExamResult] = useState(null);
@@ -211,21 +245,92 @@ const AiAssistantWidget = () => {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [copiedMsgId, setCopiedMsgId] = useState(null);
+
+  // Voice Input (Hybrid Plan C: Browser Web Speech API primary + Authenticated Gemini Audio fallback/toggle)
+  const [voiceMode, setVoiceMode] = useState(() => {
+    if (voiceCapabilities.hasWebSpeech) return 'browser';
+    if (voiceCapabilities.hasMediaRecorder) return 'gemini';
+    return 'browser';
+  });
+  const [voiceLang, setVoiceLang] = useState('vi-VN');
+  const [voiceState, setVoiceState] = useState('idle'); // 'idle' | 'listening' | 'recording'
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [voiceError, setVoiceError] = useState(null);
+
+  // Voice Output (Text-to-Speech via Web SpeechSynthesis)
+  const [speakingMsgId, setSpeakingMsgId] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState([]);
+  const [autoSpeakOnVoice, setAutoSpeakOnVoice] = useState(() => {
+    try {
+      const saved = localStorage.getItem(AUTO_SPEAK_STORAGE_KEY);
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
+
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'assistant',
       content:
-        'Chào bạn, mình là **Nuna** — trợ lý luyện thi TOEIC của bạn.\n\nBạn có thể hỏi mình về từng câu hỏi (#1–#200), từ vựng, ngữ pháp hoặc cách dùng các tính năng trên trang web.',
-      suggestedFollowUps: PLATFORM_QUICK_TOPICS.map((t) => t.prompt),
+        'Chào bạn, mình là **Nuna** — người bạn đồng hành luyện thi TOEIC của bạn.\n\nBạn có thể gõ câu hỏi hoặc bấm nút **Micro** để trò chuyện bằng giọng nói về từng câu (#1–#200), từ vựng, ngữ pháp và cách dùng trang web nhé!',
+      suggestedFollowUps: PLATFORM_QUICK_TOPICS,
     },
   ]);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Refs for voice capture & TTS lifecycle safety
+  const recognitionRef = useRef(null);
+  const bgRecognitionRef = useRef(null);
+  const bgTranscriptRef = useRef('');
+  const silenceTimerRef = useRef(null);
+  const preVoiceDraftRef = useRef('');
+  const finalTranscriptRef = useRef('');
+  const combinedTranscriptRef = useRef('');
+  const browserDidFinalizeRef = useRef(false);
+
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioContextRef = useRef(null);
+  const levelRafRef = useRef(null);
+  const recordIntervalRef = useRef(null);
+  const recordingDurationRef = useRef(0);
+  const voiceCancelledRef = useRef(false);
+  const speechSessionRef = useRef(0);
+  const ttsAudioRef = useRef(null);
+  const ttsObjectUrlRef = useRef(null);
+  const speakMessageRef = useRef(null);
+  const sendMessageRef = useRef(null);
+  const sendVoiceAudioRef = useRef(null);
+
   // Hide AI assistant while taking a live exam to preserve exam integrity
   const isLiveExamRoute = /^\/courses\/[^/]+\/take/i.test(location.pathname);
+
+  // Preload SpeechSynthesis voices when available
+  useEffect(() => {
+    if (!voiceCapabilities.hasTts) return undefined;
+    const synth = window.speechSynthesis;
+    const loadVoices = () => {
+      try {
+        const list = synth.getVoices();
+        if (Array.isArray(list) && list.length > 0) {
+          setAvailableVoices(list);
+        }
+      } catch {
+        // Ignore browser voice enumeration errors
+      }
+    };
+    loadVoices();
+    synth.addEventListener?.('voiceschanged', loadVoices);
+    return () => {
+      synth.removeEventListener?.('voiceschanged', loadVoices);
+    };
+  }, [voiceCapabilities.hasTts]);
 
   // Clear exam result context when navigating away from /results/:resultId
   useEffect(() => {
@@ -402,18 +507,250 @@ const AiAssistantWidget = () => {
     return null;
   }, []);
 
-  const sendMessage = useCallback(
-    async (rawPrompt, overrideContext = {}) => {
-      const promptText = String(rawPrompt || '').trim();
-      if (!promptText || loading) return;
+  const stopSpeaking = useCallback(() => {
+    speechSessionRef.current += 1;
+    if (ttsAudioRef.current) {
+      try {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.removeAttribute('src');
+        ttsAudioRef.current.load();
+      } catch {
+        // Ignore HTMLAudioElement pause errors
+      }
+    }
+    if (ttsObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(ttsObjectUrlRef.current);
+      } catch {
+        // Ignore URL revoke errors
+      }
+      ttsObjectUrlRef.current = null;
+    }
+    if (voiceCapabilities.hasTts) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // Ignore TTS cancel errors
+      }
+    }
+    setSpeakingMsgId(null);
+  }, [voiceCapabilities.hasTts]);
 
+  const speakWithBrowserFallback = useCallback(
+    (sessionId, plainText, targetLocale) => {
+      if (!voiceCapabilities.hasTts || speechSessionRef.current !== sessionId) {
+        setSpeakingMsgId(null);
+        return;
+      }
+      const chunks = splitTextIntoSpeechChunks(plainText, 220);
+      if (chunks.length === 0) {
+        setSpeakingMsgId(null);
+        return;
+      }
+
+      const synth = window.speechSynthesis;
+      const voicesNow = availableVoices.length > 0 ? availableVoices : synth.getVoices?.() || [];
+      const chosenVoice = selectSpeechVoice(voicesNow, targetLocale);
+
+      if (!chosenVoice && targetLocale.toLowerCase().startsWith('vi')) {
+        setSpeakingMsgId(null);
+        setVoiceError({
+          message:
+            'Trình duyệt trên máy chưa có gói giọng đọc Tiếng Việt và tạm thời không kết nối được máy chủ đọc giọng nói.',
+        });
+        return;
+      }
+
+      try {
+        synth.cancel();
+      } catch {
+        // Ignore cancel error
+      }
+
+      setTimeout(() => {
+        if (speechSessionRef.current !== sessionId) return;
+        try {
+          synth.resume?.();
+        } catch {
+          // Ignore resume error
+        }
+
+        const speakChunkAt = (index) => {
+          if (speechSessionRef.current !== sessionId || index >= chunks.length) {
+            if (speechSessionRef.current === sessionId) {
+              setSpeakingMsgId(null);
+            }
+            return;
+          }
+          const utterance = new SpeechSynthesisUtterance(chunks[index]);
+          utterance.lang = chosenVoice?.lang || targetLocale;
+          if (chosenVoice) {
+            utterance.voice = chosenVoice;
+          }
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          utterance.onend = () => {
+            if (speechSessionRef.current !== sessionId) return;
+            speakChunkAt(index + 1);
+          };
+          utterance.onerror = () => {
+            if (speechSessionRef.current === sessionId) {
+              setSpeakingMsgId(null);
+            }
+          };
+          synth.speak(utterance);
+        };
+
+        speakChunkAt(0);
+      }, 75);
+    },
+    [availableVoices, voiceCapabilities.hasTts]
+  );
+
+  const speakMessage = useCallback(
+    async (msgId, rawText) => {
+      if (speakingMsgId === msgId) {
+        stopSpeaking();
+        return;
+      }
+
+      const plainText = sanitizeMarkdownForSpeech(rawText);
+      if (!plainText) return;
+
+      stopSpeaking();
+      const sessionId = speechSessionRef.current;
+      const targetLocale = detectSpeechLocale(plainText, voiceLang);
+      const langCode = targetLocale.toLowerCase().startsWith('en') ? 'en' : 'vi';
+
+      setSpeakingMsgId(msgId);
+      setVoiceError(null);
+
+      try {
+        const audioBlob = await aiService.synthesizeSpeech({
+          text: plainText,
+          lang: langCode,
+        });
+        if (speechSessionRef.current !== sessionId) return;
+
+        if (audioBlob && audioBlob.size > 128) {
+          const objectUrl = URL.createObjectURL(audioBlob);
+          ttsObjectUrlRef.current = objectUrl;
+          const player = new Audio(objectUrl);
+          player.rate = 1.0;
+          player.onended = () => {
+            if (speechSessionRef.current === sessionId) {
+              setSpeakingMsgId(null);
+            }
+          };
+          player.onerror = () => {
+            if (speechSessionRef.current === sessionId) {
+              speakWithBrowserFallback(sessionId, plainText, targetLocale);
+            }
+          };
+          ttsAudioRef.current = player;
+          await player.play();
+          return;
+        }
+      } catch {
+        // Fall back to browser SpeechSynthesis if backend TTS is unreachable or autoplay blocked
+      }
+
+      if (speechSessionRef.current === sessionId) {
+        speakWithBrowserFallback(sessionId, plainText, targetLocale);
+      }
+    },
+    [speakingMsgId, speakWithBrowserFallback, stopSpeaking, voiceLang]
+  );
+
+  useEffect(() => {
+    speakMessageRef.current = speakMessage;
+  }, [speakMessage]);
+
+  const cleanupRecordingResources = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (bgRecognitionRef.current) {
+      try {
+        bgRecognitionRef.current.abort?.();
+        bgRecognitionRef.current.stop?.();
+      } catch {
+        // Ignore background recognition stop error
+      }
+      bgRecognitionRef.current = null;
+    }
+    if (recordIntervalRef.current) {
+      clearInterval(recordIntervalRef.current);
+      recordIntervalRef.current = null;
+    }
+    if (levelRafRef.current) {
+      cancelAnimationFrame(levelRafRef.current);
+      levelRafRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch {
+        // Ignore AudioContext close error
+      }
+      audioContextRef.current = null;
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {
+          // Ignore track stop error
+        }
+      });
+      mediaStreamRef.current = null;
+    }
+    setAudioLevel(0);
+  }, []);
+
+  const cancelVoiceCapture = useCallback(() => {
+    voiceCancelledRef.current = true;
+    browserDidFinalizeRef.current = true;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort?.();
+        recognitionRef.current.stop?.();
+      } catch {
+        // Ignore SpeechRecognition abort error
+      }
+      recognitionRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // Ignore MediaRecorder stop error
+      }
+    }
+    cleanupRecordingResources();
+    setVoiceState('idle');
+    setRecordingSeconds(0);
+    recordingDurationRef.current = 0;
+    if (preVoiceDraftRef.current !== undefined) {
+      setInputValue(preVoiceDraftRef.current);
+      preVoiceDraftRef.current = '';
+    }
+  }, [cleanupRecordingResources]);
+
+  const resolveActiveExamTarget = useCallback(
+    (overrideContext = {}, textForQuestionMatch = '') => {
       const activeResult = overrideContext.result !== undefined ? overrideContext.result : examResult;
       let activeQuestion =
         overrideContext.question !== undefined ? overrideContext.question : focusedQuestion;
 
-      // Auto-detect question number in promptText (e.g., "câu 8", "#8", "question 15")
-      if (activeResult?.questions?.length) {
-        const match = promptText.match(/(?:câu|cau|question|q|#)\s*(\d{1,3})\b/i);
+      if (textForQuestionMatch && activeResult?.questions?.length) {
+        const normalizedMatchText = normalizeSpokenVietnameseNumbers(textForQuestionMatch);
+        const match = normalizedMatchText.match(/(?:câu|cau|question|q|#)\s*(\d{1,3})\b/i);
         if (match) {
           const parsedNum = Number(match[1]);
           const matchedFromPrompt = activeResult.questions.find(
@@ -430,30 +767,38 @@ const AiAssistantWidget = () => {
       const resolvedResultId =
         activeResult?.testResultId || (routeResultIdMatch ? routeResultIdMatch[1] : null);
 
+      return { activeResult, activeQuestion, resolvedResultId };
+    },
+    [examResult, focusedQuestion, location.pathname]
+  );
+
+  const sendMessage = useCallback(
+    async (rawPrompt, overrideContext = {}) => {
+      const promptText = String(rawPrompt || '').trim();
+      if (!promptText || loading) return;
+
+      const viaVoice = Boolean(overrideContext.viaVoice);
+      const { activeResult, activeQuestion, resolvedResultId } = resolveActiveExamTarget(
+        overrideContext,
+        promptText
+      );
+
       const userMsg = {
         id: `user-${Date.now()}`,
         role: 'user',
         content: promptText,
+        viaVoiceAudio: viaVoice,
         questionBadge: activeQuestion ? `Câu #${activeQuestion.questionNumber}` : null,
       };
 
-      const historyPayload = messages
-        .filter(
-          (m) =>
-            m.id !== 'welcome' &&
-            !m.isError &&
-            (m.role === 'user' || m.role === 'assistant') &&
-            typeof m.content === 'string' &&
-            m.content.trim().length > 0
-        )
-        .slice(-6)
-        .map((m) => ({
-          role: m.role,
-          content: m.content.slice(0, 1500),
-        }));
+      const historyPayload = buildHistoryPayload(messages);
 
       setMessages((prev) => [...prev, userMsg]);
       setInputValue('');
+      preVoiceDraftRef.current = '';
+      combinedTranscriptRef.current = '';
+      finalTranscriptRef.current = '';
+      setVoiceError(null);
       setLoading(true);
       scrollToBottom();
 
@@ -472,7 +817,6 @@ const AiAssistantWidget = () => {
           data?.reply ||
           'Mình đã ghi nhận câu hỏi của bạn nhưng phản hồi hiện đang trống. Bạn vui lòng thử hỏi lại nhé!';
 
-        // If backend resolved a question number from the user's text, sync focusedQuestion
         if (data?.referencedQuestionNumber && activeResult?.questions) {
           const matchedQ = activeResult.questions.find(
             (q) => Number(q.questionNumber) === Number(data.referencedQuestionNumber)
@@ -482,29 +826,39 @@ const AiAssistantWidget = () => {
           }
         }
 
+        const aiMsgId = `ai-${Date.now()}`;
         setMessages((prev) => [
           ...prev,
           {
-            id: `ai-${Date.now()}`,
+            id: aiMsgId,
             role: 'assistant',
             content: replyText,
-            referencedQuestionNumber: data?.referencedQuestionNumber || activeQuestion?.questionNumber || null,
+            referencedQuestionNumber:
+              data?.referencedQuestionNumber || activeQuestion?.questionNumber || null,
             suggestedFollowUps: Array.isArray(data?.suggestedFollowUps) ? data.suggestedFollowUps : [],
           },
         ]);
+
+        if (viaVoice && autoSpeakOnVoice) {
+          speakMessageRef.current?.(aiMsgId, replyText);
+        }
       } catch (err) {
         const localFallback = buildClientFallbackReply(promptText, activeResult, activeQuestion);
         if (localFallback) {
+          const fallbackMsgId = `ai-fallback-${Date.now()}`;
           setMessages((prev) => [
             ...prev,
             {
-              id: `ai-fallback-${Date.now()}`,
+              id: fallbackMsgId,
               role: 'assistant',
               content: localFallback.reply,
               referencedQuestionNumber: localFallback.referencedQuestionNumber,
               suggestedFollowUps: localFallback.suggestedFollowUps,
             },
           ]);
+          if (viaVoice && autoSpeakOnVoice) {
+            speakMessageRef.current?.(fallbackMsgId, localFallback.reply);
+          }
         } else {
           const errMsg =
             err?.response?.data?.message ||
@@ -524,8 +878,724 @@ const AiAssistantWidget = () => {
         scrollToBottom();
       }
     },
-    [buildClientFallbackReply, examResult, focusedQuestion, loading, location.pathname, messages, scrollToBottom]
+    [
+      autoSpeakOnVoice,
+      buildClientFallbackReply,
+      loading,
+      location.pathname,
+      messages,
+      resolveActiveExamTarget,
+      scrollToBottom,
+    ]
   );
+
+  const sendVoiceAudio = useCallback(
+    async (audioBlob, fileName, durationSec, clientTranscript = '') => {
+      if (!audioBlob || loading) return;
+      if (!isAuthenticated) {
+        setVoiceError({
+          message: 'Tính năng ghi âm gửi trực tiếp cho AI chỉ dành cho tài khoản đã đăng nhập.',
+          actionLabel: 'Đăng nhập ngay',
+          actionType: 'login',
+        });
+        return;
+      }
+
+      const trimmedClientTranscript = String(clientTranscript || '').trim();
+      const { activeResult, activeQuestion, resolvedResultId } = resolveActiveExamTarget(
+        {},
+        trimmedClientTranscript
+      );
+      const tempUserMsgId = `user-voice-${Date.now()}`;
+      const historyPayload = buildHistoryPayload(messages);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: tempUserMsgId,
+          role: 'user',
+          content:
+            trimmedClientTranscript ||
+            `Đang gửi câu hỏi giọng nói (${formatRecordingDuration(durationSec)})...`,
+          viaVoiceAudio: true,
+          questionBadge: activeQuestion ? `Câu #${activeQuestion.questionNumber}` : null,
+        },
+      ]);
+      setInputValue('');
+      preVoiceDraftRef.current = '';
+      setVoiceError(null);
+      setLoading(true);
+      scrollToBottom();
+
+      try {
+        const response = await aiService.voiceChat({
+          audioBlob,
+          fileName,
+          resultId: resolvedResultId,
+          questionId: activeQuestion?.questionId || null,
+          questionNumber: activeQuestion?.questionNumber || null,
+          pageContext: location.pathname,
+          history: historyPayload,
+          languageHint: voiceLang.startsWith('en') ? 'en' : 'vi',
+          clientTranscript: trimmedClientTranscript,
+        });
+
+        const data = response?.data;
+        const transcriptText = data?.userTranscript
+          ? String(data.userTranscript).trim()
+          : trimmedClientTranscript || '(Tin nhắn thoại)';
+        const replyText =
+          data?.reply ||
+          'Mình đã nghe đoạn ghi âm nhưng chưa tạo được phản hồi. Bạn vui lòng thử lại nhé!';
+
+        if (data?.referencedQuestionNumber && activeResult?.questions) {
+          const matchedQ = activeResult.questions.find(
+            (q) => Number(q.questionNumber) === Number(data.referencedQuestionNumber)
+          );
+          if (matchedQ) {
+            setFocusedQuestion(matchedQ);
+          }
+        }
+
+        const resolvedQuestionBadge = data?.referencedQuestionNumber
+          ? `Câu #${data.referencedQuestionNumber}`
+          : activeQuestion
+            ? `Câu #${activeQuestion.questionNumber}`
+            : null;
+
+        const aiMsgId = `ai-voice-${Date.now()}`;
+        setMessages((prev) => [
+          ...prev.map((m) =>
+            m.id === tempUserMsgId
+              ? {
+                ...m,
+                content: transcriptText,
+                questionBadge: resolvedQuestionBadge,
+              }
+              : m
+          ),
+          {
+            id: aiMsgId,
+            role: 'assistant',
+            content: replyText,
+            referencedQuestionNumber:
+              data?.referencedQuestionNumber || activeQuestion?.questionNumber || null,
+            suggestedFollowUps: Array.isArray(data?.suggestedFollowUps)
+              ? data.suggestedFollowUps
+              : [],
+          },
+        ]);
+
+        if (autoSpeakOnVoice) {
+          speakMessageRef.current?.(aiMsgId, replyText);
+        }
+      } catch (err) {
+        // Client-side fallback if voice-chat endpoint fails but we captured clientTranscript
+        if (trimmedClientTranscript) {
+          const localFallback = buildClientFallbackReply(
+            trimmedClientTranscript,
+            activeResult,
+            activeQuestion
+          );
+          if (localFallback) {
+            const fallbackMsgId = `ai-voice-fallback-${Date.now()}`;
+            setMessages((prev) => [
+              ...prev.map((m) =>
+                m.id === tempUserMsgId ? { ...m, content: trimmedClientTranscript } : m
+              ),
+              {
+                id: fallbackMsgId,
+                role: 'assistant',
+                content: localFallback.reply,
+                referencedQuestionNumber: localFallback.referencedQuestionNumber,
+                suggestedFollowUps: localFallback.suggestedFollowUps,
+              },
+            ]);
+            if (autoSpeakOnVoice) {
+              speakMessageRef.current?.(fallbackMsgId, localFallback.reply);
+            }
+            return;
+          }
+        }
+
+        const errCode = Number(err?.response?.data?.code);
+        const errMsg =
+          err?.response?.data?.message ||
+          'Không thể xử lý đoạn ghi âm lúc này. Bạn vui lòng thử lại hoặc dùng nhận diện nhanh.';
+
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsgId));
+        if (errCode === 3018 && voiceCapabilities.hasWebSpeech) {
+          setVoiceError({
+            message: errMsg,
+            actionLabel: 'Dùng nhận diện trình duyệt',
+            actionType: 'switch-browser',
+          });
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `err-voice-${Date.now()}`,
+              role: 'assistant',
+              isError: true,
+              content: errMsg,
+            },
+          ]);
+        }
+      } finally {
+        setLoading(false);
+        scrollToBottom();
+      }
+    },
+    [
+      autoSpeakOnVoice,
+      buildClientFallbackReply,
+      isAuthenticated,
+      loading,
+      location.pathname,
+      messages,
+      resolveActiveExamTarget,
+      scrollToBottom,
+      voiceCapabilities.hasWebSpeech,
+      voiceLang,
+    ]
+  );
+
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
+
+  useEffect(() => {
+    sendVoiceAudioRef.current = sendVoiceAudio;
+  }, [sendVoiceAudio]);
+
+  const stopVoiceInput = useCallback(
+    (cancelOnly = false) => {
+      voiceCancelledRef.current = Boolean(cancelOnly);
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+      if (voiceState === 'listening' && recognitionRef.current) {
+        try {
+          if (cancelOnly) {
+            recognitionRef.current.abort?.();
+          } else {
+            recognitionRef.current.stop?.();
+          }
+        } catch {
+          setVoiceState('idle');
+        }
+        return;
+      }
+
+      if (voiceState === 'recording' && mediaRecorderRef.current) {
+        if (mediaRecorderRef.current.state !== 'inactive') {
+          try {
+            mediaRecorderRef.current.stop();
+          } catch {
+            cleanupRecordingResources();
+            setVoiceState('idle');
+          }
+        } else {
+          cleanupRecordingResources();
+          setVoiceState('idle');
+        }
+      }
+    },
+    [cleanupRecordingResources, voiceState]
+  );
+
+  const startGeminiVoiceRecording = useCallback(async () => {
+    if (!isAuthenticated) {
+      setVoiceError({
+        message: 'Chế độ ghi âm gửi trực tiếp cho AI chỉ dành cho người dùng đã đăng nhập.',
+        actionLabel: 'Đăng nhập ngay',
+        actionType: 'login',
+      });
+      return;
+    }
+    if (!voiceCapabilities.hasMediaRecorder) {
+      setVoiceError({
+        message: 'Trình duyệt của bạn không hỗ trợ ghi âm Micro (MediaRecorder).',
+      });
+      return;
+    }
+
+    stopSpeaking();
+    setVoiceError(null);
+    voiceCancelledRef.current = false;
+    preVoiceDraftRef.current = inputValue;
+    bgTranscriptRef.current = '';
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+
+      const mimeOption = pickSupportedRecorderMimeType();
+      const recorder = mimeOption.mimeType
+        ? new MediaRecorder(stream, { mimeType: mimeOption.mimeType })
+        : new MediaRecorder(stream);
+
+      audioChunksRef.current = [];
+      recordingDurationRef.current = 0;
+      setRecordingSeconds(0);
+      mediaRecorderRef.current = recorder;
+
+      // Run parallel background SpeechRecognition if supported for live preview & resilient fallback
+      const SpeechRecCtor = getSpeechRecognitionConstructor();
+      if (SpeechRecCtor) {
+        try {
+          const bgRec = new SpeechRecCtor();
+          bgRec.lang = voiceLang;
+          bgRec.interimResults = true;
+          bgRec.continuous = true;
+          bgRec.maxAlternatives = 1;
+          bgRec.onresult = (event) => {
+            let textAcc = '';
+            for (let i = 0; i < event.results.length; i += 1) {
+              textAcc += `${event.results[i][0]?.transcript || ''} `;
+            }
+            const cleaned = textAcc.replace(/\s+/g, ' ').trim();
+            if (cleaned) {
+              bgTranscriptRef.current = cleaned;
+              setInputValue(cleaned);
+            }
+          };
+          bgRec.onerror = () => {
+            // Ignore background speech recognition errors while MediaRecorder is active
+          };
+          bgRec.start();
+          bgRecognitionRef.current = bgRec;
+        } catch {
+          // Ignore if background recognition cannot start simultaneously
+        }
+      }
+
+      // Live volume bar via Web Audio API
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const audioCtx = new AudioCtx();
+          const sourceNode = audioCtx.createMediaStreamSource(stream);
+          const analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          sourceNode.connect(analyser);
+          audioContextRef.current = audioCtx;
+          const dataArr = new Uint8Array(analyser.frequencyBinCount);
+          const updateMeter = () => {
+            if (!audioContextRef.current) return;
+            analyser.getByteFrequencyData(dataArr);
+            let sum = 0;
+            for (let i = 0; i < dataArr.length; i += 1) {
+              sum += dataArr[i];
+            }
+            const avg = sum / dataArr.length;
+            setAudioLevel(Math.min(100, Math.round((avg / 95) * 100)));
+            levelRafRef.current = requestAnimationFrame(updateMeter);
+          };
+          levelRafRef.current = requestAnimationFrame(updateMeter);
+        }
+      } catch {
+        // Keep recording working even if AudioContext meter is blocked
+      }
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const capturedDuration = Math.max(1, recordingDurationRef.current);
+        const wasCancelled = voiceCancelledRef.current;
+        const capturedBgTranscript = bgTranscriptRef.current;
+        cleanupRecordingResources();
+        setVoiceState('idle');
+        setRecordingSeconds(0);
+        recordingDurationRef.current = 0;
+
+        if (wasCancelled) {
+          setInputValue(preVoiceDraftRef.current || '');
+          preVoiceDraftRef.current = '';
+          return;
+        }
+
+        const blobType = recorder.mimeType || mimeOption.mimeType || 'audio/webm';
+        const rawBlob = new Blob(audioChunksRef.current, { type: blobType });
+        audioChunksRef.current = [];
+
+        if (rawBlob.size < 256 && !capturedBgTranscript) {
+          setVoiceError({
+            message: 'Đoạn ghi âm quá ngắn. Hãy nói ít nhất 1 giây rồi bấm Dừng & Gửi.',
+          });
+          return;
+        }
+
+        // Convert to 16kHz mono PCM WAV for universal Vertex AI & Gemini compatibility
+        const { blob: finalAudioBlob, fileExt: finalExt } = await convertAudioBlobToWav(
+          rawBlob,
+          mimeOption.fileExt
+        );
+
+        if (finalAudioBlob.size > MAX_VOICE_AUDIO_BYTES) {
+          setVoiceError({
+            message: 'Đoạn ghi âm vượt quá giới hạn 4 MB. Vui lòng nói ngắn gọn hơn dưới 45 giây.',
+          });
+          return;
+        }
+
+        const fileName = `nuna-voice-${Date.now()}.${finalExt}`;
+        sendVoiceAudioRef.current?.(
+          finalAudioBlob,
+          fileName,
+          capturedDuration,
+          capturedBgTranscript
+        );
+      };
+
+      recorder.start(250);
+      setVoiceState('recording');
+
+      recordIntervalRef.current = setInterval(() => {
+        recordingDurationRef.current += 1;
+        setRecordingSeconds(recordingDurationRef.current);
+        if (recordingDurationRef.current >= MAX_VOICE_RECORD_SECONDS) {
+          voiceCancelledRef.current = false;
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            try {
+              mediaRecorderRef.current.stop();
+            } catch {
+              cleanupRecordingResources();
+              setVoiceState('idle');
+            }
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      cleanupRecordingResources();
+      setVoiceState('idle');
+      const errName = err?.name || '';
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        setVoiceError({
+          message: 'Trình duyệt chưa được cấp quyền Micro. Vui lòng cho phép Micro rồi thử lại.',
+        });
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        setVoiceError({
+          message: 'Không tìm thấy thiết bị Micro trên máy của bạn.',
+        });
+      } else {
+        setVoiceError({
+          message: 'Không thể khởi động Micro ghi âm. Vui lòng kiểm tra thiết bị hoặc nhập chữ.',
+        });
+      }
+    }
+  }, [
+    cleanupRecordingResources,
+    inputValue,
+    isAuthenticated,
+    stopSpeaking,
+    voiceCapabilities.hasMediaRecorder,
+    voiceLang,
+  ]);
+
+  const startBrowserRecognition = useCallback(() => {
+    const SpeechRecCtor = getSpeechRecognitionConstructor();
+    if (!SpeechRecCtor) {
+      if (voiceCapabilities.hasMediaRecorder) {
+        if (isAuthenticated) {
+          setVoiceMode('gemini');
+          startGeminiVoiceRecording();
+        } else {
+          setVoiceError({
+            message:
+              'Trình duyệt này chưa hỗ trợ nhận diện giọng nói nhanh. Hãy đăng nhập để dùng Micro AI ghi âm song ngữ.',
+            actionLabel: 'Đăng nhập ngay',
+            actionType: 'login',
+          });
+        }
+      } else {
+        setVoiceError({
+          message: 'Trình duyệt của bạn hiện chưa hỗ trợ nhập liệu bằng giọng nói.',
+        });
+      }
+      return;
+    }
+
+    stopSpeaking();
+    setVoiceError(null);
+    voiceCancelledRef.current = false;
+    browserDidFinalizeRef.current = false;
+    preVoiceDraftRef.current = inputValue;
+    finalTranscriptRef.current = '';
+    combinedTranscriptRef.current = '';
+
+    try {
+      const recognition = new SpeechRecCtor();
+      recognition.lang = voiceLang;
+      recognition.interimResults = true;
+      recognition.continuous = true;
+      recognition.maxAlternatives = 1;
+      recognitionRef.current = recognition;
+
+      recognition.onresult = (event) => {
+        let finalSeg = '';
+        let interimSeg = '';
+        for (let i = 0; i < event.results.length; i += 1) {
+          const transcriptPiece = event.results[i][0]?.transcript || '';
+          if (event.results[i].isFinal) {
+            finalSeg += `${transcriptPiece} `;
+          } else {
+            interimSeg += transcriptPiece;
+          }
+        }
+        finalTranscriptRef.current = finalSeg.trim();
+        const combined = `${finalSeg}${interimSeg}`.replace(/\s+/g, ' ').trim();
+        combinedTranscriptRef.current = combined;
+        setInputValue(combined);
+
+        // Reset 1.8s silence auto-submit timer whenever user speaks new words
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+        }
+        if (combined.length > 0) {
+          silenceTimerRef.current = setTimeout(() => {
+            if (recognitionRef.current && !voiceCancelledRef.current) {
+              try {
+                recognitionRef.current.stop();
+              } catch {
+                // Ignore stop error
+              }
+            }
+          }, 1800);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        const code = event?.error || '';
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+        if (voiceCancelledRef.current || code === 'aborted') {
+          return;
+        }
+        recognitionRef.current = null;
+        setVoiceState('idle');
+
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          setVoiceError({
+            message: 'Trình duyệt chưa được cấp quyền Micro. Vui lòng cho phép quyền Micro trên thanh địa chỉ.',
+          });
+          return;
+        }
+        if (code === 'audio-capture') {
+          setVoiceError({
+            message: 'Không tìm thấy hoặc không thể truy cập thiết bị Micro.',
+          });
+          return;
+        }
+        if (code === 'no-speech') {
+          setVoiceError({
+            message: 'Nuna chưa nghe thấy tiếng nói. Hãy bấm Micro và thử nói lại rõ hơn nhé.',
+          });
+          return;
+        }
+
+        // Hybrid automatic fallback: immediately start Gemini recording if authenticated
+        if (voiceCapabilities.hasMediaRecorder && isAuthenticated) {
+          browserDidFinalizeRef.current = true;
+          setVoiceMode('gemini');
+          startGeminiVoiceRecording();
+        } else if (voiceCapabilities.hasMediaRecorder && !isAuthenticated) {
+          setVoiceError({
+            message:
+              'Nhận diện nhanh trình duyệt gặp lỗi mạng. Đăng nhập để dùng chế độ Ghi âm AI (Song ngữ).',
+            actionLabel: 'Đăng nhập ngay',
+            actionType: 'login',
+          });
+        } else {
+          setVoiceError({
+            message: 'Nhận diện giọng nói tạm thời gián đoạn. Vui lòng thử lại hoặc nhập chữ.',
+          });
+        }
+      };
+
+      recognition.onend = () => {
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+        if (browserDidFinalizeRef.current) return;
+        browserDidFinalizeRef.current = true;
+        recognitionRef.current = null;
+        setVoiceState('idle');
+
+        if (voiceCancelledRef.current) {
+          setInputValue(preVoiceDraftRef.current);
+          preVoiceDraftRef.current = '';
+          return;
+        }
+
+        const spokenText = (combinedTranscriptRef.current || finalTranscriptRef.current || '').trim();
+        if (spokenText) {
+          sendMessageRef.current?.(spokenText, { viaVoice: true });
+        } else if (preVoiceDraftRef.current) {
+          setInputValue(preVoiceDraftRef.current);
+          preVoiceDraftRef.current = '';
+        }
+      };
+
+      recognition.start();
+      setVoiceState('listening');
+    } catch {
+      recognitionRef.current = null;
+      setVoiceState('idle');
+      setVoiceError({
+        message: 'Không thể khởi động nhận diện giọng nói. Vui lòng thử lại hoặc chuyển sang Ghi âm AI.',
+      });
+    }
+  }, [
+    inputValue,
+    isAuthenticated,
+    startGeminiVoiceRecording,
+    stopSpeaking,
+    voiceCapabilities.hasMediaRecorder,
+    voiceLang,
+  ]);
+
+  const primeTtsAudioElement = useCallback(() => {
+    if (!ttsAudioRef.current && typeof Audio !== 'undefined') {
+      ttsAudioRef.current = new Audio();
+    }
+  }, []);
+
+  const handleMicButtonClick = useCallback(() => {
+    if (loading) return;
+    primeTtsAudioElement();
+    if (voiceState !== 'idle') {
+      stopVoiceInput(false);
+      return;
+    }
+    if (voiceMode === 'gemini') {
+      startGeminiVoiceRecording();
+    } else {
+      startBrowserRecognition();
+    }
+  }, [
+    loading,
+    primeTtsAudioElement,
+    startBrowserRecognition,
+    startGeminiVoiceRecording,
+    stopVoiceInput,
+    voiceMode,
+    voiceState,
+  ]);
+
+  const handleComposerSubmit = useCallback(
+    (e) => {
+      if (e) e.preventDefault();
+      if (loading) return;
+      primeTtsAudioElement();
+
+      if (voiceState === 'recording') {
+        stopVoiceInput(false);
+        return;
+      }
+
+      if (voiceState === 'listening') {
+        const textToSubmit = (
+          inputValue ||
+          combinedTranscriptRef.current ||
+          finalTranscriptRef.current ||
+          ''
+        ).trim();
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+        voiceCancelledRef.current = true;
+        browserDidFinalizeRef.current = true;
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop?.();
+          } catch {
+            // Ignore stop error
+          }
+          recognitionRef.current = null;
+        }
+        setVoiceState('idle');
+        if (textToSubmit) {
+          sendMessage(textToSubmit, { viaVoice: true });
+        }
+        return;
+      }
+
+      sendMessage(inputValue);
+    },
+    [inputValue, loading, primeTtsAudioElement, sendMessage, stopVoiceInput, voiceState]
+  );
+
+  const handleSwitchVoiceMode = useCallback(
+    (nextMode) => {
+      if (voiceState !== 'idle') return;
+      setVoiceError(null);
+      if (nextMode === 'gemini') {
+        if (!voiceCapabilities.hasMediaRecorder) {
+          setVoiceError({ message: 'Trình duyệt của bạn không hỗ trợ ghi âm MediaRecorder.' });
+          return;
+        }
+        if (!isAuthenticated) {
+          setVoiceError({
+            message: 'Chế độ Ghi âm gửi trực tiếp cho AI chỉ dành cho người dùng đã đăng nhập.',
+            actionLabel: 'Đăng nhập ngay',
+            actionType: 'login',
+          });
+          return;
+        }
+        setVoiceMode('gemini');
+      } else {
+        if (!voiceCapabilities.hasWebSpeech) {
+          setVoiceError({
+            message: 'Trình duyệt hiện tại không hỗ trợ nhận diện nhanh Web Speech API.',
+          });
+          return;
+        }
+        setVoiceMode('browser');
+      }
+    },
+    [isAuthenticated, voiceCapabilities.hasMediaRecorder, voiceCapabilities.hasWebSpeech, voiceState]
+  );
+
+  const handleToggleAutoSpeak = useCallback(() => {
+    setAutoSpeakOnVoice((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(AUTO_SPEAK_STORAGE_KEY, String(next));
+      } catch {
+        // Ignore storage errors
+      }
+      if (!next) {
+        stopSpeaking();
+      }
+      return next;
+    });
+  }, [stopSpeaking]);
+
+  // Stop voice & TTS if panel closes or user navigates into live exam route
+  useEffect(() => {
+    if (!isOpen || isLiveExamRoute) {
+      cancelVoiceCapture();
+      stopSpeaking();
+    }
+  }, [cancelVoiceCapture, isLiveExamRoute, isOpen, stopSpeaking]);
+
+  // Ensure hardware mic stream & TTS stop on unmount
+  useEffect(() => {
+    return () => {
+      cancelVoiceCapture();
+      stopSpeaking();
+    };
+  }, [cancelVoiceCapture, stopSpeaking]);
 
   // Listen to custom events from TestResultPage or any other page
   useEffect(() => {
@@ -570,17 +1640,21 @@ const AiAssistantWidget = () => {
     };
   }, [examResult, focusedQuestion, sendMessage]);
 
-  // Escape key closes panel
+  // Escape key cancels active recording first, otherwise closes panel
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        setIsOpen(false);
+        if (voiceState !== 'idle') {
+          cancelVoiceCapture();
+        } else {
+          setIsOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [cancelVoiceCapture, isOpen, voiceState]);
 
   const resultQuestions = useMemo(
     () => (Array.isArray(examResult?.questions) ? examResult.questions : []),
@@ -602,22 +1676,38 @@ const AiAssistantWidget = () => {
   };
 
   const handleResetConversation = () => {
+    cancelVoiceCapture();
+    stopSpeaking();
+    setVoiceError(null);
     setMessages([
       {
         id: 'welcome',
         role: 'assistant',
         content: examResult
-          ? `Gâu gâu! Nuna đang kết nối với bài làm **${examResult.testTitle || 'Đề thi TOEIC'}** của bạn rồi! 🐾\nBạn có thể chọn bất kỳ câu hỏi nào từ **#1 – #${resultQuestions.length}** hoặc bấm các gợi ý bên dưới để Nuna giải thích chi tiết nhé!`
-          : 'Nuna đã làm mới cuộc trò chuyện rồi! 🐾 Bạn muốn hỏi Nuna về câu hỏi TOEIC hay cách sử dụng tính năng nào trên trang web?',
+          ? `Gâu gâu! Nuna đang kết nối với bài làm **${examResult.testTitle || 'Đề thi TOEIC'}** của bạn rồi! 🐾\nBạn có thể bấm nút **Micro** để hỏi bằng giọng nói hoặc chọn bất kỳ câu nào từ **#1 – #${resultQuestions.length}** nhé!`
+          : 'Nuna đã làm mới cuộc trò chuyện rồi! 🐾 Bạn có thể gõ chữ hoặc bấm **Micro** để trò chuyện cùng Nuna về TOEIC và trang web nhé.',
         suggestedFollowUps: examResult
           ? [
             'Phân tích điểm mạnh, điểm yếu của tôi trong bài thi này',
             'Tôi nên ưu tiên ôn tập Part nào trước để tăng điểm?',
             'Hướng dẫn cách luyện lại các câu làm sai hiệu quả',
           ]
-          : PLATFORM_QUICK_TOPICS.map((t) => t.prompt),
+          : PLATFORM_QUICK_TOPICS,
       },
     ]);
+  };
+
+  const renderTopicIcon = (iconType) => {
+    switch (iconType) {
+      case 'exam':
+        return <BookOpen size={14} />;
+      case 'dictation':
+        return <Languages size={14} />;
+      case 'classroom':
+        return <Lightbulb size={14} />;
+      default:
+        return <Sparkles size={14} />;
+    }
   };
 
   const headerTobyMood = loading
@@ -672,7 +1762,7 @@ const AiAssistantWidget = () => {
         <aside
           aria-label="Cửa sổ Trợ lý AI Nuna TOEIC Learning"
           style={{
-            backgroundImage: `linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(248, 250, 252, 0.36) 55%, rgba(255, 255, 255, 0.48) 100%), url(${nunaBgImage})`,
+            backgroundImage: `linear-gradient(180deg, rgba(255, 253, 249, 0.80) 0%, rgba(248, 250, 252, 0.86) 55%, rgba(255, 253, 249, 0.92) 100%), url(${nunaBgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center center',
           }}
@@ -683,7 +1773,7 @@ const AiAssistantWidget = () => {
         >
           {/* Panel Header */}
           <header className="ai-assistant-header flex items-center justify-between gap-3 px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-3">
               <TobyAvatar
                 mood={headerTobyMood}
                 size="md"
@@ -691,13 +1781,19 @@ const AiAssistantWidget = () => {
                 className="ai-header-avatar bg-[#FFFDF9]"
               />
               <div className="min-w-0">
-                <div className="ai-assistant-title truncate text-[15px] font-bold tracking-tight text-slate-900">
-                  Trợ lý Nuna
+                <div className="flex items-center gap-2">
+                  <span className="ai-assistant-title truncate text-[16px] font-bold tracking-tight text-slate-900">
+                    Trợ lý Nuna
+                  </span>
+                  <span className="ai-online-badge inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    <span>Sẵn sàng</span>
+                  </span>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-slate-600">
                   {examResult
-                    ? `Đang xem: ${examResult.testTitle || 'Bài thi TOEIC'}`
-                    : 'Giải đáp TOEIC & hướng dẫn trang web'}
+                    ? `Đang đồng hành: ${examResult.testTitle || 'Bài thi TOEIC'}`
+                    : 'Bạn đồng hành giải đáp TOEIC & hướng dẫn trang web'}
                 </p>
               </div>
             </div>
@@ -861,36 +1957,76 @@ const AiAssistantWidget = () => {
           )}
 
           {/* Conversation Messages List */}
-          <div className="ai-assistant-body flex-1 space-y-3.5 overflow-y-auto px-4 py-4">
+          <div className="ai-assistant-body flex-1 space-y-4 overflow-y-auto px-4 py-4">
             {messages.map((msg) => {
               const isUser = msg.role === 'user';
+              const followUps = Array.isArray(msg.suggestedFollowUps) ? msg.suggestedFollowUps : [];
+              const hasTopicCards = followUps.some((item) => item && typeof item === 'object');
               return (
                 <div key={msg.id} className={`group flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                   {/* Sender Meta Row */}
-                  <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] font-semibold text-slate-700">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-0.5 text-[11px] font-semibold text-slate-700">
                     {isUser ? (
                       <>
                         {msg.questionBadge && (
-                          <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
+                          <span className="ai-meta-pill rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
                             {msg.questionBadge}
                           </span>
                         )}
-                        <span className="rounded bg-white/75 px-1.5 py-0.5 text-slate-700">Bạn</span>
+                        {msg.viaVoiceAudio && (
+                          <span className="ai-meta-pill inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
+                            <Mic size={11} className="text-[#1D4ED8]" />
+                            <span>Giọng nói</span>
+                          </span>
+                        )}
+                        <span className="ai-sender-badge rounded-full px-2.5 py-0.5 text-slate-700">Bạn</span>
                       </>
                     ) : (
                       <>
-                        <span className="rounded bg-white/75 px-1.5 py-0.5 font-bold text-slate-800">Nuna</span>
+                        <div className="ai-sender-nuna inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-1">
+                          <img
+                            src={msg.id === 'welcome' ? TOBY_IMAGES.cheering : TOBY_IMAGES.studying}
+                            alt="Nuna"
+                            className="h-5 w-5 rounded-full bg-[#FFF7ED] object-contain p-0.5"
+                          />
+                          <span className="font-bold text-slate-800">Nuna</span>
+                        </div>
                         {msg.referencedQuestionNumber && (
-                          <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-[#1D4ED8] tabular-nums">
+                          <span className="ai-meta-pill rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
                             Câu #{msg.referencedQuestionNumber}
                           </span>
+                        )}
+                        {!msg.isError && (
+                          <button
+                            type="button"
+                            onClick={() => speakMessage(msg.id, msg.content)}
+                            title={speakingMsgId === msg.id ? 'Dừng đọc câu trả lời' : 'Đọc thành tiếng câu trả lời'}
+                            aria-label={
+                              speakingMsgId === msg.id
+                                ? 'Dừng đọc câu trả lời của Nuna'
+                                : 'Đọc thành tiếng câu trả lời của Nuna'
+                            }
+                            className={`ai-speak-btn inline-flex cursor-pointer items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold transition-all ${speakingMsgId === msg.id ? 'is-speaking' : ''}`}
+                          >
+                            {speakingMsgId === msg.id ? (
+                              <>
+                                <VolumeX size={11} />
+                                <span>Dừng đọc</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 size={11} />
+                                <span>Nghe Nuna đọc</span>
+                              </>
+                            )}
+                          </button>
                         )}
                         {!msg.isError && msg.id !== 'welcome' && (
                           <button
                             type="button"
                             onClick={() => handleCopyMessage(msg.id, msg.content)}
                             title="Sao chép câu trả lời"
-                            className="ai-copy-btn ml-1 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-slate-500 opacity-0 transition-all group-hover:opacity-100"
+                            className="ai-copy-btn inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-all sm:opacity-80 sm:group-hover:opacity-100"
                           >
                             {copiedMsgId === msg.id ? (
                               <>
@@ -911,13 +2047,19 @@ const AiAssistantWidget = () => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`max-w-[92%] ${isUser
+                    className={`max-w-[94%] ${isUser
                       ? 'ai-msg-bubble-user px-4 py-2.5 text-[14px] leading-relaxed text-white'
                       : msg.isError
                         ? 'ai-msg-bubble-error px-4 py-3 text-sm text-red-900'
                         : 'ai-msg-bubble-assistant px-4 py-3.5 text-slate-900'
                       }`}
                   >
+                    {!isUser && msg.id === 'welcome' && (
+                      <div className="ai-welcome-greeting mb-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
+                        <Sparkles size={12} className="shrink-0 text-[#1D4ED8]" />
+                        <span>Góc học tập TOEIC cùng Nuna</span>
+                      </div>
+                    )}
                     {isUser ? (
                       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-white">{msg.content}</p>
                     ) : (
@@ -925,21 +2067,66 @@ const AiAssistantWidget = () => {
                     )}
                   </div>
 
-                  {/* Follow-up Suggestion Chips */}
-                  {!isUser && Array.isArray(msg.suggestedFollowUps) && msg.suggestedFollowUps.length > 0 && (
-                    <div className="mt-2.5 flex max-w-[96%] flex-wrap gap-1.5">
-                      {msg.suggestedFollowUps.map((followUp, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={loading}
-                          onClick={() => sendMessage(followUp)}
-                          className="ai-quick-chip inline-flex cursor-pointer items-center gap-1.5 px-3.5 py-1.5 text-left text-xs font-semibold text-slate-700 transition-all disabled:opacity-50"
-                        >
-                          <ChevronRight size={12} className="shrink-0 text-[#1D4ED8]" />
-                          <span>{followUp}</span>
-                        </button>
-                      ))}
+                  {/* Follow-up Suggestion Chips / Friendly Topic Cards */}
+                  {!isUser && followUps.length > 0 && (
+                    <div className="mt-3 w-full max-w-[96%]">
+                      {hasTopicCards ? (
+                        <div>
+                          <div className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold text-slate-600">
+                            <Sparkles size={12} className="text-[#1D4ED8]" />
+                            <span>Chủ đề gợi ý nhanh — chạm để hỏi ngay:</span>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {followUps.map((item, idx) => {
+                              const label = typeof item === 'object' ? item.label : item;
+                              const subtitle = typeof item === 'object' ? item.subtitle : '';
+                              const promptText = typeof item === 'object' ? item.prompt : item;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  disabled={loading}
+                                  onClick={() => sendMessage(promptText)}
+                                  className="ai-topic-card group/card flex cursor-pointer items-start gap-2.5 p-3 text-left transition-all disabled:opacity-50"
+                                >
+                                  <span className="ai-topic-card-icon mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
+                                    {renderTopicIcon(item?.iconType)}
+                                  </span>
+                                  <span className="min-w-0 flex-1">
+                                    <span className="ai-topic-card-title block text-[13px] leading-snug font-semibold text-slate-800">
+                                      {label}
+                                    </span>
+                                    {subtitle && (
+                                      <span className="ai-topic-card-sub mt-0.5 block truncate text-[11.5px] text-slate-500">
+                                        {subtitle}
+                                      </span>
+                                    )}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {followUps.map((followUp, idx) => {
+                            const label = typeof followUp === 'object' ? followUp.label : followUp;
+                            const promptText = typeof followUp === 'object' ? followUp.prompt : followUp;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                disabled={loading}
+                                onClick={() => sendMessage(promptText)}
+                                className="ai-quick-chip inline-flex cursor-pointer items-center gap-1.5 px-3.5 py-2 text-left text-xs font-medium text-slate-700 transition-all disabled:opacity-50"
+                              >
+                                <ChevronRight size={13} className="shrink-0 text-[#1D4ED8]" />
+                                <span>{label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -965,11 +2152,8 @@ const AiAssistantWidget = () => {
 
           {/* Streamlined Floating Composer Footer */}
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage(inputValue);
-            }}
-            className="ai-composer-footer px-4 pt-2 pb-3.5"
+            onSubmit={handleComposerSubmit}
+            className="ai-composer-footer px-4 pt-2.5 pb-3"
           >
             {focusedQuestion && (
               <div className="mb-1.5 flex items-center justify-between px-1">
@@ -987,7 +2171,90 @@ const AiAssistantWidget = () => {
               </div>
             )}
 
-            <div className="ai-composer-box flex items-end gap-2.5 px-4 py-2.5 transition-all">
+            {voiceError && (
+              <div
+                role="alert"
+                className="ai-voice-error-bar mb-2 flex items-start justify-between gap-2 px-3 py-2 text-xs"
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="font-medium leading-snug">{voiceError.message}</p>
+                  {voiceError.actionType === 'login' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoiceError(null);
+                        setIsOpen(false);
+                        navigate('/login');
+                      }}
+                      className="inline-flex cursor-pointer items-center rounded-full bg-[#1D4ED8] px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-blue-800"
+                    >
+                      {voiceError.actionLabel || 'Đăng nhập ngay'}
+                    </button>
+                  )}
+                  {voiceError.actionType === 'switch-browser' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setVoiceMode('browser');
+                        setVoiceError(null);
+                      }}
+                      className="inline-flex cursor-pointer items-center rounded-full border border-amber-400 bg-white px-2.5 py-0.5 text-[11px] font-bold text-amber-900 hover:bg-amber-50"
+                    >
+                      {voiceError.actionLabel || 'Chuyển sang nhận diện nhanh'}
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setVoiceError(null)}
+                  aria-label="Đóng thông báo micro"
+                  className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-amber-800 hover:bg-amber-200/60"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+
+            {voiceState !== 'idle' && (
+              <div
+                role="status"
+                aria-live="polite"
+                className={`ai-voice-recording-bar mb-2 flex items-center justify-between gap-2.5 px-3 py-2 text-xs ${voiceState === 'listening' ? 'is-browser' : ''}`}
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span
+                    className={`ai-voice-pulse inline-block h-2.5 w-2.5 shrink-0 rounded-full ${voiceState === 'recording' ? 'animate-pulse bg-[#DC2626]' : 'animate-pulse bg-[#1D4ED8]'}`}
+                  />
+                  {voiceState === 'recording' ? (
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span className="truncate font-semibold">
+                        Đang ghi âm ({formatRecordingDuration(recordingSeconds)} / {formatRecordingDuration(MAX_VOICE_RECORD_SECONDS)})
+                      </span>
+                      <div className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-red-200/80">
+                        <div
+                          className="h-full rounded-full bg-[#DC2626] transition-all duration-100"
+                          style={{ width: `${Math.max(10, audioLevel)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="truncate font-semibold">
+                      Đang lắng nghe ({voiceLang === 'en-US' ? 'Tiếng Anh' : 'Tiếng Việt'}) — bấm Dừng để gửi
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => stopVoiceInput(true)}
+                  className="shrink-0 cursor-pointer rounded-full border border-current/25 bg-white/85 px-2.5 py-0.5 text-[11px] font-bold hover:bg-white"
+                >
+                  Hủy
+                </button>
+              </div>
+            )}
+
+            <div className="ai-composer-box flex items-end gap-2 px-3.5 py-2 transition-all">
               <textarea
                 ref={inputRef}
                 rows={1}
@@ -995,24 +2262,53 @@ const AiAssistantWidget = () => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage(inputValue);
+                    handleComposerSubmit(e);
                   }
                 }}
                 placeholder={
-                  focusedQuestion
-                    ? `Hỏi Nuna về Câu #${focusedQuestion.questionNumber} (hoặc gõ "câu 15")...`
-                    : examResult
-                      ? 'Hỏi Nuna bất kỳ câu nào (VD: "Giải thích câu 8", "Part 5")...'
-                      : 'Nhắn cho Nuna bất kỳ điều gì về TOEIC hoặc trang web...'
+                  voiceState === 'recording'
+                    ? 'Đang thu âm câu hỏi của bạn (bấm Dừng hoặc Gửi để hoàn tất)...'
+                    : voiceState === 'listening'
+                      ? 'Đang chuyển giọng nói thành chữ (tự gửi khi ngừng nói hoặc bấm Gửi)...'
+                      : focusedQuestion
+                        ? `Hỏi Nuna về Câu #${focusedQuestion.questionNumber} (gõ hoặc bấm Micro)...`
+                        : examResult
+                          ? 'Hỏi Nuna bất kỳ câu nào (gõ hoặc bấm Micro)...'
+                          : 'Nhắn hoặc bấm Micro trò chuyện với Nuna...'
                 }
-                disabled={loading}
+                disabled={loading || voiceState === 'recording'}
                 className="max-h-28 min-h-[26px] flex-1 resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
               />
 
+              {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
+                <button
+                  type="button"
+                  onClick={handleMicButtonClick}
+                  disabled={loading}
+                  aria-label={
+                    voiceState !== 'idle'
+                      ? 'Dừng micro và gửi câu hỏi'
+                      : 'Bật micro để hỏi Nuna bằng giọng nói'
+                  }
+                  title={
+                    voiceState !== 'idle'
+                      ? 'Dừng & Gửi câu hỏi giọng nói'
+                      : voiceMode === 'gemini'
+                        ? 'Nhấn để ghi âm gửi AI nghe song ngữ'
+                        : 'Nhấn để nói (nhận diện nhanh)'
+                  }
+                  className={`ai-mic-btn inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center transition-all disabled:cursor-not-allowed ${voiceState !== 'idle' ? 'is-active' : ''}`}
+                >
+                  {voiceState !== 'idle' ? <Square size={14} /> : <Mic size={16} />}
+                </button>
+              )}
+
               <button
                 type="submit"
-                disabled={loading || !inputValue.trim()}
+                disabled={
+                  loading ||
+                  (voiceState !== 'recording' && !inputValue.trim())
+                }
                 aria-label="Gửi câu hỏi cho Trợ lý AI Nuna"
                 className="ai-send-btn inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-white transition-all disabled:cursor-not-allowed"
               >
@@ -1020,8 +2316,62 @@ const AiAssistantWidget = () => {
               </button>
             </div>
 
-            <div className="mt-1.5 flex items-center justify-between px-1.5 text-[11px] text-slate-600">
-              <span>Enter để gửi · Shift + Enter xuống dòng</span>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 px-0.5 text-[11px] text-slate-600">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
+                  <div className="ai-voice-mode-group inline-flex items-center p-0.5">
+                    {voiceCapabilities.hasWebSpeech && (
+                      <button
+                        type="button"
+                        disabled={voiceState !== 'idle'}
+                        onClick={() => handleSwitchVoiceMode('browser')}
+                        title="Chế độ nhận diện giọng nói nhanh trực tiếp trên trình duyệt"
+                        className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'browser' ? 'is-active' : ''}`}
+                      >
+                        Nói nhanh
+                      </button>
+                    )}
+
+                    {voiceCapabilities.hasMediaRecorder && (
+                      <button
+                        type="button"
+                        disabled={voiceState !== 'idle'}
+                        onClick={() => handleSwitchVoiceMode('gemini')}
+                        title={
+                          isAuthenticated
+                            ? 'Chế độ ghi âm gửi trực tiếp cho Nuna AI nghe hiểu song ngữ Việt–Anh'
+                            : 'Cần đăng nhập để dùng chế độ ghi âm gửi AI'
+                        }
+                        className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'gemini' ? 'is-active' : ''}`}
+                      >
+                        AI Song ngữ{!isAuthenticated ? ' · Đăng nhập' : ''}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
+                  <button
+                    type="button"
+                    disabled={voiceState !== 'idle'}
+                    onClick={() => setVoiceLang((prev) => (prev === 'vi-VN' ? 'en-US' : 'vi-VN'))}
+                    title="Chuyển ngôn ngữ ưu tiên khi nói (Tiếng Việt / Tiếng Anh)"
+                    className="ai-voice-toolbar-btn cursor-pointer transition-colors disabled:opacity-50"
+                  >
+                    {voiceLang === 'en-US' ? '🇬🇧 English' : '🇻🇳 Tiếng Việt'}
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleToggleAutoSpeak}
+                title="Tự động đọc thành tiếng câu trả lời khi hỏi bằng micro"
+                className={`ai-voice-toolbar-btn inline-flex cursor-pointer items-center gap-1 transition-colors ${autoSpeakOnVoice ? 'is-active' : ''}`}
+              >
+                {autoSpeakOnVoice ? <Volume2 size={11} /> : <VolumeX size={11} />}
+                <span>{autoSpeakOnVoice ? 'Tự đọc' : 'Tắt đọc'}</span>
+              </button>
             </div>
           </form>
         </aside>

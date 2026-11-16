@@ -6,12 +6,15 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.InvalidFormatException;
 import org.springframework.security.access.AccessDeniedException;
@@ -55,13 +58,21 @@ public class GlobalExceptionHandler {
     }
 
     // 2. Xử lý lỗi validate cho @RequestParam hoặc @PathVariable trên URL
-    @ExceptionHandler({ConstraintViolationException.class, PropertyReferenceException.class})
+    @ExceptionHandler({ConstraintViolationException.class, PropertyReferenceException.class, MissingServletRequestPartException.class})
     // Cú pháp của generic function, String thay cho T
     public ResponseEntity<ApiResponse<Void>> handleConstraintViolationException(Exception ex)
     {
         ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex)
+    {
+        ErrorCode errorCode = ErrorCode.VALIDATION_ERROR;
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
+                .body(ApiResponse.error(errorCode.getCode(), "Dung lượng tệp tải lên vượt quá giới hạn hệ thống cho phép."));
     }
 
     // 3. Xử lý lỗi không tìm thấy tài nguyên

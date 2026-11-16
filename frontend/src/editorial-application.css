@@ -1027,36 +1027,36 @@
 }
 
 .app-shell .ai-assistant-panel {
-  border-radius: 18px !important;
-  border: 1px solid #E4E4E7 !important;
-  background-color: #FFFFFF !important;
+  border-radius: 26px !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  background-color: #FFFDF9 !important;
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(248, 250, 252, 0.36) 55%, rgba(255, 255, 255, 0.48) 100%),
+    linear-gradient(180deg, rgba(255, 253, 249, 0.80) 0%, rgba(248, 250, 252, 0.86) 55%, rgba(255, 253, 249, 0.92) 100%),
     url('./assets/img/mascot/anh_cho_ban_sung.jpg') !important;
   background-size: cover !important;
   background-position: center center !important;
   box-shadow:
-    0 24px 60px -16px rgba(10, 10, 10, 0.24),
-    0 8px 24px -8px rgba(10, 10, 10, 0.10) !important;
+    0 24px 60px -14px rgba(15, 23, 42, 0.22),
+    0 8px 24px -8px rgba(29, 78, 216, 0.08) !important;
 }
 
 @media (max-width: 639px) {
   .app-shell .ai-assistant-panel {
-    border-radius: 24px 24px 0 0 !important;
+    border-radius: 26px 26px 0 0 !important;
   }
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-header {
-  background: rgba(255, 255, 255, 0.90) !important;
-  backdrop-filter: blur(14px) saturate(130%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
-  border-bottom: 1px solid #E4E4E7 !important;
-  color: #0A0A0A !important;
+  background: rgba(255, 253, 249, 0.92) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.82) !important;
+  color: #0F172A !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-header .ai-header-avatar {
   border-radius: 9999px !important;
-  border: 1.5px solid rgba(147, 197, 253, 0.75) !important;
+  border: 1.5px solid rgba(147, 197, 253, 0.85) !important;
   background: #FFFDF9 !important;
   box-shadow: 0 4px 12px -3px rgba(29, 78, 216, 0.16) !important;
 }
@@ -1066,6 +1066,16 @@
   font-size: 16.5px !important;
   font-weight: 700 !important;
   line-height: 1.25 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-assistant-header .ai-online-badge {
+  border-radius: 9999px !important;
+  background: rgba(236, 253, 245, 0.95) !important;
+  border: 1px solid rgba(167, 243, 208, 0.9) !important;
+  color: #047857 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 1px 8px !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-header .ai-status-pill {
@@ -1088,26 +1098,28 @@
   width: 34px !important;
   border-radius: 9999px !important;
   background: rgba(15, 23, 42, 0.04) !important;
-  border: 1px solid transparent !important;
+  border: 1px solid rgba(226, 232, 240, 0.7) !important;
   color: #475569 !important;
   box-shadow: none !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-header .ai-header-icon-btn:hover {
-  background: rgba(29, 78, 216, 0.10) !important;
+  background: rgba(239, 246, 255, 0.95) !important;
+  border-color: rgba(147, 197, 253, 0.85) !important;
   color: #1D4ED8 !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-header .ai-header-close-btn:hover {
-  background: rgba(239, 68, 68, 0.12) !important;
+  background: rgba(254, 242, 242, 0.95) !important;
+  border-color: rgba(252, 165, 165, 0.85) !important;
   color: #DC2626 !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-context {
-  background: rgba(255, 255, 255, 0.78) !important;
+  background: rgba(255, 253, 249, 0.84) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.75) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.78) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-assistant-context select {
@@ -1155,43 +1167,52 @@
   background: transparent !important;
 }
 
-.app-shell .ai-assistant-panel .toby-chat-hero {
-  border-radius: 22px !important;
-  border: 1px solid rgba(255, 255, 255, 0.92) !important;
-  background: rgba(255, 255, 255, 0.84) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  box-shadow: 0 10px 28px -10px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.03) !important;
-}
-
-.app-shell .ai-assistant-panel .toby-hero-mascot-btn {
-  border-radius: 18px !important;
-  border: 1px solid rgba(219, 234, 254, 0.85) !important;
-  background: radial-gradient(circle, rgba(239, 246, 255, 0.95) 0%, rgba(255, 253, 249, 0.9) 100%) !important;
-  box-shadow: 0 4px 12px -4px rgba(29, 78, 216, 0.14) !important;
-}
-
-/* Rounded message bubbles & pills inside AI panel */
+/* Rounded message bubbles, sender badges & pills inside AI panel */
 .app-shell .ai-assistant-panel [class~="rounded-full"] {
   border-radius: 9999px !important;
 }
 
-.app-shell .ai-assistant-panel .ai-msg-bubble-assistant {
-  border-radius: 14px !important;
-  border: 1px solid rgba(228, 228, 231, 0.92) !important;
+.app-shell .ai-assistant-panel .ai-sender-nuna {
+  border-radius: 9999px !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  font-size: 12px !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-sender-badge,
+.app-shell .ai-assistant-panel .ai-meta-pill {
+  border-radius: 9999px !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
   background: rgba(255, 255, 255, 0.90) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  color: #0A0A0A !important;
-  box-shadow: 0 8px 24px -10px rgba(10, 10, 10, 0.14) !important;
+  font-size: 11.5px !important;
+}
+
+.app-shell .ai-assistant-panel .ai-welcome-greeting {
+  border-radius: 9999px !important;
+  border: 1px solid rgba(191, 219, 254, 0.78) !important;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(255, 247, 237, 0.95) 100%) !important;
+  color: #1E40AF !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-msg-bubble-assistant {
+  border-radius: 22px 22px 22px 8px !important;
+  border: 1px solid rgba(226, 232, 240, 0.88) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  color: #0F172A !important;
+  box-shadow: 0 10px 26px -12px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.03) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-msg-bubble-user {
-  border-radius: 14px !important;
+  border-radius: 22px 22px 8px 22px !important;
   border: 0 !important;
-  background: #1D4ED8 !important;
+  background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 8px 20px -8px rgba(29, 78, 216, 0.40) !important;
+  box-shadow: 0 10px 22px -8px rgba(29, 78, 216, 0.38) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-msg-bubble-user p {
@@ -1199,54 +1220,108 @@
 }
 
 .app-shell .ai-assistant-panel .ai-msg-bubble-error {
-  border-radius: 22px 22px 22px 6px !important;
+  border-radius: 22px 22px 22px 8px !important;
   border: 1px solid rgba(254, 202, 202, 0.95) !important;
   background: rgba(254, 242, 242, 0.94) !important;
   backdrop-filter: blur(12px) !important;
 }
 
-.app-shell .ai-assistant-panel .ai-quick-chip {
+/* Friendly 2-column Topic Cards on Welcome Screen */
+.app-shell .ai-assistant-panel .ai-topic-card {
+  border-radius: 18px !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card:hover:not(:disabled) {
+  transform: translateY(-1.5px) !important;
+  border-color: rgba(147, 197, 253, 0.95) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 12px 24px -10px rgba(29, 78, 216, 0.18) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card .ai-topic-card-icon {
   border-radius: 9999px !important;
-  border: 1px solid rgba(255, 255, 255, 0.95) !important;
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: #EFF6FF !important;
+  border: 1px solid rgba(191, 219, 254, 0.75) !important;
+  color: #1D4ED8 !important;
+  transition: all 0.2s ease !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card:hover:not(:disabled) .ai-topic-card-icon {
+  background: #1D4ED8 !important;
+  border-color: #1D4ED8 !important;
+  color: #FFFFFF !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card .ai-topic-card-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #0F172A !important;
+  line-height: 1.35 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card:hover:not(:disabled) .ai-topic-card-title {
+  color: #1D4ED8 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-topic-card .ai-topic-card-sub {
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+  color: #64748B !important;
+  line-height: 1.3 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-quick-chip {
+  border-radius: 16px !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   color: #1E293B !important;
-  box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.10), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 4px 14px -6px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
 }
 
-.app-shell .ai-assistant-panel .ai-quick-chip:hover {
+.app-shell .ai-assistant-panel .ai-quick-chip:hover:not(:disabled) {
   transform: translateY(-1px) !important;
   border-color: rgba(147, 197, 253, 0.95) !important;
   background: #FFFFFF !important;
   color: #1D4ED8 !important;
-  box-shadow: 0 10px 22px -8px rgba(29, 78, 216, 0.22) !important;
+  box-shadow: 0 10px 22px -8px rgba(29, 78, 216, 0.18) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-thinking-avatar {
-  border-radius: 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.95) !important;
-  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
   box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.1) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-copy-btn {
   border-radius: 9999px !important;
-  border: 0 !important;
-  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(226, 232, 240, 0.85) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  font-size: 11.5px !important;
 }
 
 .app-shell .ai-assistant-panel .ai-copy-btn:hover {
+  border-color: rgba(147, 197, 253, 0.9) !important;
   background: #FFFFFF !important;
   color: #1D4ED8 !important;
 }
 
 /* Streamlined Floating Composer */
 .app-shell .ai-assistant-panel .ai-composer-footer {
-  border-top: 0 !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.0) 0%, rgba(255, 255, 255, 0.72) 45%, rgba(255, 255, 255, 0.90) 100%) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.65) !important;
+  background: rgba(255, 253, 249, 0.88) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-focused-pill {
@@ -1256,16 +1331,16 @@
 }
 
 .app-shell .ai-assistant-panel .ai-composer-box {
-  border-radius: 14px !important;
-  border: 1px solid #E4E4E7 !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  box-shadow: 0 8px 24px -10px rgba(10, 10, 10, 0.14) !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(203, 213, 225, 0.9) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 8px 22px -10px rgba(15, 23, 42, 0.10), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-composer-box:focus-within {
-  border-color: rgba(59, 130, 246, 0.85) !important;
+  border-color: rgba(59, 130, 246, 0.75) !important;
   background: #FFFFFF !important;
-  box-shadow: 0 14px 34px -10px rgba(29, 78, 216, 0.18), 0 0 0 3px rgba(29, 78, 216, 0.10) !important;
+  box-shadow: 0 12px 28px -10px rgba(29, 78, 216, 0.16), 0 0 0 3px rgba(29, 78, 216, 0.08) !important;
 }
 
 .app-shell .ai-assistant-panel .ai-composer-box textarea {
@@ -1275,9 +1350,9 @@
   background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
-  font-size: 14.5px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
-  padding: 4px 0 !important;
+  padding: 5px 2px !important;
 }
 
 .app-shell .ai-assistant-panel .ai-composer-box textarea:focus,
@@ -1304,9 +1379,139 @@
 }
 
 .app-shell .ai-assistant-panel .ai-composer-box .ai-send-btn:disabled {
-  background: #E2E8F0 !important;
+  background: #F1F5F9 !important;
   color: #94A3B8 !important;
   box-shadow: none !important;
+}
+
+/* Voice controls & TTS speaker styling for Nuna AI (Friendly Companion Bar) */
+.app-shell .ai-assistant-panel .ai-voice-mode-group {
+  border-radius: 9999px !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  background: rgba(241, 245, 249, 0.92) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-segment-btn {
+  min-height: 24px !important;
+  height: auto !important;
+  border-radius: 9999px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #64748B !important;
+  padding: 3px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-segment-btn:hover:not(:disabled) {
+  color: #1E293B !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-segment-btn.is-active {
+  background: #FFFFFF !important;
+  color: #1D4ED8 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-toolbar-btn {
+  min-height: 26px !important;
+  height: auto !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(226, 232, 240, 0.92) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: #475569 !important;
+  padding: 3px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-toolbar-btn:hover:not(:disabled) {
+  border-color: rgba(147, 197, 253, 0.9) !important;
+  color: #1D4ED8 !important;
+  background: #FFFFFF !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-toolbar-btn.is-active {
+  border-color: rgba(147, 197, 253, 0.95) !important;
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  font-weight: 600 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-composer-box .ai-mic-btn {
+  min-height: 36px !important;
+  height: 36px !important;
+  width: 36px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(191, 219, 254, 0.9) !important;
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  box-shadow: none !important;
+}
+
+.app-shell .ai-assistant-panel .ai-composer-box .ai-mic-btn:hover:not(:disabled) {
+  border-color: #1D4ED8 !important;
+  background: #DBEAFE !important;
+  color: #1D4ED8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-composer-box .ai-mic-btn.is-active {
+  border-color: #DC2626 !important;
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14) !important;
+}
+
+.app-shell .ai-assistant-panel .ai-composer-box .ai-mic-btn:disabled {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+  color: #94A3B8 !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-recording-bar {
+  border-radius: 14px !important;
+  border: 1px solid rgba(254, 202, 202, 0.95) !important;
+  background: rgba(254, 242, 242, 0.95) !important;
+  color: #991B1B !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-recording-bar.is-browser {
+  border-color: rgba(191, 219, 254, 0.95) !important;
+  background: rgba(239, 246, 255, 0.96) !important;
+  color: #1E3A8A !important;
+}
+
+.app-shell .ai-assistant-panel .ai-voice-error-bar {
+  border-radius: 14px !important;
+  border: 1px solid rgba(253, 230, 138, 0.95) !important;
+  background: rgba(255, 251, 235, 0.96) !important;
+  color: #92400E !important;
+}
+
+.app-shell .ai-assistant-panel .ai-speak-btn {
+  min-height: 24px !important;
+  height: auto !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(191, 219, 254, 0.85) !important;
+  background: rgba(239, 246, 255, 0.88) !important;
+  color: #1D4ED8 !important;
+  font-size: 11.5px !important;
+}
+
+.app-shell .ai-assistant-panel .ai-speak-btn:hover,
+.app-shell .ai-assistant-panel .ai-speak-btn.is-speaking {
+  border-color: rgba(29, 78, 216, 0.55) !important;
+  background: #DBEAFE !important;
+  color: #1E40AF !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .ai-assistant-panel .ai-voice-pulse {
+    animation: none !important;
+  }
 }
 
 /* Per-question AI Action Bar on TestResultPage */

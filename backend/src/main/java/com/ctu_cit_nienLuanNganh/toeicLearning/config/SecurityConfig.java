@@ -50,7 +50,9 @@ public class SecurityConfig {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/google",
-                                "/api/ai/chat").permitAll()
+                                "/api/ai/chat",
+                                "/api/ai/tts").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ai/voice-chat").authenticated()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/exam/list",
                                 "/api/exam/*/access",
@@ -74,7 +76,7 @@ public class SecurityConfig {
                         .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(false))
                         .referrerPolicy(referrer -> referrer.policy(
                                 ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                        .permissionsPolicyHeader(policy -> policy.policy("camera=(), microphone=(), geolocation=()")))
+                        .permissionsPolicyHeader(policy -> policy.policy("camera=(), microphone=(self), geolocation=()")))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                         .accessDeniedHandler(jwtAccessDeniedHandler)

@@ -11,6 +11,7 @@ import java.util.List;
 @Builder
 public class AiChatResponseDTO {
     private String reply;
+    private String userTranscript;
     private String contextMode;
     private Integer referencedQuestionNumber;
     private List<String> suggestedFollowUps;

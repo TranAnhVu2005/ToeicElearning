@@ -50,6 +50,8 @@ public enum ErrorCode {
     TEST_HAS_HISTORY(3010, "Đề đã có lượt làm, giao dịch hoặc bài tập liên quan; chỉ được sửa tên, ảnh bìa hoặc trạng thái để bảo toàn lịch sử.", HttpStatus.CONFLICT),
     COMMENT_NOT_FOUND(3015, "Không tìm thấy bình luận yêu cầu", HttpStatus.NOT_FOUND),
     COMMENT_ACTION_FORBIDDEN(3016, "Bạn không có quyền thao tác trên bình luận này", HttpStatus.FORBIDDEN),
+    AI_VOICE_INVALID_AUDIO(3017, "Tệp ghi âm không hợp lệ hoặc vượt quá dung lượng cho phép (tối đa 4 MB).", HttpStatus.BAD_REQUEST),
+    AI_VOICE_UNAVAILABLE(3018, "Dịch vụ nghe hiểu giọng nói AI hiện không khả dụng. Vui lòng thử lại sau hoặc chuyển sang nhận diện nhanh / nhập chữ.", HttpStatus.SERVICE_UNAVAILABLE),
 
 
     // Đặt vào trong enum ErrorCode.java
