@@ -29,6 +29,7 @@ import {
   Check,
   Headphones,
   Languages,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { examService } from '../../services/examService';
@@ -607,20 +608,33 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Auto-Save and Draft Recovery (Hybrid Architecture: 5s Client LocalStorage + 30s Smart Server Sync)
+  // Auto-Save and Draft Recovery (Hybrid Architecture: Per-Test Debounced LocalStorage + 30s Smart Server Sync)
   const AUTOSAVE_STORAGE_KEY = classroomScope
     ? `toeic_exam_studio_autosave_class_${classroomScope}`
     : 'toeic_exam_studio_autosave';
+  const getAutosaveStorageKey = useCallback(
+    (mode, testId) => {
+      if (mode === 'edit' && testId) {
+        return `${AUTOSAVE_STORAGE_KEY}_edit_${testId}`;
+      }
+      return `${AUTOSAVE_STORAGE_KEY}_create`;
+    },
+    [AUTOSAVE_STORAGE_KEY]
+  );
   const isDirtyRef = useRef(false);
   const editLoadRequestRef = useRef(0);
+  const [isLoadingTestDetail, setIsLoadingTestDetail] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const [autoSaveState, setAutoSaveState] = useState({
-    status: 'idle', // 'idle' | 'saving' | 'saved' | 'synced_server'
+    status: 'idle', // 'idle' | 'unsaved' | 'saving' | 'saved' | 'synced_server'
     savedAt: null,
   });
   const [recoverableDraft, setRecoverableDraft] = useState(null);
   const markDirty = () => {
     isDirtyRef.current = true;
-    setAutoSaveState((previous) => ({ ...previous, status: 'saving' }));
+    setAutoSaveState((previous) => (
+      previous.status === 'unsaved' ? previous : { ...previous, status: 'unsaved' }
+    ));
   };
 
   const handleRestoreDraft = () => {
@@ -634,6 +648,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     if (recoverableDraft.formParts && Array.isArray(recoverableDraft.formParts)) {
       setFormParts(recoverableDraft.formParts);
     }
+    isDirtyRef.current = true;
+    setAutoSaveState({
+      status: 'saved',
+      savedAt: recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt) : new Date(),
+    });
     setToast({
       type: 'success',
       message: 'Đã khôi phục toàn bộ nội dung bản nháp từ bộ nhớ trình duyệt!',
@@ -643,6 +662,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
   const handleDismissDraft = () => {
     try {
+      localStorage.removeItem(getAutosaveStorageKey(builderMode, selectedTest?.id));
       localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
     } catch {
       // Storage may be unavailable; the in-memory draft remains usable.
@@ -652,13 +672,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
   const clearAutosaveDraft = useCallback(() => {
     try {
+      localStorage.removeItem(getAutosaveStorageKey(builderMode, selectedTest?.id));
       localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
     } catch {
       // Storage may be unavailable; the in-memory draft remains usable.
     }
     setRecoverableDraft(null);
     setAutoSaveState({ status: 'saved', savedAt: new Date() });
-  }, [AUTOSAVE_STORAGE_KEY]);
+  }, [AUTOSAVE_STORAGE_KEY, builderMode, getAutosaveStorageKey, selectedTest]);
 
   // Tính toán số lượng câu hỏi và đối chiếu chuẩn ETS trực tiếp
   const etsMetrics = useMemo(() => {
@@ -1015,7 +1036,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   const handleOpenCreateModal = useCallback(() => {
     editLoadRequestRef.current += 1;
     setActionLoading(false);
-    setAutoSaveState({ status: 'saving', savedAt: null });
+    setIsLoadingTestDetail(false);
+    setCloseConfirmOpen(false);
+    isDirtyRef.current = false;
+    setAutoSaveState({ status: 'idle', savedAt: null });
     setBuilderMode('create');
     setSelectedTest(null);
     editPartsBaselineRef.current = { testId: null, serialized: null };
@@ -1032,7 +1056,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     setBuilderOpen(true);
 
     try {
-      const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      const storageKey = getAutosaveStorageKey('create', null);
+      const saved = localStorage.getItem(storageKey) || localStorage.getItem(AUTOSAVE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && (!parsed.testId || parsed.testId === null) && parsed.savedAt && parsed.formParts?.length > 0) {
@@ -1061,13 +1086,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     } catch {
       setRecoverableDraft(null);
     }
-  }, [AUTOSAVE_STORAGE_KEY, classroomId, classroomScope, totalElements]);
+  }, [AUTOSAVE_STORAGE_KEY, classroomId, classroomScope, getAutosaveStorageKey, totalElements]);
 
   // Open Edit Builder
   const handleOpenEditModal = useCallback(async (test, targetClassroomId = classroomScope) => {
     const requestId = ++editLoadRequestRef.current;
     setBuilderMode('edit');
-    setAutoSaveState({ status: 'saving', savedAt: null });
+    setCloseConfirmOpen(false);
+    isDirtyRef.current = false;
+    setIsLoadingTestDetail(true);
+    setAutoSaveState({ status: 'idle', savedAt: null });
     setSelectedTest(test);
     editPartsBaselineRef.current = { testId: test.id, serialized: null };
     setFormTitle(test.titleTest || '');
@@ -1083,7 +1111,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
     let localDraft = null;
     try {
-      const saved = localStorage.getItem(AUTOSAVE_STORAGE_KEY);
+      const storageKey = getAutosaveStorageKey('edit', test.id);
+      const saved = localStorage.getItem(storageKey) || localStorage.getItem(AUTOSAVE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.testId === test.id && parsed.savedAt && parsed.formParts) {
@@ -1297,6 +1326,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             });
           } else {
             if (localDraft) {
+              localStorage.removeItem(getAutosaveStorageKey('edit', test.id));
               localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
             }
             setRecoverableDraft(null);
@@ -1316,9 +1346,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       }
       return false;
     } finally {
-      if (requestId === editLoadRequestRef.current) setActionLoading(false);
+      if (requestId === editLoadRequestRef.current) {
+        setActionLoading(false);
+        setIsLoadingTestDetail(false);
+      }
     }
-  }, [AUTOSAVE_STORAGE_KEY, classroomScope]);
+  }, [AUTOSAVE_STORAGE_KEY, classroomScope, getAutosaveStorageKey]);
 
   useEffect(() => {
     if (initialTest?.id && classroomScope) {
@@ -1411,14 +1444,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     setDeleteModalOpen(true);
   };
 
-  // TẦNG 1: Tự động lưu bản nháp vào LocalStorage sau khi người dùng thực sự chỉnh sửa (debounce 1.5s)
+  // TẦNG 1: Tự động lưu bản nháp vào LocalStorage theo từng đề riêng (debounce 2.5s sau khi ngừng chỉnh sửa)
   useEffect(() => {
-    if (!builderOpen || !isDirtyRef.current) return;
+    if (!builderOpen || !isDirtyRef.current || isLoadingTestDetail) return;
     if (!formTitle && (!formParts || formParts.length === 0)) return;
 
     const timer = setTimeout(() => {
       if (!isDirtyRef.current) return;
       try {
+        setAutoSaveState((prev) => ({ ...prev, status: 'saving' }));
+        const storageKey = getAutosaveStorageKey(builderMode, selectedTest?.id);
         const draftData = {
           testId: selectedTest?.id || null,
           builderMode,
@@ -1431,39 +1466,77 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           formParts,
           savedAt: new Date().toISOString(),
         };
-        localStorage.setItem(AUTOSAVE_STORAGE_KEY, JSON.stringify(draftData));
+        localStorage.setItem(storageKey, JSON.stringify(draftData));
         setAutoSaveState((prev) => ({
           status: prev.status === 'synced_server' ? 'synced_server' : 'saved',
           savedAt: new Date(),
         }));
       } catch {
         console.warn('Autosave could not be written to browser storage.');
+        setAutoSaveState((prev) => ({ ...prev, status: 'unsaved' }));
       }
-    }, 1500);
+    }, 2500);
 
     return () => clearTimeout(timer);
-  }, [AUTOSAVE_STORAGE_KEY, formTitle, formCoverImageUrl, formClearCoverImage, formStatus, formIsVip, formVipPriceVnd, formParts, builderMode, selectedTest?.id, builderOpen]);
+  }, [builderMode, builderOpen, formClearCoverImage, formCoverImageUrl, formIsVip, formParts, formStatus, formTitle, formVipPriceVnd, getAutosaveStorageKey, isLoadingTestDetail, selectedTest?.id]);
 
-  // Đóng modal an toàn: Cảnh báo người dùng nếu có thay đổi chưa lưu lên máy chủ CSDL
-  const handleCloseBuilder = async () => {
-    if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
-      const confirmClose = window.confirm(
-        'Bạn có những thay đổi chưa được lưu lên máy chủ CSDL. Bạn có muốn lưu trước khi đóng không?\n\n' +
-        '• [OK]: Lưu ngay lên máy chủ rồi đóng.\n' +
-        '• [Cancel]: Giữ bản nháp trên trình duyệt và đóng.'
-      );
-      if (confirmClose) {
-        try {
-          await handleSaveExam(null, formStatus, false, false);
-        } catch {
-          console.warn('Autosave could not be written to browser storage.');
-        }
+  // Khóa cuộn trang nền khi mở trình soạn thảo toàn màn hình (Fullscreen Exam Studio Workspace)
+  useEffect(() => {
+    if (!builderOpen) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [builderOpen]);
+
+  // Bảo vệ khi người dùng lỡ bấm F5 / đóng tab lúc đang có thay đổi chưa lưu lên máy chủ
+  useEffect(() => {
+    if (!builderOpen) return undefined;
+    const handleBeforeUnload = (e) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
       }
-    }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [builderOpen]);
+
+  const closeBuilderImmediately = useCallback(() => {
     editLoadRequestRef.current += 1;
     setActionLoading(false);
+    setIsLoadingTestDetail(false);
+    setCloseConfirmOpen(false);
     isDirtyRef.current = false;
+    setAutoSaveState({ status: 'idle', savedAt: null });
     setBuilderOpen(false);
+  }, []);
+
+  // Đóng trình soạn thảo an toàn: mở hộp thoại xác nhận 3 lựa chọn nếu còn thay đổi chưa lưu lên máy chủ
+  const handleCloseBuilder = () => {
+    if (actionLoading) return;
+    if (isDirtyRef.current) {
+      setCloseConfirmOpen(true);
+      return;
+    }
+    closeBuilderImmediately();
+  };
+
+  const handleSaveDraftAndClose = async () => {
+    setCloseConfirmOpen(false);
+    await handleSaveExam(null, 'DRAFT', false, false);
+  };
+
+  const handleDiscardAndClose = () => {
+    try {
+      localStorage.removeItem(getAutosaveStorageKey(builderMode, selectedTest?.id));
+      localStorage.removeItem(AUTOSAVE_STORAGE_KEY);
+    } catch {
+      // Ignore storage removal errors
+    }
+    setRecoverableDraft(null);
+    closeBuilderImmediately();
   };
 
   // Submit Exam Builder (Create / Edit)
@@ -5496,115 +5569,145 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       </div>
 
       {/* ========================================================================= */}
-      {/* COMPREHENSIVE TOEIC EXAM BUILDER MODAL (CREATE & EDIT)                    */}
+      {/* FULLSCREEN TOEIC EXAM BUILDER WORKSPACE (CREATE & EDIT — NO BACKDROP)     */}
       {/* ========================================================================= */}
-      <Modal
-        isOpen={builderOpen}
-        onClose={handleCloseBuilder}
-        className="test-builder-modal"
-        title={
-          builderMode === 'create'
-            ? (classroomId ? 'Soạn thảo đề TOEIC riêng cho lớp học' : 'Soạn thảo & Khởi tạo đề thi TOEIC mới')
-            : `Chỉnh sửa & Cập nhật đề thi: ${formTitle || selectedTest?.titleTest || 'Đang tải đề…'}`
-        }
-        maxWidth="1160px"
-      >
-        <form onSubmit={handleSaveExam} noValidate className="test-builder-form flex flex-col gap-5">
-          {/* STICKY QUICK ACTION & AUTOSAVE STATUS BAR */}
-          <div className="test-builder-toolbar sticky top-0 z-40 flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-[2px] border border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8] inline-flex items-center gap-1.5">
-                {builderMode === 'create' ? (
-                  <>
-                    <PlusCircle size={13} /> Đề mới
-                  </>
-                ) : (
-                  <>
-                    <Edit2 size={13} /> Chỉnh sửa đề
-                  </>
-                )}
-              </span>
-
-              <span className="text-sm font-semibold text-[#111111] truncate max-w-[280px]">
-                {formTitle || 'Chưa đặt tên đề thi'}
-              </span>
-
-              <span
-                className={`text-xs font-semibold px-2.5 py-1 rounded-[2px] border inline-flex items-center gap-1 ${formStatus === 'PUBLISHED'
-                  ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                  : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
-                  }`}
-              >
-                {formStatus === 'PUBLISHED' ? (
-                  <>
-                    <CheckCircle2 size={12} /> Trạng thái: Xuất bản
-                  </>
-                ) : (
-                  <>
-                    <Clock size={12} /> Trạng thái: Bản nháp
-                  </>
-                )}
-              </span>
-
-              {/* Trạng thái Auto-Save Đa Tầng */}
-              {autoSaveState.status === 'saving' && (
-                <span className="text-xs text-[#4B5563] flex items-center gap-1.5 font-medium">
-                  <RefreshCw size={12} className="animate-spin" /> Đang lưu bản nháp...
-                </span>
-              )}
-              {autoSaveState.status === 'saved' && autoSaveState.savedAt && (
-                <span
-                  className="text-xs text-[#4B5563] flex items-center gap-1 font-medium"
-                  title="Bản nháp được lưu tự động vào bộ nhớ trình duyệt"
-                >
-                  <Check size={13} className="text-[#1D4ED8]" /> Lưu tạm trình duyệt lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
-                </span>
-              )}
-              {autoSaveState.status === 'synced_server' && autoSaveState.savedAt && (
-                <span
-                  className="text-xs text-[#1D4ED8] bg-[#EFF6FF] border border-[#BFDBFE] px-2.5 py-0.5 rounded-[2px] flex items-center gap-1 font-semibold"
-                  title="Dữ liệu đã được đồng bộ an toàn lên cơ sở dữ liệu máy chủ"
-                >
-                  <CheckCircle2 size={12} className="text-[#1D4ED8]" /> Đã lưu máy chủ lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              {builderMode === 'edit' && (
+      {builderOpen && (
+        <div
+          className="test-builder-modal test-builder-fullscreen"
+          role="region"
+          aria-label={
+            builderMode === 'create'
+              ? (classroomId ? 'Soạn thảo đề TOEIC riêng cho lớp học' : 'Soạn thảo & Khởi tạo đề thi TOEIC mới')
+              : `Chỉnh sửa & Cập nhật đề thi: ${formTitle || selectedTest?.titleTest || 'Đang tải đề…'}`
+          }
+        >
+          {/* FIXED FULLSCREEN TOP WORKSPACE BAR */}
+          <header className="test-builder-fullscreen-header">
+            <div className="test-builder-fullscreen-header-inner">
+              <div className="flex items-center gap-3 min-w-0 flex-wrap">
                 <button
                   type="button"
-                  onClick={handleReloadFromServer}
+                  onClick={handleCloseBuilder}
                   disabled={actionLoading}
-                  title="Tải lại toàn bộ dữ liệu mới nhất từ máy chủ"
-                  className="px-3 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer shrink-0"
+                  title="Quay lại danh sách đề thi"
                 >
-                  <RotateCcw size={13} className="text-[#4B5563]" />
-                  Tải lại từ máy chủ
+                  <ArrowLeft size={14} />
+                  <span>Quay lại danh sách</span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => handleSaveExam(null, 'DRAFT', true)}
-                disabled={actionLoading}
-                title="Lưu bản nháp"
-                className="px-3.5 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <Clock size={13} className="text-[#4B5563]" />
-                {actionLoading ? 'Đang lưu...' : 'Lưu nháp máy chủ (Ctrl+S)'}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSaveExam(null, 'PUBLISHED', false)}
-                disabled={actionLoading}
-                title="Kiểm tra và xuất bản đề thi lên hệ thống"
-                className="px-4 py-1.5 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <CheckCircle2 size={13} />
-                {builderMode === 'edit' ? 'Cập nhật & Xuất bản' : 'Xuất bản đề thi'}
-              </button>
+
+                <div className="h-5 w-[1px] bg-[#D1D5DB] hidden sm:block shrink-0" />
+
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-[2px] border border-[#BFDBFE] bg-[#EFF6FF] text-[#1D4ED8] inline-flex items-center gap-1.5 shrink-0">
+                  {builderMode === 'create' ? (
+                    <>
+                      <PlusCircle size={13} /> Đề mới
+                    </>
+                  ) : (
+                    <>
+                      <Edit2 size={13} /> Chỉnh sửa đề
+                    </>
+                  )}
+                </span>
+
+                <h2 className="m-0 text-base font-bold text-[#111111] truncate max-w-[320px]">
+                  {formTitle || selectedTest?.titleTest || (classroomId ? 'Đề TOEIC riêng cho lớp học' : 'Đề thi TOEIC mới')}
+                </h2>
+
+                <span
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-[2px] border inline-flex items-center gap-1 shrink-0 ${formStatus === 'PUBLISHED'
+                    ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                    : 'bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]'
+                    }`}
+                >
+                  {formStatus === 'PUBLISHED' ? (
+                    <>
+                      <CheckCircle2 size={12} /> Xuất bản
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={12} /> Bản nháp
+                    </>
+                  )}
+                </span>
+
+                {/* Trạng thái nạp dữ liệu & Auto-Save chính xác */}
+                {isLoadingTestDetail ? (
+                  <span className="text-xs text-[#1D4ED8] flex items-center gap-1.5 font-medium">
+                    <RefreshCw size={12} className="animate-spin" /> Đang tải chi tiết đề...
+                  </span>
+                ) : autoSaveState.status === 'saving' ? (
+                  <span className="text-xs text-[#4B5563] flex items-center gap-1.5 font-medium">
+                    <RefreshCw size={12} className="animate-spin" /> Đang lưu tạm...
+                  </span>
+                ) : autoSaveState.status === 'unsaved' ? (
+                  <span
+                    className="text-xs text-[#B45309] flex items-center gap-1.5 font-medium"
+                    title="Có thay đổi mới, sẽ tự lưu tạm trình duyệt sau vài giây ngừng gõ"
+                  >
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#D97706]" /> Có thay đổi chưa lưu
+                  </span>
+                ) : autoSaveState.status === 'saved' && autoSaveState.savedAt ? (
+                  <span
+                    className="text-xs text-[#4B5563] flex items-center gap-1 font-medium"
+                    title="Bản nháp được lưu tự động vào bộ nhớ trình duyệt theo từng đề"
+                  >
+                    <Check size={13} className="text-[#1D4ED8]" /> Lưu tạm lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                  </span>
+                ) : autoSaveState.status === 'synced_server' && autoSaveState.savedAt ? (
+                  <span
+                    className="text-xs text-[#1D4ED8] bg-[#EFF6FF] border border-[#BFDBFE] px-2.5 py-0.5 rounded-[2px] flex items-center gap-1 font-semibold"
+                    title="Dữ liệu đã được đồng bộ an toàn lên cơ sở dữ liệu máy chủ"
+                  >
+                    <CheckCircle2 size={12} className="text-[#1D4ED8]" /> Đã lưu máy chủ lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                  </span>
+                ) : (
+                  <span className="text-xs text-[#6B7280] font-medium hidden md:inline">
+                    Sẵn sàng soạn thảo
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {builderMode === 'edit' && (
+                  <button
+                    type="button"
+                    onClick={handleReloadFromServer}
+                    disabled={actionLoading || isLoadingTestDetail}
+                    title="Tải lại toàn bộ dữ liệu mới nhất từ máy chủ"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw size={13} className="text-[#4B5563]" />
+                    Tải lại từ máy chủ
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleSaveExam(null, 'DRAFT', true)}
+                  disabled={actionLoading || isLoadingTestDetail}
+                  title="Lưu bản nháp lên máy chủ và tiếp tục soạn thảo"
+                  className="px-3.5 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Clock size={13} className="text-[#4B5563]" />
+                  {actionLoading ? 'Đang lưu...' : 'Lưu nháp máy chủ (Ctrl+S)'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveExam(null, 'PUBLISHED', false)}
+                  disabled={actionLoading || isLoadingTestDetail}
+                  title="Kiểm tra và xuất bản đề thi lên hệ thống"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 size={13} />
+                  {builderMode === 'edit' ? 'Cập nhật & Xuất bản' : 'Xuất bản đề thi'}
+                </button>
+              </div>
             </div>
-          </div>
+          </header>
+
+          {/* FULLSCREEN SCROLLABLE WORKSPACE BODY */}
+          <div className="test-builder-fullscreen-body">
+            <form onSubmit={handleSaveExam} noValidate className="test-builder-form test-builder-fullscreen-container flex flex-col gap-5">
 
           {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
           {recoverableDraft && (
@@ -6569,13 +6672,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 disabled={actionLoading}
                 onClick={handleCloseBuilder}
               >
-                Đóng cửa sổ
+                Quay lại danh sách
               </button>
               <button
                 type="button"
                 onClick={() => handleSaveExam(null, 'DRAFT', true)}
                 className="px-4 py-2 rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all"
-                disabled={actionLoading}
+                disabled={actionLoading || isLoadingTestDetail}
                 title="Lưu nháp lên máy chủ và tiếp tục làm việc"
               >
                 <Clock size={14} className="text-[#4B5563]" />
@@ -6584,7 +6687,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               <button
                 type="submit"
                 className="px-5 py-2 rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] inline-flex items-center gap-2 text-xs font-semibold cursor-pointer transition-all"
-                disabled={actionLoading}
+                disabled={actionLoading || isLoadingTestDetail}
               >
                 <Save size={15} />
                 {actionLoading
@@ -6595,7 +6698,50 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               </button>
             </div>
           </div>
-        </form>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SAFE EXIT CONFIRMATION MODAL (3 OPTIONS WHEN UNSAVED CHANGES EXIST) */}
+      <Modal
+        isOpen={closeConfirmOpen}
+        onClose={() => setCloseConfirmOpen(false)}
+        title="Bạn có thay đổi chưa lưu lên máy chủ"
+        maxWidth="500px"
+      >
+        <div className="py-2">
+          <p className="m-0 mb-4 text-sm text-[#374151] leading-relaxed">
+            Đề thi <strong>"{formTitle || selectedTest?.titleTest || 'Chưa đặt tên'}"</strong> đang có nội dung mới chưa được lưu lên cơ sở dữ liệu máy chủ. Bạn muốn xử lý như thế nào trước khi rời trình soạn thảo?
+          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
+            <button
+              type="button"
+              onClick={handleDiscardAndClose}
+              disabled={actionLoading}
+              className="px-3.5 py-2 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA] cursor-pointer transition-all"
+            >
+              Thoát không lưu
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveDraftAndClose}
+              disabled={actionLoading}
+              className="px-3.5 py-2 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] cursor-pointer transition-all inline-flex items-center justify-center gap-1.5"
+            >
+              <Clock size={13} className="text-[#4B5563]" />
+              Lưu nháp & Quay lại
+            </button>
+            <button
+              type="button"
+              onClick={() => setCloseConfirmOpen(false)}
+              disabled={actionLoading}
+              className="px-4 py-2 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] cursor-pointer transition-all"
+            >
+              Tiếp tục soạn thảo
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* DELETE CONFIRMATION MODAL */}

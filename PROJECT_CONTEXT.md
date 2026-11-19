@@ -61,7 +61,7 @@
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
 - **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion`; tài khoản bị khóa trả `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC RS256/JWK; khóa bi quan dùng native `SELECT ... FOR UPDATE`; rate limit lưu hash bucket trong `auth_login_attempt`; audit lưu `audit_event`.
 - **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql` (đồng bộ 22 bảng, tích hợp PayOS và 20 bộ đề `PUBLISHED`: `ETS TOEIC 2026 - TEST 01..10` & `YBM TOEIC 2026 - TEST 01..10`); nâng cấp DB hiện có dùng `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
-- **Trạng thái kiểm chứng gần nhất (2026-11-16)**:
-  - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml compile -DskipTests` (biên dịch toàn bộ 179 file Java): **PASS (exit 0, 0 warnings/errors)** *(lưu ý `mvnw clean` trước đó không xóa được một thư mục trong `target/classes` do đang có tiến trình khóa file; đã chạy lại `compile` trực tiếp thành công)*.
+- **Trạng thái kiểm chứng gần nhất (2026-11-19)**:
+  - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml compile -DskipTests` (2026-11-16, toàn bộ 179 file Java): **PASS (exit 0, 0 warnings/errors)** *(chưa chạy lại backend ở đợt chỉ sửa frontend 2026-11-19)*.
   - Frontend `npm --prefix frontend run lint` (oxlint, 56 files / 102 rules): **PASS (exit 0, 0 errors; 0 warnings ở các file sửa, 2 warnings sẵn có ở `Footer.jsx`)**.
   - Frontend `npm --prefix frontend run build` (Vite 8.3.6): **PASS (exit 0)**.

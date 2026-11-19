@@ -869,6 +869,57 @@
   overflow: hidden;
 }
 
+.app-shell .test-builder-modal.test-builder-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 900 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #F8FAFC !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.app-shell .test-builder-fullscreen .test-builder-fullscreen-header {
+  flex: 0 0 auto;
+  background: #FFFFFF !important;
+  background-image: none !important;
+  border-bottom: 1px solid #D1D5DB !important;
+  padding: 12px 24px !important;
+  z-index: 40;
+}
+
+.app-shell .test-builder-fullscreen .test-builder-fullscreen-header-inner {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.app-shell .test-builder-fullscreen .test-builder-fullscreen-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  background: #F8FAFC !important;
+  background-image: none !important;
+  padding: 24px 24px 48px !important;
+}
+
+.app-shell .test-builder-fullscreen .test-builder-fullscreen-container {
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 .app-shell .test-builder-modal .modal-header {
   flex: 0 0 auto;
   padding: 18px 28px !important;
@@ -996,6 +1047,9 @@
 
 @media (max-width: 700px) {
   .app-shell .test-builder-modal { width: calc(100vw - 16px) !important; max-height: 96dvh !important; }
+  .app-shell .test-builder-modal.test-builder-fullscreen { width: 100vw !important; max-width: 100vw !important; height: 100dvh !important; max-height: 100dvh !important; }
+  .app-shell .test-builder-fullscreen .test-builder-fullscreen-header { padding: 10px 14px !important; }
+  .app-shell .test-builder-fullscreen .test-builder-fullscreen-body { padding: 14px 14px 36px !important; }
   .app-shell .test-builder-modal .modal-header,
   .app-shell .test-builder-modal .modal-body { padding: 14px !important; }
   .app-shell .test-builder-modal .test-builder-toolbar { position: static; margin: 0 -14px !important; padding: 12px 14px !important; }

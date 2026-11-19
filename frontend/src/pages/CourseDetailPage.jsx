@@ -825,7 +825,7 @@ const CourseDetailPage = () => {
                     className="h-12 w-12 shrink-0 rounded-xl border border-amber-200 bg-white object-contain p-1"
                   />
                   <p className="text-[14px] leading-relaxed font-normal text-amber-900">
-                    <strong className="font-semibold">🐾 Nuna mách nhỏ:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực 120 phút. Nộp bài xong nhớ gọi Nuna chữa câu sai nhé!
+                    <strong className="font-semibold">Nuna nói nhỏ cho nghe:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực 120 phút. Nộp bài xong nhớ gọi Nuna chữa câu sai nhé!
                   </p>
                 </div>
 
@@ -902,14 +902,14 @@ const CourseDetailPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
                   <div className="space-y-2">
                     <label className="block text-[14px] font-semibold text-slate-700">
-                      Giới hạn thời gian <span className="font-normal text-slate-500">(Để trống để làm không giới hạn)</span>
+                      Giới hạn thời gian
                     </label>
                     <select
                       value={timeLimit}
                       onChange={(e) => setTimeLimit(e.target.value)}
                       className="course-detail-select w-full px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
                     >
-                      <option value="">-- Chọn thời gian (Không giới hạn) --</option>
+                      <option value="">Chọn thời gian (Không giới hạn) </option>
                       <option value="5">5 phút</option>
                       <option value="10">10 phút</option>
                       <option value="15">15 phút</option>
@@ -1334,8 +1334,8 @@ const CourseDetailPage = () => {
                                 <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
                                   <span
                                     className={`inline-flex items-center px-2.5 py-0.5 text-[13px] font-medium rounded-[2px] border whitespace-nowrap leading-snug tabular-nums ${isFullTestAttempt
-                                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-blue-200'
-                                        : 'bg-amber-50/90 text-amber-800 border-amber-200'
+                                      ? 'bg-[#EFF6FF] text-[#1D4ED8] border-blue-200'
+                                      : 'bg-amber-50/90 text-amber-800 border-amber-200'
                                       }`}
                                   >
                                     {badgeLabel}
