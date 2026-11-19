@@ -142,11 +142,11 @@ public class ExamController {
 
     @PostMapping("/classrooms/{classroomId}/tests")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<ApiResponse<Void>> createClassroomTest(
+    public ResponseEntity<ApiResponse<String>> createClassroomTest(
             @AuthenticationPrincipal User teacher, @PathVariable String classroomId,
             @Valid @RequestBody CreateTestRequest request) {
-        examService.createClassroomTest(teacher, classroomId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Đã tạo đề riêng cho lớp"));
+        String createdId = examService.createClassroomTest(teacher, classroomId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Đã tạo đề riêng cho lớp", createdId));
     }
 
     @PutMapping("/classrooms/{classroomId}/tests/{testId}")
@@ -236,12 +236,12 @@ public class ExamController {
     }
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> createFullTest(
+    public ResponseEntity<ApiResponse<String>> createFullTest(
             @AuthenticationPrincipal User admin, @Valid @RequestBody CreateTestRequest request){
-        examService.createFullTest(admin, request);
+        String createdId = examService.createFullTest(admin, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Tạo đề thi thành công"));
+                .body(ApiResponse.success("Tạo đề thi thành công", createdId));
     }
 
     @PutMapping("/update/{testID}")

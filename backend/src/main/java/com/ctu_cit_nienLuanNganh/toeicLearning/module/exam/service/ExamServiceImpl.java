@@ -140,7 +140,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Transactional
-    public void createClassroomTest(User teacher, String classroomId, CreateTestRequest request) {
+    public String createClassroomTest(User teacher, String classroomId, CreateTestRequest request) {
         Classroom classroom = requireTeacherClassroom(teacher, classroomId);
         validateCoverImageUrl(request.getCoverImageUrl());
         validatePrivateAssets(teacher, request, null);
@@ -154,6 +154,7 @@ public class ExamServiceImpl implements ExamService {
         Test savedTest = testRepository.save(test);
         saveTestDetail(savedTest, request);
         auditEventService.record(teacher, "CLASS_TEST_CREATED", "TEST", savedTest.getId(), "status=" + status);
+        return savedTest.getId();
     }
 
     @Transactional
@@ -361,7 +362,7 @@ public class ExamServiceImpl implements ExamService {
 
 
     @Transactional
-    public void createFullTest(User admin, CreateTestRequest request){
+    public String createFullTest(User admin, CreateTestRequest request){
         validateCoverImageUrl(request.getCoverImageUrl());
         validatePrivateAssets(admin, request, null);
         TestStatus status = request.getStatus() != null ? request.getStatus() : TestStatus.DRAFT;
@@ -377,6 +378,7 @@ public class ExamServiceImpl implements ExamService {
         Test savedTest = testRepository.save(test);
         saveTestDetail(savedTest, request);
         auditEventService.record(admin, "SYSTEM_TEST_CREATED", "TEST", savedTest.getId(), "status=" + status);
+        return savedTest.getId();
     }
 
     @Transactional

@@ -625,6 +625,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   const editLoadRequestRef = useRef(0);
   const [isLoadingTestDetail, setIsLoadingTestDetail] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+  const [incompletePublishInfo, setIncompletePublishInfo] = useState(null);
   const [autoSaveState, setAutoSaveState] = useState({
     status: 'idle', // 'idle' | 'unsaved' | 'saving' | 'saved' | 'synced_server'
     savedAt: null,
@@ -1038,12 +1039,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     setActionLoading(false);
     setIsLoadingTestDetail(false);
     setCloseConfirmOpen(false);
+    setIncompletePublishInfo(null);
     isDirtyRef.current = false;
     setAutoSaveState({ status: 'idle', savedAt: null });
     setBuilderMode('create');
     setSelectedTest(null);
     editPartsBaselineRef.current = { testId: null, serialized: null };
-    setFormTitle(classroomId ? 'Đề TOEIC riêng của lớp' : `ETS TOEIC 2026 - Test ${(totalElements + 1).toString().padStart(2, '0')}`);
+    setFormTitle('');
     setFormCoverImageUrl('');
     setCoverImagePreviewUrl('');
     setFormClearCoverImage(false);
@@ -1075,7 +1077,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           });
           setToast({
             type: 'info',
-            message: `✓ Đã tự động khôi phục bản nháp đang soạn thảo lúc ${new Date(parsed.savedAt).toLocaleTimeString('vi-VN')}!`,
+            message: `Đã khôi phục bản nháp lưu lúc ${new Date(parsed.savedAt).toLocaleTimeString('vi-VN')}.`,
           });
         } else {
           setRecoverableDraft(null);
@@ -1086,13 +1088,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     } catch {
       setRecoverableDraft(null);
     }
-  }, [AUTOSAVE_STORAGE_KEY, classroomId, classroomScope, getAutosaveStorageKey, totalElements]);
+  }, [AUTOSAVE_STORAGE_KEY, classroomScope, getAutosaveStorageKey]);
 
   // Open Edit Builder
   const handleOpenEditModal = useCallback(async (test, targetClassroomId = classroomScope) => {
     const requestId = ++editLoadRequestRef.current;
     setBuilderMode('edit');
     setCloseConfirmOpen(false);
+    setIncompletePublishInfo(null);
     isDirtyRef.current = false;
     setIsLoadingTestDetail(true);
     setAutoSaveState({ status: 'idle', savedAt: null });
@@ -1541,8 +1544,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
   // Submit Exam Builder (Create / Edit)
   // forcedStatus: 'DRAFT' | 'PUBLISHED' | null
-  // keepOpen: boolean - nếu true thì giữ nguyên modal để tiếp tục nhập liệu
-  // isSilent: boolean - nếu true thì không bắn Toast (dùng cho Auto-Sync ngầm máy chủ)
+  // keepOpen: boolean - nếu true thì giữ nguyên trình soạn thảo để tiếp tục nhập liệu
+  // isSilent: boolean - nếu true thì không hiển thị Toast
   const handleSaveExam = useCallback(async (e, forcedStatus = null, keepOpen = false, isSilent = false) => {
     if (e && e.preventDefault) e.preventDefault();
 
@@ -1552,40 +1555,70 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       return;
     }
     if (builderMode === 'edit' && !selectedTest?.id) {
-      if (!isSilent) setToast({ type: 'error', message: 'Chưa nạp được mã đề thi. Hãy đóng hộp thoại và mở lại đề.' });
+      if (!isSilent) setToast({ type: 'error', message: 'Chưa nạp được mã đề thi. Vui lòng mở lại đề thi.' });
       return;
     }
 
     let targetStatus = forcedStatus || formStatus;
+    let effectiveTitle = (formTitle || '').trim();
 
-    if (!formTitle?.trim()) {
-      if (!isSilent) setToast({ type: 'error', message: 'Vui lòng nhập tên đề thi!' });
-      return;
+    if (!effectiveTitle) {
+      if (targetStatus === 'DRAFT') {
+        effectiveTitle = classroomId ? 'Đề lớp chưa đặt tên' : 'Đề thi chưa đặt tên';
+        setFormTitle(effectiveTitle);
+      } else {
+        if (!isSilent) setToast({ type: 'error', message: 'Vui lòng nhập tên đề thi trước khi xuất bản.' });
+        return;
+      }
     }
 
     if (!classroomId && formIsVip && (!/^\d+$/.test(String(formVipPriceVnd))
       || Number(formVipPriceVnd) < 1 || Number(formVipPriceVnd) > 99999999)) {
-      if (!isSilent) setToast({ type: 'error', message: 'Đề VIP cần có giá nguyên VND từ 1 đến 99.999.999.' });
+      if (!isSilent) setToast({ type: 'error', message: 'Đề VIP cần có mức giá hợp lệ từ 1 đến 99.999.999 VNĐ.' });
       return;
     }
 
     if (!formParts || formParts.length === 0) {
-      if (!isSilent) setToast({ type: 'error', message: 'Bộ đề thi phải có ít nhất 1 phần (Part)!' });
+      if (!isSilent) setToast({ type: 'error', message: 'Đề thi cần có ít nhất 1 phần (Part).' });
       return;
     }
 
-    // Nếu người dùng chọn Xuất bản (PUBLISHED), kiểm tra xem có câu hỏi hoặc đoạn văn nào bị bỏ trống không
+    // Nếu người dùng chọn Xuất bản (PUBLISHED), kiểm tra đầy đủ điều kiện giống hệt Backend validatePublishableTest
     if (targetStatus === 'PUBLISHED') {
       let emptyQuestionsCount = 0;
       let missingPassagesCount = 0;
+      let invalidPart7Passages = 0;
+      let invalidClusterCount = 0;
+      const exceededParts = [];
+
       for (const part of formParts) {
         const pNum = part.partNumber;
-        if (pNum !== 1 && pNum !== 2) {
-          for (const cq of part.contextQuestions || []) {
+        const maxPartQuestions = ETS_STRUCTURE_SPECS[pNum]?.standardQuestions || 200;
+        let partQTotal = 0;
+
+        for (const cq of part.contextQuestions || []) {
+          const qList = cq.questions || [];
+          const qCount = qList.length;
+          partQTotal += qCount;
+
+          if ((pNum === 1 || pNum === 2) && qCount !== 1) {
+            invalidClusterCount++;
+          } else if ((pNum === 3 || pNum === 4) && qCount !== 3) {
+            invalidClusterCount++;
+          } else if (pNum === 7 && (qCount < 1 || qCount > 5)) {
+            invalidClusterCount++;
+          }
+
+          if (pNum !== 1 && pNum !== 2) {
             if ((pNum === 6 || pNum === 7) && !cq.paragraph?.trim()) {
               missingPassagesCount++;
+            } else if (pNum === 7 && cq.paragraph?.trim()) {
+              const segments = cq.paragraph.split(/^[ \t]*---[ \t]*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)[ \t]*[0-9]+[ \t]*---[ \t]*$/im);
+              if (segments.some((seg) => !seg.trim())) {
+                invalidPart7Passages++;
+              }
             }
-            for (const q of cq.questions || []) {
+            for (const q of qList) {
               if (
                 (pNum !== 6 && !q.questionContent?.trim()) ||
                 !q.optionA?.trim() ||
@@ -1598,9 +1631,30 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             }
           }
         }
+
+        if (partQTotal > maxPartQuestions) {
+          exceededParts.push(`Part ${pNum} (${partQTotal}/${maxPartQuestions} câu)`);
+        }
       }
 
-      if (emptyQuestionsCount > 0 || missingPassagesCount > 0) {
+      if (exceededParts.length > 0 || invalidClusterCount > 0) {
+        const errReasons = [];
+        if (exceededParts.length > 0) {
+          errReasons.push(`vượt quá số câu tối đa ở ${exceededParts.join(', ')}`);
+        }
+        if (invalidClusterCount > 0) {
+          errReasons.push('có cụm câu hỏi chưa đúng quy cách (Part 1–2: 1 câu/cụm, Part 3–4: 3 câu/đoạn, Part 7: 1–5 câu/bài)');
+        }
+        if (!isSilent) {
+          setToast({
+            type: 'error',
+            message: `Chưa thể xuất bản do ${errReasons.join('; ')}. Bạn có thể lưu thành Bản nháp trước.`,
+          });
+        }
+        return;
+      }
+
+      if (emptyQuestionsCount > 0 || missingPassagesCount > 0 || invalidPart7Passages > 0) {
         if (isSilent) {
           if (builderMode === 'create' || selectedTest?.status === 'DRAFT') {
             targetStatus = 'DRAFT';
@@ -1608,18 +1662,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             return;
           }
         } else {
-          const detailMsg = [
-            emptyQuestionsCount > 0 ? `${emptyQuestionsCount} câu hỏi chưa điền đủ nội dung hoặc phương án` : null,
-            missingPassagesCount > 0 ? `${missingPassagesCount} đoạn văn đọc hiểu (Part 6/7) đang để trống` : null,
-          ].filter(Boolean).join(' và ');
-          const confirmSaveAsDraft = window.confirm(
-            `Phát hiện có ${detailMsg}.\n\n` +
-            `Khuyên dùng: Bạn có muốn lưu dưới dạng Bản nháp (Draft) để tiếp tục bổ sung sau không?\n\n` +
-            `• Nhấn [OK]: Chuyển sang Bản nháp (Draft) và lưu ngay lập tức.\n` +
-            `• Nhấn [Cancel]: Ở lại chỉnh sửa tiếp.`
-          );
-          if (!confirmSaveAsDraft) return;
-          targetStatus = 'DRAFT';
+          const reasons = [
+            emptyQuestionsCount > 0 ? `${emptyQuestionsCount} câu hỏi chưa điền đủ nội dung hoặc 4 đáp án A, B, C, D` : null,
+            missingPassagesCount > 0 ? `${missingPassagesCount} bài đọc (Part 6/7) chưa có nội dung đoạn văn` : null,
+            invalidPart7Passages > 0 ? `${invalidPart7Passages} bài đọc ghép (Part 7) còn để trống một trong các văn bản` : null,
+          ].filter(Boolean);
+          setIncompletePublishInfo({
+            reasons,
+            keepOpen,
+          });
+          return;
         }
       }
     }
@@ -1627,8 +1679,6 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     saveInFlightRef.current = true;
     try {
       setActionLoading(true);
-      // Clean payload: Đảm bảo Part 2 không mang theo dữ liệu thừa của Option D
-      // Đồng thời gắn orderIndex (số câu bắt đầu của cụm: 1..6, 7..31, 32, 35, 38...) và questionNumber (1..200)
       const getPartStartNumber = (pNum) => {
         switch (pNum) {
           case 1: return 1;
@@ -1647,7 +1697,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
         const processedContextQuestions = (part.contextQuestions || []).map((cq) => {
           const { _seqIndex, ...cleanCq } = cq;
-          const cleanParagraph = (cleanCq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '').trim();
+          let cleanParagraph = (cleanCq.paragraph || '').replace(/<!--CQ_SEQ:[^>]+-->\n?/, '');
+          if (part.partNumber === 7 && cleanParagraph) {
+            const cleanedSegments = cleanParagraph
+              .split(/^[ \t]*---[ \t]*(?:BÀI ĐỌC|VĂN BẢN|PASSAGE)[ \t]*[0-9]+[ \t]*---[ \t]*$/im)
+              .map((s) => s.trim())
+              .filter(Boolean);
+            cleanParagraph = cleanedSegments
+              .map((seg, idx) => (idx === 0 ? seg : `--- BÀI ĐỌC ${idx + 1} ---\n\n${seg}`))
+              .join('\n\n');
+          } else {
+            cleanParagraph = cleanParagraph.trim();
+          }
           const startQOfContext = runningQNum;
 
           const rawTranscriptText = (cleanCq.transcript || '').trim();
@@ -1667,24 +1728,21 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             let corrAns = q.correctAnswer || 'A';
 
             if (part.partNumber === 1) {
-              // Part 1 theo chuẩn ETS: Thí sinh nhìn hình và nghe audio, đề thi KHÔNG in câu hỏi chữ
               if (!qContent) {
                 qContent = 'Select the statement that best describes what you see in the picture.';
               }
-              // 4 đáp án Part 1 luôn luôn là 4 giá trị (A), (B), (C), (D) cố định
               optA = '(A)';
               optB = '(B)';
               optC = '(C)';
               optD = '(D)';
             } else if (part.partNumber === 2) {
-              // Part 2 theo chuẩn ETS: Câu hỏi và 3 câu đáp án nằm hoàn toàn trong audio
               if (!qContent) {
                 qContent = 'Mark your answer on your answer sheet.';
               }
               optA = '(A)';
               optB = '(B)';
               optC = '(C)';
-              optD = ''; // Part 2 ETS tuyệt đối KHÔNG có lựa chọn D!
+              optD = '';
               if (corrAns === 'D') {
                 corrAns = 'A';
               }
@@ -1722,7 +1780,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       });
 
       const payload = {
-        titleTest: formTitle.trim(),
+        titleTest: effectiveTitle,
         coverImageUrl: formCoverImageUrl.trim() || null,
         clearCoverImage: formClearCoverImage,
         status: targetStatus,
@@ -1742,7 +1800,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           if (!isSilent) {
             setToast({
               type: 'success',
-              message: `Tạo bộ đề thi "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+              message: `Đã lưu đề thi "${effectiveTitle}" (${targetStatus === 'PUBLISHED' ? 'Xuất bản' : 'Bản nháp'}).`,
             });
           }
           setAutoSaveState({
@@ -1751,23 +1809,36 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           });
           setFormStatus(targetStatus);
           if (keepOpen) {
-            // Chuyển sang edit mode và lấy ID của test vừa tạo
+            const createdId = typeof res.data === 'string' ? res.data : res.data?.id;
             await fetchTests(false);
-            const updatedRes = classroomId
-              ? await examService.getClassroomTests(classroomId, 1, 100)
-              : await examService.getAdminTests(1, 10, formTitle.trim(), 'createdAt', 'DESC', targetStatus);
-            if (updatedRes?.code === 1000 && updatedRes?.data?.content?.length > 0) {
-              const matchedTest = updatedRes.data.content.find((t) => t.titleTest === formTitle.trim()) || updatedRes.data.content[0];
-              setSelectedTest(matchedTest);
+            if (createdId) {
+              setSelectedTest({
+                id: createdId,
+                titleTest: effectiveTitle,
+                coverImageUrl: formCoverImageUrl.trim() || null,
+                status: targetStatus,
+                isVip: formIsVip,
+                vipPriceVnd: formIsVip && !classroomId ? Number(formVipPriceVnd) : null,
+              });
               setBuilderMode('edit');
-              editPartsBaselineRef.current = { testId: matchedTest.id, serialized: JSON.stringify(formParts) };
+              editPartsBaselineRef.current = { testId: createdId, serialized: JSON.stringify(formParts) };
+            } else {
+              const updatedRes = classroomId
+                ? await examService.getClassroomTests(classroomId, 1, 100)
+                : await examService.getAdminTests(1, 10, effectiveTitle, 'createdAt', 'DESC', targetStatus);
+              if (updatedRes?.code === 1000 && updatedRes?.data?.content?.length > 0) {
+                const matchedTest = updatedRes.data.content.find((t) => t.titleTest === effectiveTitle) || updatedRes.data.content[0];
+                setSelectedTest(matchedTest);
+                setBuilderMode('edit');
+                editPartsBaselineRef.current = { testId: matchedTest.id, serialized: JSON.stringify(formParts) };
+              }
             }
           } else {
             setBuilderOpen(false);
             fetchTests(false);
           }
         } else {
-          if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể tạo đề thi.' });
+          if (!isSilent) setToast({ type: 'error', message: res.message || 'Không thể lưu đề thi.' });
         }
       } else {
         const baseline = editPartsBaselineRef.current;
@@ -1778,7 +1849,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           ? await examService.updateClassroomTest(classroomId, selectedTest.id, payload)
           : metadataOnly
             ? await examService.updateTestMetadata(selectedTest.id, {
-              titleTest: formTitle.trim(),
+              titleTest: effectiveTitle,
               coverImageUrl: formCoverImageUrl.trim() || null,
               clearCoverImage: formClearCoverImage,
               status: targetStatus,
@@ -1793,17 +1864,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           if (!isSilent) {
             setToast({
               type: 'success',
-              message: `${metadataOnly ? 'Cập nhật thông tin đề' : 'Cập nhật nội dung đề'} "${formTitle.trim()}" (${targetStatus === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}) thành công!`,
+              message: `Đã cập nhật đề thi "${effectiveTitle}" (${targetStatus === 'PUBLISHED' ? 'Xuất bản' : 'Bản nháp'}).`,
             });
           }
           setAutoSaveState({
             status: 'synced_server',
             savedAt: new Date(),
           });
-          isDirtyRef.current = false;
           setSelectedTest((current) => current ? {
             ...current,
-            titleTest: formTitle.trim(),
+            titleTest: effectiveTitle,
             coverImageUrl: formClearCoverImage ? null : (formCoverImageUrl.trim() || current.coverImageUrl),
             status: targetStatus,
             isVip: formIsVip,
@@ -1826,8 +1896,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       const msg =
         err.response?.data?.message ||
         (Number(err.response?.data?.code) === 3010
-          ? 'Đề đã có lịch sử nên không thể thay đổi câu hỏi hoặc giá VIP; bạn vẫn có thể đổi tên, ảnh bìa và trạng thái.'
-          : 'Máy chủ không lưu được đề. Dữ liệu chưa bị xóa; hãy kiểm tra thông báo lỗi và thử lại.');
+          ? 'Đề đã có lịch sử làm bài nên không thể đổi câu hỏi hoặc giá VIP; bạn vẫn có thể đổi tên, ảnh bìa và trạng thái.'
+          : 'Không thể lưu đề thi lúc này. Vui lòng kiểm tra lại nội dung và thử lại.');
       if (!isSilent) setToast({ type: 'error', message: msg });
     } finally {
       saveInFlightRef.current = false;
@@ -1836,33 +1906,19 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   }, [builderMode, classroomId, clearAutosaveDraft, fetchTests, formClearCoverImage, formCoverImageUrl, formIsVip,
     formParts, formStatus, formTitle, formVipPriceVnd, selectedTest, uploadingKey]);
 
-  // TẦNG 2: Đồng bộ ngầm thông minh lên máy chủ sau mỗi 30s (Chỉ chạy khi có thay đổi thực sự isDirty)
-  useEffect(() => {
-    if (!builderOpen) return;
-
-    const syncTimer = setInterval(() => {
-      if (isDirtyRef.current && formTitle?.trim() && !actionLoading) {
-        handleSaveExam(null, formStatus, true, true);
-      }
-    }, 30000);
-
-    return () => clearInterval(syncTimer);
-  }, [builderOpen, formTitle, formStatus, actionLoading, handleSaveExam]);
-
-  // Phím tắt Ctrl + S để lưu tức thời lên máy chủ.
+  // Phím tắt Ctrl + S để lưu nhanh bản nháp
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S') && builderOpen) {
         e.preventDefault();
-        handleSaveExam(null, formStatus, true, false);
+        handleSaveExam(null, 'DRAFT', true, false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [builderOpen, formStatus, handleSaveExam]);
+  }, [builderOpen, handleSaveExam]);
 
   // Confirm Delete Test
-
   const handleConfirmDelete = async () => {
     if (!selectedTest || deleteInFlightRef.current) return;
     deleteInFlightRef.current = true;
@@ -1876,8 +1932,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         setToast({
           type: 'success',
           message: archived
-            ? `Đề "${selectedTest.titleTest}" đã có lượt làm hoặc giao dịch nên được chuyển về bản nháp để bảo toàn dữ liệu.`
-            : `Đã xóa đề thi "${selectedTest.titleTest}" thành công!`,
+            ? `Đề "${selectedTest.titleTest}" đã có lượt làm hoặc giao dịch nên được chuyển về Bản nháp để giữ lịch sử.`
+            : `Đã xóa đề thi "${selectedTest.titleTest}".`,
         });
         setDeleteModalOpen(false);
         fetchTests(false);
@@ -1887,7 +1943,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     } catch (err) {
       const msg =
         err.response?.data?.message ||
-        'Lỗi khóa ngoại MySQL: Đề thi có chứa câu hỏi, cần cấu hình ON DELETE CASCADE trong backend để xóa toàn bộ.';
+        'Không thể xóa đề thi do đang có dữ liệu bài làm hoặc bài tập liên quan.';
       setToast({ type: 'error', message: msg });
     } finally {
       deleteInFlightRef.current = false;
@@ -1897,16 +1953,39 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
   // --- Builder Sub-actions ---
   const handleRemovePart = (partIndex) => {
-    markDirty();
     if (formParts.length <= 1) {
-      setToast({ type: 'warning', message: 'Bộ đề thi phải có ít nhất 1 phần (Part)!' });
+      setToast({ type: 'warning', message: 'Đề thi phải có ít nhất 1 phần (Part).' });
       return;
     }
-    setFormParts((prev) => prev.filter((_, idx) => idx !== partIndex));
-    setActivePartIndex((prev) => Math.max(0, prev - 1));
+    markDirty();
+    setFormParts((prev) => {
+      const next = prev.filter((_, idx) => idx !== partIndex);
+      setActivePartIndex((currentIdx) => {
+        if (partIndex < currentIdx) return Math.max(0, currentIdx - 1);
+        if (currentIdx >= next.length) return Math.max(0, next.length - 1);
+        return currentIdx;
+      });
+      return next;
+    });
   };
 
   const handleAddContextQuestion = (pIdx) => {
+    const targetPart = formParts[pIdx];
+    if (!targetPart) return;
+    const pNum = targetPart.partNumber;
+    const maxQuestions = ETS_STRUCTURE_SPECS[pNum]?.standardQuestions || 200;
+    const currentQuestions = (targetPart.contextQuestions || []).reduce(
+      (sum, cq) => sum + (cq.questions?.length || 0),
+      0
+    );
+    const addedQuestionsCount = pNum === 3 || pNum === 4 ? 3 : pNum === 6 ? 4 : 1;
+    if (currentQuestions + addedQuestionsCount > maxQuestions) {
+      setToast({
+        type: 'info',
+        message: `Part ${pNum} đã đủ tối đa ${maxQuestions} câu theo cấu trúc đề TOEIC.`,
+      });
+      return;
+    }
     markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
@@ -1921,14 +2000,15 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   };
 
   const handleRemoveContextQuestion = (pIdx, cqIdx) => {
+    const targetPart = formParts[pIdx];
+    if (targetPart && targetPart.contextQuestions.length <= 1) {
+      setToast({ type: 'warning', message: 'Mỗi phần cần có ít nhất 1 câu hoặc bài đọc.' });
+      return;
+    }
     markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
-      if (part.contextQuestions.length <= 1) {
-        setToast({ type: 'warning', message: 'Mỗi phần phải có ít nhất 1 cụm câu hỏi!' });
-        return prev;
-      }
       part.contextQuestions = part.contextQuestions.filter((_, idx) => idx !== cqIdx);
       copy[pIdx] = part;
       return copy;
@@ -1936,6 +2016,31 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   };
 
   const handleAddQuestion = (pIdx, cqIdx) => {
+    const targetPart = formParts[pIdx];
+    if (!targetPart) return;
+    const pNum = targetPart.partNumber;
+    const maxPartQuestions = ETS_STRUCTURE_SPECS[pNum]?.standardQuestions || 200;
+    const currentPartQuestions = (targetPart.contextQuestions || []).reduce(
+      (sum, cq) => sum + (cq.questions?.length || 0),
+      0
+    );
+    if (currentPartQuestions >= maxPartQuestions) {
+      setToast({
+        type: 'info',
+        message: `Part ${pNum} đã đạt tối đa ${maxPartQuestions} câu.`,
+      });
+      return;
+    }
+    const targetCq = targetPart.contextQuestions?.[cqIdx];
+    const currentCqLen = targetCq?.questions?.length || 0;
+    if ((pNum === 3 || pNum === 4) && currentCqLen >= 3) {
+      setToast({ type: 'info', message: `Mỗi bài nghe Part ${pNum} gồm cố định 3 câu hỏi.` });
+      return;
+    }
+    if (pNum === 7 && currentCqLen >= 5) {
+      setToast({ type: 'info', message: 'Mỗi bài đọc Part 7 có tối đa 5 câu hỏi.' });
+      return;
+    }
     markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
@@ -1954,16 +2059,17 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
   };
 
   const handleRemoveQuestion = (pIdx, cqIdx, qIdx) => {
+    const targetCq = formParts[pIdx]?.contextQuestions?.[cqIdx];
+    if (targetCq && targetCq.questions.length <= 1) {
+      setToast({ type: 'warning', message: 'Mỗi bài cần có ít nhất 1 câu hỏi.' });
+      return;
+    }
     markDirty();
     setFormParts((prev) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
       const cqList = [...part.contextQuestions];
       const cq = { ...cqList[cqIdx] };
-      if (cq.questions.length <= 1) {
-        setToast({ type: 'warning', message: 'Cụm câu hỏi phải có ít nhất 1 câu hỏi!' });
-        return prev;
-      }
       cq.questions = cq.questions.filter((_, idx) => idx !== qIdx);
       cqList[cqIdx] = cq;
       part.contextQuestions = cqList;
@@ -1979,8 +2085,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       const part = { ...copy[pIdx] };
       const cqList = [...part.contextQuestions];
       const cq = { ...cqList[cqIdx] };
-      const qList = [...cq.questions];
-      qList[qIdx] = { ...qList[qIdx], [field]: value };
+      const qList = [...(cq.questions || [])];
+      const baseQ = qList[qIdx] || createFreshQuestion(qIdx + 1, part.partNumber);
+      const patch = typeof field === 'object' && field !== null ? field : { [field]: value };
+      qList[qIdx] = { ...baseQ, ...patch };
       cq.questions = qList;
       cqList[cqIdx] = cq;
       part.contextQuestions = cqList;
@@ -1995,7 +2103,29 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
       const copy = [...prev];
       const part = { ...copy[pIdx] };
       const cqList = [...part.contextQuestions];
-      cqList[cqIdx] = { ...cqList[cqIdx], [field]: value };
+      let patch;
+      if (typeof field === 'object' && field !== null) {
+        patch = field;
+      } else if (field === 'audioUrl') {
+        // Clear private asset bindings when user manually sets or deletes audioUrl
+        patch = {
+          audioUrl: value,
+          audioPublicId: '',
+          audioFormat: '',
+          audioDeliveryType: '',
+        };
+      } else if (field === 'imageUrl') {
+        // Clear private asset bindings when user manually sets or deletes imageUrl
+        patch = {
+          imageUrl: value,
+          imagePublicId: '',
+          imageFormat: '',
+          imageDeliveryType: '',
+        };
+      } else {
+        patch = { [field]: value };
+      }
+      cqList[cqIdx] = { ...cqList[cqIdx], ...patch };
       part.contextQuestions = cqList;
       copy[pIdx] = part;
       return copy;
@@ -2013,13 +2143,15 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     try {
       const uploaded = await uploadMediaFile(file, formTitle || 'TOEIC Test', fieldType, formIsVip);
       const prefix = fieldType === 'audio' ? 'audio' : 'image';
-      handleUpdateContextField(pIdx, cqIdx, `${prefix}Url`, uploaded.url);
-      handleUpdateContextField(pIdx, cqIdx, `${prefix}PublicId`, uploaded.publicId || '');
-      handleUpdateContextField(pIdx, cqIdx, `${prefix}Format`, uploaded.format || '');
-      handleUpdateContextField(pIdx, cqIdx, `${prefix}DeliveryType`, uploaded.deliveryType || '');
+      handleUpdateContextField(pIdx, cqIdx, {
+        [`${prefix}Url`]: uploaded.url,
+        [`${prefix}PublicId`]: uploaded.publicId || '',
+        [`${prefix}Format`]: uploaded.format || '',
+        [`${prefix}DeliveryType`]: uploaded.deliveryType || '',
+      });
       setToast({
         type: 'success',
-        message: `Tải lên ${fieldType === 'audio' ? 'file âm thanh' : 'hình ảnh'} thành công!`,
+        message: `Đã tải lên ${fieldType === 'audio' ? 'file âm thanh' : 'hình ảnh'}.`,
       });
     } catch (err) {
       setToast({
@@ -2027,11 +2159,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         message:
           err.response?.data?.message ||
           err.message ||
-          'Lỗi khi tải file lên máy chủ (Vui lòng đảm bảo Backend đã chạy API POST /api/admin/media/upload).',
+          'Không thể tải tệp lên máy chủ. Vui lòng kiểm tra định dạng hoặc dung lượng tệp.',
       });
     } finally {
       setUploadingKey(null);
-      e.target.value = ''; // Reset input để có thể chọn lại cùng 1 file
+      e.target.value = '';
     }
   };
 
@@ -2157,31 +2289,21 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   {/* Status Badges & Quick Action */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage && hasAudio
                         ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
                         : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
-                      {hasImage ? 'Đã có ảnh' : 'Chưa có ảnh'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasAudio
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasAudio ? 'Đã có audio' : 'Chưa có audio'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
+                      {hasImage && hasAudio
+                        ? (hasTranscript ? 'Đủ ảnh, audio & lời thoại' : 'Đủ ảnh & audio')
+                        : !hasImage && !hasAudio
+                          ? 'Thiếu ảnh & audio'
+                          : !hasImage
+                            ? 'Thiếu ảnh'
+                            : 'Thiếu audio'}
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] bg-[#111827] text-white border border-[#111827]">
-                      Đáp án: ({q.correctAnswer || 'A'})
+                      Đáp án: {q.correctAnswer || 'A'}
                     </span>
 
                     {activePart.contextQuestions.length > 1 && (
@@ -2440,11 +2562,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                               key={opt}
                               type="button"
                               onClick={() => {
-                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'correctAnswer', opt);
-                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionA', '(A)');
-                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionB', '(B)');
-                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionC', '(C)');
-                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionD', '(D)');
+                                handleUpdateQuestionField(activePartIndex, cqIdx, 0, {
+                                  correctAnswer: opt,
+                                  optionA: '(A)',
+                                  optionB: '(B)',
+                                  optionC: '(C)',
+                                  optionD: '(D)',
+                                });
                               }}
                               className={`w-10 h-8 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer border ${isSelected
                                 ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
@@ -2482,7 +2606,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-1 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                           title="Chèn mẫu 4 dòng (A), (B), (C), (D) vào ô lời thoại"
                         >
-                          + Mẫu (A)-(B)-(C)-(D)
+                          Chèn mẫu
                         </button>
                       </div>
 
@@ -2519,7 +2643,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-1 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                         >
-                          + Mẫu dịch nghĩa
+                          Chèn mẫu dịch
                         </button>
                       </div>
 
@@ -2550,7 +2674,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         {activePart.contextQuestions.length < 6 && (
           <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
             <span className="text-xs font-semibold text-[#111827]">
-              Hiện tại Part 1 đang có {activePart.contextQuestions.length} / 6 câu hỏi tranh chuẩn ETS.
+              Part 1 hiện có {activePart.contextQuestions.length} / 6 câu.
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <button
@@ -2558,14 +2682,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleAddContextQuestion(activePartIndex)}
                 className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <Plus size={14} /> + Thêm câu hỏi tranh (Câu #{activePart.contextQuestions.length + 1})
+                <Plus size={14} /> Thêm câu #{activePart.contextQuestions.length + 1}
               </button>
               <button
                 type="button"
                 onClick={handleResetPart1To6}
                 className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <RotateCcw size={14} /> Khởi tạo đủ 6 câu chuẩn Part 1
+                <RotateCcw size={14} /> Tạo đủ 6 câu Part 1
               </button>
             </div>
           </div>
@@ -2665,18 +2789,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
-                      {hasAudio ? 'Đã có audio' : 'Chưa có audio'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
+                      {hasAudio
+                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        : 'Chưa có audio'}
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] bg-[#111827] text-white border border-[#111827]">
-                      Đáp án: ({q.correctAnswer || 'A'})
+                      Đáp án: {q.correctAnswer || 'A'}
                     </span>
 
                     {activePart.contextQuestions.length > 1 && (
@@ -2785,11 +2903,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                             key={opt}
                             type="button"
                             onClick={() => {
-                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'correctAnswer', opt);
-                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionA', '(A)');
-                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionB', '(B)');
-                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionC', '(C)');
-                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, 'optionD', '');
+                              handleUpdateQuestionField(activePartIndex, cqIdx, 0, {
+                                correctAnswer: opt,
+                                optionA: '(A)',
+                                optionB: '(B)',
+                                optionC: '(C)',
+                                optionD: '',
+                              });
                             }}
                             className={`w-11 h-8 rounded-[2px] font-semibold text-xs transition-all flex items-center justify-center gap-1 cursor-pointer border ${isSelected
                               ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
@@ -2829,7 +2949,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }}
                         className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-[#F8FAFC] hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                       >
-                        + Mẫu thoại (Q - A - B - C)
+                        Chèn mẫu
                       </button>
                     </div>
 
@@ -2866,7 +2986,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }}
                         className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-[#F8FAFC] hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                       >
-                        + Mẫu giải thích
+                        Chèn mẫu giải thích
                       </button>
                     </div>
 
@@ -2896,7 +3016,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         {activePart.contextQuestions.length < 25 && (
           <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
             <span className="text-xs font-semibold text-[#111827]">
-              Hiện tại Part 2 đang có {activePart.contextQuestions.length} / 25 câu hỏi phản hồi chuẩn ETS.
+              Part 2 hiện có {activePart.contextQuestions.length} / 25 câu.
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <button
@@ -2904,14 +3024,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleAddContextQuestion(activePartIndex)}
                 className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <Plus size={14} /> + Thêm câu hỏi lẻ (Câu #{activePart.contextQuestions.length + 7})
+                <Plus size={14} /> Thêm câu #{activePart.contextQuestions.length + 7}
               </button>
               <button
                 type="button"
                 onClick={handleResetPart2To25}
                 className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <RotateCcw size={14} /> Khởi tạo đủ 25 câu chuẩn Part 2
+                <RotateCcw size={14} /> Tạo đủ 25 câu Part 2
               </button>
             </div>
           </div>
@@ -3011,32 +3131,20 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
-                      {hasAudio ? 'Đã có Audio' : 'Chưa có Audio'}
+                      {hasAudio
+                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        : 'Chưa có audio'}
                     </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasImage ? 'Có ảnh Graphic' : 'Không ảnh'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranslation
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranslation ? 'Đã có bản dịch' : 'Chưa có bản dịch'}
-                    </span>
+                    {hasImage && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]">
+                        Kèm biểu đồ
+                      </span>
+                    )}
+                    {hasTranslation && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]">
+                        Có bản dịch
+                      </span>
+                    )}
 
                     {activePart.contextQuestions.length > 1 && (
                       <button
@@ -3238,7 +3346,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                         >
-                          + Mẫu đối thoại (Man/Woman)
+                          Chèn mẫu hội thoại
                         </button>
                       </div>
 
@@ -3271,7 +3379,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                         >
-                          + Mẫu bản dịch tiếng Việt
+                          Chèn mẫu dịch
                         </button>
                       </div>
 
@@ -3441,7 +3549,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         {activePart.contextQuestions.length < 13 && (
           <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
             <span className="text-xs font-semibold text-[#111827]">
-              Hiện tại Part 3 đang có {activePart.contextQuestions.length} / 13 bài nghe (Chuẩn ETS: 13 đoạn hội thoại x 3 câu = 39 câu).
+              Part 3 hiện có {activePart.contextQuestions.length} / 13 đoạn hội thoại (39 câu).
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <button
@@ -3449,14 +3557,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleAddContextQuestion(activePartIndex)}
                 className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <Plus size={14} /> + Thêm đoạn hội thoại (Đoạn #{activePart.contextQuestions.length + 1})
+                <Plus size={14} /> Thêm đoạn #{activePart.contextQuestions.length + 1}
               </button>
               <button
                 type="button"
                 onClick={handleResetPart3To13}
                 className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <RotateCcw size={14} /> Khởi tạo đủ 13 đoạn chuẩn Part 3
+                <RotateCcw size={14} /> Tạo đủ 13 đoạn Part 3
               </button>
             </div>
           </div>
@@ -3556,32 +3664,20 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
                         }`}
                     >
-                      {hasAudio ? 'Đã có Audio' : 'Chưa có Audio'}
+                      {hasAudio
+                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        : 'Chưa có audio'}
                     </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasImage
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasImage ? 'Có ảnh Graphic' : 'Không ảnh'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranscript
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranscript ? 'Đã có transcript' : 'Chưa có transcript'}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border transition-all ${hasTranslation
-                        ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                        : 'bg-[#F8FAFC] text-[#6B7280] border-[#D1D5DB]'
-                        }`}
-                    >
-                      {hasTranslation ? 'Đã có bản dịch' : 'Chưa có bản dịch'}
-                    </span>
+                    {hasImage && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]">
+                        Kèm biểu đồ
+                      </span>
+                    )}
+                    {hasTranslation && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] border bg-[#F8FAFC] text-[#374151] border-[#D1D5DB]">
+                        Có bản dịch
+                      </span>
+                    )}
 
                     {activePart.contextQuestions.length > 1 && (
                       <button
@@ -3783,7 +3879,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                         >
-                          + Mẫu bài nói / Thông báo
+                          Chèn mẫu bài nói
                         </button>
                       </div>
 
@@ -3816,7 +3912,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1"
                         >
-                          + Mẫu bản dịch tiếng Việt
+                          Chèn mẫu dịch
                         </button>
                       </div>
 
@@ -3986,7 +4082,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         {activePart.contextQuestions.length < 10 && (
           <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
             <span className="text-xs font-semibold text-[#111827]">
-              Hiện tại Part 4 đang có {activePart.contextQuestions.length} / 10 bài nói chuyện (Chuẩn ETS: 10 bài x 3 câu = 30 câu).
+              Part 4 hiện có {activePart.contextQuestions.length} / 10 bài nói (30 câu).
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <button
@@ -3994,14 +4090,14 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleAddContextQuestion(activePartIndex)}
                 className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <Plus size={14} /> + Thêm bài nói chuyện (Bài #{activePart.contextQuestions.length + 1})
+                <Plus size={14} /> Thêm bài nói #{activePart.contextQuestions.length + 1}
               </button>
               <button
                 type="button"
                 onClick={handleResetPart4To10}
                 className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                <RotateCcw size={14} /> Khởi tạo đủ 10 bài chuẩn Part 4
+                <RotateCcw size={14} /> Tạo đủ 10 bài Part 4
               </button>
             </div>
           </div>
@@ -4232,27 +4328,29 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         </div>
 
         {/* Thanh công cụ dưới cùng Part 5 */}
-        <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs font-semibold text-[#111827]">
-            Hiện có {activePart.contextQuestions.length} câu hỏi Part 5 (Chuẩn ETS: 30 câu hỏi từ Câu 101 đến Câu 130).
-          </span>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleAddContextQuestion(activePartIndex)}
-              className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <Plus size={14} /> + Thêm câu hỏi điền từ (Câu #{101 + activePart.contextQuestions.length})
-            </button>
-            <button
-              type="button"
-              onClick={handleResetPart5To30}
-              className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <RotateCcw size={14} /> Khởi tạo đủ 30 câu chuẩn Part 5
-            </button>
+        {activePart.contextQuestions.length < 30 && (
+          <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
+            <span className="text-xs font-semibold text-[#111827]">
+              Part 5 hiện có {activePart.contextQuestions.length} / 30 câu (Câu 101 – 130).
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> Thêm câu #{101 + activePart.contextQuestions.length}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart5To30}
+                className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Tạo đủ 30 câu Part 5
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -4393,13 +4491,15 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       <span>{qCount} câu hỏi trắc nghiệm của Đoạn #{cqIdx + 1} (Câu {startQ} – {endQ})</span>
                     </span>
 
-                    <button
-                      type="button"
-                      onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
-                      className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1"
-                    >
-                      <Plus size={13} /> Thêm câu hỏi
-                    </button>
+                    {qCount < 4 && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                        className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1"
+                      >
+                        <Plus size={13} /> Thêm câu hỏi
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -4549,27 +4649,29 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         </div>
 
         {/* Thanh công cụ dưới cùng Part 6 */}
-        <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs font-semibold text-[#111827]">
-            Hiện có {activePart.contextQuestions.length} bài đọc Part 6 (Chuẩn ETS: 4 đoạn văn x 4 câu = 16 câu hỏi từ Câu 131 đến Câu 146).
-          </span>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleAddContextQuestion(activePartIndex)}
-              className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <Plus size={14} /> + Thêm bài đọc điền khuyết (Đoạn #{activePart.contextQuestions.length + 1})
-            </button>
-            <button
-              type="button"
-              onClick={handleResetPart6To4}
-              className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <RotateCcw size={14} /> Khởi tạo đủ 4 bài chuẩn Part 6
-            </button>
+        {activePart.contextQuestions.length < 4 && (
+          <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
+            <span className="text-xs font-semibold text-[#111827]">
+              Part 6 hiện có {activePart.contextQuestions.length} / 4 đoạn văn (16 câu).
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> Thêm đoạn #{activePart.contextQuestions.length + 1}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart6To4}
+                className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Tạo đủ 4 đoạn Part 6
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -4610,23 +4712,18 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
     const handleUpdateDoublePart = (cqIdx, partIdx, newText) => {
       const parts = splitDoublePassage(activePart.contextQuestions[cqIdx]?.paragraph || '');
       parts[partIdx] = newText;
-      let combined = parts[0].trim();
-      if (parts[1].trim()) {
-        combined += `\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1].trim()}`;
-      }
+      const combined =
+        parts[0] || parts[1] ? `${parts[0]}\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1]}` : '';
       handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', combined);
     };
 
     const handleUpdateTriplePart = (cqIdx, partIdx, newText) => {
       const parts = splitTriplePassage(activePart.contextQuestions[cqIdx]?.paragraph || '');
       parts[partIdx] = newText;
-      let combined = parts[0].trim();
-      if (parts[1].trim()) {
-        combined += `\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1].trim()}`;
-      }
-      if (parts[2].trim()) {
-        combined += `\n\n--- BÀI ĐỌC 3 ---\n\n${parts[2].trim()}`;
-      }
+      const combined =
+        parts[0] || parts[1] || parts[2]
+          ? `${parts[0]}\n\n--- BÀI ĐỌC 2 ---\n\n${parts[1]}\n\n--- BÀI ĐỌC 3 ---\n\n${parts[2]}`
+          : '';
       handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', combined);
     };
 
@@ -4887,7 +4984,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           }}
                           className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-[#F8FAFC] hover:bg-[#EFF6FF] px-2.5 py-0.5 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1 cursor-pointer"
                         >
-                          + Mẫu văn bản đơn
+                          Chèn mẫu văn bản
                         </button>
                       )}
                     </div>
@@ -4922,7 +5019,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }}
                         className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-1 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1 cursor-pointer"
                       >
-                        + Mẫu 2 bài đọc chuẩn ETS
+                        Chèn mẫu 2 văn bản
                       </button>
                     </div>
 
@@ -4981,7 +5078,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }}
                         className="text-xs font-semibold text-[#111827] hover:text-[#1D4ED8] bg-white hover:bg-[#EFF6FF] px-2.5 py-1 rounded-[2px] border border-[#D1D5DB] transition-all inline-flex items-center gap-1 cursor-pointer"
                       >
-                        + Mẫu 3 bài đọc chuẩn ETS
+                        Chèn mẫu 3 văn bản
                       </button>
                     </div>
 
@@ -5106,13 +5203,15 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       <span>{qCount} câu hỏi trắc nghiệm của Bài đọc #{cqIdx + 1} (Câu {startQ} – {endQ})</span>
                     </span>
 
-                    <button
-                      type="button"
-                      onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
-                      className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus size={13} /> Thêm câu hỏi
-                    </button>
+                    {qCount < 5 && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                        className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus size={13} /> Thêm câu hỏi
+                      </button>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -5258,27 +5357,29 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         </div>
 
         {/* Thanh công cụ dưới cùng Part 7 */}
-        <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
-          <span className="text-xs font-semibold text-[#111827]">
-            Hiện có {activePart.contextQuestions.length} bài đọc Part 7 (Chuẩn ETS 2026: 15 cụm bài gồm 10 bài đơn, 2 bài kép, 3 bài ba = 54 câu hỏi từ Câu 147 đến Câu 200).
-          </span>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleAddContextQuestion(activePartIndex)}
-              className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <Plus size={14} /> + Thêm bài đọc hiểu (Bài #{activePart.contextQuestions.length + 1})
-            </button>
-            <button
-              type="button"
-              onClick={handleResetPart7To54}
-              className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-            >
-              <RotateCcw size={14} /> Khởi tạo đủ 54 câu chuẩn Part 7
-            </button>
+        {p7ItemsMeta.reduce((acc, item) => acc + item.qCount, 0) < 54 && (
+          <div className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] flex items-center justify-between flex-wrap gap-3">
+            <span className="text-xs font-semibold text-[#111827]">
+              Part 7 hiện có {activePart.contextQuestions.length} bài đọc ({p7ItemsMeta.reduce((acc, item) => acc + item.qCount, 0)} / 54 câu).
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleAddContextQuestion(activePartIndex)}
+                className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <Plus size={14} /> Thêm bài đọc #{activePart.contextQuestions.length + 1}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPart7To54}
+                className="btn btn-outline btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                <RotateCcw size={14} /> Tạo đủ 54 câu Part 7
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -5634,38 +5735,34 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 {/* Trạng thái nạp dữ liệu & Auto-Save chính xác */}
                 {isLoadingTestDetail ? (
                   <span className="text-xs text-[#1D4ED8] flex items-center gap-1.5 font-medium">
-                    <RefreshCw size={12} className="animate-spin" /> Đang tải chi tiết đề...
+                    <RefreshCw size={12} className="animate-spin" /> Đang tải dữ liệu...
                   </span>
                 ) : autoSaveState.status === 'saving' ? (
                   <span className="text-xs text-[#4B5563] flex items-center gap-1.5 font-medium">
-                    <RefreshCw size={12} className="animate-spin" /> Đang lưu tạm...
+                    <RefreshCw size={12} className="animate-spin" /> Đang lưu...
                   </span>
                 ) : autoSaveState.status === 'unsaved' ? (
                   <span
                     className="text-xs text-[#B45309] flex items-center gap-1.5 font-medium"
-                    title="Có thay đổi mới, sẽ tự lưu tạm trình duyệt sau vài giây ngừng gõ"
+                    title="Có thay đổi mới, trình duyệt sẽ tự lưu tạm sau vài giây"
                   >
-                    <span className="inline-block h-2 w-2 rounded-full bg-[#D97706]" /> Có thay đổi chưa lưu
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#D97706]" /> Chưa lưu
                   </span>
                 ) : autoSaveState.status === 'saved' && autoSaveState.savedAt ? (
                   <span
                     className="text-xs text-[#4B5563] flex items-center gap-1 font-medium"
-                    title="Bản nháp được lưu tự động vào bộ nhớ trình duyệt theo từng đề"
+                    title="Đã tự lưu tạm trên trình duyệt"
                   >
-                    <Check size={13} className="text-[#1D4ED8]" /> Lưu tạm lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                    <Check size={13} className="text-[#1D4ED8]" /> Đã lưu tạm ({autoSaveState.savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})
                   </span>
                 ) : autoSaveState.status === 'synced_server' && autoSaveState.savedAt ? (
                   <span
                     className="text-xs text-[#1D4ED8] bg-[#EFF6FF] border border-[#BFDBFE] px-2.5 py-0.5 rounded-[2px] flex items-center gap-1 font-semibold"
-                    title="Dữ liệu đã được đồng bộ an toàn lên cơ sở dữ liệu máy chủ"
+                    title="Đã lưu bản nháp vào hệ thống"
                   >
-                    <CheckCircle2 size={12} className="text-[#1D4ED8]" /> Đã lưu máy chủ lúc {autoSaveState.savedAt.toLocaleTimeString('vi-VN')}
+                    <CheckCircle2 size={12} className="text-[#1D4ED8]" /> Đã lưu ({autoSaveState.savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})
                   </span>
-                ) : (
-                  <span className="text-xs text-[#6B7280] font-medium hidden md:inline">
-                    Sẵn sàng soạn thảo
-                  </span>
-                )}
+                ) : null}
               </div>
 
               <div className="flex items-center gap-2 flex-wrap shrink-0">
@@ -5674,32 +5771,32 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     type="button"
                     onClick={handleReloadFromServer}
                     disabled={actionLoading || isLoadingTestDetail}
-                    title="Tải lại toàn bộ dữ liệu mới nhất từ máy chủ"
+                    title="Tải lại dữ liệu gốc của đề thi"
                     className="px-3 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <RotateCcw size={13} className="text-[#4B5563]" />
-                    Tải lại từ máy chủ
+                    Khôi phục bản gốc
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => handleSaveExam(null, 'DRAFT', true)}
                   disabled={actionLoading || isLoadingTestDetail}
-                  title="Lưu bản nháp lên máy chủ và tiếp tục soạn thảo"
+                  title="Lưu bản nháp (Ctrl+S) và tiếp tục soạn thảo"
                   className="px-3.5 py-1.5 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <Clock size={13} className="text-[#4B5563]" />
-                  {actionLoading ? 'Đang lưu...' : 'Lưu nháp máy chủ (Ctrl+S)'}
+                  {actionLoading ? 'Đang lưu...' : 'Lưu bản nháp'}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSaveExam(null, 'PUBLISHED', false)}
                   disabled={actionLoading || isLoadingTestDetail}
-                  title="Kiểm tra và xuất bản đề thi lên hệ thống"
+                  title="Kiểm tra và xuất bản đề thi"
                   className="px-4 py-1.5 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 size={13} />
-                  {builderMode === 'edit' ? 'Cập nhật & Xuất bản' : 'Xuất bản đề thi'}
+                  {builderMode === 'edit' ? 'Lưu & Xuất bản' : 'Xuất bản đề thi'}
                 </button>
               </div>
             </div>
@@ -5707,7 +5804,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
           {/* FULLSCREEN SCROLLABLE WORKSPACE BODY */}
           <div className="test-builder-fullscreen-body">
-            <form onSubmit={handleSaveExam} noValidate className="test-builder-form test-builder-fullscreen-container flex flex-col gap-5">
+            <form
+              onSubmit={handleSaveExam}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                  e.preventDefault();
+                }
+              }}
+              noValidate
+              className="test-builder-form test-builder-fullscreen-container flex flex-col gap-5"
+            >
 
           {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
           {recoverableDraft && (
@@ -5715,7 +5821,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               <div className="flex items-center gap-2.5">
                 <Clock size={16} className="text-[#1D4ED8] shrink-0" />
                 <div className="text-xs">
-                  <span className="font-semibold">Phát hiện phiên chỉnh sửa chưa lưu lên máy chủ:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
+                  <span className="font-semibold">Bạn có bản nháp đang soạn dở trên trình duyệt:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
                   <span className="font-semibold">
                     {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
                   </span>{' '}
@@ -5728,7 +5834,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   onClick={handleRestoreDraft}
                   className="px-3 py-1.5 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold rounded-[2px] transition-all cursor-pointer"
                 >
-                  Khôi phục bản nháp
+                  Tiếp tục bản nháp
                 </button>
                 <button
                   type="button"
@@ -5751,12 +5857,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 </div>
                 <div>
                   <h3 className="m-0 text-base font-semibold text-[#111111]">
-                    {builderMode === 'create'
-                      ? 'Thông tin chung & Thiết lập đề thi mới'
-                      : 'Thông tin chung & Thiết lập đề thi đang chỉnh sửa'}
+                    Thông tin đề thi
                   </h3>
                   <p className="m-0 text-xs text-[#4B5563]">
-                    Đặt tên bộ đề, tải ảnh bìa minh họa, cấu hình quyền truy cập VIP và trạng thái phát hành
+                    Tên đề, ảnh bìa và cài đặt hiển thị
                   </p>
                 </div>
               </div>
@@ -5770,12 +5874,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             {/* Title Input */}
             <div>
               <label className="block text-sm font-semibold text-[#111827] mb-1.5">
-                Tên bộ đề thi TOEIC <span className="text-[#DC2626]">*</span>
+                Tên đề thi <span className="text-[#DC2626]">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: ETS TOEIC 2026 - Test 01"
+                placeholder="Ví dụ: ETS TOEIC 2026 - Test 11"
                 value={formTitle}
                 onChange={(e) => {
                   setFormTitle(e.target.value);
@@ -5797,8 +5901,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     </p>
                     <p className="text-xs text-[#4B5563] leading-relaxed m-0">
                       {formCoverImageUrl
-                        ? 'Đã thiết lập ảnh bìa riêng cho bộ đề. Bạn có thể tải ảnh mới để thay thế hoặc gỡ về ảnh mặc định.'
-                        : 'Chưa tải ảnh bìa riêng. Hệ thống hiển thị ảnh bìa mặc định nếu để trống.'}
+                        ? 'Đã tải ảnh bìa riêng cho đề thi. Bạn có thể chọn ảnh khác hoặc gỡ để dùng ảnh mặc định.'
+                        : 'Chưa có ảnh bìa riêng. Hệ thống sẽ dùng ảnh mặc định nếu để trống.'}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2.5">
@@ -5865,10 +5969,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                             }}
                             className="h-4 w-4 accent-[#1D4ED8] rounded-[2px]"
                           />
-                          Đề VIP có thu phí
+                          Đề thi VIP (Có thu phí)
                         </label>
                         <p className="text-xs text-[#4B5563] mt-0.5 mb-0 pl-6">
-                          Yêu cầu học viên mở khóa quyền truy cập riêng qua PayOS (giá do Admin thiết lập)
+                          Học viên cần thanh toán qua PayOS để mở khóa đề này
                         </p>
                       </div>
                       <span
@@ -5884,7 +5988,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-xs font-semibold text-[#374151]">
-                          Giá mở khóa đề (VND)
+                          Giá đề thi (VNĐ)
                         </label>
                         {formIsVip && formVipPriceVnd && Number(formVipPriceVnd) > 0 && (
                           <span className="text-xs font-mono font-semibold text-[#1D4ED8]">
@@ -5904,7 +6008,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           setFormVipPriceVnd(event.target.value);
                           markDirty();
                         }}
-                        placeholder={formIsVip ? 'Ví dụ: 49000' : 'Chỉ áp dụng khi bật Đề VIP'}
+                        placeholder={formIsVip ? 'Ví dụ: 49000' : 'Bật Đề VIP để nhập giá'}
                         className="w-full rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-sm font-semibold text-[#111111] disabled:bg-[#F1F1F1] disabled:text-[#6B7280]"
                       />
                     </div>
@@ -5915,7 +6019,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-[#111827]">
-                      Trạng thái lưu trữ & phát hành
+                      Trạng thái hiển thị
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5 rounded-[2px] p-1 bg-white border border-[#D1D5DB]">
@@ -5930,7 +6034,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         markDirty();
                       }}
                     >
-                      <CheckCircle2 size={13} /> Xuất bản (Published)
+                      <CheckCircle2 size={13} /> Xuất bản
                     </button>
                     <button
                       type="button"
@@ -5943,13 +6047,13 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         markDirty();
                       }}
                     >
-                      <Clock size={13} /> Bản nháp (Draft)
+                      <Clock size={13} /> Bản nháp
                     </button>
                   </div>
                   <p className="text-xs text-[#4B5563] m-0">
                     {formStatus === 'PUBLISHED'
-                      ? 'Đề thi sẽ hiển thị ngay trong thư viện cho học viên làm bài.'
-                      : 'Đề thi được lưu ở mục Bản nháp để tiếp tục biên tập sau.'}
+                      ? 'Hiển thị trong thư viện đề thi ngay sau khi lưu.'
+                      : 'Lưu ở mục Bản nháp để hoàn thiện sau.'}
                   </p>
                 </div>
               </div>
@@ -5963,52 +6067,52 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="test-builder-guide-label text-xs">
-                  Cấu trúc chuẩn ETS
+                  Mẫu đề nhanh
                 </span>
                 <span className="test-builder-guide-summary font-semibold text-sm text-[#111111]">
-                  TOEIC Listening & Reading: 200 câu · 120 phút (Listening 100 câu · Reading 100 câu)
+                  Tạo nhanh khung câu hỏi theo định dạng bài thi TOEIC
                 </span>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setEtsGuideOpen(true)}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5"
+                  onClick={handleApplyFullETSTest}
+                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Tạo khung đầy đủ 7 Part với 200 câu hỏi"
                 >
-                  <BookOpen size={13} className="text-[#1D4ED8]" /> Cẩm nang ETS
+                  Full Test (200 câu)
                 </button>
                 <button
                   type="button"
                   onClick={handleResetToListening100Blank}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5"
-                  title="Khởi tạo khung 100 câu Listening chuẩn ETS (Part 1 – Part 4)"
+                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Tạo khung 100 câu phần Nghe (Part 1 – Part 4)"
                 >
-                  <Headphones size={13} className="text-[#1D4ED8]" /> Khung 100 câu Listening
+                  <Headphones size={13} className="text-[#1D4ED8]" /> Phần Nghe (100 câu)
                 </button>
                 <button
                   type="button"
                   onClick={handleResetToReading100Blank}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5"
-                  title="Khởi tạo khung 100 câu Reading chuẩn ETS (Part 5 – Part 7)"
+                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Tạo khung 100 câu phần Đọc (Part 5 – Part 7)"
                 >
-                  <FileText size={13} className="text-[#1D4ED8]" /> Khung 100 câu Reading
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyFullETSTest}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5"
-                  title="Khởi tạo khung đầy đủ 7 Part với 200 câu hỏi chuẩn ETS"
-                >
-                  Khung Full Test 200 câu
+                  <FileText size={13} className="text-[#1D4ED8]" /> Phần Đọc (100 câu)
                 </button>
                 <button
                   type="button"
                   onClick={handleApplyMiniETSTest}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5"
-                  title="Khởi tạo khung Mini Test 50 câu rút gọn theo tỷ lệ các Part"
+                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                  title="Tạo khung Mini Test 50 câu rút gọn"
                 >
-                  Mini Test 50 câu
+                  Mini Test (50 câu)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEtsGuideOpen(true)}
+                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#4B5563] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <BookOpen size={13} className="text-[#1D4ED8]" /> Cấu trúc đề
                 </button>
               </div>
             </div>
@@ -6017,12 +6121,12 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-semibold text-[#374151]">
                 <span>
-                  Tiến độ soạn đề: <strong className="text-[#111111] text-sm">{etsMetrics.totalCount}</strong> / 200 câu
+                  Tổng số câu: <strong className="text-[#111111] text-sm">{etsMetrics.totalCount}</strong> / 200 câu
                   {etsMetrics.isFullETS ? (
-                    <span className="text-[#1D4ED8] ml-2 font-semibold">· Đủ cấu trúc 200 câu chuẩn ETS</span>
+                    <span className="text-[#1D4ED8] ml-2 font-semibold">· Đủ 200 câu</span>
                   ) : (
                     <span className="text-[#4B5563] ml-2 font-normal">
-                      (Listening: {etsMetrics.listeningCount}/100 · Reading: {etsMetrics.readingCount}/100)
+                      (Nghe: {etsMetrics.listeningCount}/100 · Đọc: {etsMetrics.readingCount}/100)
                     </span>
                   )}
                 </span>
@@ -6042,11 +6146,11 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
             <div className="pt-1 space-y-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs font-semibold text-[#374151]">
-                  Chọn phần thi để biên tập ({formParts.length}/7 phần):
+                  Danh sách phần thi ({formParts.length}/7 phần):
                 </span>
                 {formParts.length < 7 && (
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs text-[#6B7280]">Thêm phần còn thiếu:</span>
+                    <span className="text-xs text-[#6B7280]">Thêm phần:</span>
                     {[1, 2, 3, 4, 5, 6, 7]
                       .filter((pNum) => !formParts.some((p) => p.partNumber === pNum))
                       .map((pNum) => (
@@ -6054,9 +6158,9 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           key={pNum}
                           type="button"
                           onClick={() => handleAddFullETSPart(pNum)}
-                          className="text-xs px-2.5 py-1 rounded-[2px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] transition-all"
+                          className="text-xs px-2.5 py-1 rounded-[2px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] transition-all cursor-pointer"
                         >
-                          + Part {pNum} ({ETS_STRUCTURE_SPECS[pNum].standardQuestions} câu)
+                          + Part {pNum}
                         </button>
                       ))}
                   </div>
@@ -6105,7 +6209,16 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           </div>
 
           {/* ACTIVE PART DETAILS BUILDER */}
-          {activePart && (
+          {activePart && (() => {
+            const activePartQuestionCount = activePart.contextQuestions.reduce(
+              (acc, cq) => acc + (cq.questions?.length || 0),
+              0
+            );
+            const activePartMaxQuestions =
+              ETS_STRUCTURE_SPECS[activePart.partNumber]?.standardQuestions || 54;
+            const canAddMoreToActivePart = activePartQuestionCount < activePartMaxQuestions;
+
+            return (
             <div
               id={`test-builder-part-panel-${activePart.partNumber}`}
               role="region"
@@ -6127,15 +6240,17 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={handleResetActivePartToBlank}
-                    className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5 hover:bg-[#F8FAFC]"
-                    title={`Khởi tạo lại Part ${activePart.partNumber} với số câu chuẩn ETS`}
-                  >
-                    <RotateCcw size={13} className="text-[#1D4ED8]" />
-                    Chuẩn hóa Part {activePart.partNumber}
-                  </button>
+                  {canAddMoreToActivePart && (
+                    <button
+                      type="button"
+                      onClick={handleResetActivePartToBlank}
+                      className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5 hover:bg-[#F8FAFC]"
+                      title={`Tạo đủ ${activePartMaxQuestions} câu cho Part ${activePart.partNumber}`}
+                    >
+                      <RotateCcw size={13} className="text-[#1D4ED8]" />
+                      Tạo đủ {activePartMaxQuestions} câu
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -6143,30 +6258,32 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5"
                   >
                     <BookOpen size={13} />
-                    {showPartDirections ? 'Thu gọn hướng dẫn' : 'Xem hướng dẫn Part'}
+                    {showPartDirections ? 'Ẩn hướng dẫn' : 'Hướng dẫn'}
                     {showPartDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleAddContextQuestion(activePartIndex)}
-                    className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <PlusCircle size={14} />
-                    {activePart.partNumber === 1
-                      ? '+ Thêm câu hỏi tranh (1 Audio + 1 Ảnh)'
-                      : activePart.partNumber === 2
-                        ? '+ Thêm câu hỏi lẻ (1 Audio · 3 lựa chọn)'
-                        : activePart.partNumber === 3
-                          ? '+ Thêm đoạn hội thoại (1 Audio + 3 câu)'
-                          : activePart.partNumber === 4
-                            ? '+ Thêm bài nói ngắn (1 Audio + 3 câu)'
-                            : activePart.partNumber === 5
-                              ? '+ Thêm câu hỏi điền từ'
-                              : activePart.partNumber === 6
-                                ? '+ Thêm bài đọc điền khuyết (Đoạn văn + 4 câu)'
-                                : '+ Thêm bài đọc hiểu (Đoạn văn + Câu hỏi)'}
-                  </button>
+                  {canAddMoreToActivePart && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddContextQuestion(activePartIndex)}
+                      className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+                    >
+                      <PlusCircle size={14} />
+                      {activePart.partNumber === 1
+                        ? 'Thêm câu hỏi tranh'
+                        : activePart.partNumber === 2
+                          ? 'Thêm câu hỏi'
+                          : activePart.partNumber === 3
+                            ? 'Thêm đoạn hội thoại'
+                            : activePart.partNumber === 4
+                              ? 'Thêm bài nói'
+                              : activePart.partNumber === 5
+                                ? 'Thêm câu hỏi'
+                                : activePart.partNumber === 6
+                                  ? 'Thêm đoạn văn'
+                                  : 'Thêm bài đọc'}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -6654,16 +6771,17 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* Action Buttons Footer */}
           <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#D1D5DB] flex-wrap">
             <div className="text-xs text-[#4B5563]">
-              <span className="font-semibold text-[#111827]">Ghi chú:</span> Bạn có thể lưu tạm (Bản nháp) bất kỳ lúc nào khi chưa điền xong toàn bộ câu hỏi. Nhấn tổ hợp phím{' '}
+              <span className="font-semibold text-[#111827]">Mẹo:</span> Bạn có thể bấm <strong className="text-[#111827]">Lưu bản nháp</strong> hoặc nhấn{' '}
               <kbd className="px-1.5 py-0.5 text-xs font-mono font-semibold text-[#111827] bg-white border border-[#D1D5DB] rounded-[2px]">
                 Ctrl + S
               </kbd>{' '}
-              để lưu nháp nhanh.
+              bất kỳ lúc nào khi chưa điền xong toàn bộ câu hỏi.
             </div>
             <div className="flex items-center gap-2.5">
               <button
@@ -6679,10 +6797,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 onClick={() => handleSaveExam(null, 'DRAFT', true)}
                 className="px-4 py-2 rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all"
                 disabled={actionLoading || isLoadingTestDetail}
-                title="Lưu nháp lên máy chủ và tiếp tục làm việc"
+                title="Lưu bản nháp và tiếp tục soạn thảo"
               >
                 <Clock size={14} className="text-[#4B5563]" />
-                Lưu nháp máy chủ
+                Lưu bản nháp
               </button>
               <button
                 type="submit"
@@ -6691,10 +6809,10 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               >
                 <Save size={15} />
                 {actionLoading
-                  ? 'Đang lưu dữ liệu...'
+                  ? 'Đang lưu...'
                   : formStatus === 'PUBLISHED'
-                    ? (builderMode === 'edit' ? 'Cập nhật & Xuất bản đề' : 'Lưu & Xuất bản đề thi')
-                    : (builderMode === 'edit' ? 'Cập nhật Bản nháp' : 'Lưu & Hoàn tất Bản nháp')}
+                    ? (builderMode === 'edit' ? 'Lưu & Xuất bản' : 'Xuất bản đề thi')
+                    : 'Lưu bản nháp & Thoát'}
               </button>
             </div>
           </div>
@@ -6703,16 +6821,72 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         </div>
       )}
 
+      {/* INCOMPLETE PUBLISH VALIDATION MODAL (EDITORIAL MODAL INSTEAD OF WINDOW.CONFIRM) */}
+      <Modal
+        isOpen={Boolean(incompletePublishInfo)}
+        onClose={() => setIncompletePublishInfo(null)}
+        title="Đề thi chưa đủ điều kiện xuất bản"
+        maxWidth="520px"
+      >
+        {incompletePublishInfo && (
+          <div className="py-2 space-y-4">
+            <div className="p-3.5 rounded-[2px] bg-[#FEF2F2] border border-[#FECACA] text-xs text-[#991B1B] space-y-1.5">
+              <div className="font-semibold text-sm text-[#7F1D1D] flex items-center gap-2">
+                <AlertTriangle size={16} className="text-[#DC2626] shrink-0" />
+                <span>Không thể xuất bản ngay do còn mục chưa hoàn thiện:</span>
+              </div>
+              <p className="m-0 leading-relaxed text-[#7F1D1D]">
+                • {incompletePublishInfo.firstIssue}
+              </p>
+              {incompletePublishInfo.extraCount > 0 && (
+                <p className="m-0 text-[#991B1B] font-medium">
+                  (Và {incompletePublishInfo.extraCount} mục khác trong đề thi chưa điền đầy đủ).
+                </p>
+              )}
+            </div>
+
+            <p className="m-0 text-sm text-[#374151] leading-relaxed">
+              Để xuất bản, mọi câu hỏi cần có đầy đủ phương án và nội dung theo quy định của từng Part. Bạn có muốn lưu đề thi này ở trạng thái <strong>Bản nháp</strong> để tiếp tục hoàn thiện sau không?
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
+              <button
+                type="button"
+                onClick={() => setIncompletePublishInfo(null)}
+                disabled={actionLoading}
+                className="px-3.5 py-2 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#374151] border border-[#D1D5DB] cursor-pointer transition-all"
+              >
+                Quay lại kiểm tra
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const keepOpen = incompletePublishInfo.keepOpen;
+                  setIncompletePublishInfo(null);
+                  setFormStatus('DRAFT');
+                  handleSaveExam(null, 'DRAFT', keepOpen);
+                }}
+                disabled={actionLoading}
+                className="px-4 py-2 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] cursor-pointer transition-all inline-flex items-center justify-center gap-1.5"
+              >
+                <Clock size={13} />
+                Lưu thành Bản nháp
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       {/* SAFE EXIT CONFIRMATION MODAL (3 OPTIONS WHEN UNSAVED CHANGES EXIST) */}
       <Modal
         isOpen={closeConfirmOpen}
         onClose={() => setCloseConfirmOpen(false)}
-        title="Bạn có thay đổi chưa lưu lên máy chủ"
-        maxWidth="500px"
+        title="Lưu thay đổi trước khi thoát?"
+        maxWidth="480px"
       >
         <div className="py-2">
           <p className="m-0 mb-4 text-sm text-[#374151] leading-relaxed">
-            Đề thi <strong>"{formTitle || selectedTest?.titleTest || 'Chưa đặt tên'}"</strong> đang có nội dung mới chưa được lưu lên cơ sở dữ liệu máy chủ. Bạn muốn xử lý như thế nào trước khi rời trình soạn thảo?
+            Đề thi <strong>"{formTitle || selectedTest?.titleTest || 'Chưa đặt tên'}"</strong> có các thay đổi chưa được lưu. Bạn muốn lưu lại bản nháp hay thoát ngay?
           </p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
             <button
@@ -6730,7 +6904,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               className="px-3.5 py-2 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] cursor-pointer transition-all inline-flex items-center justify-center gap-1.5"
             >
               <Clock size={13} className="text-[#4B5563]" />
-              Lưu nháp & Quay lại
+              Lưu bản nháp & Thoát
             </button>
             <button
               type="button"
@@ -6738,7 +6912,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               disabled={actionLoading}
               className="px-4 py-2 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] cursor-pointer transition-all"
             >
-              Tiếp tục soạn thảo
+              Tiếp tục chỉnh sửa
             </button>
           </div>
         </div>

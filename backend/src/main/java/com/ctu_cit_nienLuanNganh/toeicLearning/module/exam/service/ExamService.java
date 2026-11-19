@@ -30,7 +30,7 @@ public interface ExamService {
     PageResponse<Test> getClassroomTests(User teacher, String classroomId, PageParams pageParams);
     PageResponse<Test> getAssignableTests(User teacher, String classroomId, PageParams pageParams);
     Test getClassroomTestDetail(User teacher, String classroomId, String testId);
-    void createClassroomTest(User teacher, String classroomId, CreateTestRequest request);
+    String createClassroomTest(User teacher, String classroomId, CreateTestRequest request);
     void updateClassroomTest(User teacher, String classroomId, String testId, CreateTestRequest request);
     void publishClassroomTest(User teacher, String classroomId, String testId);
     void deleteClassroomTest(User teacher, String classroomId, String testId);
@@ -39,7 +39,7 @@ public interface ExamService {
     DictationResponseDTO getDictationData(String testID, User currentUser);
     Test getAdminTestDetail(String testID);
     PartForUserResponseDTO getPart(String testId, String partId, User currentUser);
-    void createFullTest(User admin, CreateTestRequest request);
+    String createFullTest(User admin, CreateTestRequest request);
     void updateFullTest(User admin, String testID, CreateTestRequest request);
     void updateFullTestMetadata(User admin, String testID, TestMetadataRequest request);
     void publishTest(User admin, String testID);
