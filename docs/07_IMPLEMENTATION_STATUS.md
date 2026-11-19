@@ -362,3 +362,18 @@
   2. **Sửa triệt để lỗi xoay vòng `Đang lưu bản nháp...` khi vừa mở & tách key lưu nháp theo từng đề:** Khởi tạo trạng thái `idle` (*"Sẵn sàng soạn thảo"*) khi mở Thêm/Sửa đề; tách riêng `isLoadingTestDetail` (*"Đang tải chi tiết đề..."*); chuyển sang `unsaved` (*"Có thay đổi chưa lưu"*) khi người dùng chỉnh sửa; tăng debounce lưu `localStorage` lên `2.5s` và tách key riêng theo từng đề (`_create` và `_edit_{testId}`) để tránh xung đột bản nháp.
   3. **Bảo vệ chống thoát nhầm 2 lớp:** Thay `window.confirm` bằng Modal xác nhận thoát 3 lựa chọn (`Tiếp tục soạn thảo` / `Lưu nháp & Quay lại` / `Thoát không lưu`) khi còn thay đổi chưa lưu lên máy chủ, kết hợp sự kiện `beforeunload` cảnh báo khi F5/đóng tab.
   4. **Kiểm chứng kỹ thuật (2026-11-19):** `npm --prefix frontend run lint` (`PASS`, exit 0, 0 errors, 0 warnings ở các file sửa, 2 warnings sẵn có ở `Footer.jsx`) và `npm --prefix frontend run build` (`PASS`, exit 0).
+
+- 2026-11-19 (Đợt 2): Rà soát sâu, khắc phục triệt để các lỗi biên & tinh gọn giao diện **Trợ lý AI Nuna (`AiAssistantServiceImpl.java`, `AiAssistantWidget.jsx`, `editorial-application.css`)**:
+  1. **Sửa lỗi câu trả lời Gemini 2.5 Flash bị cắt lửng giữa câu & lỗi reset số thứ tự Markdown:**
+     - Tăng `maxOutputTokens` từ `2048` lên `4096` cho cả `chat` và `voiceChat` (do Gemini 2.5 Flash chia sẻ ngân sách token cho cả `thoughtsTokenCount` và `candidatesTokenCount`), lọc bỏ các part `thought: true`, và bổ sung `cleanTruncatedReply(resultText, finishReason)` cắt gọn dòng dở dang cuối cùng nếu chạm giới hạn token để không bao giờ để lại mảnh câu cụt (như `"• Đặc biệt"`).
+     - Trong `AiMarkdownMessage`, bảo toàn số thứ tự thực tế của danh sách `<ol start={startNum}>` và `<li value={item.num}>` để khi danh sách đánh số `1., 2.` xen kẽ với gạch đầu dòng phụ `•` thì mục `2.` không bị reset về `1.`.
+  2. **Nâng cao độ tin cậy Hỏi đáp & Giọng nói:**
+     - Cập nhật `buildSuggestedFollowUps` trên backend và `buildClientFallbackReply` trên frontend để sinh gợi ý ngắn gọn 1 dòng (4–7 chữ) theo đúng ngữ cảnh câu hỏi vừa hỏi và luôn có phản hồi dự phòng đầy đủ kể cả khi mất kết nối.
+     - Hỗ trợ nhận diện mẫu giọng nói `"câu số 8"` / `"câu tám"` đồng bộ ở cả client và server.
+  3. **Tinh gọn giao diện khung chat (loại bỏ các yếu tố thừa / "màu AI"):**
+     - Bỏ badge xanh `[● Sẵn sàng]` trên header (khiến dòng mô tả phụ bị cắt lửng `...`), bỏ các pill viền dày `[🐶 Nuna]`, `[Bạn]`, `[✨ Góc học tập TOEIC cùng Nuna]` và bỏ cờ emoji `🇻🇳`/`🇬🇧`.
+     - Đưa tên `Nuna` cùng hai nút hành động mảnh không viền (`Đọc`/`Dừng`, `Chép`) xuống thanh footer nhẹ bên dưới bong bóng trả lời (`ai-msg-footer`).
+     - Chuyển các khối gợi ý xám to 2 dòng có dấu `>` thành các **pill gợi ý ngang 1 dòng (`ai-quick-chip` bo tròn `9999px`)** gọn gàng, tự nhiên.
+  4. **Kiểm chứng kỹ thuật (2026-11-19):**
+     - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml compile -DskipTests`: **PASS (exit 0)**.
+     - Frontend `npm --prefix frontend run lint` (`PASS`, exit 0, 0 errors, 0 warnings ở các file sửa) & `npm --prefix frontend run build` (`PASS`, exit 0).

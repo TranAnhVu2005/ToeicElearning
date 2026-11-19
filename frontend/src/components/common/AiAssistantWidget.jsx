@@ -8,7 +8,6 @@ import {
   BookOpen,
   CheckCircle2,
   CircleX,
-  ChevronRight,
   LoaderCircle,
   Maximize2,
   Minimize2,
@@ -87,14 +86,16 @@ const AiMarkdownMessage = ({ content }) => {
   const flushList = (keySuffix) => {
     if (listItems.length === 0) return;
     if (listType === 'ol') {
+      const startNum = listItems[0]?.num || 1;
       elements.push(
         <ol
           key={`list-${keySuffix}`}
-          className="my-2.5 list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:font-bold marker:text-[#1D4ED8]"
+          start={startNum}
+          className="my-2 list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:font-bold marker:text-[#1D4ED8]"
         >
           {listItems.map((item, i) => (
-            <li key={i} className="pl-0.5">
-              {renderInlineFormatting(item)}
+            <li key={i} value={item.num} className="pl-0.5">
+              {renderInlineFormatting(item.text)}
             </li>
           ))}
         </ol>
@@ -103,11 +104,11 @@ const AiMarkdownMessage = ({ content }) => {
       elements.push(
         <ul
           key={`list-${keySuffix}`}
-          className="my-2.5 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:text-[#1D4ED8]"
+          className="my-2 list-disc space-y-1.5 pl-5 text-[14px] leading-relaxed text-slate-800 marker:text-[#1D4ED8]"
         >
           {listItems.map((item, i) => (
             <li key={i} className="pl-0.5">
-              {renderInlineFormatting(item)}
+              {renderInlineFormatting(item.text)}
             </li>
           ))}
         </ul>
@@ -126,7 +127,7 @@ const AiMarkdownMessage = ({ content }) => {
     // Horizontal rule (---, ***, ___)
     if (/^([-*_])\1{2,}$/.test(line)) {
       flushList(index);
-      elements.push(<hr key={index} className="my-3.5 border-t border-slate-200/90" />);
+      elements.push(<hr key={index} className="my-3 border-t border-slate-200/90" />);
       return;
     }
 
@@ -135,9 +136,8 @@ const AiMarkdownMessage = ({ content }) => {
       elements.push(
         <h4
           key={index}
-          className="mt-3.5 mb-1.5 flex items-center gap-1.5 text-[13px] font-bold tracking-wide text-[#1D4ED8] uppercase"
+          className="mt-3 mb-1 text-[13.5px] font-bold text-slate-900"
         >
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#1D4ED8]" />
           {renderInlineFormatting(line.slice(5))}
         </h4>
       );
@@ -150,7 +150,7 @@ const AiMarkdownMessage = ({ content }) => {
       elements.push(
         <div
           key={index}
-          className="mt-3 mb-2 border-b border-slate-200/90 pb-1.5 text-[15px] font-bold text-slate-950 first:mt-0"
+          className="mt-2.5 mb-1.5 border-b border-slate-200/80 pb-1 text-[14.5px] font-bold text-slate-950 first:mt-0"
         >
           {renderInlineFormatting(titleText)}
         </div>
@@ -163,7 +163,7 @@ const AiMarkdownMessage = ({ content }) => {
       elements.push(
         <blockquote
           key={index}
-          className="my-2.5 rounded-r-xl border-l-3 border-[#1D4ED8] bg-[#EFF6FF]/70 px-3.5 py-2.5 text-[13px] leading-relaxed text-slate-700 italic"
+          className="my-2 rounded-r-lg border-l-2 border-[#1D4ED8] bg-[#EFF6FF]/60 px-3 py-2 text-[13px] leading-relaxed text-slate-700 italic"
         >
           {renderInlineFormatting(line.slice(2))}
         </blockquote>
@@ -171,23 +171,26 @@ const AiMarkdownMessage = ({ content }) => {
       return;
     }
 
-    const bulletMatch = line.match(/^[-+*]\s+(.*)$/);
+    const bulletMatch = line.match(/^[-+•*]\s+(.*)$/);
     if (bulletMatch) {
       if (listType !== 'ul') {
         flushList(index);
         listType = 'ul';
       }
-      listItems.push(bulletMatch[1]);
+      listItems.push({ text: bulletMatch[1] });
       return;
     }
 
-    const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+    const orderedMatch = line.match(/^(\d+)\.\s+(.*)$/);
     if (orderedMatch) {
       if (listType !== 'ol') {
         flushList(index);
         listType = 'ol';
       }
-      listItems.push(orderedMatch[1]);
+      listItems.push({
+        num: Number(orderedMatch[1]) || listItems.length + 1,
+        text: orderedMatch[2],
+      });
       return;
     }
 
@@ -206,26 +209,18 @@ const AiMarkdownMessage = ({ content }) => {
 const PLATFORM_QUICK_TOPICS = [
   {
     label: 'Cách làm Full Test & Điểm 990',
-    subtitle: 'Tự lưu khi F5 & quy đổi thang điểm',
-    iconType: 'exam',
     prompt: 'Hướng dẫn chi tiết cách làm bài Full Test 200 câu, cơ chế tự lưu khi F5 và cách quy đổi điểm TOEIC 990 trên trang web.',
   },
   {
     label: 'Nghe chép chính tả Dictation',
-    subtitle: 'Cách luyện từng câu & phím tắt nhanh',
-    iconType: 'dictation',
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Lớp học & Xem trước PDF',
-    subtitle: 'Bài tập, tài liệu & mời qua Gmail',
-    iconType: 'classroom',
+    label: 'Lớp học & Tài liệu PDF',
     prompt: 'Hệ thống Lớp học trực tuyến, tính năng Xem trước PDF trực tiếp và Mời học viên qua Gmail hoạt động như thế nào?',
   },
   {
     label: 'Đề thi VIP & Đăng ký Giáo viên',
-    subtitle: 'Quyền lợi nâng cấp & thanh toán PayOS',
-    iconType: 'vip',
     prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì, cách mua đề VIP hoặc đăng ký Giáo viên qua PayOS như thế nào?',
   },
 ];
@@ -275,7 +270,7 @@ const AiAssistantWidget = () => {
       id: 'welcome',
       role: 'assistant',
       content:
-        'Chào bạn, mình là **Nuna** — người bạn đồng hành luyện thi TOEIC của bạn.\n\nBạn có thể gõ câu hỏi hoặc bấm nút **Micro** để trò chuyện bằng giọng nói về từng câu (#1–#200), từ vựng, ngữ pháp và cách dùng trang web nhé!',
+        'Chào bạn, mình là **Nuna**.\n\nBạn có thể nhập câu hỏi hoặc bấm **Micro** để hỏi trực tiếp về từng câu TOEIC (#1–#200), từ vựng, ngữ pháp và cách sử dụng hệ thống.',
       suggestedFollowUps: PLATFORM_QUICK_TOPICS,
     },
   ]);
@@ -497,14 +492,27 @@ const AiAssistantWidget = () => {
         ].join('\n'),
         referencedQuestionNumber: null,
         suggestedFollowUps: [
-          'Hệ thống Lớp học, Xem trước PDF và Mời qua Gmail hoạt động thế nào?',
-          'Kho đề thi có bao nhiêu bộ đề ETS và YBM?',
-          'Hướng dẫn cách tính điểm TOEIC 990 trên web',
+          'Lớp học & Tài liệu PDF',
+          'Kho 20 bộ đề ETS & YBM',
+          'Cách tính điểm TOEIC 990',
         ],
       };
     }
 
-    return null;
+    return {
+      reply: [
+        '### Nuna có thể hỗ trợ bạn ngay các nội dung sau:',
+        '- **Giải thích bài thi (`/results/:resultId`)**: Phân tích đáp án, lời thoại Transcript, bản dịch và từ vựng cho từng câu **#1 – #200**.',
+        '- **Luyện thi TOEIC (`/courses`)**: Kho **20 đề chuẩn ETS & YBM 2026**, làm Full Test 120 phút (tự lưu khi F5), luyện từng Part và nghe chép chính tả **Dictation**.',
+        '- **Lớp học & Nâng cấp VIP**: Xem trước PDF trực tiếp trong lớp học, mời học viên qua Gmail, mua đề VIP và đăng ký Giáo viên qua **PayOS**.',
+      ].join('\n'),
+      referencedQuestionNumber: null,
+      suggestedFollowUps: [
+        'Cấu trúc đề TOEIC 200 câu',
+        'Cách làm Full Test & Điểm 990',
+        'Nghe chép chính tả Dictation',
+      ],
+    };
   }, []);
 
   const stopSpeaking = useCallback(() => {
@@ -748,20 +756,20 @@ const AiAssistantWidget = () => {
       let activeQuestion =
         overrideContext.question !== undefined ? overrideContext.question : focusedQuestion;
 
-      if (textForQuestionMatch && activeResult?.questions?.length) {
-        const normalizedMatchText = normalizeSpokenVietnameseNumbers(textForQuestionMatch);
-        const match = normalizedMatchText.match(/(?:câu|cau|question|q|#)\s*(\d{1,3})\b/i);
-        if (match) {
-          const parsedNum = Number(match[1]);
-          const matchedFromPrompt = activeResult.questions.find(
-            (q) => Number(q.questionNumber) === parsedNum
-          );
-          if (matchedFromPrompt) {
-            activeQuestion = matchedFromPrompt;
-            setFocusedQuestion(matchedFromPrompt);
+        if (textForQuestionMatch && activeResult?.questions?.length) {
+          const normalizedMatchText = normalizeSpokenVietnameseNumbers(textForQuestionMatch);
+          const match = normalizedMatchText.match(/(?:câu|cau|question|q|#)\s*(?:số|so)?\s*(\d{1,3})\b/i);
+          if (match) {
+            const parsedNum = Number(match[1]);
+            const matchedFromPrompt = activeResult.questions.find(
+              (q) => Number(q.questionNumber) === parsedNum
+            );
+            if (matchedFromPrompt) {
+              activeQuestion = matchedFromPrompt;
+              setFocusedQuestion(matchedFromPrompt);
+            }
           }
         }
-      }
 
       const routeResultIdMatch = location.pathname.match(/^\/results\/([^/?#]+)/i);
       const resolvedResultId =
@@ -1684,30 +1692,17 @@ const AiAssistantWidget = () => {
         id: 'welcome',
         role: 'assistant',
         content: examResult
-          ? `Gâu gâu! Nuna đang kết nối với bài làm **${examResult.testTitle || 'Đề thi TOEIC'}** của bạn rồi! 🐾\nBạn có thể bấm nút **Micro** để hỏi bằng giọng nói hoặc chọn bất kỳ câu nào từ **#1 – #${resultQuestions.length}** nhé!`
-          : 'Nuna đã làm mới cuộc trò chuyện rồi! 🐾 Bạn có thể gõ chữ hoặc bấm **Micro** để trò chuyện cùng Nuna về TOEIC và trang web nhé.',
+          ? `Mình đang kết nối với bài làm **${examResult.testTitle || 'Đề thi TOEIC'}** của bạn.\nBạn có thể nhập câu hỏi, bấm **Micro** hoặc chọn câu từ **#1 – #${resultQuestions.length}** để xem lời giải chi tiết.`
+          : 'Đã làm mới cuộc trò chuyện. Bạn có thể nhập câu hỏi hoặc bấm **Micro** để trao đổi về TOEIC và cách sử dụng hệ thống.',
         suggestedFollowUps: examResult
           ? [
-            'Phân tích điểm mạnh, điểm yếu của tôi trong bài thi này',
-            'Tôi nên ưu tiên ôn tập Part nào trước để tăng điểm?',
-            'Hướng dẫn cách luyện lại các câu làm sai hiệu quả',
+            'Phân tích điểm mạnh & yếu bài này',
+            'Nên ôn Part nào để tăng điểm?',
+            'Cách luyện lại các câu làm sai',
           ]
           : PLATFORM_QUICK_TOPICS,
       },
     ]);
-  };
-
-  const renderTopicIcon = (iconType) => {
-    switch (iconType) {
-      case 'exam':
-        return <BookOpen size={14} />;
-      case 'dictation':
-        return <Languages size={14} />;
-      case 'classroom':
-        return <Lightbulb size={14} />;
-      default:
-        return <Sparkles size={14} />;
-    }
   };
 
   const headerTobyMood = loading
@@ -1726,13 +1721,13 @@ const AiAssistantWidget = () => {
       {!isOpen && (
         <div className="ai-assistant-launcher fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2">
           {examResult && (
-            <div className="toby-speech-nudge hidden items-center gap-2 rounded-2xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-lg sm:flex">
+            <div className="toby-speech-nudge hidden items-center gap-2 rounded-2xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-lg sm:flex">
               <img
                 src={TOBY_IMAGES.encouragement}
                 alt="Nuna khích lệ"
-                className="h-8 w-10 object-contain"
+                className="h-7 w-9 object-contain"
               />
-              <span>Gâu! Có câu nào khó cứ bấm hỏi Nuna nhé! 🐾</span>
+              <span>Hỏi Nuna giải thích từng câu trong bài này</span>
             </div>
           )}
 
@@ -1743,12 +1738,12 @@ const AiAssistantWidget = () => {
               setTimeout(() => inputRef.current?.focus(), 120);
             }}
             className="ai-launcher-btn group relative flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-zinc-200 bg-white p-1 shadow-[0_10px_28px_-6px_rgba(15,23,42,0.22)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_-6px_rgba(15,23,42,0.28)]"
-            aria-label="Mở Trợ lý AI Nuna — Bạn đồng hành TOEIC"
+            aria-label="Mở Trợ lý Nuna"
           >
             <span className="toby-launcher-avatar relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#FFFDF9]">
               <img
                 src={examResult ? TOBY_IMAGES.studying : TOBY_IMAGES.cheering}
-                alt="Chú cún Nuna — Trợ lý AI TOEIC"
+                alt="Trợ lý Nuna"
                 className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-110"
               />
             </span>
@@ -1760,9 +1755,9 @@ const AiAssistantWidget = () => {
       {/* Slide-over / Floating AI Assistant Panel */}
       {isOpen && (
         <aside
-          aria-label="Cửa sổ Trợ lý AI Nuna TOEIC Learning"
+          aria-label="Cửa sổ Trợ lý Nuna TOEIC Learning"
           style={{
-            backgroundImage: `linear-gradient(180deg, rgba(255, 253, 249, 0.80) 0%, rgba(248, 250, 252, 0.86) 55%, rgba(255, 253, 249, 0.92) 100%), url(${nunaBgImage})`,
+            backgroundImage: `linear-gradient(180deg, rgba(255, 253, 249, 0.84) 0%, rgba(248, 250, 252, 0.88) 55%, rgba(255, 253, 249, 0.94) 100%), url(${nunaBgImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center center',
           }}
@@ -1773,7 +1768,7 @@ const AiAssistantWidget = () => {
         >
           {/* Panel Header */}
           <header className="ai-assistant-header flex items-center justify-between gap-3 px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2.5">
               <TobyAvatar
                 mood={headerTobyMood}
                 size="md"
@@ -1781,19 +1776,13 @@ const AiAssistantWidget = () => {
                 className="ai-header-avatar bg-[#FFFDF9]"
               />
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="ai-assistant-title truncate text-[16px] font-bold tracking-tight text-slate-900">
-                    Trợ lý Nuna
-                  </span>
-                  <span className="ai-online-badge inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span>Sẵn sàng</span>
-                  </span>
+                <div className="ai-assistant-title truncate text-[16px] font-bold tracking-tight text-slate-900">
+                  Trợ lý Nuna
                 </div>
                 <p className="mt-0.5 truncate text-xs text-slate-600">
                   {examResult
-                    ? `Đang đồng hành: ${examResult.testTitle || 'Bài thi TOEIC'}`
-                    : 'Bạn đồng hành giải đáp TOEIC & hướng dẫn trang web'}
+                    ? `Đang xem: ${examResult.testTitle || 'Bài thi TOEIC'}`
+                    : 'Giải đáp TOEIC & hướng dẫn học tập'}
                 </p>
               </div>
             </div>
@@ -1957,93 +1946,27 @@ const AiAssistantWidget = () => {
           )}
 
           {/* Conversation Messages List */}
-          <div className="ai-assistant-body flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          <div className="ai-assistant-body flex-1 space-y-3.5 overflow-y-auto px-4 py-4">
             {messages.map((msg) => {
               const isUser = msg.role === 'user';
               const followUps = Array.isArray(msg.suggestedFollowUps) ? msg.suggestedFollowUps : [];
-              const hasTopicCards = followUps.some((item) => item && typeof item === 'object');
               return (
                 <div key={msg.id} className={`group flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-                  {/* Sender Meta Row */}
-                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5 px-0.5 text-[11px] font-semibold text-slate-700">
-                    {isUser ? (
-                      <>
-                        {msg.questionBadge && (
-                          <span className="ai-meta-pill rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
-                            {msg.questionBadge}
-                          </span>
-                        )}
-                        {msg.viaVoiceAudio && (
-                          <span className="ai-meta-pill inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-slate-700">
-                            <Mic size={11} className="text-[#1D4ED8]" />
-                            <span>Giọng nói</span>
-                          </span>
-                        )}
-                        <span className="ai-sender-badge rounded-full px-2.5 py-0.5 text-slate-700">Bạn</span>
-                      </>
-                    ) : (
-                      <>
-                        <div className="ai-sender-nuna inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-1">
-                          <img
-                            src={msg.id === 'welcome' ? TOBY_IMAGES.cheering : TOBY_IMAGES.studying}
-                            alt="Nuna"
-                            className="h-5 w-5 rounded-full bg-[#FFF7ED] object-contain p-0.5"
-                          />
-                          <span className="font-bold text-slate-800">Nuna</span>
-                        </div>
-                        {msg.referencedQuestionNumber && (
-                          <span className="ai-meta-pill rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
-                            Câu #{msg.referencedQuestionNumber}
-                          </span>
-                        )}
-                        {!msg.isError && (
-                          <button
-                            type="button"
-                            onClick={() => speakMessage(msg.id, msg.content)}
-                            title={speakingMsgId === msg.id ? 'Dừng đọc câu trả lời' : 'Đọc thành tiếng câu trả lời'}
-                            aria-label={
-                              speakingMsgId === msg.id
-                                ? 'Dừng đọc câu trả lời của Nuna'
-                                : 'Đọc thành tiếng câu trả lời của Nuna'
-                            }
-                            className={`ai-speak-btn inline-flex cursor-pointer items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold transition-all ${speakingMsgId === msg.id ? 'is-speaking' : ''}`}
-                          >
-                            {speakingMsgId === msg.id ? (
-                              <>
-                                <VolumeX size={11} />
-                                <span>Dừng đọc</span>
-                              </>
-                            ) : (
-                              <>
-                                <Volume2 size={11} />
-                                <span>Nghe Nuna đọc</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                        {!msg.isError && msg.id !== 'welcome' && (
-                          <button
-                            type="button"
-                            onClick={() => handleCopyMessage(msg.id, msg.content)}
-                            title="Sao chép câu trả lời"
-                            className="ai-copy-btn inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 transition-all sm:opacity-80 sm:group-hover:opacity-100"
-                          >
-                            {copiedMsgId === msg.id ? (
-                              <>
-                                <Check size={11} className="text-emerald-600" />
-                                <span className="text-emerald-600">Đã chép</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={11} />
-                                <span>Sao chép</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  {/* Optional compact context tag for User messages */}
+                  {isUser && (msg.questionBadge || msg.viaVoiceAudio) && (
+                    <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] text-slate-600">
+                      {msg.questionBadge && (
+                        <span className="font-semibold text-[#1D4ED8] tabular-nums">{msg.questionBadge}</span>
+                      )}
+                      {msg.questionBadge && msg.viaVoiceAudio && <span>·</span>}
+                      {msg.viaVoiceAudio && (
+                        <span className="inline-flex items-center gap-1 text-slate-600">
+                          <Mic size={10} className="text-[#1D4ED8]" />
+                          <span>Giọng nói</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Message Bubble */}
                   <div
@@ -2051,82 +1974,89 @@ const AiAssistantWidget = () => {
                       ? 'ai-msg-bubble-user px-4 py-2.5 text-[14px] leading-relaxed text-white'
                       : msg.isError
                         ? 'ai-msg-bubble-error px-4 py-3 text-sm text-red-900'
-                        : 'ai-msg-bubble-assistant px-4 py-3.5 text-slate-900'
+                        : 'ai-msg-bubble-assistant px-4 py-3 text-slate-900'
                       }`}
                   >
-                    {!isUser && msg.id === 'welcome' && (
-                      <div className="ai-welcome-greeting mb-2.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold">
-                        <Sparkles size={12} className="shrink-0 text-[#1D4ED8]" />
-                        <span>Góc học tập TOEIC cùng Nuna</span>
-                      </div>
-                    )}
                     {isUser ? (
                       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-white">{msg.content}</p>
                     ) : (
-                      <AiMarkdownMessage content={msg.content} />
+                      <>
+                        <AiMarkdownMessage content={msg.content} />
+                        {!msg.isError && (
+                          <div className="ai-msg-footer mt-2.5 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+                            <span className="text-[11.5px] font-medium text-slate-500">
+                              Nuna{msg.referencedQuestionNumber ? ` · Câu #${msg.referencedQuestionNumber}` : ''}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => speakMessage(msg.id, msg.content)}
+                                title={speakingMsgId === msg.id ? 'Dừng đọc' : 'Nghe đọc câu trả lời'}
+                                aria-label={
+                                  speakingMsgId === msg.id
+                                    ? 'Dừng đọc câu trả lời của Nuna'
+                                    : 'Đọc thành tiếng câu trả lời của Nuna'
+                                }
+                                className={`ai-speak-btn inline-flex cursor-pointer items-center gap-1 px-2 py-0.5 text-[11px] font-medium transition-all ${speakingMsgId === msg.id ? 'is-speaking' : ''}`}
+                              >
+                                {speakingMsgId === msg.id ? (
+                                  <>
+                                    <VolumeX size={11} />
+                                    <span>Dừng</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Volume2 size={11} />
+                                    <span>Đọc</span>
+                                  </>
+                                )}
+                              </button>
+
+                              {msg.id !== 'welcome' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyMessage(msg.id, msg.content)}
+                                  title="Sao chép câu trả lời"
+                                  className="ai-copy-btn inline-flex cursor-pointer items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-slate-500 transition-all hover:text-slate-800"
+                                >
+                                  {copiedMsgId === msg.id ? (
+                                    <>
+                                      <Check size={11} className="text-emerald-600" />
+                                      <span className="text-emerald-600">Đã chép</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy size={11} />
+                                      <span>Chép</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {/* Follow-up Suggestion Chips / Friendly Topic Cards */}
+                  {/* Compact Inline Suggestion Pills */}
                   {!isUser && followUps.length > 0 && (
-                    <div className="mt-3 w-full max-w-[96%]">
-                      {hasTopicCards ? (
-                        <div>
-                          <div className="mb-2 flex items-center gap-1.5 px-1 text-xs font-semibold text-slate-600">
-                            <Sparkles size={12} className="text-[#1D4ED8]" />
-                            <span>Chủ đề gợi ý nhanh — chạm để hỏi ngay:</span>
-                          </div>
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                            {followUps.map((item, idx) => {
-                              const label = typeof item === 'object' ? item.label : item;
-                              const subtitle = typeof item === 'object' ? item.subtitle : '';
-                              const promptText = typeof item === 'object' ? item.prompt : item;
-                              return (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  disabled={loading}
-                                  onClick={() => sendMessage(promptText)}
-                                  className="ai-topic-card group/card flex cursor-pointer items-start gap-2.5 p-3 text-left transition-all disabled:opacity-50"
-                                >
-                                  <span className="ai-topic-card-icon mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
-                                    {renderTopicIcon(item?.iconType)}
-                                  </span>
-                                  <span className="min-w-0 flex-1">
-                                    <span className="ai-topic-card-title block text-[13px] leading-snug font-semibold text-slate-800">
-                                      {label}
-                                    </span>
-                                    {subtitle && (
-                                      <span className="ai-topic-card-sub mt-0.5 block truncate text-[11.5px] text-slate-500">
-                                        {subtitle}
-                                      </span>
-                                    )}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                          {followUps.map((followUp, idx) => {
-                            const label = typeof followUp === 'object' ? followUp.label : followUp;
-                            const promptText = typeof followUp === 'object' ? followUp.prompt : followUp;
-                            return (
-                              <button
-                                key={idx}
-                                type="button"
-                                disabled={loading}
-                                onClick={() => sendMessage(promptText)}
-                                className="ai-quick-chip inline-flex cursor-pointer items-center gap-1.5 px-3.5 py-2 text-left text-xs font-medium text-slate-700 transition-all disabled:opacity-50"
-                              >
-                                <ChevronRight size={13} className="shrink-0 text-[#1D4ED8]" />
-                                <span>{label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
+                    <div className="mt-2 flex max-w-[96%] flex-wrap gap-1.5">
+                      {followUps.map((followUp, idx) => {
+                        const label = typeof followUp === 'object' ? followUp.label : followUp;
+                        const promptText = typeof followUp === 'object' ? followUp.prompt : followUp;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            disabled={loading}
+                            onClick={() => sendMessage(promptText)}
+                            className="ai-quick-chip inline-flex cursor-pointer items-center px-3 py-1.5 text-left text-[12px] font-medium text-slate-700 transition-all disabled:opacity-50"
+                          >
+                            <span>{label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -2138,11 +2068,11 @@ const AiAssistantWidget = () => {
                 <img
                   src={TOBY_IMAGES.thinking}
                   alt="Nuna đang suy nghĩ"
-                  className="ai-thinking-avatar h-11 w-11 shrink-0 object-contain p-1"
+                  className="ai-thinking-avatar h-10 w-10 shrink-0 object-contain p-1"
                 />
-                <div className="ai-msg-bubble-assistant flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-slate-700">
-                  <LoaderCircle size={16} className="animate-spin text-[#1D4ED8]" />
-                  <span>Nuna đang suy nghĩ và phân tích câu trả lời cho bạn...</span>
+                <div className="ai-msg-bubble-assistant flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-slate-700">
+                  <LoaderCircle size={15} className="animate-spin text-[#1D4ED8]" />
+                  <span>Đang phân tích câu trả lời...</span>
                 </div>
               </div>
             )}
@@ -2153,16 +2083,16 @@ const AiAssistantWidget = () => {
           {/* Streamlined Floating Composer Footer */}
           <form
             onSubmit={handleComposerSubmit}
-            className="ai-composer-footer px-4 pt-2.5 pb-3"
+            className="ai-composer-footer px-4 pt-2 pb-2.5"
           >
             {focusedQuestion && (
               <div className="mb-1.5 flex items-center justify-between px-1">
-                <span className="ai-focused-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-[#1D4ED8] tabular-nums">
-                  <span>🐾 Đang hỏi về Câu #{focusedQuestion.questionNumber}</span>
+                <span className="ai-focused-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-[#1D4ED8] tabular-nums">
+                  <span>Đang hỏi Câu #{focusedQuestion.questionNumber}</span>
                   <button
                     type="button"
                     onClick={() => setFocusedQuestion(null)}
-                    title="Bỏ ghim câu này để hỏi chung cả đề"
+                    title="Bỏ chọn câu này để hỏi chung cả đề"
                     className="ml-0.5 inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-blue-600 hover:bg-blue-100"
                   >
                     <X size={10} />
@@ -2239,7 +2169,7 @@ const AiAssistantWidget = () => {
                     </div>
                   ) : (
                     <span className="truncate font-semibold">
-                      Đang lắng nghe ({voiceLang === 'en-US' ? 'Tiếng Anh' : 'Tiếng Việt'}) — bấm Dừng để gửi
+                      Đang nghe ({voiceLang === 'en-US' ? 'Tiếng Anh' : 'Tiếng Việt'}) — bấm Dừng để gửi
                     </span>
                   )}
                 </div>
@@ -2269,12 +2199,12 @@ const AiAssistantWidget = () => {
                   voiceState === 'recording'
                     ? 'Đang thu âm câu hỏi của bạn (bấm Dừng hoặc Gửi để hoàn tất)...'
                     : voiceState === 'listening'
-                      ? 'Đang chuyển giọng nói thành chữ (tự gửi khi ngừng nói hoặc bấm Gửi)...'
+                      ? 'Đang chuyển giọng nói thành chữ (tự gửi khi ngừng nói)...'
                       : focusedQuestion
-                        ? `Hỏi Nuna về Câu #${focusedQuestion.questionNumber} (gõ hoặc bấm Micro)...`
+                        ? `Hỏi về Câu #${focusedQuestion.questionNumber}...`
                         : examResult
-                          ? 'Hỏi Nuna bất kỳ câu nào (gõ hoặc bấm Micro)...'
-                          : 'Nhắn hoặc bấm Micro trò chuyện với Nuna...'
+                          ? 'Hỏi về câu bất kỳ trong bài thi...'
+                          : 'Nhập câu hỏi hoặc bấm Micro để nói...'
                 }
                 disabled={loading || voiceState === 'recording'}
                 className="max-h-28 min-h-[26px] flex-1 resize-none border-0 bg-transparent p-0 text-[14px] leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
@@ -2288,7 +2218,7 @@ const AiAssistantWidget = () => {
                   aria-label={
                     voiceState !== 'idle'
                       ? 'Dừng micro và gửi câu hỏi'
-                      : 'Bật micro để hỏi Nuna bằng giọng nói'
+                      : 'Bật micro để hỏi bằng giọng nói'
                   }
                   title={
                     voiceState !== 'idle'
@@ -2309,15 +2239,15 @@ const AiAssistantWidget = () => {
                   loading ||
                   (voiceState !== 'recording' && !inputValue.trim())
                 }
-                aria-label="Gửi câu hỏi cho Trợ lý AI Nuna"
+                aria-label="Gửi câu hỏi"
                 className="ai-send-btn inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-white transition-all disabled:cursor-not-allowed"
               >
                 <Send size={15} />
               </button>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5 px-0.5 text-[11px] text-slate-600">
-              <div className="flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 px-1 text-[11px] text-slate-500">
+              <div className="flex flex-wrap items-center gap-1">
                 {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
                   <div className="ai-voice-mode-group inline-flex items-center p-0.5">
                     {voiceCapabilities.hasWebSpeech && (
@@ -2325,10 +2255,10 @@ const AiAssistantWidget = () => {
                         type="button"
                         disabled={voiceState !== 'idle'}
                         onClick={() => handleSwitchVoiceMode('browser')}
-                        title="Chế độ nhận diện giọng nói nhanh trực tiếp trên trình duyệt"
+                        title="Nhận diện giọng nói nhanh trực tiếp trên trình duyệt"
                         className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'browser' ? 'is-active' : ''}`}
                       >
-                        Nói nhanh
+                        Nhanh
                       </button>
                     )}
 
@@ -2339,12 +2269,12 @@ const AiAssistantWidget = () => {
                         onClick={() => handleSwitchVoiceMode('gemini')}
                         title={
                           isAuthenticated
-                            ? 'Chế độ ghi âm gửi trực tiếp cho Nuna AI nghe hiểu song ngữ Việt–Anh'
+                            ? 'Ghi âm gửi trực tiếp cho AI nghe hiểu song ngữ Việt–Anh'
                             : 'Cần đăng nhập để dùng chế độ ghi âm gửi AI'
                         }
                         className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'gemini' ? 'is-active' : ''}`}
                       >
-                        AI Song ngữ{!isAuthenticated ? ' · Đăng nhập' : ''}
+                        AI Song ngữ
                       </button>
                     )}
                   </div>
@@ -2355,10 +2285,10 @@ const AiAssistantWidget = () => {
                     type="button"
                     disabled={voiceState !== 'idle'}
                     onClick={() => setVoiceLang((prev) => (prev === 'vi-VN' ? 'en-US' : 'vi-VN'))}
-                    title="Chuyển ngôn ngữ ưu tiên khi nói (Tiếng Việt / Tiếng Anh)"
+                    title="Chuyển ngôn ngữ khi nói (Tiếng Việt / Tiếng Anh)"
                     className="ai-voice-toolbar-btn cursor-pointer transition-colors disabled:opacity-50"
                   >
-                    {voiceLang === 'en-US' ? '🇬🇧 English' : '🇻🇳 Tiếng Việt'}
+                    {voiceLang === 'en-US' ? 'Tiếng Anh' : 'Tiếng Việt'}
                   </button>
                 )}
               </div>
@@ -2366,7 +2296,7 @@ const AiAssistantWidget = () => {
               <button
                 type="button"
                 onClick={handleToggleAutoSpeak}
-                title="Tự động đọc thành tiếng câu trả lời khi hỏi bằng micro"
+                title="Tự động đọc thành tiếng khi hỏi bằng micro"
                 className={`ai-voice-toolbar-btn inline-flex cursor-pointer items-center gap-1 transition-colors ${autoSpeakOnVoice ? 'is-active' : ''}`}
               >
                 {autoSpeakOnVoice ? <Volume2 size={11} /> : <VolumeX size={11} />}

@@ -73,7 +73,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             Bạn là **Nuna — Trợ lý AI TOEIC Learning** (chú cún thông minh, đáng yêu, cố vấn học tập TOEIC và người bạn đồng hành chính thức của nền tảng luyện thi TOEIC trực tuyến **TOEIC Learning**).
             
             NGUYÊN TẮC PHẢN HỒI:
-            1. Luôn xưng là **"Nuna"** (hoặc "Nuna AI") và gọi người học là **"bạn"**; trả lời trực tiếp, đúng trọng tâm câu hỏi bằng tiếng Việt rõ ràng, thân thiện, khích lệ tinh thần học tập nhưng vẫn đảm bảo tính sư phạm cao, trình bày bằng Markdown (dùng tiêu đề ngắn, gạch đầu dòng, in đậm từ khóa quan trọng).
+            1. Luôn xưng là **"Nuna"** và gọi người học là **"bạn"**; trả lời trực tiếp, tự nhiên, đúng trọng tâm câu hỏi bằng tiếng Việt rõ ràng, thân thiện và súc tích (ưu tiên khoảng 120–280 từ, chia ý gọn gàng bằng gạch đầu dòng `-` và in đậm `**từ khóa**`, luôn kết thúc trọn vẹn câu cuối cùng, không viết dàn trải quá dài và không lồng danh sách đánh số `1. 2.` xen lẫn gạch đầu dòng gây rối bố cục).
             2. Khi người dùng đang ở trang Xem lại bài thi (`/results/:resultId`) và hỏi về câu hỏi hoặc đề thi:
                - Trả lời chính xác theo yêu cầu của người dùng (ví dụ: nếu hỏi nội dung/lời thoại/dịch nghĩa thì cung cấp đầy đủ nội dung câu hỏi, phương án A/B/C/D, lời thoại Transcript, bản dịch và giải thích; nếu hỏi tại sao chọn đáp án thì phân tích ngữ pháp/từ khóa và loại trừ các đáp án sai; nếu hỏi từ vựng thì trích lọc từ vựng & collocations trong câu).
                - Luôn đối chiếu **Đáp án đúng** với **Lựa chọn của học viên**.
@@ -169,7 +169,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             source = "SMART_TUTOR";
         }
 
-        List<String> followUps = buildSuggestedFollowUps(ctx.contextMode(), ctx.focusedAnswer(), ctx.verifiedResult());
+        List<String> followUps = buildSuggestedFollowUps(ctx.contextMode(), ctx.focusedAnswer(), ctx.verifiedResult(), userMessage);
 
         return AiChatResponseDTO.builder()
                 .reply(aiReply)
@@ -253,7 +253,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     .reply("Nuna chưa nghe rõ câu hỏi trong đoạn ghi âm vừa rồi. Bạn vui lòng nói gần micro hơn, giữ môi trường yên tĩnh hoặc gõ trực tiếp câu hỏi nhé!")
                     .contextMode(initialCtx.contextMode())
                     .referencedQuestionNumber(initialCtx.referencedQuestionNumber())
-                    .suggestedFollowUps(buildSuggestedFollowUps(initialCtx.contextMode(), initialCtx.focusedAnswer(), initialCtx.verifiedResult()))
+                    .suggestedFollowUps(buildSuggestedFollowUps(initialCtx.contextMode(), initialCtx.focusedAnswer(), initialCtx.verifiedResult(), ""))
                     .source("GEMINI_VOICE_AI")
                     .build();
         }
@@ -325,7 +325,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                 .reply(finalReply)
                 .contextMode(finalCtx.contextMode())
                 .referencedQuestionNumber(finalCtx.referencedQuestionNumber())
-                .suggestedFollowUps(buildSuggestedFollowUps(finalCtx.contextMode(), finalCtx.focusedAnswer(), finalCtx.verifiedResult()))
+                .suggestedFollowUps(buildSuggestedFollowUps(finalCtx.contextMode(), finalCtx.focusedAnswer(), finalCtx.verifiedResult(), transcript))
                 .source(responseSource)
                 .build();
     }
@@ -704,9 +704,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
         ObjectNode generationConfig = root.putObject("generationConfig");
         generationConfig.put("temperature", 0.35);
-        generationConfig.put("maxOutputTokens", 2048);
+        generationConfig.put("maxOutputTokens", 4096);
 
-        return executeGeminiPayload(root, 20);
+        return executeGeminiPayload(root, 24);
     }
 
     private VoiceGeminiOutput callGeminiVoiceWithFallback(
@@ -796,7 +796,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
         ObjectNode generationConfig = root.putObject("generationConfig");
         generationConfig.put("temperature", 0.3);
-        generationConfig.put("maxOutputTokens", 2048);
+        generationConfig.put("maxOutputTokens", 4096);
         if (jsonResponseMode) {
             generationConfig.put("responseMimeType", "application/json");
         }
@@ -890,16 +890,21 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                 JsonNode respJson = JSON.readTree(response.body());
                 JsonNode candidates = respJson.path("candidates");
                 if (candidates.isArray() && !candidates.isEmpty()) {
-                    JsonNode parts = candidates.get(0).path("content").path("parts");
+                    JsonNode firstCandidate = candidates.get(0);
+                    String finishReason = firstCandidate.path("finishReason").asText("");
+                    JsonNode parts = firstCandidate.path("content").path("parts");
                     if (parts.isArray() && !parts.isEmpty()) {
                         StringBuilder replyBuilder = new StringBuilder();
                         for (JsonNode part : parts) {
+                            if (part.path("thought").asBoolean(false)) {
+                                continue;
+                            }
                             String text = part.path("text").asText("");
                             if (!text.isEmpty()) {
                                 replyBuilder.append(text);
                             }
                         }
-                        String resultText = replyBuilder.toString().trim();
+                        String resultText = cleanTruncatedReply(replyBuilder.toString().trim(), finishReason);
                         if (!resultText.isEmpty()) {
                             return resultText;
                         }
@@ -910,6 +915,34 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             }
         }
         return null;
+    }
+
+    private String cleanTruncatedReply(String rawText, String finishReason) {
+        if (rawText == null || rawText.isBlank()) {
+            return "";
+        }
+        String trimmed = rawText.trim();
+        // Do not alter structured JSON responses from voice mode
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return trimmed;
+        }
+
+        // Remove any trailing dangling bullet or half-finished fragment (e.g. "- Đặc biệt", "* Lưu ý:")
+        String[] lines = trimmed.split("\\r?\\n");
+        if (lines.length > 1) {
+            String lastLine = lines[lines.length - 1].trim();
+            String lastBody = lastLine.replaceFirst("^(?:[-+*]|\\d+\\.)\\s*", "").trim();
+            boolean looksIncompleteFragment = lastBody.length() < 32
+                    && !lastBody.matches(".*[.!?)\"”’`]$");
+            boolean hitMaxTokens = "MAX_TOKENS".equalsIgnoreCase(finishReason);
+            if (looksIncompleteFragment || (hitMaxTokens && !lastBody.matches(".*[.!?)\"”’`]$"))) {
+                int lastNewline = trimmed.lastIndexOf('\n');
+                if (lastNewline > 40) {
+                    trimmed = trimmed.substring(0, lastNewline).trim();
+                }
+            }
+        }
+        return trimmed;
     }
 
     private List<String> buildCandidateUrls(String trimmedKey, String primaryUrl) {
@@ -1707,29 +1740,52 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         };
     }
 
-    private List<String> buildSuggestedFollowUps(String contextMode, UserAnswer focusedAnswer, TestResult result) {
+    private List<String> buildSuggestedFollowUps(String contextMode, UserAnswer focusedAnswer, TestResult result, String userMessage) {
         if ("QUESTION_REVIEW".equals(contextMode) && focusedAnswer != null && focusedAnswer.getQuestion() != null) {
             int qNum = focusedAnswer.getQuestion().getQuestionNumber() == null ? 1 : focusedAnswer.getQuestion().getQuestionNumber();
             int partNum = extractPartNumber(focusedAnswer.getQuestion());
             return List.of(
-                    "Giải thích chi tiết đáp án và dịch nghĩa câu " + qNum,
-                    "Từ vựng và cấu trúc ngữ pháp quan trọng trong câu " + qNum,
-                    "Bẫy ETS thường gặp và mẹo làm nhanh dạng Part " + partNum + " ở câu " + qNum
+                    "Giải thích đáp án câu " + qNum,
+                    "Từ vựng & ngữ pháp câu " + qNum,
+                    "Mẹo tránh bẫy Part " + partNum + " ở câu " + qNum
             );
         }
 
         if ("RESULT_OVERVIEW".equals(contextMode) && result != null) {
             return List.of(
-                    "Phân tích điểm mạnh, điểm yếu của tôi trong bài thi này",
-                    "Giải thích cho tôi câu làm sai đầu tiên trong đề này",
-                    "Tôi nên ưu tiên ôn tập Part nào trước để tăng điểm nhanh nhất?"
+                    "Phân tích điểm mạnh & yếu bài này",
+                    "Giải thích câu sai đầu tiên",
+                    "Nên ôn Part nào để tăng điểm nhanh?"
+            );
+        }
+
+        String lower = userMessage == null ? "" : userMessage.toLowerCase(Locale.ROOT);
+        if (lower.contains("cấu trúc") || lower.contains("bao nhiêu câu") || lower.contains("990") || lower.contains("tính điểm")) {
+            return List.of(
+                    "Mẹo phân bổ thời gian Reading",
+                    "Cách luyện nghe chép chính tả",
+                    "Kho 20 bộ đề ETS & YBM"
+            );
+        }
+        if (lower.contains("dictation") || lower.contains("chép chính tả") || lower.contains("nghe")) {
+            return List.of(
+                    "Mẹo làm nhanh Part 2 & Part 3",
+                    "Cấu trúc đề thi TOEIC 200 câu",
+                    "Tham gia Lớp học trực tuyến"
+            );
+        }
+        if (lower.contains("lớp học") || lower.contains("pdf") || lower.contains("gmail")) {
+            return List.of(
+                    "Cách đăng ký làm Giáo viên",
+                    "Mua đề thi VIP qua PayOS",
+                    "Cách làm Full Test 200 câu"
             );
         }
 
         return List.of(
-                "Bài thi TOEIC chuẩn có bao nhiêu câu hỏi và cấu trúc thế nào?",
-                "Hướng dẫn cách làm Full Test và cách tính điểm 990 trên web",
-                "Làm sao để luyện nghe chép chính tả (Dictation) và tham gia Lớp học?"
+                "Cấu trúc đề TOEIC 200 câu",
+                "Cách làm Full Test & tính điểm 990",
+                "Luyện nghe Dictation & Lớp học"
         );
     }
 
