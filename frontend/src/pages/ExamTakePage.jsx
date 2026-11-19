@@ -390,7 +390,7 @@ const ExamTakePage = () => {
     return mode === 'practice' || sourceResultId ? 0 : 120;
   }, [timeParam, mode, sourceResultId]);
 
-  const isStopwatch = initialMinutes === 0 || mode === 'practice' || Boolean(sourceResultId);
+  const isStopwatch = initialMinutes <= 0 || Boolean(sourceResultId);
 
   // Test data & Loading state
   const [test, setTest] = useState(null);
@@ -1182,7 +1182,11 @@ const ExamTakePage = () => {
             <div className="hidden lg:flex items-center gap-3 border border-slate-200/90 bg-white/95 px-3.5 py-1.5 rounded-[2px] text-[14px]">
               <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
                 <BookOpen size={14} className="text-[#1D4ED8]" />
-                {mode === 'fulltest' ? 'Full Test · 120 phút' : 'Luyện tập theo Part'}
+                {mode === 'fulltest'
+                  ? `Full Test · ${initialMinutes || 120} phút`
+                  : initialMinutes > 0
+                    ? `Luyện tập theo Part · ${initialMinutes} phút`
+                    : 'Luyện tập theo Part'}
               </span>
               <span className="h-3.5 w-[1px] bg-slate-200" />
               <span className="font-medium text-slate-600">
@@ -1704,7 +1708,7 @@ const ExamTakePage = () => {
                   disabled={isSubmitted || isSubmitting}
                   className="ml-auto flex cursor-pointer items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#173ea8] disabled:opacity-50"
                 >
-                  <CheckCircle2 size={16} /> Hoàn tất & Nộp bài
+                  <CheckCircle2 size={16} /> Hoàn tất và Nộp bài
                 </button>
               )}
             </div>

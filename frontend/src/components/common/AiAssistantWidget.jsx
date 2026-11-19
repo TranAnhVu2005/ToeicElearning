@@ -208,7 +208,7 @@ const AiMarkdownMessage = ({ content }) => {
 
 const PLATFORM_QUICK_TOPICS = [
   {
-    label: 'Cách làm Full Test & Điểm 990',
+    label: 'Cách làm Full Test và Điểm 990',
     prompt: 'Hướng dẫn chi tiết cách làm bài Full Test 200 câu, cơ chế tự lưu khi F5 và cách quy đổi điểm TOEIC 990 trên trang web.',
   },
   {
@@ -216,11 +216,11 @@ const PLATFORM_QUICK_TOPICS = [
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Lớp học & Tài liệu PDF',
+    label: 'Lớp học và Tài liệu PDF',
     prompt: 'Hệ thống Lớp học trực tuyến, tính năng Xem trước PDF trực tiếp và Mời học viên qua Gmail hoạt động như thế nào?',
   },
   {
-    label: 'Đề thi VIP & Đăng ký Giáo viên',
+    label: 'Đề thi VIP và Đăng ký Giáo viên',
     prompt: 'Đề thi VIP trên hệ thống có quyền lợi gì, cách mua đề VIP hoặc đăng ký Giáo viên qua PayOS như thế nào?',
   },
 ];
@@ -383,7 +383,7 @@ const AiAssistantWidget = () => {
       }
 
       if (activeQuestion.explanation) {
-        lines.push(`\n**Giải thích & Phân tích chi tiết:**\n${activeQuestion.explanation}`);
+        lines.push(`\n**Giải thích và Phân tích chi tiết:**\n${activeQuestion.explanation}`);
       } else {
         lines.push(
           `\n**Phân tích trọng tâm:**\n- Đáp án đúng của Câu #${qNum} là **${correct}**. Bạn hãy đối chiếu từ khóa trong câu hỏi/transcript với phương án **${correct}** để nắm chắc ngữ cảnh.`
@@ -409,7 +409,7 @@ const AiAssistantWidget = () => {
     ) {
       return {
         reply: [
-          '### Cấu trúc chuẩn của bài thi TOEIC (Listening & Reading)',
+          '### Cấu trúc chuẩn của bài thi TOEIC (Listening and Reading)',
           'Một đề thi **TOEIC Full Test** tiêu chuẩn gồm **200 câu hỏi trắc nghiệm**, thực hiện trong **120 phút** với tổng điểm **10 – 990 điểm**:',
           '1. **Phần Nghe (Listening Comprehension — 100 câu / ~45 phút | 5 – 495 điểm):**',
           '   - **Part 1 (6 câu — Câu 1–6)**: Mô tả tranh (*Photographs*).',
@@ -461,7 +461,7 @@ const AiAssistantWidget = () => {
     ) {
       return {
         reply: [
-          '### Hệ thống Lớp học trực tuyến, Xem trước PDF & Thông báo Gmail (`/classrooms`)',
+          '### Hệ thống Lớp học trực tuyến, Xem trước PDF và Thông báo Gmail (`/classrooms`)',
           '- **4 tab trực quan**: **Bảng tin**, **Bài tập trên lớp**, **Mọi người**, và **Điểm số**.',
           '- **Xem trước tài liệu PDF trực tiếp**: Ở mỗi tài liệu PDF trong lớp, bạn bấm nút **"Xem trước"** để mở cửa sổ đọc PDF trực tiếp ngay trên trình duyệt, hoặc bấm **"Tải PDF"** để tải về máy.',
           '- **Mời học viên hàng loạt qua Gmail**: Giáo viên bấm **"Mời qua Gmail"** và nhập danh sách địa chỉ Gmail; học viên đã có tài khoản sẽ được **duyệt thẳng vào lớp**, đồng thời nhận email lời mời kèm Mã lớp (`Class Code`).',
@@ -485,15 +485,15 @@ const AiAssistantWidget = () => {
     ) {
       return {
         reply: [
-          '### Đề thi VIP & Đăng ký Giáo viên qua Cổng thanh toán PayOS',
+          '### Đề thi VIP và Đăng ký Giáo viên qua Cổng thanh toán PayOS',
           '- **Mua Đề VIP (Mua 1 lần — Sở hữu vĩnh viễn)**: Mỗi đề VIP có giá VND riêng do Admin thiết lập; quét mã QR VietQR qua **PayOS**, hệ thống xác nhận tự động qua Webhook và mở khóa vĩnh viễn đề đó.',
           '- **Đăng ký Giáo viên (`/teacher/application`)**: Lệ phí xét duyệt là **2.000 ₫** qua PayOS. Nếu link thanh toán cũ hết hạn, bạn chỉ cần bấm tạo lại mã QR PayOS mới ngay trên trang để tiếp tục thanh toán; sau khi thanh toán xong, hồ sơ chuyển sang chờ Admin phê duyệt cấp quyền `ROLE_TEACHER`.',
           '- **Tra cứu giao dịch**: Xem lịch sử biên nhận tại **Hồ sơ cá nhân (`/profile?tab=payments`)**.',
         ].join('\n'),
         referencedQuestionNumber: null,
         suggestedFollowUps: [
-          'Lớp học & Tài liệu PDF',
-          'Kho 20 bộ đề ETS & YBM',
+          'Lớp học và Tài liệu PDF',
+          'Kho 20 bộ đề ETS và YBM',
           'Cách tính điểm TOEIC 990',
         ],
       };
@@ -503,13 +503,13 @@ const AiAssistantWidget = () => {
       reply: [
         '### Nuna có thể hỗ trợ bạn ngay các nội dung sau:',
         '- **Giải thích bài thi (`/results/:resultId`)**: Phân tích đáp án, lời thoại Transcript, bản dịch và từ vựng cho từng câu **#1 – #200**.',
-        '- **Luyện thi TOEIC (`/courses`)**: Kho **20 đề chuẩn ETS & YBM 2026**, làm Full Test 120 phút (tự lưu khi F5), luyện từng Part và nghe chép chính tả **Dictation**.',
-        '- **Lớp học & Nâng cấp VIP**: Xem trước PDF trực tiếp trong lớp học, mời học viên qua Gmail, mua đề VIP và đăng ký Giáo viên qua **PayOS**.',
+        '- **Luyện thi TOEIC (`/courses`)**: Kho **20 đề chuẩn ETS và YBM 2026**, làm Full Test 120 phút (tự lưu khi F5), luyện từng Part và nghe chép chính tả **Dictation**.',
+        '- **Lớp học và Nâng cấp VIP**: Xem trước PDF trực tiếp trong lớp học, mời học viên qua Gmail, mua đề VIP và đăng ký Giáo viên qua **PayOS**.',
       ].join('\n'),
       referencedQuestionNumber: null,
       suggestedFollowUps: [
         'Cấu trúc đề TOEIC 200 câu',
-        'Cách làm Full Test & Điểm 990',
+        'Cách làm Full Test và Điểm 990',
         'Nghe chép chính tả Dictation',
       ],
     };
@@ -1234,7 +1234,7 @@ const AiAssistantWidget = () => {
 
         if (rawBlob.size < 256 && !capturedBgTranscript) {
           setVoiceError({
-            message: 'Đoạn ghi âm quá ngắn. Hãy nói ít nhất 1 giây rồi bấm Dừng & Gửi.',
+            message: 'Đoạn ghi âm quá ngắn. Hãy nói ít nhất 1 giây rồi bấm Dừng và Gửi.',
           });
           return;
         }
@@ -1696,7 +1696,7 @@ const AiAssistantWidget = () => {
           : 'Đã làm mới cuộc trò chuyện. Bạn có thể nhập câu hỏi hoặc bấm **Micro** để trao đổi về TOEIC và cách sử dụng hệ thống.',
         suggestedFollowUps: examResult
           ? [
-            'Phân tích điểm mạnh & yếu bài này',
+            'Phân tích điểm mạnh và yếu bài này',
             'Nên ôn Part nào để tăng điểm?',
             'Cách luyện lại các câu làm sai',
           ]
@@ -1782,7 +1782,7 @@ const AiAssistantWidget = () => {
                 <p className="mt-0.5 truncate text-xs text-slate-600">
                   {examResult
                     ? `Đang xem: ${examResult.testTitle || 'Bài thi TOEIC'}`
-                    : 'Giải đáp TOEIC & hướng dẫn học tập'}
+                    : 'Giải đáp TOEIC và hướng dẫn học tập'}
                 </p>
               </div>
             </div>
@@ -1897,7 +1897,7 @@ const AiAssistantWidget = () => {
                       className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-slate-700 transition-colors disabled:opacity-50"
                     >
                       <Languages size={11} className="text-[#1D4ED8]" />
-                      <span>Từ vựng & Ngữ pháp</span>
+                      <span>Từ vựng và Ngữ pháp</span>
                     </button>
                     <button
                       type="button"
@@ -1926,7 +1926,7 @@ const AiAssistantWidget = () => {
                       className="ai-context-chip inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold text-[#1D4ED8] transition-colors disabled:opacity-50"
                     >
                       <Sparkles size={11} />
-                      <span>Phân tích điểm mạnh & yếu</span>
+                      <span>Phân tích điểm mạnh và yếu</span>
                     </button>
                     <button
                       type="button"
@@ -2222,7 +2222,7 @@ const AiAssistantWidget = () => {
                   }
                   title={
                     voiceState !== 'idle'
-                      ? 'Dừng & Gửi câu hỏi giọng nói'
+                      ? 'Dừng và Gửi câu hỏi giọng nói'
                       : voiceMode === 'gemini'
                         ? 'Nhấn để ghi âm gửi AI nghe song ngữ'
                         : 'Nhấn để nói (nhận diện nhanh)'

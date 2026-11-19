@@ -686,7 +686,7 @@ const AdminDashboardPage = () => {
           >
             <div>
               <h2 id="charts-title" className="text-xl font-medium text-[#111111]">
-                Biểu đồ đăng nhập & lượt thi {chartGranularity === 'MONTHLY' ? 'theo tháng' : 'theo ngày'}
+                Biểu đồ đăng nhập và lượt thi {chartGranularity === 'MONTHLY' ? 'theo tháng' : 'theo ngày'}
               </h2>
               <p className="mt-1 text-xs text-slate-600 sm:text-sm">
                 Theo dõi xu hướng người dùng truy cập và mức độ hoàn thành bài thi trên toàn hệ thống (múi giờ {REPORTING_TIME_ZONE}).

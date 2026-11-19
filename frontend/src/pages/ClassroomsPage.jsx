@@ -1449,7 +1449,7 @@ const ClassroomsPage = () => {
                 <button
                   type="button"
                   onClick={beginEditClassroom}
-                  title="Cài đặt & tùy chỉnh lớp học"
+                  title="Cài đặt và tùy chỉnh lớp học"
                   className="grid h-9 w-9 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-[#1D4ED8]"
                 >
                   <Settings size={18} />
@@ -1485,7 +1485,7 @@ const ClassroomsPage = () => {
                 setActiveTab('CLASSWORK');
               }
             }}
-            title="Lịch & Bài tập trên lớp"
+            title="Lịch và Bài tập trên lớp"
             className={`grid h-11 w-11 place-items-center rounded-full transition ${
               viewMode === 'CLASS_DETAIL' && activeTab === 'CLASSWORK'
                 ? 'bg-[#EFF6FF] text-[#1D4ED8]'
@@ -1960,7 +1960,7 @@ const ClassroomsPage = () => {
                       {selectedClass.description && (
                         <div className="mt-4 border-t border-slate-100 pt-3">
                           <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                            Mô tả & Mục tiêu lớp học
+                            Mô tả và Mục tiêu lớp học
                           </span>
                           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
                             {selectedClass.description}
@@ -2179,7 +2179,7 @@ const ClassroomsPage = () => {
                           {[
                             ['ALL', 'Tất cả'],
                             ['ANNOUNCEMENTS', 'Thông báo'],
-                            ['CLASSWORK', 'Bài tập & PDF'],
+                            ['CLASSWORK', 'Bài tập và PDF'],
                           ].map(([key, label]) => (
                             <button
                               key={key}
@@ -2406,7 +2406,7 @@ const ClassroomsPage = () => {
                                         }}
                                         className="rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                                       >
-                                        Xem bài nộp & Chấm điểm
+                                        Xem bài nộp và Chấm điểm
                                       </button>
                                     ) : (
                                       <>
@@ -2537,7 +2537,7 @@ const ClassroomsPage = () => {
                       </div>
                     ) : (
                       <div>
-                        <h2 className="text-xl font-bold text-slate-900">Bài tập & Tài liệu trên lớp</h2>
+                        <h2 className="text-xl font-bold text-slate-900">Bài tập và Tài liệu trên lớp</h2>
                         <p className="text-xs text-slate-600">
                           Hoàn thành các bài tập đúng hạn và tải về tài liệu ôn tập PDF của lớp.
                         </p>
@@ -2878,7 +2878,7 @@ const ClassroomsPage = () => {
                                         }}
                                         className="rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
                                       >
-                                        Xem bài nộp & Nhận xét
+                                        Xem bài nộp và Nhận xét
                                       </button>
                                       <button
                                         type="button"
@@ -3412,7 +3412,7 @@ const ClassroomsPage = () => {
                     <div>
                       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
                         <div>
-                          <h2 className="text-xl font-bold text-slate-900">Sổ điểm & Nhận xét bài nộp</h2>
+                          <h2 className="text-xl font-bold text-slate-900">Sổ điểm và Nhận xét bài nộp</h2>
                           <p className="text-xs text-slate-600">
                             Chọn một bài tập để xem thống kê nộp bài, chấm điểm và gửi nhận xét cho từng học viên.
                           </p>
@@ -4379,7 +4379,7 @@ const ClassroomsPage = () => {
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#1D4ED8]"
                 >
                   <Pencil size={13} />
-                  <span>{editInfoExpanded ? 'Ẩn chỉnh sửa tên & mô tả lớp' : 'Chỉnh sửa tên & mô tả lớp học'}</span>
+                  <span>{editInfoExpanded ? 'Ẩn chỉnh sửa tên và mô tả lớp' : 'Chỉnh sửa tên và mô tả lớp học'}</span>
                 </button>
                 {editInfoExpanded && (
                   <div className="mt-3 space-y-2.5">

@@ -216,7 +216,7 @@ const getMetaForNotification = (item) => {
 
 const resolveCtaLabel = (item, meta) => {
   const link = item?.link || item?.referenceUrl || '';
-  if (link.startsWith('/results/')) return 'Xem kết quả & lời giải chi tiết';
+  if (link.startsWith('/results/')) return 'Xem kết quả và lời giải chi tiết';
   if (link.startsWith('/courses/')) return 'Mở trang đề thi';
   if (link === '/courses') return 'Khám phá thư viện đề thi';
   if (link.startsWith('/classrooms')) return 'Mở không gian lớp học';

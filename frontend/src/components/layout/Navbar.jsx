@@ -652,7 +652,7 @@ const Navbar = () => {
                 <span className="text-slate-600">
                   {isAuthenticated
                     ? `Streak: ${currentStreak} ngày · Kỷ lục: ${highestStreak} ngày`
-                    : 'Giải đáp đề thi & hướng dẫn luyện TOEIC'}
+                    : 'Giải đáp đề thi và hướng dẫn luyện TOEIC'}
                 </span>
               </div>
               <button

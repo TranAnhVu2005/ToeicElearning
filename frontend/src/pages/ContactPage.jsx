@@ -72,7 +72,7 @@ const supportNotes = [
   },
   {
     step: '03',
-    title: 'Góp ý trải nghiệm phòng thi & tính năng mới',
+    title: 'Góp ý trải nghiệm phòng thi và tính năng mới',
     detail: 'Mọi đóng góp về giao diện làm bài, tốc độ phát audio hoặc tính năng ôn tập đều được ghi nhận để hoàn thiện hệ thống.',
   },
 ];

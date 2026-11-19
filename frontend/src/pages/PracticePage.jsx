@@ -50,7 +50,7 @@ const PracticePage = () => {
       part: 'Part 2',
       skill: 'listening',
       name: 'Question - Response',
-      vnName: 'Hỏi & Đáp',
+      vnName: 'Hỏi và Đáp',
       questions: 25,
       duration: '10 phút',
       difficulty: 'Trung bình',
@@ -219,7 +219,7 @@ const PracticePage = () => {
             to="/courses"
             className="practice-fulltest-link"
           >
-            <BookOpen size={18} /> Xem tất cả đề thi & khóa học
+            <BookOpen size={18} /> Xem tất cả đề thi và khóa học
           </Link>
         </div>
 

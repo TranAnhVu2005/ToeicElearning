@@ -1671,7 +1671,7 @@ const DictationTakePage = () => {
               onClick={() => setShowShortcutsModal(false)}
               className="w-full cursor-pointer border border-[#1D4ED8] bg-[#1D4ED8] py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[#173ea8]"
             >
-              Đã hiểu & Tiếp tục luyện tập
+              Đã hiểu và Tiếp tục luyện tập
             </button>
           </div>
         </div>

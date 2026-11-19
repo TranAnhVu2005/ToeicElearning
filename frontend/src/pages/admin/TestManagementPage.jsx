@@ -64,7 +64,7 @@ const ETS_STRUCTURE_SPECS = {
   },
   2: {
     partNumber: 2,
-    name: 'Part 2: Hỏi & Đáp (Question - Response)',
+    name: 'Part 2: Hỏi và Đáp (Question - Response)',
     skill: 'Listening',
     standardQuestions: 25,
     questionsPerContext: 1,
@@ -2295,9 +2295,9 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }`}
                     >
                       {hasImage && hasAudio
-                        ? (hasTranscript ? 'Đủ ảnh, audio & lời thoại' : 'Đủ ảnh & audio')
+                        ? (hasTranscript ? 'Đủ ảnh, audio và lời thoại' : 'Đủ ảnh và audio')
                         : !hasImage && !hasAudio
-                          ? 'Thiếu ảnh & audio'
+                          ? 'Thiếu ảnh và audio'
                           : !hasImage
                             ? 'Thiếu ảnh'
                             : 'Thiếu audio'}
@@ -2626,7 +2626,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-semibold text-[#111827] flex items-center gap-1.5">
                           <BookOpen size={14} className="text-[#1D4ED8]" />
-                          <span>Giải thích chi tiết & Dịch nghĩa tiếng Việt</span>
+                          <span>Giải thích chi tiết và Dịch nghĩa tiếng Việt</span>
                         </label>
 
                         <button
@@ -2773,7 +2773,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     </div>
                     <div>
                       <span className="text-sm font-semibold text-[#111111] block">
-                        Hỏi & Đáp (Question - Response) #{qNum}
+                        Hỏi và Đáp (Question - Response) #{qNum}
                       </span>
                       <span className="text-xs text-[#6B7280]">
                         1 Audio MP3 riêng lẻ · 3 lựa chọn (A, B, C)
@@ -2790,7 +2790,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }`}
                     >
                       {hasAudio
-                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        ? (hasTranscript ? 'Đủ audio và lời thoại' : 'Đã có audio')
                         : 'Chưa có audio'}
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] bg-[#111827] text-white border border-[#111827]">
@@ -2969,7 +2969,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-semibold text-[#111827] flex items-center gap-1.5">
                         <BookOpen size={13} className="text-[#1D4ED8]" />
-                        <span>Giải thích chi tiết & Bẫy cần tránh</span>
+                        <span>Giải thích chi tiết và Bẫy cần tránh</span>
                       </label>
 
                       <button
@@ -3132,7 +3132,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }`}
                     >
                       {hasAudio
-                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        ? (hasTranscript ? 'Đủ audio và lời thoại' : 'Đã có audio')
                         : 'Chưa có audio'}
                     </span>
                     {hasImage && (
@@ -3665,7 +3665,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         }`}
                     >
                       {hasAudio
-                        ? (hasTranscript ? 'Đủ audio & lời thoại' : 'Đã có audio')
+                        ? (hasTranscript ? 'Đủ audio và lời thoại' : 'Đã có audio')
                         : 'Chưa có audio'}
                     </span>
                     {hasImage && (
@@ -4173,7 +4173,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         Câu hỏi điền từ độc lập #{qNum}
                       </span>
                       <span className="text-xs text-[#6B7280]">
-                        Ngữ pháp & Từ vựng độc lập · 4 lựa chọn A, B, C, D
+                        Ngữ pháp và Từ vựng độc lập · 4 lựa chọn A, B, C, D
                       </span>
                     </div>
                   </div>
@@ -5072,7 +5072,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                         type="button"
                         onClick={() => {
                           const p1 = `JOB ADVERTISEMENT\nPosition: Senior Project Architect\nCompany: Apex Design Studio\nLocation: Chicago, IL\nWe are looking for an experienced architect with at least 5 years of commercial design experience. Applicants must be proficient in AutoCAD and BIM software.\nApply by sending your resume to hr@apexdesign.com.`;
-                          const p2 = `COVER LETTER & EMAIL\nTo: hr@apexdesign.com\nFrom: sarah.jenkins@archimail.com\nDate: August 12\nSubject: Application for Senior Project Architect\n\nDear Hiring Manager,\nI am writing to express my strong interest in the Senior Project Architect role. With over 6 years leading commercial building projects in downtown Chicago, I am confident in my ability to contribute to Apex Design Studio.`;
+                          const p2 = `COVER LETTER AND EMAIL\nTo: hr@apexdesign.com\nFrom: sarah.jenkins@archimail.com\nDate: August 12\nSubject: Application for Senior Project Architect\n\nDear Hiring Manager,\nI am writing to express my strong interest in the Senior Project Architect role. With over 6 years leading commercial building projects in downtown Chicago, I am confident in my ability to contribute to Apex Design Studio.`;
                           const p3 = `INTERVIEW INVITATION\nTo: sarah.jenkins@archimail.com\nFrom: hr@apexdesign.com\nDate: August 15\nSubject: Interview Schedule\n\nDear Ms. Jenkins,\nWe were very impressed by your portfolio. We would like to invite you for an interview on Friday, August 22 at 10:00 AM at our downtown office. Please let us know if this time works for you.`;
                           handleUpdateContextField(activePartIndex, cqIdx, 'paragraph', `${p1}\n\n--- BÀI ĐỌC 2 ---\n\n${p2}\n\n--- BÀI ĐỌC 3 ---\n\n${p3}`);
                         }}
@@ -5678,8 +5678,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
           role="region"
           aria-label={
             builderMode === 'create'
-              ? (classroomId ? 'Soạn thảo đề TOEIC riêng cho lớp học' : 'Soạn thảo & Khởi tạo đề thi TOEIC mới')
-              : `Chỉnh sửa & Cập nhật đề thi: ${formTitle || selectedTest?.titleTest || 'Đang tải đề…'}`
+              ? (classroomId ? 'Soạn thảo đề TOEIC riêng cho lớp học' : 'Soạn thảo và Khởi tạo đề thi TOEIC mới')
+              : `Chỉnh sửa và Cập nhật đề thi: ${formTitle || selectedTest?.titleTest || 'Đang tải đề…'}`
           }
         >
           {/* FIXED FULLSCREEN TOP WORKSPACE BAR */}
@@ -5796,7 +5796,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   className="px-4 py-1.5 text-xs font-semibold rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 size={13} />
-                  {builderMode === 'edit' ? 'Lưu & Xuất bản' : 'Xuất bản đề thi'}
+                  {builderMode === 'edit' ? 'Lưu và Xuất bản' : 'Xuất bản đề thi'}
                 </button>
               </div>
             </div>
@@ -6322,7 +6322,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <div className="p-3 rounded-[2px] bg-[#EFF6FF] border border-[#BFDBFE] text-xs flex items-center gap-2 text-[#111827]">
                     <Volume2 size={16} className="text-[#1D4ED8] shrink-0" />
                     <div>
-                      <strong className="text-[#111111]">Quy cách định dạng file nghe & câu hỏi: </strong>
+                      <strong className="text-[#111111]">Quy cách định dạng file nghe và câu hỏi: </strong>
                       <span>{ETS_PART_DIRECTIONS[activePart.partNumber].audioFormatNote}</span>
                     </div>
                   </div>
@@ -6370,7 +6370,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                           <span className="font-semibold text-xs text-[#111827] flex items-center gap-1.5">
                             <Layers size={14} className="text-[#1D4ED8]" />
                             {activePart.partNumber === 1
-                              ? `Câu hỏi tranh #${cqIdx + 1} (File nghe & Ảnh riêng lẻ)`
+                              ? `Câu hỏi tranh #${cqIdx + 1} (File nghe và Ảnh riêng lẻ)`
                               : activePart.partNumber === 2
                                 ? `Câu hỏi #${cqIdx + 7} (File nghe riêng lẻ · 3 lựa chọn A, B, C)`
                                 : activePart.partNumber === 3
@@ -6378,7 +6378,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                                   : activePart.partNumber === 4
                                     ? `Bài nói ngắn #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 File Audio phát chung cho 3 câu hỏi`
                                     : activePart.partNumber === 5
-                                      ? `Câu hỏi #${startQ} (Ngữ pháp & Từ vựng độc lập)`
+                                      ? `Câu hỏi #${startQ} (Ngữ pháp và Từ vựng độc lập)`
                                       : activePart.partNumber === 6
                                         ? `Bài đọc điền khuyết #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 Đoạn văn có ${cq.questions?.length || 4} chỗ trống`
                                         : `Bài đọc hiểu #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · ${cq.questions?.length || 0} câu hỏi`}
@@ -6811,8 +6811,8 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 {actionLoading
                   ? 'Đang lưu...'
                   : formStatus === 'PUBLISHED'
-                    ? (builderMode === 'edit' ? 'Lưu & Xuất bản' : 'Xuất bản đề thi')
-                    : 'Lưu bản nháp & Thoát'}
+                    ? (builderMode === 'edit' ? 'Lưu và Xuất bản' : 'Xuất bản đề thi')
+                    : 'Lưu bản nháp và Thoát'}
               </button>
             </div>
           </div>
@@ -6904,7 +6904,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               className="px-3.5 py-2 text-xs font-semibold rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] cursor-pointer transition-all inline-flex items-center justify-center gap-1.5"
             >
               <Clock size={13} className="text-[#4B5563]" />
-              Lưu bản nháp & Thoát
+              Lưu bản nháp và Thoát
             </button>
             <button
               type="button"
@@ -6966,7 +6966,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         isOpen={etsGuideOpen}
         onClose={() => setEtsGuideOpen(false)}
         className="test-structure-reference-modal"
-        title="Cẩm nang cấu trúc TOEIC Listening & Reading (tài liệu tham khảo)"
+        title="Cẩm nang cấu trúc TOEIC Listening and Reading (tài liệu tham khảo)"
         maxWidth="900px"
       >
         <div className="test-structure-reference space-y-5 text-[#111827] text-xs leading-relaxed max-h-[75vh] overflow-y-auto pr-2">
@@ -7011,7 +7011,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <tr className="bg-[#F1F1F1] text-[#111111] font-semibold border-b border-[#D1D5DB]">
                     <th className="p-2.5">Phần thi</th>
                     <th className="p-2.5">Nội dung bài thi</th>
-                    <th className="p-2.5">Quy cách & Chi tiết yêu cầu</th>
+                    <th className="p-2.5">Quy cách và Chi tiết yêu cầu</th>
                     <th className="p-2.5 text-center">Số câu</th>
                   </tr>
                 </thead>
@@ -7026,7 +7026,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   </tr>
                   <tr>
                     <td className="p-2.5 font-semibold text-[#111111] whitespace-nowrap">Part 2</td>
-                    <td className="p-2.5 font-semibold text-[#1D4ED8]">Hỏi & Đáp (Question - Response)</td>
+                    <td className="p-2.5 font-semibold text-[#1D4ED8]">Hỏi và Đáp (Question - Response)</td>
                     <td className="p-2.5 text-[#4B5563]">
                       Nghe 1 câu hỏi hoặc câu nhận định và 3 câu phản hồi. <strong className="text-[#111111]">Lưu ý: Chỉ có 3 lựa chọn A, B, C (không có đáp án D).</strong>
                     </td>
@@ -7065,7 +7065,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                   <tr className="bg-[#F1F1F1] text-[#111111] font-semibold border-b border-[#D1D5DB]">
                     <th className="p-2.5">Phần thi</th>
                     <th className="p-2.5">Nội dung câu hỏi</th>
-                    <th className="p-2.5">Yêu cầu & Mục tiêu đánh giá</th>
+                    <th className="p-2.5">Yêu cầu và Mục tiêu đánh giá</th>
                     <th className="p-2.5 text-center">Số câu</th>
                   </tr>
                 </thead>
@@ -7119,23 +7119,23 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
                 Cuộc họp, thư từ, email, thông báo nội bộ, thiết bị văn phòng, quy trình làm việc.
               </div>
               <div className="bg-white p-2.5 rounded-[2px] border border-[#D1D5DB]">
-                <strong className="text-[#111111] block mb-0.5">Kinh doanh & Doanh nghiệp</strong>
+                <strong className="text-[#111111] block mb-0.5">Kinh doanh và Doanh nghiệp</strong>
                 Hợp đồng, thương lượng giá, tiếp thị, bán hàng, hội nghị, chiến lược kinh doanh.
               </div>
               <div className="bg-white p-2.5 rounded-[2px] border border-[#D1D5DB]">
-                <strong className="text-[#111111] block mb-0.5">Nhân sự & Tuyển dụng</strong>
+                <strong className="text-[#111111] block mb-0.5">Nhân sự và Tuyển dụng</strong>
                 Phỏng vấn, lương thưởng, thăng chức, nghỉ phép, đào tạo nhân viên mới.
               </div>
               <div className="bg-white p-2.5 rounded-[2px] border border-[#D1D5DB]">
-                <strong className="text-[#111111] block mb-0.5">Tài chính & Ngân sách</strong>
+                <strong className="text-[#111111] block mb-0.5">Tài chính và Ngân sách</strong>
                 Ngân hàng, kế toán, báo cáo doanh thu, đầu tư, thuế, hóa đơn chi phí.
               </div>
               <div className="bg-white p-2.5 rounded-[2px] border border-[#D1D5DB]">
-                <strong className="text-[#111111] block mb-0.5">Mua hàng & Vận chuyển</strong>
+                <strong className="text-[#111111] block mb-0.5">Mua hàng và Vận chuyển</strong>
                 Đặt hàng, theo dõi đơn hàng (tracking), khiếu nại giao nhận, vận chuyển hàng hóa.
               </div>
               <div className="bg-white p-2.5 rounded-[2px] border border-[#D1D5DB]">
-                <strong className="text-[#111111] block mb-0.5">Du lịch & Khách sạn</strong>
+                <strong className="text-[#111111] block mb-0.5">Du lịch và Khách sạn</strong>
                 Đặt vé máy bay, lịch trình di chuyển, phòng khách sạn, hoãn/hủy chuyến bay.
               </div>
             </div>

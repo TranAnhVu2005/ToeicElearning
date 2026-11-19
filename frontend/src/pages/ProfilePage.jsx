@@ -230,7 +230,7 @@ const ProfilePage = () => {
           ...prev,
           userAvatar: res.data.userAvatar || prev.userAvatar,
         }));
-        setProfileToast({ type: 'success', message: 'Cập nhật thông tin & ảnh đại diện thành công!' });
+        setProfileToast({ type: 'success', message: 'Cập nhật thông tin và ảnh đại diện thành công!' });
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || 'Cập nhật thất bại. Vui lòng thử lại!';
@@ -347,7 +347,7 @@ const ProfilePage = () => {
           <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 border border-blue-200 bg-blue-50/90 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-[#1D4ED8]">
-                <Sparkles size={13} /> Tài khoản & Thành tích học tập
+                <Sparkles size={13} /> Tài khoản và Thành tích học tập
               </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
                 Hồ Sơ Của Bạn

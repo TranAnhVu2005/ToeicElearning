@@ -44,7 +44,7 @@ const HomeLearningSection = () => {
     <section className="home-learning-section">
       <div className="container">
         <header className="home-learning-heading">
-          <span className="section-subtitle">TOEIC LISTENING &amp; READING</span>
+          <span className="section-subtitle">TOEIC LISTENING AND READING</span>
           <h2>Luyện thi với lộ trình rõ ràng</h2>
           <p>Nền tảng cho phép luyện tập theo từng đề, từng phần, hỗ trợ chấm chữa câu sai và có trợ lý AI Nuna đồng hành hỏi đáp.</p>
         </header>

@@ -32,7 +32,7 @@ export const ETS_PART_DIRECTIONS = {
   2: {
     partNumber: 2,
     skill: 'listening',
-    name: 'Part 2: Question - Response (Hỏi & Đáp)',
+    name: 'Part 2: Question - Response (Hỏi và Đáp)',
     questionRange: 'Câu 7 - 31 (25 câu)',
     audioFormatNote: 'Mỗi câu hỏi có 1 FILE NGHE AUDIO RIÊNG LẺ. ĐẶC BIỆT: Chỉ có 3 lựa chọn A, B, C (Không có D).',
     directions:

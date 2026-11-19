@@ -334,7 +334,7 @@ const TestResultPage = () => {
             {/* Summary Header Card */}
             <section className="border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
               <p className="editorial-eyebrow text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-                BÁO CÁO KẾT QUẢ & LỜI GIẢI CHI TIẾT
+                BÁO CÁO KẾT QUẢ VÀ LỜI GIẢI CHI TIẾT
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">{result.testTitle}</h1>
 
@@ -505,7 +505,7 @@ const TestResultPage = () => {
                       <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
                         Sau khi làm bài, bạn có thể bấm{' '}
                         <strong className="font-semibold text-slate-900">"Giải thích đáp án"</strong> hoặc{' '}
-                        <strong className="font-semibold text-slate-900">"Từ vựng & Ngữ pháp"</strong> ở từng câu bên dưới để Nuna phân tích chi tiết.
+                        <strong className="font-semibold text-slate-900">"Từ vựng và Ngữ pháp"</strong> ở từng câu bên dưới để Nuna phân tích chi tiết.
                       </p>
                     </div>
                   </div>
@@ -806,7 +806,7 @@ const TestResultPage = () => {
                           }
                           className="ai-q-chip cursor-pointer rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition-all hover:border-[#1D4ED8] hover:bg-blue-50/50 hover:text-[#1D4ED8]"
                         >
-                          Từ vựng & Ngữ pháp
+                          Từ vựng và Ngữ pháp
                         </button>
                         <button
                           type="button"

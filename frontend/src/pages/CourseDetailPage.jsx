@@ -430,8 +430,17 @@ const CourseDetailPage = () => {
       setToast({ type: 'error', message: 'Vui lòng chọn ít nhất 1 phần thi để luyện tập!' });
       return;
     }
+    const rawTime = String(timeLimit || '').trim();
+    let timeParam = 0;
+    if (rawTime !== '') {
+      const parsedTime = Number(rawTime);
+      if (!Number.isInteger(parsedTime) || parsedTime < 0 || parsedTime > 300) {
+        setToast({ type: 'error', message: 'Thời gian luyện tập vui lòng nhập từ 1 đến 300 phút (hoặc để trống nếu không giới hạn).' });
+        return;
+      }
+      timeParam = parsedTime;
+    }
     const partsParam = selectedAvailableParts.join(',');
-    const timeParam = timeLimit ? parseInt(timeLimit, 10) : 0;
     navigate(`/courses/${testId}/take?mode=practice&parts=${partsParam}&time=${timeParam}&speed=${encodeURIComponent(audioSpeed)}`);
   };
 
@@ -757,7 +766,7 @@ const CourseDetailPage = () => {
                   onClick={() => setTranscriptModalOpen(true)}
                   className="course-detail-subtab px-4 py-2 text-[14px] font-medium cursor-pointer inline-flex items-center gap-1.5 bg-white/95 hover:bg-white backdrop-blur-xs"
                 >
-                  <FileText size={14} strokeWidth={1.6} /> Đáp án &amp; Transcript
+                  <FileText size={14} strokeWidth={1.6} /> Đáp án và Transcript
                 </button>
               </div>
 
@@ -821,7 +830,7 @@ const CourseDetailPage = () => {
                     alt="Cún Nuna mách mẹo luyện từng Part"
                     className="h-12 w-12 shrink-0 rounded-xl border border-amber-200 bg-white object-contain p-1"
                   />
-                      <p className="text-[14px] leading-relaxed font-normal text-amber-900">
+                  <p className="text-[14px] leading-relaxed font-normal text-amber-900">
                     <strong className="font-semibold">Mẹo từ Nuna:</strong> Luyện tập theo từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung xử lý chính xác từng dạng câu hỏi trước khi bước vào bài thi 120 phút.
                   </p>
                 </div>
@@ -898,31 +907,44 @@ const CourseDetailPage = () => {
                 {/* Giới hạn thời gian & Tốc độ âm thanh mặc định */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
                   <div className="space-y-2">
-                    <label className="block text-[14px] font-semibold text-slate-700">
-                      Giới hạn thời gian
+                    <label htmlFor="practice-time-limit" className="block text-[14px] font-semibold text-slate-700">
+                      Giới hạn thời gian <span className="font-normal text-slate-500">(Không giới hạn nếu để trống ô này)</span>
                     </label>
-                    <select
-                      value={timeLimit}
-                      onChange={(e) => setTimeLimit(e.target.value)}
-                      className="course-detail-select w-full px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
-                    >
-                      <option value="">Chọn thời gian (Không giới hạn) </option>
-                      <option value="5">5 phút</option>
-                      <option value="10">10 phút</option>
-                      <option value="15">15 phút</option>
-                      <option value="20">20 phút</option>
-                      <option value="30">30 phút</option>
-                      <option value="45">45 phút</option>
-                      <option value="60">60 phút</option>
-                      <option value="75">75 phút</option>
-                      <option value="90">90 phút</option>
-                      <option value="120">120 phút</option>
-                    </select>
+                    <div className="relative flex items-center">
+                      <input
+                        id="practice-time-limit"
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        max="300"
+                        step="1"
+                        value={timeLimit}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setTimeLimit(val);
+                        }}
+                        placeholder="Nhập thời gian..."
+                        className="course-detail-select w-full pl-3.5 pr-20 py-2.5 text-[14px] text-slate-800"
+                      />
+                      {timeLimit ? (
+                        <button
+                          type="button"
+                          onClick={() => setTimeLimit('')}
+                          className="absolute right-14 text-[12px] font-medium text-slate-400 hover:text-slate-600 px-1.5 py-0.5 cursor-pointer"
+                          title="Đặt lại không giới hạn thời gian"
+                        >
+                          Xóa
+                        </button>
+                      ) : null}
+                      <span className="pointer-events-none absolute right-3.5 text-[13px] font-medium text-slate-500 select-none">
+                        phút
+                      </span>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="block text-[14px] font-semibold text-slate-700">
-                      Tốc độ phát âm thanh mặc định <span className="font-normal text-slate-500">(Đổi được từng câu)</span>
+                      Tốc độ phát âm thanh mặc định
                     </label>
                     <select
                       value={audioSpeed}
@@ -1033,7 +1055,7 @@ const CourseDetailPage = () => {
                       },
                       {
                         part: 2,
-                        name: 'Part 2: Hỏi & Đáp',
+                        name: 'Part 2: Hỏi và Đáp',
                         desc: '25 câu hỏi phản xạ nhanh • Rèn luyện nhận diện từ để hỏi và bẫy gián tiếp',
                         count: '25 câu',
                       },
@@ -1692,7 +1714,7 @@ const CourseDetailPage = () => {
       <Modal
         isOpen={transcriptModalOpen}
         onClose={() => setTranscriptModalOpen(false)}
-        title={`Đáp án & Transcript - ${test.titleTest}`}
+        title={`Đáp án và Transcript - ${test.titleTest}`}
         maxWidth="max-w-4xl"
       >
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">

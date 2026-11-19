@@ -251,7 +251,7 @@ const TeacherApplicationPage = () => {
                 <li className="flex gap-3">
                   <span className="mt-0.5 text-xs font-semibold tabular-nums text-[#1D4ED8]">01</span>
                   <div>
-                    <p className="font-semibold text-[#111111]">Gửi hồ sơ &amp; thanh toán</p>
+                    <p className="font-semibold text-[#111111]">Gửi hồ sơ và thanh toán</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
                       Điền giới thiệu ngắn và hoàn tất phí xét duyệt{' '}
                       <span className="tabular-nums font-semibold text-[#111827]">2.000 ₫</span> qua cổng PayOS.
@@ -261,7 +261,7 @@ const TeacherApplicationPage = () => {
                 <li className="flex gap-3">
                   <span className="mt-0.5 text-xs font-semibold tabular-nums text-[#1D4ED8]">02</span>
                   <div>
-                    <p className="font-semibold text-[#111111]">Xác nhận &amp; duyệt hồ sơ</p>
+                    <p className="font-semibold text-[#111111]">Xác nhận và duyệt hồ sơ</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
                       Hệ thống ghi nhận thanh toán tự động và chuyển hồ sơ tới quản trị viên xem xét.
                     </p>

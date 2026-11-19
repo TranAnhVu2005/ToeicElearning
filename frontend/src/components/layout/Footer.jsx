@@ -41,7 +41,7 @@ const Footer = () => {
               <li><Link to="/"><ArrowRight size={14} /> Trang chủ</Link></li>
               <li><Link to="/courses"><ArrowRight size={14} /> Kho đề thi TOEIC</Link></li>
               <li><Link to="/classrooms"><ArrowRight size={14} /> Không gian Lớp học</Link></li>
-              <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ & Hỗ trợ</Link></li>
+              <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ và Hỗ trợ</Link></li>
               <li><Link to="/login"><ArrowRight size={14} /> Đăng nhập hệ thống</Link></li>
               <li><Link to="/register"><ArrowRight size={14} /> Đăng ký tài khoản</Link></li>
             </ul>
@@ -62,7 +62,7 @@ const Footer = () => {
             </div>
             <ul className="footer-links">
               <li><Link to="/courses"><ArrowRight size={14} /> Khám phá đề thi</Link></li>
-              <li><Link to="/profile"><ArrowRight size={14} /> Theo dõi Streak & Kỷ lục</Link></li>
+              <li><Link to="/profile"><ArrowRight size={14} /> Theo dõi Streak và Kỷ lục</Link></li>
               <li><Link to="/contact"><ArrowRight size={14} /> Liên hệ hỗ trợ</Link></li>
             </ul>
           </div>
