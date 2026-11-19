@@ -1,9 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MessageSquareText } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import brandLogo from '../../assets/img/layout/logo1.png';
 import { TOBY_IMAGES } from '../common/TobyMascot';
-import { openAiAssistant } from '../../services/aiService';
 
 const Footer = () => {
   return (

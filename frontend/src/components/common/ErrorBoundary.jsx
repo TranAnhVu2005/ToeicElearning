@@ -50,8 +50,8 @@ class ErrorBoundary extends React.Component {
                 width: '64px',
                 height: '64px',
                 background: '#FEE2E2',
-                color: '#ffffff',
-                border: '1px solid #D1D5DB',
+                color: '#DC2626',
+                border: '1px solid #FECACA',
                 borderRadius: '2px',
                 boxShadow: 'none',
                 display: 'inline-flex',
@@ -64,11 +64,11 @@ class ErrorBoundary extends React.Component {
             </div>
 
             <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#111111', marginBottom: '0.75rem' }}>
-              Đã xảy ra lỗi khi tải giao diện
+              Đã xảy ra lỗi khi tải trang
             </h2>
 
             <p style={{ color: '#444444', fontSize: '0.95rem', fontWeight: '600', marginBottom: '1.75rem', lineHeight: 1.6 }}>
-              Hệ thống vừa phát hiện sự cố không mong muốn trong thành phần hiển thị. Vui lòng thử tải lại trang hoặc quay về trang chủ.
+              Trang hiện tại gặp sự cố ngoài ý muốn. Bạn vui lòng tải lại trang hoặc quay về trang chủ để tiếp tục.
             </p>
 
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>

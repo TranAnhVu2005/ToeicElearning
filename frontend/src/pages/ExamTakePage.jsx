@@ -54,7 +54,7 @@ const AUDIO_SPEED_OPTIONS = [
   { value: 0.5, label: '0.5×' },
   { value: 0.75, label: '0.75×' },
   { value: 0.9, label: '0.9×' },
-  { value: 1.0, label: 'Normal' },
+  { value: 1.0, label: '1.0× (Chuẩn)' },
   { value: 1.1, label: '1.1×' },
   { value: 1.25, label: '1.25×' },
   { value: 1.5, label: '1.5×' },
@@ -266,10 +266,10 @@ const AudioPlayerBar = ({ src, defaultPlaybackRate = 1.0 }) => {
             aria-label="Chọn tốc độ phát âm thanh"
             className="exam-audio-speed-popover absolute right-0 top-[calc(100%+8px)] z-40 w-[148px] border border-slate-200/90 bg-white py-2.5 px-3 text-slate-700"
           >
-            {/* Header: ◂ Speed */}
+            {/* Header: ◂ Tốc độ phát */}
             <div className="mb-2 flex items-center gap-2 border-b border-slate-200 pb-2 text-[14px] font-semibold text-slate-700">
               <span className="text-[11px] text-slate-500">◂</span>
-              <span>Speed</span>
+              <span>Tốc độ phát</span>
             </div>
 
             {/* Radio Options */}
@@ -309,7 +309,7 @@ const AudioPlayerBar = ({ src, defaultPlaybackRate = 1.0 }) => {
                 onClick={handleReloadAudio}
                 className="w-full cursor-pointer border-0 bg-transparent py-1 text-[13px] font-semibold text-slate-600 transition hover:text-[#1D4ED8]"
               >
-                Reload File
+                Tải lại âm thanh
               </button>
             </div>
           </div>
@@ -591,7 +591,7 @@ const ExamTakePage = () => {
             }
             if (partNum >= 3) {
               context.questions.forEach((question) => {
-                if (missing(question.questionContent)) {
+                if (partNum !== 6 && missing(question.questionContent)) {
                   throw new Error(`Đề thi thiếu nội dung câu hỏi ${question.questionNumber}. Vui lòng báo quản trị viên kiểm tra nội dung đề.`);
                 }
                 for (const option of ['A', 'B', 'C', 'D']) {

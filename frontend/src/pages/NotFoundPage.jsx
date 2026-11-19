@@ -13,13 +13,13 @@ const NotFoundPage = () => {
           className="mx-auto mb-3 h-24 w-24 object-contain"
         />
         <p className="font-mono text-xs font-semibold uppercase tracking-widest text-[#1D4ED8]">
-          MÃ TRẠNG THÁI 404 · NUNA ĐANG BỐI RỐI
+          LỖI 404 · KHÔNG TÌM THẤY TRANG
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-900 sm:text-4xl">
-          Gâu...? Không tìm thấy trang yêu cầu
+          Không tìm thấy trang yêu cầu
         </h1>
         <p className="mt-3 text-base leading-relaxed text-slate-600">
-          Nuna đã đánh hơi khắp nơi nhưng đường dẫn bạn vừa truy cập không tồn tại hoặc đã được thay đổi. Hãy quay về trang chủ hoặc mở thư viện đề thi TOEIC để tiếp tục học tập cùng Nuna nhé!
+          Đường dẫn bạn vừa truy cập không tồn tại hoặc đã được thay đổi. Hãy quay về trang chủ hoặc mở thư viện đề thi TOEIC để tiếp tục học tập.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

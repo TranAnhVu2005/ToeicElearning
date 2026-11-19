@@ -118,12 +118,12 @@ const RegisterPage = () => {
                   className="h-9 w-9 shrink-0 object-contain"
                 />
                 <span className="text-xs font-semibold text-slate-700">
-                  <strong className="text-[#1D4ED8]">Làm bạn cùng Nuna!</strong> Tạo tài khoản để luyện đề và theo dõi tiến độ học tiếng anh nhé!
+                  <strong className="text-[#1D4ED8]">Làm bạn cùng Nuna!</strong> Tạo tài khoản để luyện đề và theo dõi tiến độ học tiếng Anh nhé!
                 </span>
               </div>
               <p className="auth-kicker">TOEIC ELEARNING</p>
               <h1 id="register-title" className="auth-title">Đăng Ký Tài Khoản</h1>
-              <p className="auth-subtitle">Trở thành thành viên ToeicElearning chỉ trong 1 phút</p>
+              <p className="auth-subtitle">Tạo tài khoản mới để lưu lịch sử làm bài và chuỗi ngày học</p>
             </header>
 
             {errorMsg && (

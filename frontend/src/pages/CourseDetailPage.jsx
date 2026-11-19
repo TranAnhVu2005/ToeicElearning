@@ -211,7 +211,7 @@ const CourseDetailPage = () => {
   // Main Tabs: 'practice' (Luyện tập) | 'fulltest' (Làm full test) | 'discussion' (Thảo luận)
   const [activeTab, setActiveTab] = useState('practice');
 
-  // Selected parts are filtered against the content available in this test.
+  //Selected parts are filtered against the content available in this test.
   const [selectedParts, setSelectedParts] = useState(() => (
     Number.isInteger(requestedPracticePart) && requestedPracticePart >= 1 && requestedPracticePart <= 7
       ? [requestedPracticePart]
@@ -223,9 +223,6 @@ const CourseDetailPage = () => {
 
   // Default Audio Playback Speed for Listening questions ('0.5' | '1.0' | '1.1' | '1.5' | '2')
   const [audioSpeed, setAudioSpeed] = useState('1.0');
-
-  // Interface view: 'default'
-  const [interfaceType, setInterfaceType] = useState('default');
 
   // Admin delete state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -824,8 +821,8 @@ const CourseDetailPage = () => {
                     alt="Cún Nuna mách mẹo luyện từng Part"
                     className="h-12 w-12 shrink-0 rounded-xl border border-amber-200 bg-white object-contain p-1"
                   />
-                  <p className="text-[14px] leading-relaxed font-normal text-amber-900">
-                    <strong className="font-semibold">Nuna nói nhỏ cho nghe:</strong> Hình thức luyện tập từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung vào giải đúng các câu hỏi thay vì phải chịu áp lực 120 phút. Nộp bài xong nhớ gọi Nuna chữa câu sai nhé!
+                      <p className="text-[14px] leading-relaxed font-normal text-amber-900">
+                    <strong className="font-semibold">Mẹo từ Nuna:</strong> Luyện tập theo từng phần và chọn mức thời gian phù hợp sẽ giúp bạn tập trung xử lý chính xác từng dạng câu hỏi trước khi bước vào bài thi 120 phút.
                   </p>
                 </div>
 
@@ -935,25 +932,13 @@ const CourseDetailPage = () => {
                       <option value="0.5">0.5×</option>
                       <option value="0.75">0.75×</option>
                       <option value="0.9">0.9×</option>
-                      <option value="1.0">Normal (1.0×)</option>
+                      <option value="1.0">Bình thường (1.0×)</option>
                       <option value="1.1">1.1×</option>
                       <option value="1.25">1.25×</option>
                       <option value="1.5">1.5×</option>
                       <option value="2">2×</option>
                     </select>
                   </div>
-                </div>
-
-                {/* Giao diện */}
-                <div className="space-y-2">
-                  <label className="block text-[14px] font-semibold text-slate-700">Giao diện phòng thi</label>
-                  <select
-                    value={interfaceType}
-                    onChange={(e) => setInterfaceType(e.target.value)}
-                    className="course-detail-select w-full max-w-sm px-3.5 py-2.5 text-[14px] text-slate-800 cursor-pointer"
-                  >
-                    <option value="default">Mặc định</option>
-                  </select>
                 </div>
 
                 {/* Action Button: LUYỆN TẬP */}
@@ -994,7 +979,7 @@ const CourseDetailPage = () => {
                     <option value="0.5">0.5×</option>
                     <option value="0.75">0.75×</option>
                     <option value="0.9">0.9×</option>
-                    <option value="1.0">Normal (1.0×)</option>
+                    <option value="1.0">Bình thường (1.0×)</option>
                     <option value="1.1">1.1×</option>
                     <option value="1.25">1.25×</option>
                     <option value="1.5">1.5×</option>
@@ -1084,7 +1069,7 @@ const CourseDetailPage = () => {
                         <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                           <span className="text-[13px] font-normal text-slate-500">Audio theo từng câu</span>
                           <Link
-                            to={`/courses/${testId}/dictation?part=${item.part}${audioSpeed !== 1 ? `&speed=${audioSpeed}` : ''}`}
+                            to={`/courses/${testId}/dictation?part=${item.part}${Number(audioSpeed) !== 1 ? `&speed=${audioSpeed}` : ''}`}
                             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[3px] border border-slate-200 bg-white px-3.5 py-1.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
                           >
                             <span>Bắt đầu chép</span>
@@ -1099,7 +1084,7 @@ const CourseDetailPage = () => {
                 {/* Master Action CTA */}
                 <div className="pt-2">
                   <Link
-                    to={`/courses/${testId}/dictation?part=all${audioSpeed !== 1 ? `&speed=${audioSpeed}` : ''}`}
+                    to={`/courses/${testId}/dictation?part=all${Number(audioSpeed) !== 1 ? `&speed=${audioSpeed}` : ''}`}
                     className="course-detail-cta group px-7 py-3 font-semibold text-[15px] inline-flex items-center gap-3 cursor-pointer"
                   >
                     <span>Chép chính tả toàn bộ phần nghe (Part 1 – 4)</span>
@@ -1297,12 +1282,12 @@ const CourseDetailPage = () => {
                   <div className="text-center py-8 text-slate-600 text-[14px]">
                     <img
                       src={TOBY_IMAGES.sleeping}
-                      alt="Nuna đang chờ bạn làm đề này"
+                      alt="Chưa có lượt làm bài"
                       className="mx-auto mb-2.5 h-16 w-16 object-contain"
                     />
-                    <p className="font-semibold text-slate-800">Nuna chưa thấy lượt làm bài nào của bạn ở đề này</p>
+                    <p className="font-semibold text-slate-800">Bạn chưa có lượt làm bài nào ở đề này</p>
                     <p className="mt-1 text-slate-500">
-                      Hãy chọn &ldquo;Luyện tập từng phần&rdquo; hoặc &ldquo;Làm full test&rdquo; ở trên để đánh thức Nuna và bắt đầu nhé!
+                      Hãy chọn &ldquo;Luyện tập từng phần&rdquo; hoặc &ldquo;Làm full test&rdquo; ở trên để bắt đầu làm bài.
                     </p>
                   </div>
                 ) : (
@@ -1584,28 +1569,28 @@ const CourseDetailPage = () => {
                 />
                 <div className="min-w-0 flex-1">
                   <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#1D4ED8]">
-                    🐾 Góc dặn dò của Nuna
+                    Góc hướng dẫn của Nuna
                   </span>
                   <h4 className="mt-0.5 text-[16px] font-bold text-slate-900 leading-snug">
                     {activeTab === 'fulltest'
-                      ? 'Sẵn sàng 120 phút Full Test!'
+                      ? 'Sẵn sàng 120 phút Full Test'
                       : activeTab === 'dictation'
-                        ? 'Luyện tai nhạy bén cùng Nuna'
+                        ? 'Luyện nghe chép chính tả'
                         : activeTab === 'discussion'
                           ? 'Cùng trao đổi câu hỏi khó'
-                          : 'Chiến thuật luyện từng Part'}
+                          : 'Gợi ý luyện từng Part'}
                   </h4>
                 </div>
               </div>
 
               <p className="mt-3 text-[13.5px] leading-relaxed text-slate-700">
                 {activeTab === 'fulltest'
-                  ? 'Hệ thống tự động lưu đáp án theo thời gian thực. Nếu lỡ F5 hoặc rớt mạng, Nuna vẫn giữ nguyên bài đang làm cho bạn!'
+                  ? 'Hệ thống tự động lưu đáp án khi làm bài. Nếu trình duyệt tải lại trang, bạn vẫn tiếp tục được bài đang làm.'
                   : activeTab === 'dictation'
-                    ? 'Nghe từng câu và gõ lại rồi nhấn Enter để Nuna kiểm tra từng vế câu cho bạn nhé!'
+                    ? 'Nghe từng câu, gõ lại những gì nghe được rồi nhấn Enter để đối chiếu theo từng vế câu.'
                     : activeTab === 'discussion'
-                      ? 'Bạn có thể để lại bình luận trao đổi cùng mọi người hoặc bấm nút bên dưới để hỏi Nuna AI ngay lập tức.'
-                      : 'Chọn 1–2 Part bạn muốn cải thiện trước. Ngay sau khi nộp bài, Nuna sẽ giải thích ngữ pháp, từ vựng và bẫy từng câu!'}
+                      ? 'Bạn có thể để lại bình luận trao đổi cùng mọi người hoặc mở trợ lý Nuna để hỏi đáp ngay.'
+                      : 'Chọn 1–2 Part cần cải thiện để luyện trước. Sau khi nộp bài, bạn có thể xem giải thích chi tiết từng câu.'}
               </p>
 
               <button
@@ -1617,7 +1602,7 @@ const CourseDetailPage = () => {
                 }
                 className="mt-3.5 flex w-full cursor-pointer items-center justify-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#1E40AF]"
               >
-                <span>🐾 Hỏi Nuna chiến thuật làm đề này</span>
+                <span>Hỏi Nuna kinh nghiệm làm đề</span>
               </button>
             </section>
 
@@ -1636,19 +1621,24 @@ const CourseDetailPage = () => {
                     {user?.userName || user?.userEmail || 'Tài khoản học viên'}
                   </h4>
                   <p className="text-[14px] text-slate-500 mt-1.5 leading-relaxed">
-                    Bạn chưa tạo mục tiêu cho quá trình luyện thi của mình.{' '}
-                    <Link to="/profile" className="course-detail-profile-link font-semibold text-[#1D4ED8] hover:underline">
-                      Tạo ngay
-                    </Link>
+                    {isAuthenticated ? (
+                      <>
+                        Chuỗi học hiện tại:{' '}
+                        <strong className="font-semibold text-slate-800">{Number(user?.currentStreak) || 0} ngày</strong>
+                        {Number(user?.totalScore) > 0 ? ` · Điểm cao nhất: ${user.totalScore}/990` : ''}
+                      </>
+                    ) : (
+                      'Đăng nhập để lưu kết quả làm bài và theo dõi tiến độ học tập.'
+                    )}
                   </p>
                 </div>
 
                 <Link
-                  to="/profile"
+                  to={isAuthenticated ? '/profile?tab=history' : '/login'}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-[3px] border border-slate-200 bg-white py-2.5 text-[14px] font-medium text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-[#EFF6FF]"
                 >
                   <BarChart3 size={15} strokeWidth={1.7} />
-                  <span>Thống kê kết quả</span>
+                  <span>{isAuthenticated ? 'Xem lịch sử làm bài' : 'Đăng nhập ngay'}</span>
                 </Link>
               </div>
             </div>

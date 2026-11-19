@@ -61,9 +61,9 @@ const HomeLearningSection = () => {
           <div className="home-learning-copy">
             <h3>Mỗi câu hỏi là một cơ hội để tiến bộ.</h3>
             <ul className="home-learning-points">
-              <li>01 - Explore: Khám phá kỹ năng cần cải thiện</li>
-              <li>02 - Practice: Luyện tập và thử thách bản thân</li>
-              <li>03 - Improve: Nhìn lại kết quả và tiến bộ cùng Nuna AI</li>
+              <li>01 - Chọn đề hoặc kỹ năng cần cải thiện</li>
+              <li>02 - Làm bài theo từng Part hoặc thi thử 120 phút</li>
+              <li>03 - Xem lời giải chi tiết và hỏi đáp cùng trợ lý Nuna</li>
             </ul>
             <div className="home-learning-actions">
               <Link to="/courses" className="home-learning-primary">Bắt đầu làm bài ngay <ArrowRight size={17} aria-hidden="true" /></Link>

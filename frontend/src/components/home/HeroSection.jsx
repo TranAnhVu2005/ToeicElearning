@@ -75,7 +75,7 @@ const HeroSection = () => {
           </p>
           <h1 className="editorial-hero-title">English<br /><span>is life</span></h1>
           <p className="editorial-hero-description">
-            TOEIC Elearning là nền tảng hỗ trợ những người yêu tiếng anh nói chung và những người thi TOEIC nói riêng có
+            TOEIC Elearning là nền tảng hỗ trợ những người yêu tiếng Anh nói chung và những người thi TOEIC nói riêng có
             một công cụ hỗ trợ học tập linh hoạt, tiện lợi và dễ dàng sử dụng.
           </p>
           <div className="editorial-hero-actions">

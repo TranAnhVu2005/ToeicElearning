@@ -407,11 +407,11 @@ const ProfilePage = () => {
               <div className="mt-3 flex items-center justify-between border-t border-amber-200/70 pt-2.5 text-xs">
                 <span className="font-semibold text-amber-900/80">
                   {currentStreak > 0
-                    ? 'Nuna rất vui vì bạn giữ nhịp học mỗi ngày!'
-                    : 'Nuna đang ngủ gật... Làm 1 bài để đánh thức Nuna nhé!'}
+                    ? 'Bạn đang duy trì thói quen luyện tập đều đặn mỗi ngày.'
+                    : 'Hoàn thành 1 bài luyện tập hôm nay để bắt đầu chuỗi ngày học.'}
                 </span>
                 <span className="shrink-0 border border-amber-300 bg-amber-100/90 px-2 py-0.5 text-[11px] font-bold text-amber-900">
-                  {currentStreak > 0 ? '🐾 Đang cháy' : '💤 Chưa mở chuỗi'}
+                  {currentStreak > 0 ? 'Đang duy trì' : 'Chưa mở chuỗi'}
                 </span>
               </div>
             </div>
@@ -442,11 +442,11 @@ const ProfilePage = () => {
               <div className="mt-3 flex items-center justify-between border-t border-blue-200/70 pt-2.5 text-xs">
                 <span className="font-semibold text-slate-600">
                   {isAtRecordStreak
-                    ? 'Tuyệt vời! Bạn và Nuna đang ở đỉnh kỷ lục!'
+                    ? 'Chuỗi ngày học hiện tại đang đạt mức cao nhất của bạn.'
                     : 'Mốc duy trì học tập liên tục dài nhất'}
                 </span>
                 <span className="shrink-0 border border-blue-200 bg-blue-100/80 px-2 py-0.5 text-[11px] font-bold text-[#1D4ED8]">
-                  {isAtRecordStreak ? '🏆 Đỉnh kỷ lục' : 'Kỷ lục cá nhân'}
+                  {isAtRecordStreak ? 'Đỉnh kỷ lục' : 'Kỷ lục cá nhân'}
                 </span>
               </div>
             </div>
@@ -489,7 +489,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Duolingo-style Nuna Daily Streak Companion Reminder */}
+          {/* Daily Streak Companion Reminder */}
           <div className="mt-4 flex flex-col items-center justify-between gap-3 border border-blue-200/90 bg-white/95 px-4 py-3 sm:flex-row">
             <div className="flex items-center gap-3">
               <img
@@ -500,19 +500,19 @@ const ProfilePage = () => {
               <p className="text-xs leading-relaxed text-slate-700 sm:text-sm">
                 <strong className="font-bold text-slate-950">
                   {currentStreak > 0
-                    ? `Gâu gâu! Chuỗi ${currentStreak} ngày của bạn đang rất đẹp!`
-                    : 'Lời nhắc từ Nuna:'}
+                    ? `Chuỗi ${currentStreak} ngày liên tiếp:`
+                    : 'Gợi ý luyện tập:'}
                 </strong>{' '}
                 {currentStreak > 0
-                  ? 'Chỉ cần luyện thêm 1 Part ngắn hoặc nghe chép 1 câu Dictation mỗi ngày là bạn sẽ phá kỷ lục bản thân!'
-                  : 'Mỗi ngày dành 15 phút giải 1 Part TOEIC cùng Nuna sẽ giúp điểm nghe - đọc tăng nhanh và bền vững hơn rất nhiều!'}
+                  ? 'Chỉ cần hoàn thành thêm 1 Part ngắn mỗi ngày để tiếp tục nâng kỷ lục chuỗi ngày học của bạn.'
+                  : 'Dành 15 phút mỗi ngày luyện 1 Part TOEIC sẽ giúp cải thiện điểm Nghe và Đọc ổn định hơn.'}
               </p>
             </div>
             <Link
               to="/courses"
               className="shrink-0 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1E40AF]"
             >
-              🐾 Luyện đề cùng Nuna ngay
+              Luyện đề ngay
             </Link>
           </div>
         </div>
@@ -1044,44 +1044,53 @@ const ProfilePage = () => {
                   </button>
                 </div>
 
-                {/* Filter Chips */}
-                {testHistory.length > 0 && (
-                  <div className="mb-5 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setHistoryFilter('ALL')}
-                      className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
-                        historyFilter === 'ALL'
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-                      }`}
-                    >
-                      Tất cả ({testHistory.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setHistoryFilter('FULL')}
-                      className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
-                        historyFilter === 'FULL'
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-                      }`}
-                    >
-                      Full Test ({testHistory.filter((item) => (item.partName || '').toLowerCase().includes('full')).length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setHistoryFilter('PART')}
-                      className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
-                        historyFilter === 'PART'
-                          ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
-                      }`}
-                    >
-                      Luyện tập Part ({testHistory.filter((item) => !(item.partName || '').toLowerCase().includes('full')).length})
-                    </button>
-                  </div>
-                )}
+                    {/* Filter Chips */}
+                {testHistory.length > 0 && (() => {
+                  const isFullTestItem = (item) =>
+                    item.scoreType === 'ESTIMATED_SCALED' ||
+                    item.totalCount === 200 ||
+                    (item.partName || '').toLowerCase().includes('full');
+                  const fullTestCount = testHistory.filter(isFullTestItem).length;
+                  const partTestCount = testHistory.length - fullTestCount;
+
+                  return (
+                    <div className="mb-5 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setHistoryFilter('ALL')}
+                        className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
+                          historyFilter === 'ALL'
+                            ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                            : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                        }`}
+                      >
+                        Tất cả ({testHistory.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryFilter('FULL')}
+                        className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
+                          historyFilter === 'FULL'
+                            ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                            : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                        }`}
+                      >
+                        Full Test ({fullTestCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryFilter('PART')}
+                        className={`cursor-pointer border px-4 py-1.5 text-xs font-bold tabular-nums transition-colors ${
+                          historyFilter === 'PART'
+                            ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                            : 'border-slate-300 bg-white text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]'
+                        }`}
+                      >
+                        Luyện tập Part ({partTestCount})
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {historyError && (
                   <div role="alert" className="mb-4 border border-red-300 bg-red-50 p-3.5 text-sm font-medium text-red-800">
@@ -1091,25 +1100,25 @@ const ProfilePage = () => {
 
                 {historyLoading ? (
                   <div role="status" className="flex items-center justify-center gap-2 border border-slate-200 bg-slate-50 p-8 text-sm font-semibold text-slate-600">
-                    <LoaderCircle size={18} className="animate-spin text-[#1D4ED8]" /> Đang nạp lịch sử làm bài...
+                    <LoaderCircle size={18} className="animate-spin text-[#1D4ED8]" /> Đang tải lịch sử làm bài...
                   </div>
                 ) : testHistory.length === 0 ? (
                   <div className="border border-slate-200 bg-slate-50/50 p-12 text-center">
                     <img
                       src={TOBY_IMAGES.sleeping}
-                      alt="Nuna đang chờ bạn làm bài thi đầu tiên"
+                      alt="Chưa có lịch sử làm bài"
                       className="mx-auto h-20 w-20 object-contain"
                     />
                     <h3 className="mt-3 text-lg font-bold text-slate-900">Chưa có lịch sử làm bài</h3>
                     <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-                      Nuna đang ngủ gật chờ bạn khai trương bài thi đầu tiên! Hãy thử sức ngay với kho đề thi TOEIC chuẩn ETS nhé.
+                      Bạn chưa hoàn thành bài luyện tập nào. Hãy chọn một đề thi trong thư viện để bắt đầu luyện tập và theo dõi kết quả tại đây.
                     </p>
                     <div className="mt-6">
                       <Link
                         to="/courses"
                         className="inline-flex items-center gap-2 border border-[#1D4ED8] bg-[#1D4ED8] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#173ea8]"
                       >
-                        🐾 Khám phá đề thi cùng Nuna
+                        Khám phá thư viện đề thi
                       </Link>
                     </div>
                   </div>
@@ -1117,8 +1126,12 @@ const ProfilePage = () => {
                   <div className="space-y-3">
                     {testHistory
                       .filter((item) => {
-                        if (historyFilter === 'FULL') return (item.partName || '').toLowerCase().includes('full');
-                        if (historyFilter === 'PART') return !(item.partName || '').toLowerCase().includes('full');
+                        const isFull =
+                          item.scoreType === 'ESTIMATED_SCALED' ||
+                          item.totalCount === 200 ||
+                          (item.partName || '').toLowerCase().includes('full');
+                        if (historyFilter === 'FULL') return isFull;
+                        if (historyFilter === 'PART') return !isFull;
                         return true;
                       })
                       .map((attempt) => {

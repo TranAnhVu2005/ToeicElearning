@@ -793,7 +793,7 @@ const AdminDashboardPage = () => {
                 { key: 'loginCount', label: 'Tổng lượt đăng nhập', color: '#60A5FA' },
               ]}
               summaryItems={[
-                { label: 'Số người dùng đăng nhập/ngày)', value: totals.uniqueLoginUsers, tone: 'text-[#1D4ED8]' },
+                { label: 'Tổng người dùng đăng nhập', value: totals.uniqueLoginUsers, tone: 'text-[#1D4ED8]' },
                 { label: 'Tổng lượt đăng nhập', value: totals.loginCount, tone: 'text-[#2563EB]' },
               ]}
             />

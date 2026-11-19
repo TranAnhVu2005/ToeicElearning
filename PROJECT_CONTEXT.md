@@ -64,5 +64,5 @@
 - **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql` (đồng bộ 22 bảng, tích hợp PayOS và 20 bộ đề `PUBLISHED`: `ETS TOEIC 2026 - TEST 01..10` & `YBM TOEIC 2026 - TEST 01..10`); nâng cấp DB hiện có dùng `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
 - **Trạng thái kiểm chứng gần nhất (2026-11-19)**:
   - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml compile -DskipTests` (toàn bộ 179 file Java): **PASS (exit 0, 0 warnings/errors)**.
-  - Frontend `npm --prefix frontend run lint` (oxlint, 56 files / 102 rules): **PASS (exit 0, 0 errors; 0 warnings ở các file sửa, 2 warnings sẵn có ở `Footer.jsx`)**.
+  - Frontend `npm --prefix frontend run lint` (oxlint, 56 files / 102 rules): **PASS (exit 0, 0 warnings and 0 errors trên toàn bộ dự án)**.
   - Frontend `npm --prefix frontend run build` (Vite 8.3.6): **PASS (exit 0)**.

@@ -33,7 +33,7 @@ const AUDIO_SPEED_OPTIONS = [
   { value: 0.5, label: '0.5×', shortLabel: '0.5×' },
   { value: 0.75, label: '0.75×', shortLabel: '0.75×' },
   { value: 0.9, label: '0.9×', shortLabel: '0.9×' },
-  { value: 1, label: 'Normal', shortLabel: '1×' },
+  { value: 1, label: '1.0× (Chuẩn)', shortLabel: '1×' },
   { value: 1.1, label: '1.1×', shortLabel: '1.1×' },
   { value: 1.25, label: '1.25×', shortLabel: '1.25×' },
   { value: 1.5, label: '1.5×', shortLabel: '1.5×' },
@@ -1193,7 +1193,7 @@ const DictationTakePage = () => {
                           >
                             <div className="flex items-center gap-2 border-b border-slate-200 px-3.5 py-2 text-[14px] font-medium text-slate-600">
                               <span className="text-[11px] text-slate-400">◀</span>
-                              <span>Speed</span>
+                              <span>Tốc độ phát</span>
                             </div>
 
                             <div className="py-1">
@@ -1229,7 +1229,7 @@ const DictationTakePage = () => {
                                 onClick={handleReloadAudio}
                                 className="w-full cursor-pointer px-3.5 py-2 text-left text-[14px] font-normal text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                               >
-                                Reload File
+                                Tải lại âm thanh
                               </button>
                             </div>
                           </div>
@@ -1296,7 +1296,7 @@ const DictationTakePage = () => {
                       className="inline-flex cursor-pointer items-center gap-1.5 border border-slate-300 bg-white px-3.5 py-2 text-[14px] font-medium text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                       title="Tự động điền đến hết dấu câu (. hoặc ,) của vế hiện tại"
                     >
-                      <SkipForward size={15} strokeWidth={1.75} /> Bỏ qua vế này (Skip)
+                      <SkipForward size={15} strokeWidth={1.75} /> Bỏ qua vế này
                     </button>
 
                     {currentInput && (
@@ -1342,19 +1342,19 @@ const DictationTakePage = () => {
                         {progressiveData.isAllCorrect ? (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-emerald-700">
                             <CheckCircle2 size={18} strokeWidth={2} className="text-emerald-600" />
-                            <span>Gâu! Chính xác hoàn toàn — Nuna khen bạn nghe siêu đỉnh! 🎉</span>
+                            <span>Chính xác hoàn toàn! Bạn đã hoàn thành câu nghe này.</span>
                           </span>
                         ) : progressiveData.isCurrentClauseMatched ? (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#1D4ED8]">
                             <CheckCircle2 size={18} strokeWidth={2} className="text-[#1D4ED8]" />
                             <span>
-                              Tuyệt! Đã khớp vế {progressiveData.revealedClauseIndex + 1}/{progressiveData.clauses.length} — Cùng Nuna nghe tiếp phần ***** nhé!
+                              Đã khớp vế {progressiveData.revealedClauseIndex + 1}/{progressiveData.clauses.length} — Hãy nghe tiếp phần còn lại.
                             </span>
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-amber-700">
                             <AlertCircle size={18} strokeWidth={2} className="fill-amber-400 text-amber-900" />
-                            <span>Gần đúng rồi! Cố lên, Nuna gợi ý các từ màu xanh bên dưới nhé! 💪</span>
+                            <span>Gần đúng rồi — hãy xem các từ gợi ý màu xanh bên dưới.</span>
                           </span>
                         )}
                       </div>
@@ -1365,7 +1365,7 @@ const DictationTakePage = () => {
                           onClick={handleSkipClause}
                           className="cursor-pointer rounded-[4px] border border-slate-300 bg-white px-3.5 py-1.5 text-[14px] font-medium text-slate-700 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                         >
-                          Skip
+                          Bỏ qua vế
                         </button>
                       )}
                     </div>
@@ -1427,7 +1427,7 @@ const DictationTakePage = () => {
                       </div>
                     </div>
 
-                    {/* Checkboxes matching reference image: "Show answer immediately" & "Show full answer" */}
+                    {/* Checkboxes */}
                     <div className="flex flex-col gap-2.5 pt-1 sm:flex-row sm:items-center sm:gap-6">
                       <label className="inline-flex cursor-pointer items-center gap-2.5 text-[14px] font-medium text-slate-700 select-none">
                         <input
@@ -1436,7 +1436,7 @@ const DictationTakePage = () => {
                           onChange={(e) => setShowAnswerImmediately(e.target.checked)}
                           className="h-4 w-4 cursor-pointer rounded-[3px] border-slate-300 accent-[#1D4ED8]"
                         />
-                        <span>Hiển thị đáp án đến dấu câu (Show answer immediately)</span>
+                        <span>Hiển thị từ gợi ý đến dấu câu</span>
                       </label>
 
                       <label className="inline-flex cursor-pointer items-center gap-2.5 text-[14px] font-medium text-slate-700 select-none">
@@ -1446,7 +1446,7 @@ const DictationTakePage = () => {
                           onChange={(e) => setShowFullTranscript(e.target.checked)}
                           className="h-4 w-4 cursor-pointer rounded-[3px] border-slate-300 accent-[#1D4ED8]"
                         />
-                        <span>Hiển thị toàn bộ đáp án (Show full answer)</span>
+                        <span>Hiển thị toàn bộ lời thoại</span>
                       </label>
                     </div>
 
@@ -1535,11 +1535,11 @@ const DictationTakePage = () => {
               />
               <div className="min-w-0 flex-1 text-xs leading-snug text-slate-700">
                 <strong className="block font-bold text-[#1D4ED8]">
-                  🐾 Nuna đồng hành luyện nghe
+                  Nuna đồng hành luyện nghe
                 </strong>
                 {stats.completed > 0
-                  ? `Bạn đã hoàn thành ${stats.completed}/${stats.total} câu nghe (Chính xác TB: ${stats.avgAccuracy}%). Cố lên nhé!`
-                  : 'Mẹo của Nuna: Nhấn Enter sau mỗi vế câu để kiểm tra ngay mà không cần rời tay khỏi bàn phím!'}
+                  ? `Bạn đã hoàn thành ${stats.completed}/${stats.total} câu nghe (Chính xác TB: ${stats.averageAccuracy}%). Cố lên nhé!`
+                  : 'Mẹo: Nhấn Enter sau mỗi vế câu để kiểm tra ngay mà không cần rời tay khỏi bàn phím.'}
               </div>
             </div>
 

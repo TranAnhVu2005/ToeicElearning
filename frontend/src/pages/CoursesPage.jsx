@@ -367,7 +367,7 @@ const CoursesPage = () => {
                   }
                   className="mt-3 flex w-full cursor-pointer items-center justify-center gap-1.5 border border-blue-200 bg-[#EFF6FF] py-2 text-xs font-bold text-[#1D4ED8] transition-colors hover:border-[#1D4ED8] hover:bg-blue-100"
                 >
-                  🐾 Nhờ Nuna tư vấn lộ trình
+                  Nhờ Nuna tư vấn lộ trình
                 </button>
               </div>
             </aside>
@@ -454,10 +454,10 @@ const CoursesPage = () => {
                   <p className="mt-1 text-xs text-red-700">{error}</p>
                   <button
                     type="button"
-                    className="mt-4 border border-red-600 bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
                     onClick={() => fetchTests(currentPage, searchTerm, sortBy, direction, activeFilter, vipFilter)}
+                    className="mt-4 border border-red-600 bg-red-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
                   >
-                    Thử lại ngay
+                    Thử tải lại
                   </button>
                 </div>
               )}
@@ -471,7 +471,7 @@ const CoursesPage = () => {
                     className="mx-auto mb-3 h-20 w-20 object-contain"
                   />
                   <h3 className="text-base font-bold text-slate-900">
-                    Gâu? Nuna chưa tìm thấy đề thi phù hợp
+                    Chưa tìm thấy đề thi phù hợp
                   </h3>
                   <p className="mx-auto mt-1 max-w-md text-xs text-slate-600">
                     {searchTerm
@@ -483,7 +483,7 @@ const CoursesPage = () => {
                     className="mt-4 border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#173ea8]"
                     onClick={handleResetFilters}
                   >
-                    Đặt lại tất cả bộ lọc
+                    Đặt lại bộ lọc
                   </button>
                 </div>
               )}
@@ -640,15 +640,15 @@ const CoursesPage = () => {
           <Modal
             isOpen={deleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
-            title="Xác nhận xóa hoặc gỡ đề thi"
+            title="Xác nhận gỡ đề thi"
           >
             <div style={{ textAlign: 'center', padding: '10px 0' }}>
               <AlertTriangle size={48} color="#ef4444" style={{ margin: '0 auto 12px' }} />
               <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#0f172a' }}>
-                Bạn có chắc chắn muốn gỡ đề thi này khỏi catalog?
+                Bạn có chắc chắn muốn gỡ đề thi này khỏi thư viện?
               </h4>
               <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: '#64748b' }}>
-                Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ không còn xuất hiện trong catalog. Nếu đã có lượt làm hoặc giao dịch, hệ thống chuyển đề về bản nháp để giữ lịch sử; nếu chưa có, đề sẽ bị xóa cùng nội dung.
+                Đề <strong>"{selectedTest?.titleTest}"</strong> sẽ được gỡ khỏi thư viện đề thi. Nếu đề đã có lượt làm bài hoặc giao dịch, hệ thống sẽ chuyển về Bản nháp để bảo toàn lịch sử; nếu chưa có dữ liệu liên quan, đề sẽ được xóa hoàn toàn.
               </p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                 <button
@@ -657,7 +657,7 @@ const CoursesPage = () => {
                   onClick={() => setDeleteModalOpen(false)}
                   disabled={actionLoading}
                 >
-                  Hủy thao tác
+                  Hủy
                 </button>
                 <button
                   type="button"
@@ -666,7 +666,7 @@ const CoursesPage = () => {
                   onClick={handleConfirmDelete}
                   disabled={actionLoading}
                 >
-                  {actionLoading ? 'Đang xử lý...' : 'Xác nhận gỡ đề'}
+                  {actionLoading ? 'Đang xử lý...' : 'Gỡ đề thi'}
                 </button>
               </div>
             </div>

@@ -30,7 +30,6 @@ const HomeStudyOverviewSection = () => (
               <th scope="col">PHẦN THI</th>
               <th scope="col">NỘI DUNG THI</th>
               <th scope="col">SỐ LƯỢNG CÂU - THỜI GIAN</th>
-              <th scope="col"><span className="src-only"></span></th>
             </tr>
           </thead>
           <tbody>

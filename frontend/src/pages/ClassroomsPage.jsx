@@ -884,7 +884,7 @@ const ClassroomsPage = () => {
         id: `${Date.now()}`,
         title: announcementTitle.trim() || 'Thông báo lớp học',
         content: announcementContent.trim(),
-        authorName: user?.name || selectedClass.teacherName || (isTeacher ? 'Giáo viên' : 'Học viên'),
+        authorName: user?.userName || user?.name || selectedClass.teacherName || (isTeacher ? 'Giáo viên' : 'Học viên'),
         createdAt: new Date().toISOString(),
         pinned: false,
       };
@@ -3386,11 +3386,11 @@ const ClassroomsPage = () => {
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <span className="grid h-10 w-10 place-items-center rounded-full bg-[#EFF6FF] font-mono text-sm font-bold text-[#1D4ED8]">
-                              {(user?.name || 'B').trim().charAt(0).toUpperCase()}
+                              {(user?.userName || user?.name || 'B').trim().charAt(0).toUpperCase()}
                             </span>
                             <div>
-                              <p className="font-bold text-slate-900">{user?.name || 'Bạn'} (Bạn)</p>
-                              <p className="font-mono text-xs text-slate-500">{user?.email || ''}</p>
+                              <p className="font-bold text-slate-900">{user?.userName || user?.name || 'Bạn'} (Bạn)</p>
+                              <p className="font-mono text-xs text-slate-500">{user?.userEmail || user?.email || ''}</p>
                             </div>
                           </div>
                           <span className="rounded-full bg-emerald-50 px-3 py-1 font-mono text-xs font-semibold text-emerald-800">

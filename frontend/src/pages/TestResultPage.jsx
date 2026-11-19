@@ -287,7 +287,7 @@ const TestResultPage = () => {
           </Link>
         )}
         <Link
-          to={`/courses/${result.testId}/take?mode=full`}
+          to={`/courses/${result.testId}/take?mode=fulltest&time=120`}
           onClick={() => isMobile && setMobilePaletteOpen(false)}
           className="flex w-full items-center justify-center gap-2 border border-slate-300 bg-white py-2 text-center text-xs font-semibold text-slate-800 transition-colors hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
         >
@@ -483,29 +483,29 @@ const TestResultPage = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                         <span className="rounded-full border border-blue-200 bg-blue-100/80 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#1D4ED8] uppercase">
-                          🐾 Lời nhắn từ cún Nuna
+                          Nhận xét từ Nuna
                         </span>
                         <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
                           {accuracy >= 75
-                            ? 'Phong độ xuất sắc! 🏆'
+                            ? 'Kết quả rất tốt'
                             : accuracy >= 45
-                              ? 'Hoàn thành tốt! Tiếp tục bứt phá nhé!'
-                              : 'Đừng nản lòng! Sai ở đâu mình sửa ở đó! 💪'}
+                              ? 'Hoàn thành tốt · Tiếp tục cố gắng'
+                              : 'Cần ôn lại các câu sai'}
                         </span>
                       </div>
 
                       <h2 className="mt-1.5 text-base font-bold text-slate-900 sm:text-lg">
                         {accuracy >= 75
-                          ? `Gâu gâu! Bạn đạt ${accuracy}% độ chính xác — Nuna cực kỳ tự hào về bạn!`
+                          ? `Bạn đạt ${accuracy}% độ chính xác (${correctCount}/${totalCount} câu đúng).`
                           : wrongQuestions.length > 0
-                            ? `Bạn đã hoàn thành bài thi! Còn ${wrongQuestions.length} câu chưa đúng, hãy để Nuna cùng bạn gỡ từng câu nhé!`
-                            : 'Hoàn thành tuyệt đối! Bạn đã trả lời chính xác toàn bộ câu hỏi!'}
+                            ? `Bạn đã hoàn thành bài thi. Còn ${wrongQuestions.length} câu chưa đúng cần xem lại.`
+                            : 'Bạn đã trả lời chính xác toàn bộ câu hỏi trong bài.'}
                       </h2>
 
                       <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">
-                        Bí quyết tăng 100+ điểm TOEIC giống như trên Duolingo: ngay sau khi thi xong, hãy bấm{' '}
+                        Sau khi làm bài, bạn có thể bấm{' '}
                         <strong className="font-semibold text-slate-900">"Giải thích đáp án"</strong> hoặc{' '}
-                        <strong className="font-semibold text-slate-900">"Hỏi Nuna AI"</strong> ở những câu làm sai bên dưới để hiểu rõ bẫy ngữ pháp và từ vựng ngay lập tức!
+                        <strong className="font-semibold text-slate-900">"Từ vựng & Ngữ pháp"</strong> ở từng câu bên dưới để Nuna phân tích chi tiết.
                       </p>
                     </div>
                   </div>
@@ -526,7 +526,7 @@ const TestResultPage = () => {
                       }}
                       className="shrink-0 cursor-pointer rounded-full border border-[#1D4ED8] bg-[#1D4ED8] px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#1E40AF]"
                     >
-                      🐾 Cùng Nuna chữa câu sai đầu tiên (#{wrongQuestions[0]?.questionNumber})
+                      Chữa câu sai đầu tiên (#{wrongQuestions[0]?.questionNumber})
                     </button>
                   )}
                 </div>
@@ -744,10 +744,10 @@ const TestResultPage = () => {
                       })}
                     </div>
 
-                    {question.transcript && (
+                      {question.transcript && (
                       <details className="mt-4 border border-slate-200 bg-slate-50/60 p-3.5 text-sm">
                         <summary className="cursor-pointer font-semibold text-slate-800">
-                          Xem lời thoại âm thanh (Transcript)
+                          Xem lời thoại (Transcript)
                         </summary>
                         <p className="mt-2.5 whitespace-pre-wrap border-t border-slate-200 pt-2.5 text-slate-700">
                           {question.transcript}
@@ -758,7 +758,7 @@ const TestResultPage = () => {
                     {question.translation && (
                       <details className="mt-3 border border-slate-200 bg-slate-50/60 p-3.5 text-sm">
                         <summary className="cursor-pointer font-semibold text-slate-800">
-                          Xem bản dịch tiếng Việt (Translation)
+                          Xem bản dịch tiếng Việt
                         </summary>
                         <p className="mt-2.5 whitespace-pre-wrap border-t border-slate-200 pt-2.5 text-slate-700">
                           {question.translation}
@@ -834,7 +834,7 @@ const TestResultPage = () => {
                         className="ai-q-ask-btn inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#1D4ED8] bg-[#1D4ED8] px-3.5 py-1.5 text-xs font-bold text-white shadow-2xs transition-all hover:bg-[#173ea8]"
                       >
                         <Sparkles size={13} />
-                        Hỏi bất kỳ điều gì về câu #{question.questionNumber}
+                        Hỏi Nuna về câu #{question.questionNumber}
                       </button>
                     </div>
                   </article>
