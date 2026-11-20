@@ -42,4 +42,8 @@ public interface ExamSessionRepository extends JpaRepository<ExamSession, String
     int expireAndClearDrafts(@Param("active") ExamSessionStatus active,
                              @Param("expired") ExamSessionStatus expired,
                              @Param("now") java.time.LocalDateTime now);
+
+    @Modifying
+    @Query("UPDATE ExamSession s SET s.assignment = NULL WHERE s.assignment.id = :assignmentId")
+    int detachAssignment(@Param("assignmentId") String assignmentId);
 }

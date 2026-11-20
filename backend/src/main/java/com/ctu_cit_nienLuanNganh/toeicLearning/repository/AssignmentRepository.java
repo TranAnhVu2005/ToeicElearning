@@ -16,4 +16,8 @@ public interface AssignmentRepository extends BaseRepository<Assignment, String>
     java.util.Optional<Assignment> findByIdForUpdate(@Param("id") String id);
 
     boolean existsByTest_Id(String testId);
+
+    List<Assignment> findByMaterial_Id(String materialId);
+    boolean existsByMaterial_IdAndIsActiveTrue(String materialId);
+    boolean existsByMaterial_IdAndIdNot(String materialId, String assignmentId);
 }

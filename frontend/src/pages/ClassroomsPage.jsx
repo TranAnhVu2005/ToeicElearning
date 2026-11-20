@@ -354,6 +354,7 @@ const ClassroomsPage = () => {
   const [submissionSort, setSubmissionSort] = useState({ sortBy: 'name', direction: 'ASC' });
   const [editingAssignmentId, setEditingAssignmentId] = useState('');
   const [feedbackDrafts, setFeedbackDrafts] = useState({});
+  const [scoreDrafts, setScoreDrafts] = useState({});
   const [assignmentForm, setAssignmentForm] = useState({
     assignmentType: 'TEST',
     title: '',
@@ -365,6 +366,10 @@ const ClassroomsPage = () => {
   });
   const [assignmentPdfFile, setAssignmentPdfFile] = useState(null);
   const assignmentPdfInputRef = useRef(null);
+  const [pdfSubmitModal, setPdfSubmitModal] = useState({ open: false, assignment: null });
+  const [pdfSubmitFile, setPdfSubmitFile] = useState(null);
+  const [pdfSubmitNote, setPdfSubmitNote] = useState('');
+  const pdfSubmitInputRef = useRef(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
 
   const membersRequestKey = `${selectedClass?.id || ''}/${filterStatus}/${isTeacher}`;
@@ -681,18 +686,19 @@ const ClassroomsPage = () => {
     );
   }, [memberSearchQuery, members]);
 
-  // Student personal grade summary (only auto-graded test assignments)
+  // Student personal grade summary (both TOEIC test and PDF assignments)
   const studentGradeSummary = useMemo(() => {
-    const testAssignments = assignments.filter((a) => Boolean(a.testId));
-    if (isTeacher || testAssignments.length === 0) return { total: 0, submitted: 0, avgScore: null };
-    const submittedList = testAssignments.filter((a) => a.myLatestResultId != null);
+    if (isTeacher || assignments.length === 0) return { total: 0, submitted: 0, avgScore: null };
+    const submittedList = assignments.filter(
+      (a) => a.myLatestResultId != null || a.myPdfSubmissionId != null
+    );
     const scoredList = submittedList.filter((a) => typeof a.myLatestScore === 'number');
     const avgScore =
       scoredList.length > 0
         ? (scoredList.reduce((acc, item) => acc + Number(item.myLatestScore || 0), 0) / scoredList.length).toFixed(1)
         : null;
     return {
-      total: testAssignments.length,
+      total: assignments.length,
       submitted: submittedList.length,
       avgScore,
     };
@@ -839,9 +845,20 @@ const ClassroomsPage = () => {
     setCustomizeBannerOpen(false);
     setClassEditForm({ className: '', description: '' });
     setEditingAssignmentId('');
-    setAssignmentForm({ title: '', instructions: '', testId: '', deadline: '', latePolicy: '' });
+    setAssignmentForm({
+      assignmentType: 'TEST',
+      title: '',
+      instructions: '',
+      testId: '',
+      materialId: '',
+      deadline: '',
+      latePolicy: '',
+    });
+    setAssignmentPdfFile(null);
+    if (assignmentPdfInputRef.current) assignmentPdfInputRef.current.value = '';
     setSelectedAssignmentId('');
     setFeedbackDrafts({});
+    setScoreDrafts({});
     setMaterialTitle('');
     setMaterialFile(null);
     if (materialFileInputRef.current) materialFileInputRef.current.value = '';
@@ -1162,16 +1179,27 @@ const ClassroomsPage = () => {
   };
 
   const handleHideMaterial = async (material) => {
-    if (!selectedClass || !window.confirm(`Ẩn tài liệu “${material.title}” khỏi lớp?`)) return;
+    if (
+      !selectedClass ||
+      !window.confirm(
+        `Xóa vĩnh viễn tài liệu “${material.title}” khỏi lớp học và hệ thống lưu trữ Cloudinary?`
+      )
+    ) {
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const response = await classroomService.hideMaterial(selectedClass.id, material.id);
-      if (response.code !== 1000) throw new Error(response.message || 'Không ẩn được tài liệu.');
-      setNotice('Đã ẩn tài liệu khỏi lớp.');
+      if (response.code !== 1000) throw new Error(response.message || 'Không xóa được tài liệu.');
+      setNotice('Đã xóa tài liệu và dọn tệp PDF trên hệ thống lưu trữ.');
       await loadMaterials(selectedClass.id, true);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không ẩn được tài liệu.');
+      setError(
+        err.response?.data?.message ||
+        err.message ||
+        'Không thể xóa tài liệu này (có thể tài liệu đang được gắn với một bài tập đang mở).'
+      );
     } finally {
       setBusy(false);
     }
@@ -1229,7 +1257,8 @@ const ClassroomsPage = () => {
           selectedClass.id,
           pdfTitle,
           assignmentPdfFile,
-          false
+          false,
+          true
         );
         if (uploadRes.code !== 1000 || !uploadRes.data?.id) {
           throw new Error(uploadRes.message || 'Không tải được tệp PDF bài tập lên.');
@@ -1251,14 +1280,147 @@ const ClassroomsPage = () => {
       if (response.code !== 1000) throw new Error(response.message || 'Không lưu được bài tập.');
       setNotice(editingAssignmentId ? 'Đã cập nhật bài tập và hạn nộp.' : 'Đã giao bài tập mới cho lớp.');
       resetAssignmentForm();
-      await Promise.all([
-        loadAssignments(selectedClass.id),
-        isPdfMode && assignmentPdfFile ? loadMaterials(selectedClass.id, true) : Promise.resolve(),
-      ]);
+      await loadAssignments(selectedClass.id);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không lưu được bài tập.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const openPdfSubmitModal = (assignment) => {
+    setPdfSubmitFile(null);
+    setPdfSubmitNote(assignment?.myPdfSubmissionNote || '');
+    if (pdfSubmitInputRef.current) pdfSubmitInputRef.current.value = '';
+    setPdfSubmitModal({ open: true, assignment });
+  };
+
+  const closePdfSubmitModal = () => {
+    setPdfSubmitModal({ open: false, assignment: null });
+    setPdfSubmitFile(null);
+    setPdfSubmitNote('');
+    if (pdfSubmitInputRef.current) pdfSubmitInputRef.current.value = '';
+  };
+
+  const handleSubmitPdfAssignment = async (event) => {
+    event.preventDefault();
+    const targetAssignment = pdfSubmitModal.assignment;
+    if (!targetAssignment || !pdfSubmitFile) {
+      setError('Vui lòng chọn tệp bài làm PDF trước khi nộp.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      const response = await classroomService.submitPdfAssignment(
+        targetAssignment.id,
+        pdfSubmitFile,
+        pdfSubmitNote
+      );
+      if (response.code !== 1000) {
+        throw new Error(response.message || 'Không nộp được bài tập PDF.');
+      }
+      closePdfSubmitModal();
+      setNotice('Đã nộp bài làm PDF thành công! Giáo viên sẽ xem và nhận xét bài làm của bạn.');
+      if (selectedClass?.id) {
+        await loadAssignments(selectedClass.id);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không nộp được bài tập PDF.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePreviewPdfSubmission = async ({ id, title, originalFileName, sizeBytes }) => {
+    if (!id) return;
+    setError('');
+    const materialObj = {
+      id,
+      title: title || 'Bài nộp PDF của học viên',
+      originalFileName: originalFileName || 'Bai-nop.pdf',
+      sizeBytes: sizeBytes || null,
+      downloadable: true,
+      isPdfSubmission: true,
+    };
+    setPreviewModal((current) => {
+      if (current.blobUrl) {
+        try {
+          window.URL.revokeObjectURL(current.blobUrl);
+        } catch {
+          // Ignore revoke error
+        }
+      }
+      return {
+        open: true,
+        loading: true,
+        material: materialObj,
+        blobUrl: '',
+        googleViewerUrl: '',
+        mode: 'DIRECT',
+        error: '',
+      };
+    });
+
+    try {
+      const [blobResult, linkResult] = await Promise.allSettled([
+        classroomService.getPdfSubmissionPreviewBlob(id),
+        classroomService.getPdfSubmissionPreviewLink(id),
+      ]);
+
+      let nextBlobUrl = '';
+      if (blobResult.status === 'fulfilled' && blobResult.value) {
+        const pdfBlob = new Blob([blobResult.value], { type: 'application/pdf' });
+        nextBlobUrl = window.URL.createObjectURL(pdfBlob);
+      }
+
+      let nextGoogleViewerUrl = '';
+      if (
+        linkResult.status === 'fulfilled' &&
+        linkResult.value?.code === 1000 &&
+        linkResult.value?.data?.url
+      ) {
+        nextGoogleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+          linkResult.value.data.url
+        )}&embedded=true`;
+      }
+
+      if (!nextBlobUrl && !nextGoogleViewerUrl) {
+        throw new Error('Không tạo được dữ liệu xem trước bài nộp PDF.');
+      }
+
+      setPreviewModal((current) => ({
+        ...current,
+        loading: false,
+        blobUrl: nextBlobUrl,
+        googleViewerUrl: nextGoogleViewerUrl,
+        mode: nextBlobUrl ? 'DIRECT' : 'GOOGLE',
+        error: '',
+      }));
+    } catch (err) {
+      setPreviewModal((current) => ({
+        ...current,
+        loading: false,
+        error: err.response?.data?.message || err.message || 'Không thể mở bản xem trước bài nộp PDF.',
+      }));
+    }
+  };
+
+  const handleDownloadPdfSubmission = async ({ id }) => {
+    if (!id) return;
+    setDownloadingMaterialId(id);
+    setError('');
+    try {
+      const response = await classroomService.getPdfSubmissionDownloadLink(id);
+      if (response.code !== 1000 || !response.data?.url) {
+        throw new Error(response.message || 'Không tạo được link tải bài nộp.');
+      }
+      window.location.assign(response.data.url);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không tải được bài nộp PDF.');
+    } finally {
+      setDownloadingMaterialId('');
     }
   };
 
@@ -1286,16 +1448,25 @@ const ClassroomsPage = () => {
   };
 
   const archiveAssignment = async (assignment) => {
-    if (!window.confirm(`Ẩn bài tập “${assignment.title}” khỏi lớp học?`)) return;
+    if (
+      !window.confirm(
+        `Xóa vĩnh viễn bài tập “${assignment.title}”? Các tệp PDF đính kèm và bài nộp PDF của học viên (nếu có) cũng sẽ bị xóa khỏi hệ thống lưu trữ Cloudinary.`
+      )
+    ) {
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       const response = await classroomService.archiveAssignment(assignment.id);
-      if (response.code !== 1000) throw new Error(response.message || 'Không ẩn được bài tập.');
-      setNotice('Đã ẩn bài tập; dữ liệu các lượt nộp được giữ lại.');
+      if (response.code !== 1000) throw new Error(response.message || 'Không xóa được bài tập.');
+      setNotice('Đã xóa bài tập và dọn các tệp PDF liên quan trên hệ thống lưu trữ.');
+      if (selectedAssignmentId === assignment.id) {
+        setSelectedAssignmentId('');
+      }
       await loadAssignments(selectedClass.id);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không ẩn được bài tập.');
+      setError(err.response?.data?.message || err.message || 'Không xóa được bài tập.');
     } finally {
       setBusy(false);
     }
@@ -1313,6 +1484,28 @@ const ClassroomsPage = () => {
       await loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction);
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Không lưu được nhận xét.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const savePdfFeedback = async (submission) => {
+    if (!submission.pdfSubmissionId) return;
+    const comment = feedbackDrafts[submission.pdfSubmissionId] ?? submission.teacherComment ?? '';
+    const rawScore = scoreDrafts[submission.pdfSubmissionId] ?? (submission.score != null ? String(submission.score) : '');
+    if (rawScore !== '' && (Number.isNaN(Number(rawScore)) || Number(rawScore) < 0 || Number(rawScore) > 990)) {
+      setError('Điểm số cần nằm trong khoảng từ 0 đến 990 (hoặc để trống).');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const response = await classroomService.gradePdfSubmission(submission.pdfSubmissionId, rawScore, comment);
+      if (response.code !== 1000) throw new Error(response.message || 'Không lưu được điểm và nhận xét.');
+      setNotice('Đã lưu điểm và nhận xét cho học viên.');
+      await loadSubmissions(selectedAssignmentId, submissionSort.sortBy, submissionSort.direction);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Không lưu được điểm và nhận xét.');
     } finally {
       setBusy(false);
     }
@@ -2450,7 +2643,7 @@ const ClassroomsPage = () => {
                                           className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
                                         >
                                           <Eye size={14} />
-                                          Xem trước PDF
+                                          Xem đề PDF
                                         </button>
                                         <button
                                           type="button"
@@ -2459,12 +2652,12 @@ const ClassroomsPage = () => {
                                           className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                                         >
                                           <Download size={14} />
-                                          Tải PDF
+                                          Tải đề PDF
                                         </button>
                                       </>
                                     )}
-                                    {assign.testId && (
-                                      isTeacher ? (
+                                    {isTeacher ? (
+                                      <>
                                         <button
                                           type="button"
                                           onClick={() => {
@@ -2475,26 +2668,65 @@ const ClassroomsPage = () => {
                                         >
                                           Xem bài nộp và Chấm điểm
                                         </button>
-                                      ) : (
-                                        <>
-                                          {assign.myLatestResultId && (
-                                            <Link
-                                              to={`/results/${assign.myLatestResultId}`}
-                                              className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-                                            >
-                                              Xem kết quả
-                                            </Link>
-                                          )}
-                                          {canSubmit && (
-                                            <Link
-                                              to={`/courses/${assign.testId}/take?assignmentId=${assign.id}`}
-                                              className="rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
-                                            >
-                                              {assign.myLatestResultId ? 'Làm lại' : 'Làm bài ngay'}
-                                            </Link>
-                                          )}
-                                        </>
-                                      )
+                                        <button
+                                          type="button"
+                                          disabled={busy}
+                                          onClick={() => archiveAssignment(assign)}
+                                          className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                        >
+                                          <Trash2 size={13} />
+                                          Xóa
+                                        </button>
+                                      </>
+                                    ) : assign.testId ? (
+                                      <>
+                                        {assign.myLatestResultId && (
+                                          <Link
+                                            to={`/results/${assign.myLatestResultId}`}
+                                            className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                          >
+                                            Xem kết quả
+                                          </Link>
+                                        )}
+                                        {canSubmit && (
+                                          <Link
+                                            to={`/courses/${assign.testId}/take?assignmentId=${assign.id}`}
+                                            className="rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                                          >
+                                            {assign.myLatestResultId ? 'Làm lại' : 'Làm bài ngay'}
+                                          </Link>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <>
+                                        {assign.myPdfSubmissionId && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handlePreviewPdfSubmission({
+                                                id: assign.myPdfSubmissionId,
+                                                title: `Bài nộp: ${assign.title}`,
+                                                originalFileName: assign.myPdfSubmissionFileName,
+                                                sizeBytes: assign.myPdfSubmissionSizeBytes,
+                                              })
+                                            }
+                                            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                                          >
+                                            <Eye size={13} />
+                                            Xem bài đã nộp
+                                          </button>
+                                        )}
+                                        {canSubmit && (
+                                          <button
+                                            type="button"
+                                            onClick={() => openPdfSubmitModal(assign)}
+                                            className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                                          >
+                                            <Upload size={13} />
+                                            {assign.myPdfSubmissionId ? 'Nộp lại bài PDF' : 'Nộp bài PDF'}
+                                          </button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 </article>
@@ -2523,25 +2755,40 @@ const ClassroomsPage = () => {
                                   </div>
                                 </div>
 
-                                {mat.downloadable && (
+                                {(mat.downloadable || isTeacher) && (
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handlePreviewMaterial(mat)}
-                                      className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
-                                    >
-                                      <Eye size={14} />
-                                      Xem trước
-                                    </button>
-                                    <button
-                                      type="button"
-                                      disabled={downloadingMaterialId === mat.id}
-                                      onClick={() => handleDownloadMaterial(mat)}
-                                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-                                    >
-                                      <Download size={14} />
-                                      Tải PDF
-                                    </button>
+                                    {mat.downloadable && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => handlePreviewMaterial(mat)}
+                                          className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] transition hover:bg-blue-100"
+                                        >
+                                          <Eye size={14} />
+                                          Xem trước
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={downloadingMaterialId === mat.id}
+                                          onClick={() => handleDownloadMaterial(mat)}
+                                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                        >
+                                          <Download size={14} />
+                                          Tải PDF
+                                        </button>
+                                      </>
+                                    )}
+                                    {isTeacher && (
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() => handleHideMaterial(mat)}
+                                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                      >
+                                        <Trash2 size={13} />
+                                        Xóa
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </article>
@@ -2995,7 +3242,12 @@ const ClassroomsPage = () => {
                                   </div>
 
                                   {!isTeacher && (
-                                    assignment.testId ? (
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      {!assignment.testId && (
+                                        <span className="rounded-full border border-blue-200 bg-[#EFF6FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#1D4ED8]">
+                                          Bài tập PDF
+                                        </span>
+                                      )}
                                       <span
                                         className={`rounded-full border px-3 py-1 text-xs font-semibold ${assignment.myLatestSubmissionLate || displayStatus === 'LATE'
                                           ? 'border-amber-200 bg-amber-50 text-amber-800'
@@ -3008,19 +3260,48 @@ const ClassroomsPage = () => {
                                       >
                                         {getAssignmentStatusLabel(displayStatus, assignment.myLatestSubmissionLate)}
                                       </span>
-                                    ) : (
-                                      <span className="rounded-full border border-blue-200 bg-[#EFF6FF] px-3 py-1 text-xs font-semibold text-[#1D4ED8]">
-                                        Bài tập PDF
-                                      </span>
-                                    )
+                                    </div>
                                   )}
                                 </div>
+
+                                {!isTeacher && !assignment.testId && assignment.myPdfSubmissionId && (
+                                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3.5 py-2 text-xs text-emerald-900">
+                                    <span>
+                                      Bài đã nộp: <strong>{assignment.myPdfSubmissionFileName || 'Bai-nop.pdf'}</strong>
+                                      {assignment.myLatestSubmittedAt
+                                        ? ` · Lúc ${formatVietnamDateTime(assignment.myLatestSubmittedAt)}`
+                                        : ''}
+                                      {assignment.myLatestSubmissionLate ? ' (nộp trễ)' : ''}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handlePreviewPdfSubmission({
+                                          id: assignment.myPdfSubmissionId,
+                                          title: `Bài nộp: ${assignment.title}`,
+                                          originalFileName: assignment.myPdfSubmissionFileName,
+                                          sizeBytes: assignment.myPdfSubmissionSizeBytes,
+                                        })
+                                      }
+                                      className="font-bold text-[#1D4ED8] hover:underline"
+                                    >
+                                      Xem bài làm đã nộp →
+                                    </button>
+                                  </div>
+                                )}
+
+                                {!isTeacher && assignment.myTeacherComment && (
+                                  <div className="mt-2.5 rounded-xl border border-blue-100 bg-[#F8FAFC] px-3.5 py-2 text-xs text-slate-700">
+                                    <strong className="text-[#1D4ED8]">Nhận xét của giáo viên:</strong>{' '}
+                                    {assignment.myTeacherComment}
+                                  </div>
+                                )}
 
                                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
                                   <span className="font-mono text-xs text-slate-500">
                                     {getDeadlineHint(assignment.deadline, clockNow) || 'Đang mở'}
                                     {!isTeacher && assignment.myLatestScore != null
-                                      ? ` · Điểm gần nhất: ${assignment.myLatestScore}`
+                                      ? ` · Điểm: ${assignment.myLatestScore}`
                                       : ''}
                                   </span>
 
@@ -3033,7 +3314,7 @@ const ClassroomsPage = () => {
                                             onClick={() => handlePreviewMaterial(getAssignmentMaterialObj(assignment))}
                                             className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
                                           >
-                                            <Eye size={13} /> Xem trước PDF
+                                            <Eye size={13} /> Xem đề PDF
                                           </button>
                                           <button
                                             type="button"
@@ -3041,22 +3322,20 @@ const ClassroomsPage = () => {
                                             onClick={() => handleDownloadMaterial(getAssignmentMaterialObj(assignment))}
                                             className="editorial-button-secondary inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold"
                                           >
-                                            <Download size={13} /> Tải PDF
+                                            <Download size={13} /> Tải đề PDF
                                           </button>
                                         </>
                                       )}
-                                      {assignment.testId && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setSelectedAssignmentId(assignment.id);
-                                            setActiveTab('GRADES');
-                                          }}
-                                          className="rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
-                                        >
-                                          Xem bài nộp và Nhận xét
-                                        </button>
-                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedAssignmentId(assignment.id);
+                                          setActiveTab('GRADES');
+                                        }}
+                                        className="rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                                      >
+                                        Xem bài nộp và Nhận xét
+                                      </button>
                                       <button
                                         type="button"
                                         onClick={() => editAssignment(assignment)}
@@ -3068,9 +3347,9 @@ const ClassroomsPage = () => {
                                         type="button"
                                         disabled={busy}
                                         onClick={() => archiveAssignment(assignment)}
-                                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                                        className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
                                       >
-                                        <Trash2 size={13} /> Ẩn bài
+                                        <Trash2 size={13} /> Xóa bài
                                       </button>
                                     </div>
                                   ) : (
@@ -3082,7 +3361,7 @@ const ClassroomsPage = () => {
                                             onClick={() => handlePreviewMaterial(getAssignmentMaterialObj(assignment))}
                                             className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
                                           >
-                                            <Eye size={13} /> Xem trước PDF
+                                            <Eye size={13} /> Xem đề PDF
                                           </button>
                                           <button
                                             type="button"
@@ -3090,7 +3369,7 @@ const ClassroomsPage = () => {
                                             onClick={() => handleDownloadMaterial(getAssignmentMaterialObj(assignment))}
                                             className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                                           >
-                                            <Download size={13} /> Tải PDF
+                                            <Download size={13} /> Tải đề PDF
                                           </button>
                                         </>
                                       )}
@@ -3109,6 +3388,16 @@ const ClassroomsPage = () => {
                                         >
                                           {assignment.myLatestResultId ? 'Làm lại bài' : 'Bắt đầu làm'}
                                         </Link>
+                                      )}
+                                      {!assignment.testId && canSubmit && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openPdfSubmitModal(assignment)}
+                                          className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
+                                        >
+                                          <Upload size={13} />
+                                          {assignment.myPdfSubmissionId ? 'Nộp lại bài PDF' : 'Nộp bài PDF'}
+                                        </button>
                                       )}
                                     </div>
                                   )}
@@ -3223,9 +3512,10 @@ const ClassroomsPage = () => {
                                     type="button"
                                     disabled={busy}
                                     onClick={() => handleHideMaterial(material)}
-                                    className="min-h-9 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                                    className="inline-flex min-h-9 items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
                                   >
-                                    Ẩn
+                                    <Trash2 size={13} />
+                                    Xóa tài liệu
                                   </button>
                                 )}
                               </div>
@@ -3648,36 +3938,36 @@ const ClassroomsPage = () => {
                         </p>
                       ) : (() => {
                         const selectedAssignObj = assignments.find((a) => a.id === selectedAssignmentId);
-                        if (selectedAssignObj && !selectedAssignObj.testId) {
-                          return (
-                            <div className="rounded-2xl border border-blue-200 bg-[#EFF6FF]/60 p-6 text-center">
-                              <p className="text-sm font-semibold text-slate-800">
-                                Đây là bài tập dạng tệp PDF ({selectedAssignObj.materialFileName || selectedAssignObj.materialTitle || 'PDF'}) nên không chấm điểm tự động trên phòng thi trắc nghiệm.
-                              </p>
-                              {selectedAssignObj.materialId && (
-                                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                        return (
+                          <>
+                            {selectedAssignObj && !selectedAssignObj.testId && selectedAssignObj.materialId && (
+                              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-[#EFF6FF]/60 px-4 py-3">
+                                <div className="text-xs text-slate-700">
+                                  <span className="font-bold text-[#1D4ED8]">Bài tập PDF:</span>{' '}
+                                  <span className="font-semibold text-slate-900">
+                                    {selectedAssignObj.materialFileName || selectedAssignObj.materialTitle || 'Bai-tap.pdf'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
                                   <button
                                     type="button"
                                     onClick={() => handlePreviewMaterial(getAssignmentMaterialObj(selectedAssignObj))}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-2 text-xs font-semibold text-white hover:bg-blue-800"
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-blue-800"
                                   >
-                                    <Eye size={14} /> Xem trước tệp PDF
+                                    <Eye size={13} /> Xem đề PDF
                                   </button>
                                   <button
                                     type="button"
                                     disabled={downloadingMaterialId === selectedAssignObj.materialId}
                                     onClick={() => handleDownloadMaterial(getAssignmentMaterialObj(selectedAssignObj))}
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
                                   >
-                                    <Download size={14} /> Tải tệp PDF
+                                    <Download size={13} /> Tải đề PDF
                                   </button>
                                 </div>
-                              )}
-                            </div>
-                          );
-                        }
-                        return (
-                          <>
+                              </div>
+                            )}
+
                             {!submissionsLoading && !submissionsError && assignmentSummary && (
                               <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                                 {[
@@ -3688,7 +3978,7 @@ const ClassroomsPage = () => {
                                   ['Quá hạn', assignmentSummary.missingCount],
                                   ['Đã nhận xét', assignmentSummary.reviewedCount],
                                   [
-                                    'Điểm TB đã nhận xét',
+                                    'Điểm TB đã chấm',
                                     assignmentSummary.averageScore == null
                                       ? '—'
                                       : Number(assignmentSummary.averageScore).toFixed(1),
@@ -3704,9 +3994,9 @@ const ClassroomsPage = () => {
                                     <span className="mt-1 block font-mono text-xl font-bold text-slate-900">
                                       {value}
                                     </span>
-                                    {label === 'Điểm TB đã nhận xét' && (
+                                    {label === 'Điểm TB đã chấm' && (
                                       <span className="mt-0.5 block text-[10px] text-slate-500">
-                                        {assignmentSummary.averageScoreSubmissionCount} bài hợp lệ
+                                        {assignmentSummary.averageScoreSubmissionCount} bài có điểm
                                       </span>
                                     )}
                                   </div>
@@ -3753,7 +4043,9 @@ const ClassroomsPage = () => {
                                           ? 'border-amber-200 bg-amber-50 text-amber-800'
                                           : submission.status === 'MISSING'
                                             ? 'border-red-200 bg-red-50 text-red-700'
-                                            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                            : submission.status === 'NOT_SUBMITTED'
+                                              ? 'border-slate-200 bg-slate-50 text-slate-700'
+                                              : 'border-emerald-200 bg-emerald-50 text-emerald-800'
                                           }`}
                                       >
                                         {getAssignmentStatusLabel(submission.status, submission.late)}
@@ -3811,6 +4103,116 @@ const ClassroomsPage = () => {
                                           className="editorial-button-primary mt-2 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold disabled:opacity-50"
                                         >
                                           <MessageSquare size={13} /> Lưu nhận xét
+                                        </button>
+                                      </>
+                                    ) : submission.pdfSubmissionId ? (
+                                      <>
+                                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#F8FAFC] px-3.5 py-2.5">
+                                          <div className="min-w-0">
+                                            <p className="truncate font-mono text-xs font-bold text-slate-900">
+                                              <FileText size={13} className="mr-1 inline text-[#1D4ED8]" />
+                                              {submission.pdfSubmissionFileName || 'Bai-nop.pdf'}
+                                              {submission.pdfSubmissionSizeBytes
+                                                ? ` (${(submission.pdfSubmissionSizeBytes / (1024 * 1024)).toFixed(2)} MiB)`
+                                                : ''}
+                                            </p>
+                                            <p className="mt-0.5 font-mono text-[11px] text-slate-500">
+                                              Nộp lúc:{' '}
+                                              {submission.submittedAt
+                                                ? formatVietnamDateTime(submission.submittedAt)
+                                                : '—'}
+                                              {submission.score != null ? ` · Điểm hiện tại: ${submission.score}` : ''}
+                                            </p>
+                                          </div>
+                                          <div className="flex flex-wrap gap-2">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handlePreviewPdfSubmission({
+                                                  id: submission.pdfSubmissionId,
+                                                  title: `Bài làm của ${submission.studentName}`,
+                                                  originalFileName: submission.pdfSubmissionFileName,
+                                                  sizeBytes: submission.pdfSubmissionSizeBytes,
+                                                })
+                                              }
+                                              className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                                            >
+                                              <Eye size={13} /> Xem trước bài làm PDF
+                                            </button>
+                                            <button
+                                              type="button"
+                                              disabled={downloadingMaterialId === submission.pdfSubmissionId}
+                                              onClick={() =>
+                                                handleDownloadPdfSubmission({ id: submission.pdfSubmissionId })
+                                              }
+                                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                            >
+                                              <Download size={13} /> Tải bài làm PDF
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        {submission.studentNote && (
+                                          <p className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                                            <strong>Ghi chú của học viên:</strong> {submission.studentNote}
+                                          </p>
+                                        )}
+
+                                        <div className="mt-3 grid gap-3 sm:grid-cols-[160px_1fr]">
+                                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                                            Điểm số (0–990)
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              max={990}
+                                              value={
+                                                scoreDrafts[submission.pdfSubmissionId] ??
+                                                (submission.score != null ? String(submission.score) : '')
+                                              }
+                                              onChange={(event) =>
+                                                setScoreDrafts((drafts) => ({
+                                                  ...drafts,
+                                                  [submission.pdfSubmissionId]: event.target.value,
+                                                }))
+                                              }
+                                              placeholder="Tuỳ chọn"
+                                              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                                            />
+                                          </label>
+                                          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                                            Nhận xét của giáo viên
+                                            <textarea
+                                              rows={2}
+                                              maxLength={5000}
+                                              value={
+                                                feedbackDrafts[submission.pdfSubmissionId] ??
+                                                submission.teacherComment ??
+                                                ''
+                                              }
+                                              onChange={(event) =>
+                                                setFeedbackDrafts((drafts) => ({
+                                                  ...drafts,
+                                                  [submission.pdfSubmissionId]: event.target.value,
+                                                }))
+                                              }
+                                              placeholder="Nhập nhận xét chi tiết cho bài nộp PDF của học viên..."
+                                              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                                            />
+                                          </label>
+                                        </div>
+                                        <button
+                                          disabled={
+                                            busy ||
+                                            !(
+                                              feedbackDrafts[submission.pdfSubmissionId] ??
+                                              submission.teacherComment ??
+                                              ''
+                                            ).trim()
+                                          }
+                                          onClick={() => savePdfFeedback(submission)}
+                                          className="editorial-button-primary mt-2 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold disabled:opacity-50"
+                                        >
+                                          <MessageSquare size={13} /> Lưu điểm và nhận xét
                                         </button>
                                       </>
                                     ) : (
@@ -3880,46 +4282,27 @@ const ClassroomsPage = () => {
                                     </p>
                                   </div>
 
-                                  <div className="flex items-center gap-3">
-                                    {assignment.testId ? (
-                                      <>
-                                        {assignment.myLatestScore != null && (
-                                          <span className="rounded-lg bg-[#EFF6FF] px-3 py-1 font-mono text-sm font-bold text-[#1D4ED8]">
-                                            Điểm: {assignment.myLatestScore}
-                                            {assignment.myTotalCount
-                                              ? ` (${assignment.myCorrectCount}/${assignment.myTotalCount})`
-                                              : ''}
-                                          </span>
-                                        )}
-                                        <span
-                                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${assignment.myLatestSubmissionLate || displayStatus === 'LATE'
-                                            ? 'border-amber-200 bg-amber-50 text-amber-800'
-                                            : displayStatus === 'MISSING'
-                                              ? 'border-red-200 bg-red-50 text-red-700'
-                                              : displayStatus === 'GRADED' || displayStatus === 'SUBMITTED'
-                                                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                                                : 'border-slate-200 bg-slate-50 text-slate-700'
-                                            }`}
-                                        >
-                                          {getAssignmentStatusLabel(displayStatus, assignment.myLatestSubmissionLate)}
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span className="rounded-full border border-blue-200 bg-[#EFF6FF] px-3 py-1 text-xs font-semibold text-[#1D4ED8]">
-                                          Bài tập PDF
-                                        </span>
-                                        {assignment.materialId && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handlePreviewMaterial(getAssignmentMaterialObj(assignment))}
-                                            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
-                                          >
-                                            <Eye size={13} /> Xem PDF
-                                          </button>
-                                        )}
-                                      </>
+                                  <div className="flex flex-wrap items-center gap-2.5">
+                                    {assignment.myLatestScore != null && (
+                                      <span className="rounded-lg bg-[#EFF6FF] px-3 py-1 font-mono text-sm font-bold text-[#1D4ED8]">
+                                        Điểm: {assignment.myLatestScore}
+                                        {assignment.myTotalCount
+                                          ? ` (${assignment.myCorrectCount}/${assignment.myTotalCount})`
+                                          : ''}
+                                      </span>
                                     )}
+                                    <span
+                                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${assignment.myLatestSubmissionLate || displayStatus === 'LATE'
+                                        ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                        : displayStatus === 'MISSING'
+                                          ? 'border-red-200 bg-red-50 text-red-700'
+                                          : displayStatus === 'GRADED' || displayStatus === 'SUBMITTED'
+                                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                            : 'border-slate-200 bg-slate-50 text-slate-700'
+                                        }`}
+                                    >
+                                      {getAssignmentStatusLabel(displayStatus, assignment.myLatestSubmissionLate)}
+                                    </span>
                                   </div>
                                 </div>
 
@@ -3938,6 +4321,37 @@ const ClassroomsPage = () => {
                                     >
                                       Xem chi tiết bài nộp →
                                     </Link>
+                                  </div>
+                                )}
+
+                                {!assignment.testId && (
+                                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    {assignment.myPdfSubmissionId && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handlePreviewPdfSubmission({
+                                            id: assignment.myPdfSubmissionId,
+                                            title: `Bài nộp: ${assignment.title}`,
+                                            originalFileName: assignment.myPdfSubmissionFileName,
+                                            sizeBytes: assignment.myPdfSubmissionSizeBytes,
+                                          })
+                                        }
+                                        className="inline-flex items-center gap-1.5 rounded-full bg-[#EFF6FF] px-3.5 py-1.5 text-xs font-bold text-[#1D4ED8] hover:bg-blue-100"
+                                      >
+                                        <Eye size={13} /> Xem bài đã nộp ({assignment.myPdfSubmissionFileName || 'PDF'})
+                                      </button>
+                                    )}
+                                    {!(assignment.latePolicy === 'REJECT_AFTER_DEADLINE' && deadlineExpired) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openPdfSubmitModal(assignment)}
+                                        className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-[#1D4ED8] hover:text-[#1D4ED8]"
+                                      >
+                                        <Upload size={13} />
+                                        {assignment.myPdfSubmissionId ? 'Nộp lại bài PDF' : 'Nộp bài PDF'}
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </article>
@@ -4238,7 +4652,11 @@ const ClassroomsPage = () => {
               {previewModal.material?.downloadable && (
                 <button
                   type="button"
-                  onClick={() => handleDownloadMaterial(previewModal.material)}
+                  onClick={() =>
+                    previewModal.material?.isPdfSubmission
+                      ? handleDownloadPdfSubmission(previewModal.material)
+                      : handleDownloadMaterial(previewModal.material)
+                  }
                   className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
                 >
                   <Download size={14} />
@@ -4270,7 +4688,11 @@ const ClassroomsPage = () => {
                 {previewModal.material?.downloadable && (
                   <button
                     type="button"
-                    onClick={() => handleDownloadMaterial(previewModal.material)}
+                    onClick={() =>
+                      previewModal.material?.isPdfSubmission
+                        ? handleDownloadPdfSubmission(previewModal.material)
+                        : handleDownloadMaterial(previewModal.material)
+                    }
                     className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white hover:bg-blue-700"
                   >
                     <Download size={14} />
@@ -4657,6 +5079,96 @@ const ClassroomsPage = () => {
           </div>
         );
       })()}
+
+      {/* =========================================================
+          MODAL 7: STUDENT PDF ASSIGNMENT SUBMISSION MODAL
+      ========================================================= */}
+      {pdfSubmitModal.open && pdfSubmitModal.assignment && !isTeacher && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-[1px]">
+          <form
+            onSubmit={handleSubmitPdfAssignment}
+            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3.5">
+              <div className="min-w-0">
+                <h2 className="text-base font-bold text-slate-900">
+                  {pdfSubmitModal.assignment.myPdfSubmissionId ? 'Nộp lại bài làm PDF' : 'Nộp bài tập PDF'}
+                </h2>
+                <p className="mt-0.5 truncate text-xs text-slate-600">
+                  {pdfSubmitModal.assignment.title} · Hạn:{' '}
+                  <span className="font-mono">{formatVietnamDateTime(pdfSubmitModal.assignment.deadline)}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closePdfSubmitModal}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {pdfSubmitModal.assignment.myPdfSubmissionId && (
+                <div className="rounded-xl border border-blue-200 bg-[#EFF6FF] px-3.5 py-2.5 text-xs text-slate-700">
+                  Bạn đã nộp tệp{' '}
+                  <strong>{pdfSubmitModal.assignment.myPdfSubmissionFileName || 'Bai-nop.pdf'}</strong>. Khi nộp lại,
+                  hệ thống sẽ ghi nhận bản mới nhất cho giáo viên chấm điểm.
+                </div>
+              )}
+
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Chọn tệp bài làm PDF (Tối đa 10 MiB) *
+                <input
+                  ref={pdfSubmitInputRef}
+                  required
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={(event) => setPdfSubmitFile(event.target.files?.[0] || null)}
+                  className="mt-1.5 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-normal normal-case text-slate-700 file:mr-2.5 file:border-0 file:bg-[#EFF6FF] file:px-3 file:py-1 file:font-semibold file:text-[#1D4ED8]"
+                />
+              </label>
+
+              {pdfSubmitFile && (
+                <p className="text-xs font-medium text-emerald-700">
+                  Đã chọn: <strong>{pdfSubmitFile.name}</strong> ({(pdfSubmitFile.size / (1024 * 1024)).toFixed(2)} MiB)
+                </p>
+              )}
+
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Ghi chú gửi giáo viên (Tuỳ chọn)
+                <textarea
+                  rows={3}
+                  maxLength={2000}
+                  value={pdfSubmitNote}
+                  onChange={(event) => setPdfSubmitNote(event.target.value)}
+                  placeholder="Ví dụ: Em đã hoàn thành đầy đủ các câu hỏi trong tệp PDF đính kèm..."
+                  className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-normal normal-case text-slate-900 outline-none focus:border-[#1D4ED8]"
+                />
+              </label>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={closePdfSubmitModal}
+                className="rounded-full px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={busy || !pdfSubmitFile}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#1D4ED8] px-5 py-2 text-xs font-semibold text-white transition hover:bg-blue-800 disabled:opacity-50"
+              >
+                {busy ? <LoaderCircle size={14} className="animate-spin" /> : <Upload size={14} />}
+                {busy ? 'Đang tải bài lên…' : 'Nộp bài làm'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

@@ -38,6 +38,10 @@ public class Material extends BaseCreatedEntity {
     @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
     private Boolean active = true;
 
+    @Builder.Default
+    @Column(name = "assignment_attachment", nullable = false, columnDefinition = "boolean default false")
+    private Boolean assignmentAttachment = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uploaded_by_id")
     private User uploadedBy;

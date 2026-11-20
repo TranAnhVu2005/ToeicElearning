@@ -14,6 +14,10 @@ public class AssignmentSubmissionResponse {
     String status;
     Boolean late;
     String resultId;
+    String pdfSubmissionId;
+    String pdfSubmissionFileName;
+    Long pdfSubmissionSizeBytes;
+    String studentNote;
     Integer score;
     Integer correctCount;
     Integer totalCount;

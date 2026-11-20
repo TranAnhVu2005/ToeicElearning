@@ -2,6 +2,7 @@ package com.ctu_cit_nienLuanNganh.toeicLearning.repository;
 
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestResult;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.base.BaseRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,4 +37,8 @@ public interface TestResultRepository extends BaseRepository<TestResult, String>
             "FROM test_result WHERE created_at >= :from AND created_at < :to " +
             "GROUP BY DATE(created_at) ORDER BY DATE(created_at)", nativeQuery = true)
     List<Object[]> countSubmittedByDay(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Modifying
+    @Query("UPDATE TestResult r SET r.assignment = NULL WHERE r.assignment.id = :assignmentId")
+    int detachAssignment(@Param("assignmentId") String assignmentId);
 }

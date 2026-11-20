@@ -25,6 +25,10 @@ public class AssignmentResponse {
     Boolean active;
     LocalDateTime createdAt;
     String myLatestResultId;
+    String myPdfSubmissionId;
+    String myPdfSubmissionFileName;
+    Long myPdfSubmissionSizeBytes;
+    String myPdfSubmissionNote;
     String mySubmissionStatus;
     Boolean myLatestSubmissionLate;
     LocalDateTime myLatestSubmittedAt;

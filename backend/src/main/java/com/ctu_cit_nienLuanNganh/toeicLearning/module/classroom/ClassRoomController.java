@@ -59,12 +59,13 @@ public class ClassRoomController {
             @RequestParam("title") String title,
             @RequestParam("file") MultipartFile file,
             @RequestParam(name = "notify", defaultValue = "true") boolean notify,
+            @RequestParam(name = "assignmentAttachment", defaultValue = "false") boolean assignmentAttachment,
             HttpServletRequest httpRequest) {
         String clientIp = httpRequest.getRemoteAddr();
         rateLimitService.checkAllowed("class-pdf-upload", clientIp, currentUser.getId(), 30, 10);
         rateLimitService.recordAttempt("class-pdf-upload", clientIp, currentUser.getId(), 30, 10);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Tải tài liệu lớp thành công",
-                materialService.upload(currentUser, classroomId, title, file, notify)));
+                materialService.upload(currentUser, classroomId, title, file, notify, assignmentAttachment)));
     }
 
     @GetMapping("/{classroomId}/materials/{materialId}/download")
@@ -99,7 +100,7 @@ public class ClassRoomController {
             @PathVariable String classroomId,
             @PathVariable String materialId) {
         materialService.hide(currentUser, classroomId, materialId);
-        return ResponseEntity.ok(ApiResponse.success("Đã ẩn tài liệu khỏi lớp"));
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa tài liệu và tệp lưu trữ trên hệ thống"));
     }
 
     @PostMapping
@@ -223,7 +224,7 @@ public class ClassRoomController {
     public ResponseEntity<ApiResponse<Void>> archiveAssignment(
             @AuthenticationPrincipal User currentUser, @PathVariable String assignmentId) {
         assignmentService.archive(currentUser, assignmentId);
-        return ResponseEntity.ok(ApiResponse.success("Đã ẩn bài tập; kết quả đã nộp được giữ lại"));
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa bài tập và các tệp PDF liên quan"));
     }
 
     @GetMapping("/assignments/{assignmentId}/submissions")
@@ -249,5 +250,54 @@ public class ClassRoomController {
             @Valid @RequestBody AssignmentFeedbackRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Đã lưu nhận xét và thông báo học sinh",
                 assignmentService.addFeedback(currentUser, resultId, request.getComment())));
+    }
+
+    @PostMapping(value = "/assignments/{assignmentId}/pdf-submissions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApiResponse<AssignmentResponse>> submitPdfAssignment(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String assignmentId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(name = "note", required = false) String note,
+            HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+        rateLimitService.checkAllowed("assignment-pdf-submit", clientIp, currentUser.getId(), 20, 10);
+        rateLimitService.recordAttempt("assignment-pdf-submit", clientIp, currentUser.getId(), 20, 10);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(
+                "Đã nộp bài tập PDF thành công",
+                assignmentService.submitPdfAssignment(currentUser, assignmentId, file, note)));
+    }
+
+    @GetMapping("/assignments/pdf-submissions/{submissionId}/download")
+    @PreAuthorize("hasAnyRole('TEACHER', 'USER')")
+    public ResponseEntity<ApiResponse<MaterialDownloadResponse>> downloadPdfSubmission(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String submissionId,
+            @RequestParam(name = "attachment", defaultValue = "true") boolean attachment) {
+        return ResponseEntity.ok(ApiResponse.success(
+                assignmentService.createPdfSubmissionDownloadLink(currentUser, submissionId, attachment)));
+    }
+
+    @GetMapping(value = "/assignments/pdf-submissions/{submissionId}/preview", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'USER')")
+    public ResponseEntity<byte[]> previewPdfSubmission(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String submissionId) {
+        MaterialService.MaterialPreviewContent content =
+                assignmentService.loadPdfSubmissionPreviewContent(currentUser, submissionId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header("Content-Disposition", "inline; filename=\"" + content.fileName().replace("\"", "") + "\"")
+                .body(content.bytes());
+    }
+
+    @PatchMapping("/assignments/pdf-submissions/{submissionId}/feedback")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<ApiResponse<String>> gradePdfSubmission(
+            @AuthenticationPrincipal User currentUser,
+            @PathVariable String submissionId,
+            @Valid @RequestBody AssignmentFeedbackRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Đã lưu điểm và nhận xét cho học viên",
+                assignmentService.gradePdfSubmission(currentUser, submissionId, request.getScore(), request.getComment())));
     }
 }

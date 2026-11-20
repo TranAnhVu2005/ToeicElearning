@@ -259,8 +259,18 @@ public class CloudinaryService {
 
     public void deletePrivateClassPdf(String publicId) {
         if (publicId == null || !publicId.matches(
-                "Resource/toeic-learning/classrooms/[A-Za-z0-9-]{1,64}/materials/[A-Fa-f0-9-]{36}\\.pdf")) {
+                "Resource/toeic-learning/classrooms/[A-Za-z0-9-]{1,64}/(materials|submissions/[A-Za-z0-9-]{1,64})/[A-Za-z0-9_-]{1,120}\\.pdf")) {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
+        destroyAsset(publicId, "raw", "private");
+    }
+
+    public void deletePrivateClassPdfQuietly(String publicId) {
+        if (publicId == null || publicId.isBlank()) return;
+        if (!publicId.matches(
+                "Resource/toeic-learning/classrooms/[A-Za-z0-9-]{1,64}/(materials|submissions/[A-Za-z0-9-]{1,64})/[A-Za-z0-9_-]{1,120}\\.pdf")) {
+            log.warn("Skipped Cloudinary private PDF cleanup for unexpected publicId pattern.");
+            return;
         }
         destroyAsset(publicId, "raw", "private");
     }
@@ -389,7 +399,8 @@ public class CloudinaryService {
 
     private byte[] readAndValidateClassPdf(MultipartFile file, String folder) {
         if (file == null || file.isEmpty()) throw new AppException(ErrorCode.FILE_NOT_FOUND);
-        if (folder == null || folder.length() > 240 || !folder.matches("Resource/toeic-learning/classrooms/[A-Za-z0-9-]{1,64}/materials")
+        if (folder == null || folder.length() > 240
+                || !folder.matches("Resource/toeic-learning/classrooms/[A-Za-z0-9-]{1,64}/(materials|submissions/[A-Za-z0-9-]{1,64})")
                 || file.getSize() > MAX_CLASS_PDF_BYTES) {
             throw new AppException(ErrorCode.VALIDATION_ERROR);
         }

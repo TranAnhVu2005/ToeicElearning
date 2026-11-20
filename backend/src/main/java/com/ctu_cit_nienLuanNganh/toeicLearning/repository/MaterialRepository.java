@@ -14,5 +14,6 @@ public interface MaterialRepository extends BaseRepository<Material, String> {
     long sumStoredBytesByClassroom(@Param("classroomId") String classroomId);
 
     List<Material> findByClassroom_IdAndActiveTrueOrderByCreatedAtDesc(String classroomId);
+    List<Material> findByClassroom_IdAndActiveTrueAndAssignmentAttachmentFalseOrderByCreatedAtDesc(String classroomId);
     Optional<Material> findByIdAndClassroom_IdAndActiveTrue(String id, String classroomId);
 }

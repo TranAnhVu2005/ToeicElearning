@@ -166,6 +166,7 @@ CREATE TABLE material (
     content_type VARCHAR(100),
     size_bytes BIGINT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    assignment_attachment BOOLEAN NOT NULL DEFAULT FALSE,
     uploaded_by_id VARCHAR(36),
     class_id VARCHAR(36) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -189,6 +190,27 @@ CREATE TABLE assignment (
     CONSTRAINT fk_assign_class FOREIGN KEY (class_id) REFERENCES classroom(id) ON DELETE CASCADE,
     CONSTRAINT fk_assign_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE SET NULL,
     CONSTRAINT fk_assign_material FOREIGN KEY (material_id) REFERENCES material(id) ON DELETE SET NULL
+);
+
+CREATE TABLE assignment_submission (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    assignment_id VARCHAR(36) NOT NULL,
+    student_id VARCHAR(36) NOT NULL,
+    file_url VARCHAR(1000) NOT NULL,
+    cloudinary_public_id VARCHAR(512),
+    file_format VARCHAR(20),
+    original_file_name VARCHAR(180),
+    content_type VARCHAR(100),
+    size_bytes BIGINT,
+    student_note TEXT,
+    deadline_snapshot DATETIME,
+    is_late BOOLEAN NOT NULL DEFAULT FALSE,
+    score INT,
+    teacher_comment TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_assign_sub_assignment FOREIGN KEY (assignment_id) REFERENCES assignment(id) ON DELETE CASCADE,
+    CONSTRAINT fk_assign_sub_student FOREIGN KEY (student_id) REFERENCES `user`(id) ON DELETE CASCADE
 );
 
 -- ==============================================================================

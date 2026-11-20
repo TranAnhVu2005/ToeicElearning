@@ -21,11 +21,12 @@ export const classroomService = {
     params: status ? { status } : {},
   })).data,
   getMaterials: async (classroomId) => (await apiClient.get(`/classrooms/${classroomId}/materials`)).data,
-  uploadMaterial: async (classroomId, title, file, notify = true) => {
+  uploadMaterial: async (classroomId, title, file, notify = true, assignmentAttachment = false) => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('file', file);
     formData.append('notify', String(notify));
+    formData.append('assignmentAttachment', String(assignmentAttachment));
     return (await apiClient.post(`/classrooms/${classroomId}/materials`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })).data;
@@ -62,6 +63,33 @@ export const classroomService = {
   ).data,
   addAssignmentFeedback: async (resultId, comment) => (
     await apiClient.patch(`/classrooms/assignments/submissions/${resultId}/feedback`, { comment })
+  ).data,
+  submitPdfAssignment: async (assignmentId, file, note = '') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (note && note.trim()) formData.append('note', note.trim());
+    return (await apiClient.post(`/classrooms/assignments/${assignmentId}/pdf-submissions`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })).data;
+  },
+  getPdfSubmissionDownloadLink: async (submissionId) => (
+    await apiClient.get(`/classrooms/assignments/pdf-submissions/${submissionId}/download`)
+  ).data,
+  getPdfSubmissionPreviewLink: async (submissionId) => (
+    await apiClient.get(`/classrooms/assignments/pdf-submissions/${submissionId}/download`, {
+      params: { attachment: false },
+    })
+  ).data,
+  getPdfSubmissionPreviewBlob: async (submissionId) => (
+    await apiClient.get(`/classrooms/assignments/pdf-submissions/${submissionId}/preview`, {
+      responseType: 'blob',
+    })
+  ).data,
+  gradePdfSubmission: async (submissionId, score, comment) => (
+    await apiClient.patch(`/classrooms/assignments/pdf-submissions/${submissionId}/feedback`, {
+      score: score === '' || score == null ? null : Number(score),
+      comment,
+    })
   ).data,
   postAnnouncement: async (classroomId, title, content) => (
     await apiClient.post(`/classrooms/${classroomId}/announcements`, { title, content })
