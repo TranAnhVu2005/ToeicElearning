@@ -20,6 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -45,6 +46,7 @@ public class MaterialService {
     private final CloudinaryService cloudinaryService;
     private final AuditEventService auditEventService;
     private final NotificationService notificationService;
+    private final TransactionTemplate transactionTemplate;
 
     @Value("${app.classroom.storage-quota-bytes:536870912}")
     private long classroomStorageQuotaBytes;
@@ -56,17 +58,14 @@ public class MaterialService {
                 .stream().map(this::toResponse).toList();
     }
 
-    @Transactional
     public MaterialResponse upload(User currentUser, String classroomId, String title, MultipartFile file) {
         return upload(currentUser, classroomId, title, file, true, false);
     }
 
-    @Transactional
     public MaterialResponse upload(User currentUser, String classroomId, String title, MultipartFile file, boolean notifyStudents) {
         return upload(currentUser, classroomId, title, file, notifyStudents, false);
     }
 
-    @Transactional
     public MaterialResponse upload(
             User currentUser,
             String classroomId,
@@ -74,53 +73,67 @@ public class MaterialService {
             MultipartFile file,
             boolean notifyStudents,
             boolean assignmentAttachment) {
-        Classroom classroom = classroomRepository.findByIdForUpdate(classroomId)
-                .filter(found -> found.getTeacher().getId().equals(currentUser.getId()))
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         String safeTitle = title == null ? "" : title.trim();
         if (safeTitle.isBlank() || safeTitle.length() > 120) throw new AppException(ErrorCode.VALIDATION_ERROR);
         long requestedBytes = file == null ? 0 : file.getSize();
-        long storedBytes = materialRepository.sumStoredBytesByClassroom(classroomId);
-        if (classroomStorageQuotaBytes <= 0 || requestedBytes > classroomStorageQuotaBytes
-                || storedBytes > classroomStorageQuotaBytes - requestedBytes) {
-            throw new AppException(ErrorCode.CLASSROOM_STORAGE_QUOTA_EXCEEDED);
-        }
 
-        String folder = "Resource/toeic-learning/classrooms/" + classroom.getId() + "/materials";
-        CloudinaryService.PrivatePdfUpload uploadedFile = cloudinaryService.uploadPrivateClassPdf(file, folder);
-        Material material = Material.builder()
-                .title(safeTitle)
-                .fileUrl(uploadedFile.secureUrl())
-                .cloudinaryPublicId(uploadedFile.publicId())
-                .fileFormat("pdf")
-                .originalFileName(uploadedFile.originalFileName())
-                .contentType(CONTENT_TYPE_PDF)
-                .sizeBytes(uploadedFile.sizeBytes())
-                .active(true)
-                .assignmentAttachment(assignmentAttachment)
-                .uploadedBy(currentUser)
-                .classroom(classroom)
-                .build();
-        try {
-            Material saved = materialRepository.save(material);
-            auditEventService.record(currentUser, "CLASS_MATERIAL_UPLOADED", "MATERIAL", saved.getId(), "format=pdf");
-            if (notifyStudents) {
-                List<User> approvedStudents = classMemberRepository
-                        .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)
-                        .stream()
-                        .map(ClassMember::getStudent)
-                        .toList();
-                notificationService.createNotifications(
-                        approvedStudents,
-                        "Tài liệu học tập mới trong lớp " + classroom.getClassName(),
-                        "Giáo viên " + currentUser.getUserName() + " vừa đăng tài liệu PDF mới: \"" + saved.getTitle() + "\".",
-                        "CLASSROOM_MATERIAL",
-                        "/classrooms"
-                );
+        // Pre-check ownership and quota without holding a DB row lock during Cloudinary network upload.
+        String verifiedClassroomId = transactionTemplate.execute(status -> {
+            Classroom found = requireOwnedClassroom(currentUser, classroomId);
+            long storedBytes = materialRepository.sumStoredBytesByClassroom(classroomId);
+            if (classroomStorageQuotaBytes <= 0 || requestedBytes > classroomStorageQuotaBytes
+                    || storedBytes > classroomStorageQuotaBytes - requestedBytes) {
+                throw new AppException(ErrorCode.CLASSROOM_STORAGE_QUOTA_EXCEEDED);
             }
-            return toResponse(saved);
+            return found.getId();
+        });
+
+        String folder = "Resource/toeic-learning/classrooms/" + verifiedClassroomId + "/materials";
+        CloudinaryService.PrivatePdfUpload uploadedFile = cloudinaryService.uploadPrivateClassPdf(file, folder);
+
+        try {
+            return transactionTemplate.execute(status -> {
+                Classroom classroom = classroomRepository.findByIdForUpdate(verifiedClassroomId)
+                        .filter(found -> found.getTeacher().getId().equals(currentUser.getId()))
+                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                long storedBytes = materialRepository.sumStoredBytesByClassroom(verifiedClassroomId);
+                if (classroomStorageQuotaBytes <= 0 || uploadedFile.sizeBytes() > classroomStorageQuotaBytes
+                        || storedBytes > classroomStorageQuotaBytes - uploadedFile.sizeBytes()) {
+                    throw new AppException(ErrorCode.CLASSROOM_STORAGE_QUOTA_EXCEEDED);
+                }
+                Material material = Material.builder()
+                        .title(safeTitle)
+                        .fileUrl(uploadedFile.secureUrl())
+                        .cloudinaryPublicId(uploadedFile.publicId())
+                        .fileFormat("pdf")
+                        .originalFileName(uploadedFile.originalFileName())
+                        .contentType(CONTENT_TYPE_PDF)
+                        .sizeBytes(uploadedFile.sizeBytes())
+                        .active(true)
+                        .assignmentAttachment(assignmentAttachment)
+                        .uploadedBy(currentUser)
+                        .classroom(classroom)
+                        .build();
+                Material saved = materialRepository.save(material);
+                auditEventService.record(currentUser, "CLASS_MATERIAL_UPLOADED", "MATERIAL", saved.getId(), "format=pdf");
+                if (notifyStudents) {
+                    List<User> approvedStudents = classMemberRepository
+                            .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)
+                            .stream()
+                            .map(ClassMember::getStudent)
+                            .toList();
+                    notificationService.createNotifications(
+                            approvedStudents,
+                            "Tài liệu học tập mới trong lớp " + classroom.getClassName(),
+                            "Giáo viên " + currentUser.getUserName() + " vừa đăng tài liệu PDF mới: \"" + saved.getTitle() + "\".",
+                            "CLASSROOM_MATERIAL",
+                            "/classrooms"
+                    );
+                }
+                return toResponse(saved);
+            });
         } catch (RuntimeException exception) {
-            cloudinaryService.deletePrivateClassPdf(uploadedFile.publicId());
+            cloudinaryService.deletePrivateClassPdfQuietly(uploadedFile.publicId());
             throw exception;
         }
     }

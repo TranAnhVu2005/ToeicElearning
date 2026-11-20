@@ -2612,7 +2612,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
 
                       <textarea
                         rows={4}
-                        placeholder={`Nhập transcript 4 câu mô tả nghe được trong audio của câu này:\n(A) The woman is carrying a tray of food.\n(B) The woman is wearing a jacket.\n(C) The woman is tying up her hair.\n(D) The woman is removing her hat.`}
+                        placeholder={`Nhập transcript 4 câu mô tả nghe được trong audio của câu này theo mẫu ví dụ dưới đây:\n(A) The woman is carrying a tray of food.\n(B) The woman is wearing a jacket.\n(C) The woman is tying up her hair.\n(D) The woman is removing her hat.`}
                         value={cq.transcript || ''}
                         onChange={(e) =>
                           handleUpdateContextField(activePartIndex, cqIdx, 'transcript', e.target.value)
@@ -5815,1007 +5815,1007 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
               className="test-builder-form test-builder-fullscreen-container flex flex-col gap-5"
             >
 
-          {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
-          {recoverableDraft && (
-            <div className="bg-[#F8FAFC] border border-[#D1D5DB] border-l-4 border-l-[#1D4ED8] text-[#111827] px-4 py-3 rounded-[2px] flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2.5">
-                <Clock size={16} className="text-[#1D4ED8] shrink-0" />
-                <div className="text-xs">
-                  <span className="font-semibold">Bạn có bản nháp đang soạn dở trên trình duyệt:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
-                  <span className="font-semibold">
-                    {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
-                  </span>{' '}
-                  ngày {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleDateString('vi-VN') : ''}.
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleRestoreDraft}
-                  className="px-3 py-1.5 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold rounded-[2px] transition-all cursor-pointer"
-                >
-                  Tiếp tục bản nháp
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDismissDraft}
-                  className="px-3 py-1.5 bg-white hover:bg-[#F8FAFC] text-[#374151] text-xs font-semibold rounded-[2px] border border-[#D1D5DB] transition-all cursor-pointer"
-                >
-                  Bỏ qua
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Test Basic Info & Status */}
-          <div className="test-builder-basic-info space-y-5">
-            {/* Section Title */}
-            <div className="flex items-center justify-between border-b border-[#D1D5DB] pb-3.5 flex-wrap gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] flex items-center justify-center shrink-0">
-                  <FileText size={16} />
-                </div>
-                <div>
-                  <h3 className="m-0 text-base font-semibold text-[#111111]">
-                    Thông tin đề thi
-                  </h3>
-                  <p className="m-0 text-xs text-[#4B5563]">
-                    Tên đề, ảnh bìa và cài đặt hiển thị
-                  </p>
-                </div>
-              </div>
-              {builderMode === 'edit' && selectedTest?.id && (
-                <span className="text-xs font-mono text-[#4B5563] bg-[#F8FAFC] border border-[#D1D5DB] px-2.5 py-1 rounded-[2px]">
-                  Mã đề: {selectedTest.id.slice(0, 8)}
-                </span>
-              )}
-            </div>
-
-            {/* Title Input */}
-            <div>
-              <label className="block text-sm font-semibold text-[#111827] mb-1.5">
-                Tên đề thi <span className="text-[#DC2626]">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Ví dụ: ETS TOEIC 2026 - Test 11"
-                value={formTitle}
-                onChange={(e) => {
-                  setFormTitle(e.target.value);
-                  markDirty();
-                }}
-                className="w-full px-4 py-2.5 rounded-[2px] border border-[#D1D5DB] text-base font-semibold text-[#111111] bg-white outline-none focus:border-[#1D4ED8]"
-              />
-            </div>
-
-            {/* Two-Column Grid: Cover Image + VIP/Status Settings */}
-            <div className="grid gap-5 lg:grid-cols-12">
-              {/* Left Column: Cover Image Card */}
-              <div className="lg:col-span-7 grid gap-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] p-4 sm:grid-cols-[minmax(0,1fr)_220px] items-center">
-                <div className="min-w-0 space-y-3">
-                  <div>
-                    <p className="mb-1 text-sm font-semibold text-[#111111] flex items-center gap-1.5">
-                      <ImageIcon size={15} className="text-[#1D4ED8]" />
-                      Ảnh bìa đề thi
-                    </p>
-                    <p className="text-xs text-[#4B5563] leading-relaxed m-0">
-                      {formCoverImageUrl
-                        ? 'Đã tải ảnh bìa riêng cho đề thi. Bạn có thể chọn ảnh khác hoặc gỡ để dùng ảnh mặc định.'
-                        : 'Chưa có ảnh bìa riêng. Hệ thống sẽ dùng ảnh mặc định nếu để trống.'}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[2px] border border-[#D1D5DB] bg-white px-3.5 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] hover:border-[#1D4ED8] transition-all">
-                      <UploadCloud size={15} className="mr-1.5 text-[#1D4ED8]" aria-hidden="true" />
-                      {uploadingKey === 'test-cover' ? 'Đang tải ảnh…' : 'Chọn ảnh từ máy'}
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png"
-                        className="sr-only"
-                        onChange={handleCoverImageUpload}
-                        disabled={uploadingKey === 'test-cover'}
-                      />
-                    </label>
-                    {formCoverImageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormCoverImageUrl('');
-                          setCoverImagePreviewUrl('');
-                          setFormClearCoverImage(true);
-                          markDirty();
-                        }}
-                        className="min-h-10 px-3 py-1.5 rounded-[2px] border border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] transition-all"
-                      >
-                        Gỡ ảnh bìa
-                      </button>
-                    )}
-                    <span className="text-xs text-[#6B7280]">JPEG hoặc PNG · tối đa 5 MB</span>
-                  </div>
-                </div>
-
-                <div className="relative flex h-40 max-h-40 items-center justify-center overflow-hidden rounded-[2px] border border-[#D1D5DB] bg-white p-1.5">
-                  {coverImagePreviewUrl || formCoverImageUrl ? (
-                    <img
-                      src={coverImagePreviewUrl || formCoverImageUrl}
-                      alt="Xem trước ảnh bìa đề thi"
-                      className="test-cover-preview-img h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center p-3 bg-[#F8FAFC]">
-                      <BookOpen size={20} className="text-[#4B5563] mb-1" />
-                      <span className="text-xs font-semibold text-[#111827]">Ảnh bìa mặc định</span>
-                      <span className="text-[11px] text-[#6B7280]">Chưa tải ảnh riêng</span>
+              {/* BANNER KHÔI PHỤC BẢN NHÁP TỰ ĐỘNG LƯU TRÌNH DUYỆT NẾU CÓ */}
+              {recoverableDraft && (
+                <div className="bg-[#F8FAFC] border border-[#D1D5DB] border-l-4 border-l-[#1D4ED8] text-[#111827] px-4 py-3 rounded-[2px] flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <Clock size={16} className="text-[#1D4ED8] shrink-0" />
+                    <div className="text-xs">
+                      <span className="font-semibold">Bạn có bản nháp đang soạn dở trên trình duyệt:</span> "{recoverableDraft.formTitle || 'Chưa đặt tên'}" lúc{' '}
+                      <span className="font-semibold">
+                        {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleTimeString('vi-VN') : ''}
+                      </span>{' '}
+                      ngày {recoverableDraft.savedAt ? new Date(recoverableDraft.savedAt).toLocaleDateString('vi-VN') : ''}.
                     </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRestoreDraft}
+                      className="px-3 py-1.5 bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold rounded-[2px] transition-all cursor-pointer"
+                    >
+                      Tiếp tục bản nháp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDismissDraft}
+                      className="px-3 py-1.5 bg-white hover:bg-[#F8FAFC] text-[#374151] text-xs font-semibold rounded-[2px] border border-[#D1D5DB] transition-all cursor-pointer"
+                    >
+                      Bỏ qua
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Test Basic Info & Status */}
+              <div className="test-builder-basic-info space-y-5">
+                {/* Section Title */}
+                <div className="flex items-center justify-between border-b border-[#D1D5DB] pb-3.5 flex-wrap gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] flex items-center justify-center shrink-0">
+                      <FileText size={16} />
+                    </div>
+                    <div>
+                      <h3 className="m-0 text-base font-semibold text-[#111111]">
+                        Thông tin đề thi
+                      </h3>
+                      <p className="m-0 text-xs text-[#4B5563]">
+                        Tên đề, ảnh bìa và cài đặt hiển thị
+                      </p>
+                    </div>
+                  </div>
+                  {builderMode === 'edit' && selectedTest?.id && (
+                    <span className="text-xs font-mono text-[#4B5563] bg-[#F8FAFC] border border-[#D1D5DB] px-2.5 py-1 rounded-[2px]">
+                      Mã đề: {selectedTest.id.slice(0, 8)}
+                    </span>
                   )}
                 </div>
-              </div>
 
-              {/* Right Column: VIP & Publish Status */}
-              <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] p-4">
-                {!classroomId && (
-                  <div className="space-y-3 border-b border-[#D1D5DB] pb-3.5">
-                    <div className="flex items-start justify-between gap-3">
+                {/* Title Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-[#111827] mb-1.5">
+                    Tên đề thi <span className="text-[#DC2626]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ví dụ: ETS TOEIC 2026 - Test 11"
+                    value={formTitle}
+                    onChange={(e) => {
+                      setFormTitle(e.target.value);
+                      markDirty();
+                    }}
+                    className="w-full px-4 py-2.5 rounded-[2px] border border-[#D1D5DB] text-base font-semibold text-[#111111] bg-white outline-none focus:border-[#1D4ED8]"
+                  />
+                </div>
+
+                {/* Two-Column Grid: Cover Image + VIP/Status Settings */}
+                <div className="grid gap-5 lg:grid-cols-12">
+                  {/* Left Column: Cover Image Card */}
+                  <div className="lg:col-span-7 grid gap-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] p-4 sm:grid-cols-[minmax(0,1fr)_220px] items-center">
+                    <div className="min-w-0 space-y-3">
                       <div>
-                        <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-[#111111]">
-                          <input
-                            type="checkbox"
-                            checked={formIsVip}
-                            onChange={(event) => {
-                              setFormIsVip(event.target.checked);
-                              if (!event.target.checked) setFormVipPriceVnd('');
-                              markDirty();
-                            }}
-                            className="h-4 w-4 accent-[#1D4ED8] rounded-[2px]"
-                          />
-                          Đề thi VIP (Có thu phí)
-                        </label>
-                        <p className="text-xs text-[#4B5563] mt-0.5 mb-0 pl-6">
-                          Học viên cần thanh toán qua PayOS để mở khóa đề này
+                        <p className="mb-1 text-sm font-semibold text-[#111111] flex items-center gap-1.5">
+                          <ImageIcon size={15} className="text-[#1D4ED8]" />
+                          Ảnh bìa đề thi
+                        </p>
+                        <p className="text-xs text-[#4B5563] leading-relaxed m-0">
+                          {formCoverImageUrl
+                            ? 'Đã tải ảnh bìa riêng cho đề thi. Bạn có thể chọn ảnh khác hoặc gỡ để dùng ảnh mặc định.'
+                            : 'Chưa có ảnh bìa riêng. Hệ thống sẽ dùng ảnh mặc định nếu để trống.'}
                         </p>
                       </div>
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-[2px] border ${formIsVip
-                          ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
-                          : 'bg-white text-[#4B5563] border-[#D1D5DB]'
-                          }`}
-                      >
-                        {formIsVip ? 'Đề VIP' : 'Miễn phí'}
-                      </span>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="text-xs font-semibold text-[#374151]">
-                          Giá đề thi (VNĐ)
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <label className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[2px] border border-[#D1D5DB] bg-white px-3.5 py-2 text-xs font-semibold text-[#111827] hover:bg-[#F8FAFC] hover:border-[#1D4ED8] transition-all">
+                          <UploadCloud size={15} className="mr-1.5 text-[#1D4ED8]" aria-hidden="true" />
+                          {uploadingKey === 'test-cover' ? 'Đang tải ảnh…' : 'Chọn ảnh từ máy'}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            className="sr-only"
+                            onChange={handleCoverImageUpload}
+                            disabled={uploadingKey === 'test-cover'}
+                          />
                         </label>
-                        {formIsVip && formVipPriceVnd && Number(formVipPriceVnd) > 0 && (
-                          <span className="text-xs font-mono font-semibold text-[#1D4ED8]">
-                            {Number(formVipPriceVnd).toLocaleString('vi-VN')} ₫
-                          </span>
+                        {formCoverImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormCoverImageUrl('');
+                              setCoverImagePreviewUrl('');
+                              setFormClearCoverImage(true);
+                              markDirty();
+                            }}
+                            className="min-h-10 px-3 py-1.5 rounded-[2px] border border-[#FECACA] bg-[#FEF2F2] text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] transition-all"
+                          >
+                            Gỡ ảnh bìa
+                          </button>
                         )}
+                        <span className="text-xs text-[#6B7280]">JPEG hoặc PNG · tối đa 5 MB</span>
                       </div>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99999999"
-                        step="1"
-                        required={formIsVip}
-                        disabled={!formIsVip}
-                        value={formVipPriceVnd}
-                        onChange={(event) => {
-                          setFormVipPriceVnd(event.target.value);
-                          markDirty();
-                        }}
-                        placeholder={formIsVip ? 'Ví dụ: 49000' : 'Bật Đề VIP để nhập giá'}
-                        className="w-full rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-sm font-semibold text-[#111111] disabled:bg-[#F1F1F1] disabled:text-[#6B7280]"
-                      />
                     </div>
-                  </div>
-                )}
 
-                {/* Publish / Draft Toggle */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#111827]">
-                      Trạng thái hiển thị
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 rounded-[2px] p-1 bg-white border border-[#D1D5DB]">
-                    <button
-                      type="button"
-                      className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'PUBLISHED'
-                        ? 'bg-[#1D4ED8] text-white'
-                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
-                        }`}
-                      onClick={() => {
-                        setFormStatus('PUBLISHED');
-                        markDirty();
-                      }}
-                    >
-                      <CheckCircle2 size={13} /> Xuất bản
-                    </button>
-                    <button
-                      type="button"
-                      className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'DRAFT'
-                        ? 'bg-[#111827] text-white'
-                        : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
-                        }`}
-                      onClick={() => {
-                        setFormStatus('DRAFT');
-                        markDirty();
-                      }}
-                    >
-                      <Clock size={13} /> Bản nháp
-                    </button>
-                  </div>
-                  <p className="text-xs text-[#4B5563] m-0">
-                    {formStatus === 'PUBLISHED'
-                      ? 'Hiển thị trong thư viện đề thi ngay sau khi lưu.'
-                      : 'Lưu ở mục Bản nháp để hoàn thiện sau.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ========================================================================= */}
-          {/* KHUNG CẤU TRÚC & ĐIỀU HƯỚNG PHẦN THI (PART 1 – PART 7)                    */}
-          {/* ========================================================================= */}
-          <div className="test-builder-guide space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="test-builder-guide-label text-xs">
-                  Mẫu đề nhanh
-                </span>
-                <span className="test-builder-guide-summary font-semibold text-sm text-[#111111]">
-                  Tạo nhanh khung câu hỏi theo định dạng bài thi TOEIC
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleApplyFullETSTest}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                  title="Tạo khung đầy đủ 7 Part với 200 câu hỏi"
-                >
-                  Full Test (200 câu)
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetToListening100Blank}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                  title="Tạo khung 100 câu phần Nghe (Part 1 – Part 4)"
-                >
-                  <Headphones size={13} className="text-[#1D4ED8]" /> Phần Nghe (100 câu)
-                </button>
-                <button
-                  type="button"
-                  onClick={handleResetToReading100Blank}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                  title="Tạo khung 100 câu phần Đọc (Part 5 – Part 7)"
-                >
-                  <FileText size={13} className="text-[#1D4ED8]" /> Phần Đọc (100 câu)
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyMiniETSTest}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                  title="Tạo khung Mini Test 50 câu rút gọn"
-                >
-                  Mini Test (50 câu)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEtsGuideOpen(true)}
-                  className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#4B5563] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <BookOpen size={13} className="text-[#1D4ED8]" /> Cấu trúc đề
-                </button>
-              </div>
-            </div>
-
-            {/* Live Progress Bar */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-semibold text-[#374151]">
-                <span>
-                  Tổng số câu: <strong className="text-[#111111] text-sm">{etsMetrics.totalCount}</strong> / 200 câu
-                  {etsMetrics.isFullETS ? (
-                    <span className="text-[#1D4ED8] ml-2 font-semibold">· Đủ 200 câu</span>
-                  ) : (
-                    <span className="text-[#4B5563] ml-2 font-normal">
-                      (Nghe: {etsMetrics.listeningCount}/100 · Đọc: {etsMetrics.readingCount}/100)
-                    </span>
-                  )}
-                </span>
-                <span className="text-[#1D4ED8] font-mono font-semibold">
-                  {Math.min(100, Math.round((etsMetrics.totalCount / 200) * 100))}%
-                </span>
-              </div>
-              <div className="w-full bg-[#E5E7EB] rounded-[2px] h-2 overflow-hidden">
-                <div
-                  className="bg-[#1D4ED8] h-full transition-all duration-300"
-                  style={{ width: `${Math.min(100, (etsMetrics.totalCount / 200) * 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Unified Part Tabs & Missing Part Adder */}
-            <div className="pt-1 space-y-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-xs font-semibold text-[#374151]">
-                  Danh sách phần thi ({formParts.length}/7 phần):
-                </span>
-                {formParts.length < 7 && (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs text-[#6B7280]">Thêm phần:</span>
-                    {[1, 2, 3, 4, 5, 6, 7]
-                      .filter((pNum) => !formParts.some((p) => p.partNumber === pNum))
-                      .map((pNum) => (
-                        <button
-                          key={pNum}
-                          type="button"
-                          onClick={() => handleAddFullETSPart(pNum)}
-                          className="text-xs px-2.5 py-1 rounded-[2px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] transition-all cursor-pointer"
-                        >
-                          + Part {pNum}
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="test-builder-part-tabs flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Chọn phần đề thi">
-                {formParts.map((part, idx) => {
-                  const isActive = idx === activePartIndex;
-                  const totalQInPart = part.contextQuestions.reduce(
-                    (acc, cq) => acc + (cq.questions?.length || 0),
-                    0
-                  );
-                  const standard = ETS_STRUCTURE_SPECS[part.partNumber]?.standardQuestions || totalQInPart;
-
-                  return (
-                    <div key={part.partNumber} className="test-builder-part-tab-wrap">
-                      <button
-                        id={`test-builder-part-tab-${part.partNumber}`}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setActivePartIndex(idx)}
-                        className={`test-builder-part-tab ${isActive ? 'is-active' : ''}`}
-                      >
-                        <span>Part {part.partNumber}</span>
-                        <span className="test-builder-question-count">
-                          {totalQInPart}/{standard} câu
-                        </span>
-                      </button>
-                      {formParts.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePart(idx)}
-                          className="test-builder-remove-part"
-                          title="Xóa phần này khỏi đề thi"
-                          aria-label={`Xóa Part ${part.partNumber}`}
-                        >
-                          <X size={13} />
-                        </button>
+                    <div className="relative flex h-40 max-h-40 items-center justify-center overflow-hidden rounded-[2px] border border-[#D1D5DB] bg-white p-1.5">
+                      {coverImagePreviewUrl || formCoverImageUrl ? (
+                        <img
+                          src={coverImagePreviewUrl || formCoverImageUrl}
+                          alt="Xem trước ảnh bìa đề thi"
+                          className="test-cover-preview-img h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center p-3 bg-[#F8FAFC]">
+                          <BookOpen size={20} className="text-[#4B5563] mb-1" />
+                          <span className="text-xs font-semibold text-[#111827]">Ảnh bìa mặc định</span>
+                          <span className="text-[11px] text-[#6B7280]">Chưa tải ảnh riêng</span>
+                        </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* ACTIVE PART DETAILS BUILDER */}
-          {activePart && (() => {
-            const activePartQuestionCount = activePart.contextQuestions.reduce(
-              (acc, cq) => acc + (cq.questions?.length || 0),
-              0
-            );
-            const activePartMaxQuestions =
-              ETS_STRUCTURE_SPECS[activePart.partNumber]?.standardQuestions || 54;
-            const canAddMoreToActivePart = activePartQuestionCount < activePartMaxQuestions;
-
-            return (
-            <div
-              id={`test-builder-part-panel-${activePart.partNumber}`}
-              role="region"
-              aria-labelledby={`test-builder-part-tab-${activePart.partNumber}`}
-              className="test-builder-part-panel space-y-6"
-            >
-              {/* Part Header & Action */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#D1D5DB] flex-wrap gap-3">
-                <div>
-                  <h4 className="font-semibold text-[#111111] text-lg m-0 flex items-center gap-2.5 flex-wrap">
-                    <span>{PART_DEFINITIONS[activePart.partNumber]?.name || `Part ${activePart.partNumber}`}</span>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
-                      {ETS_PART_DIRECTIONS[activePart.partNumber]?.questionRange}
-                    </span>
-                  </h4>
-                  <p className="text-xs text-[#4B5563] m-0 mt-1">
-                    {ETS_STRUCTURE_SPECS[activePart.partNumber]?.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {canAddMoreToActivePart && (
-                    <button
-                      type="button"
-                      onClick={handleResetActivePartToBlank}
-                      className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5 hover:bg-[#F8FAFC]"
-                      title={`Tạo đủ ${activePartMaxQuestions} câu cho Part ${activePart.partNumber}`}
-                    >
-                      <RotateCcw size={13} className="text-[#1D4ED8]" />
-                      Tạo đủ {activePartMaxQuestions} câu
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPartDirections(!showPartDirections)}
-                    className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5"
-                  >
-                    <BookOpen size={13} />
-                    {showPartDirections ? 'Ẩn hướng dẫn' : 'Hướng dẫn'}
-                    {showPartDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                  </button>
-
-                  {canAddMoreToActivePart && (
-                    <button
-                      type="button"
-                      onClick={() => handleAddContextQuestion(activePartIndex)}
-                      className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
-                    >
-                      <PlusCircle size={14} />
-                      {activePart.partNumber === 1
-                        ? 'Thêm câu hỏi tranh'
-                        : activePart.partNumber === 2
-                          ? 'Thêm câu hỏi'
-                          : activePart.partNumber === 3
-                            ? 'Thêm đoạn hội thoại'
-                            : activePart.partNumber === 4
-                              ? 'Thêm bài nói'
-                              : activePart.partNumber === 5
-                                ? 'Thêm câu hỏi'
-                                : activePart.partNumber === 6
-                                  ? 'Thêm đoạn văn'
-                                  : 'Thêm bài đọc'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* TOEIC REFERENCE DIRECTIONS */}
-              {showPartDirections && ETS_PART_DIRECTIONS[activePart.partNumber] && (
-                <div className="p-4 rounded-[2px] bg-[#F8FAFC] border border-[#D1D5DB] space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] font-semibold text-xs px-2.5 py-0.5 rounded-[2px]">
-                          Hướng dẫn tham khảo
-                        </span>
-                        <strong className="text-xs text-[#111827] font-semibold">
-                          Part {activePart.partNumber} · Cấu trúc TOEIC
-                        </strong>
-                      </div>
-                      <p className="text-xs text-[#4B5563] leading-relaxed italic m-0 pt-1">
-                        "{ETS_PART_DIRECTIONS[activePart.partNumber].directions}"
-                      </p>
-                    </div>
                   </div>
 
-                  {/* Sample Statement for Part 1 */}
-                  {activePart.partNumber === 1 && ETS_PART_DIRECTIONS[1].sampleStatement && (
-                    <div className="p-3 rounded-[2px] bg-white border border-[#D1D5DB] text-xs text-[#374151] space-y-1">
-                      <span className="font-semibold text-[#111827] block text-xs">
-                        Ví dụ câu mẫu tham khảo (Sample Statement):
-                      </span>
-                      <p className="m-0 italic text-[#4B5563]">
-                        {ETS_PART_DIRECTIONS[1].sampleStatement}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Audio Format Note for Teacher/Admin */}
-                  <div className="p-3 rounded-[2px] bg-[#EFF6FF] border border-[#BFDBFE] text-xs flex items-center gap-2 text-[#111827]">
-                    <Volume2 size={16} className="text-[#1D4ED8] shrink-0" />
-                    <div>
-                      <strong className="text-[#111111]">Quy cách định dạng file nghe và câu hỏi: </strong>
-                      <span>{ETS_PART_DIRECTIONS[activePart.partNumber].audioFormatNote}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Context Questions List */}
-              {activePart.partNumber === 1 ? (
-                renderPart1QuestionsBuilder()
-              ) : activePart.partNumber === 2 ? (
-                renderPart2QuestionsBuilder()
-              ) : activePart.partNumber === 3 ? (
-                renderPart3QuestionsBuilder()
-              ) : activePart.partNumber === 4 ? (
-                renderPart4QuestionsBuilder()
-              ) : activePart.partNumber === 5 ? (
-                renderPart5QuestionsBuilder()
-              ) : activePart.partNumber === 6 ? (
-                renderPart6QuestionsBuilder()
-              ) : activePart.partNumber === 7 ? (
-                renderPart7QuestionsBuilder()
-              ) : (
-                <div className="space-y-6">
-                  {activePart.contextQuestions.map((cq, cqIdx) => {
-                    let countBefore = 0;
-                    for (let i = 0; i < cqIdx; i++) {
-                      countBefore += (activePart.contextQuestions[i]?.questions?.length || 0);
-                    }
-                    let startQ = 1;
-                    if (activePart.partNumber === 1) startQ = cqIdx + 1;
-                    else if (activePart.partNumber === 2) startQ = cqIdx + 7;
-                    else if (activePart.partNumber === 3) startQ = 32 + cqIdx * 3;
-                    else if (activePart.partNumber === 4) startQ = 71 + cqIdx * 3;
-                    else if (activePart.partNumber === 5) startQ = 101 + cqIdx;
-                    else if (activePart.partNumber === 6) startQ = 131 + countBefore;
-                    else if (activePart.partNumber === 7) startQ = 147 + countBefore;
-                    const endQ = startQ + Math.max(0, (cq.questions?.length || 1) - 1);
-
-                    return (
-                      <div
-                        key={cqIdx}
-                        className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] relative space-y-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-xs text-[#111827] flex items-center gap-1.5">
-                            <Layers size={14} className="text-[#1D4ED8]" />
-                            {activePart.partNumber === 1
-                              ? `Câu hỏi tranh #${cqIdx + 1} (File nghe và Ảnh riêng lẻ)`
-                              : activePart.partNumber === 2
-                                ? `Câu hỏi #${cqIdx + 7} (File nghe riêng lẻ · 3 lựa chọn A, B, C)`
-                                : activePart.partNumber === 3
-                                  ? `Đoạn hội thoại #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 File Audio phát chung cho 3 câu hỏi`
-                                  : activePart.partNumber === 4
-                                    ? `Bài nói ngắn #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 File Audio phát chung cho 3 câu hỏi`
-                                    : activePart.partNumber === 5
-                                      ? `Câu hỏi #${startQ} (Ngữ pháp và Từ vựng độc lập)`
-                                      : activePart.partNumber === 6
-                                        ? `Bài đọc điền khuyết #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 Đoạn văn có ${cq.questions?.length || 4} chỗ trống`
-                                        : `Bài đọc hiểu #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · ${cq.questions?.length || 0} câu hỏi`}
+                  {/* Right Column: VIP & Publish Status */}
+                  <div className="lg:col-span-5 flex flex-col justify-between gap-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] p-4">
+                    {!classroomId && (
+                      <div className="space-y-3 border-b border-[#D1D5DB] pb-3.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <label className="flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-[#111111]">
+                              <input
+                                type="checkbox"
+                                checked={formIsVip}
+                                onChange={(event) => {
+                                  setFormIsVip(event.target.checked);
+                                  if (!event.target.checked) setFormVipPriceVnd('');
+                                  markDirty();
+                                }}
+                                className="h-4 w-4 accent-[#1D4ED8] rounded-[2px]"
+                              />
+                              Đề thi VIP (Có thu phí)
+                            </label>
+                            <p className="text-xs text-[#4B5563] mt-0.5 mb-0 pl-6">
+                              Học viên cần thanh toán qua PayOS để mở khóa đề này
+                            </p>
+                          </div>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-[2px] border ${formIsVip
+                              ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]'
+                              : 'bg-white text-[#4B5563] border-[#D1D5DB]'
+                              }`}
+                          >
+                            {formIsVip ? 'Đề VIP' : 'Miễn phí'}
                           </span>
+                        </div>
 
-                          {activePart.contextQuestions.length > 1 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-semibold text-[#374151]">
+                              Giá đề thi (VNĐ)
+                            </label>
+                            {formIsVip && formVipPriceVnd && Number(formVipPriceVnd) > 0 && (
+                              <span className="text-xs font-mono font-semibold text-[#1D4ED8]">
+                                {Number(formVipPriceVnd).toLocaleString('vi-VN')} ₫
+                              </span>
+                            )}
+                          </div>
+                          <input
+                            type="number"
+                            min="1"
+                            max="99999999"
+                            step="1"
+                            required={formIsVip}
+                            disabled={!formIsVip}
+                            value={formVipPriceVnd}
+                            onChange={(event) => {
+                              setFormVipPriceVnd(event.target.value);
+                              markDirty();
+                            }}
+                            placeholder={formIsVip ? 'Nhập giá đề thi...' : 'Chỉ nhập được giá khi tich vào đề VIP'}
+                            className="w-full rounded-[2px] border border-[#D1D5DB] bg-white px-3 py-2 text-sm font-semibold text-[#111111] disabled:bg-[#F1F1F1] disabled:text-[#6B7280]"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Publish / Draft Toggle */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-[#111827]">
+                          Trạng thái hiển thị
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5 rounded-[2px] p-1 bg-white border border-[#D1D5DB]">
+                        <button
+                          type="button"
+                          className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'PUBLISHED'
+                            ? 'bg-[#1D4ED8] text-white'
+                            : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                            }`}
+                          onClick={() => {
+                            setFormStatus('PUBLISHED');
+                            markDirty();
+                          }}
+                        >
+                          <CheckCircle2 size={13} /> Xuất bản
+                        </button>
+                        <button
+                          type="button"
+                          className={`px-3 py-2 text-xs font-semibold rounded-[2px] transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer ${formStatus === 'DRAFT'
+                            ? 'bg-[#111827] text-white'
+                            : 'bg-white text-[#374151] hover:bg-[#F8FAFC]'
+                            }`}
+                          onClick={() => {
+                            setFormStatus('DRAFT');
+                            markDirty();
+                          }}
+                        >
+                          <Clock size={13} /> Bản nháp
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#4B5563] m-0">
+                        {formStatus === 'PUBLISHED'
+                          ? 'Hiển thị trong thư viện đề thi ngay sau khi lưu.'
+                          : 'Lưu ở mục Bản nháp để hoàn thiện sau.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ========================================================================= */}
+              {/* KHUNG CẤU TRÚC & ĐIỀU HƯỚNG PHẦN THI (PART 1 – PART 7)                    */}
+              {/* ========================================================================= */}
+              <div className="test-builder-guide space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="test-builder-guide-label text-xs">
+                      Mẫu đề nhanh
+                    </span>
+                    <span className="test-builder-guide-summary font-semibold text-sm text-[#111111]">
+                      Tạo nhanh khung câu hỏi theo định dạng bài thi TOEIC
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleApplyFullETSTest}
+                      className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      title="Tạo khung đầy đủ 7 Part với 200 câu hỏi"
+                    >
+                      Full Test (200 câu)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetToListening100Blank}
+                      className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      title="Tạo khung 100 câu phần Nghe (Part 1 – Part 4)"
+                    >
+                      <Headphones size={13} className="text-[#1D4ED8]" /> Phần Nghe (100 câu)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetToReading100Blank}
+                      className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      title="Tạo khung 100 câu phần Đọc (Part 5 – Part 7)"
+                    >
+                      <FileText size={13} className="text-[#1D4ED8]" /> Phần Đọc (100 câu)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplyMiniETSTest}
+                      className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                      title="Tạo khung Mini Test 50 câu rút gọn"
+                    >
+                      Mini Test (50 câu)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEtsGuideOpen(true)}
+                      className="px-3 py-1.5 rounded-[2px] text-xs font-semibold bg-white hover:bg-[#F8FAFC] text-[#4B5563] border border-[#D1D5DB] transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <BookOpen size={13} className="text-[#1D4ED8]" /> Cấu trúc đề
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Progress Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#374151]">
+                    <span>
+                      Tổng số câu: <strong className="text-[#111111] text-sm">{etsMetrics.totalCount}</strong> / 200 câu
+                      {etsMetrics.isFullETS ? (
+                        <span className="text-[#1D4ED8] ml-2 font-semibold">· Đủ 200 câu</span>
+                      ) : (
+                        <span className="text-[#4B5563] ml-2 font-normal">
+                          (Nghe: {etsMetrics.listeningCount}/100 · Đọc: {etsMetrics.readingCount}/100)
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[#1D4ED8] font-mono font-semibold">
+                      {Math.min(100, Math.round((etsMetrics.totalCount / 200) * 100))}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-[#E5E7EB] rounded-[2px] h-2 overflow-hidden">
+                    <div
+                      className="bg-[#1D4ED8] h-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, (etsMetrics.totalCount / 200) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Unified Part Tabs & Missing Part Adder */}
+                <div className="pt-1 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-semibold text-[#374151]">
+                      Danh sách phần thi ({formParts.length}/7 phần):
+                    </span>
+                    {formParts.length < 7 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs text-[#6B7280]">Thêm phần:</span>
+                        {[1, 2, 3, 4, 5, 6, 7]
+                          .filter((pNum) => !formParts.some((p) => p.partNumber === pNum))
+                          .map((pNum) => (
+                            <button
+                              key={pNum}
+                              type="button"
+                              onClick={() => handleAddFullETSPart(pNum)}
+                              className="text-xs px-2.5 py-1 rounded-[2px] font-semibold bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] hover:bg-[#DBEAFE] transition-all cursor-pointer"
+                            >
+                              + Part {pNum}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="test-builder-part-tabs flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Chọn phần đề thi">
+                    {formParts.map((part, idx) => {
+                      const isActive = idx === activePartIndex;
+                      const totalQInPart = part.contextQuestions.reduce(
+                        (acc, cq) => acc + (cq.questions?.length || 0),
+                        0
+                      );
+                      const standard = ETS_STRUCTURE_SPECS[part.partNumber]?.standardQuestions || totalQInPart;
+
+                      return (
+                        <div key={part.partNumber} className="test-builder-part-tab-wrap">
+                          <button
+                            id={`test-builder-part-tab-${part.partNumber}`}
+                            type="button"
+                            aria-pressed={isActive}
+                            onClick={() => setActivePartIndex(idx)}
+                            className={`test-builder-part-tab ${isActive ? 'is-active' : ''}`}
+                          >
+                            <span>Part {part.partNumber}</span>
+                            <span className="test-builder-question-count">
+                              {totalQInPart}/{standard} câu
+                            </span>
+                          </button>
+                          {formParts.length > 1 && (
                             <button
                               type="button"
-                              onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
-                              className="text-xs text-[#B91C1C] hover:text-[#991B1B] font-semibold inline-flex items-center gap-1"
+                              onClick={() => handleRemovePart(idx)}
+                              className="test-builder-remove-part"
+                              title="Xóa phần này khỏi đề thi"
+                              aria-label={`Xóa Part ${part.partNumber}`}
                             >
-                              <Trash2 size={13} /> Xóa cụm này
+                              <X size={13} />
                             </button>
                           )}
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
 
-                        {/* Audio & Image URLs (Only for Parts that need them) */}
-                        {activePart.partNumber <= 4 && (
-                          <div className={`grid gap-4 ${activePart.partNumber === 2 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
-                            {/* Audio URL & Upload */}
-                            <div>
-                              <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-semibold text-[#374151]">
-                                  {activePart.partNumber <= 2
-                                    ? `File Audio cho Câu hỏi này (MP3 riêng lẻ):`
-                                    : `File Audio phát chung cho 3 câu hỏi này (MP3 dính liền):`}
-                                </label>
-                                <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-white text-[#111827] hover:bg-[#F8FAFC] border border-[#D1D5DB] cursor-pointer transition-all">
-                                  <UploadCloud size={13} className="text-[#1D4ED8]" />
-                                  {uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải lên...' : 'Tải MP3 từ máy'}
-                                  <input
-                                    type="file"
-                                    accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
-                                    className="hidden"
-                                    disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
-                                    onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
-                                  />
-                                </label>
-                              </div>
-                              <div className="relative">
-                                <Volume2
-                                  size={16}
-                                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="https://.../audio.mp3 hoặc bấm nút tải MP3 ở trên"
-                                  value={cq.audioUrl || ''}
-                                  onChange={(e) =>
-                                    handleUpdateContextField(
-                                      activePartIndex,
-                                      cqIdx,
-                                      'audioUrl',
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full pl-9 pr-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
-                                />
-                              </div>
-                              {cq.audioUrl && (
-                                <audio
-                                  src={cq.audioUrl}
-                                  controls
-                                  className="w-full h-8 mt-2 rounded-[2px]"
-                                />
-                              )}
+              {/* ACTIVE PART DETAILS BUILDER */}
+              {activePart && (() => {
+                const activePartQuestionCount = activePart.contextQuestions.reduce(
+                  (acc, cq) => acc + (cq.questions?.length || 0),
+                  0
+                );
+                const activePartMaxQuestions =
+                  ETS_STRUCTURE_SPECS[activePart.partNumber]?.standardQuestions || 54;
+                const canAddMoreToActivePart = activePartQuestionCount < activePartMaxQuestions;
+
+                return (
+                  <div
+                    id={`test-builder-part-panel-${activePart.partNumber}`}
+                    role="region"
+                    aria-labelledby={`test-builder-part-tab-${activePart.partNumber}`}
+                    className="test-builder-part-panel space-y-6"
+                  >
+                    {/* Part Header & Action */}
+                    <div className="flex items-center justify-between pb-4 border-b border-[#D1D5DB] flex-wrap gap-3">
+                      <div>
+                        <h4 className="font-semibold text-[#111111] text-lg m-0 flex items-center gap-2.5 flex-wrap">
+                          <span>{PART_DEFINITIONS[activePart.partNumber]?.name || `Part ${activePart.partNumber}`}</span>
+                          <span className="text-xs font-semibold px-2.5 py-0.5 rounded-[2px] bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]">
+                            {ETS_PART_DIRECTIONS[activePart.partNumber]?.questionRange}
+                          </span>
+                        </h4>
+                        <p className="text-xs text-[#4B5563] m-0 mt-1">
+                          {ETS_STRUCTURE_SPECS[activePart.partNumber]?.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {canAddMoreToActivePart && (
+                          <button
+                            type="button"
+                            onClick={handleResetActivePartToBlank}
+                            className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5 hover:bg-[#F8FAFC]"
+                            title={`Tạo đủ ${activePartMaxQuestions} câu cho Part ${activePart.partNumber}`}
+                          >
+                            <RotateCcw size={13} className="text-[#1D4ED8]" />
+                            Tạo đủ {activePartMaxQuestions} câu
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPartDirections(!showPartDirections)}
+                          className="btn btn-outline btn-sm text-xs font-semibold text-[#111827] inline-flex items-center gap-1.5"
+                        >
+                          <BookOpen size={13} />
+                          {showPartDirections ? 'Ẩn hướng dẫn' : 'Hướng dẫn'}
+                          {showPartDirections ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        </button>
+
+                        {canAddMoreToActivePart && (
+                          <button
+                            type="button"
+                            onClick={() => handleAddContextQuestion(activePartIndex)}
+                            className="btn btn-primary btn-sm text-xs font-semibold inline-flex items-center gap-1.5"
+                          >
+                            <PlusCircle size={14} />
+                            {activePart.partNumber === 1
+                              ? 'Thêm câu hỏi tranh'
+                              : activePart.partNumber === 2
+                                ? 'Thêm câu hỏi'
+                                : activePart.partNumber === 3
+                                  ? 'Thêm đoạn hội thoại'
+                                  : activePart.partNumber === 4
+                                    ? 'Thêm bài nói'
+                                    : activePart.partNumber === 5
+                                      ? 'Thêm câu hỏi'
+                                      : activePart.partNumber === 6
+                                        ? 'Thêm đoạn văn'
+                                        : 'Thêm bài đọc'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* TOEIC REFERENCE DIRECTIONS */}
+                    {showPartDirections && ETS_PART_DIRECTIONS[activePart.partNumber] && (
+                      <div className="p-4 rounded-[2px] bg-[#F8FAFC] border border-[#D1D5DB] space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] font-semibold text-xs px-2.5 py-0.5 rounded-[2px]">
+                                Hướng dẫn tham khảo
+                              </span>
+                              <strong className="text-xs text-[#111827] font-semibold">
+                                Part {activePart.partNumber} · Cấu trúc TOEIC
+                              </strong>
                             </div>
+                            <p className="text-xs text-[#4B5563] leading-relaxed italic m-0 pt-1">
+                              "{ETS_PART_DIRECTIONS[activePart.partNumber].directions}"
+                            </p>
+                          </div>
+                        </div>
 
-                            {/* Image URL & Upload */}
-                            {activePart.partNumber !== 2 && (
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <label className="block text-xs font-semibold text-[#374151]">
-                                    {activePart.partNumber === 1
-                                      ? 'Hình ảnh tranh mô tả (Bắt buộc cho Part 1):'
-                                      : 'Hình ảnh biểu đồ / bảng biểu (Graphic Questions nếu có):'}
-                                  </label>
-                                  <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-white text-[#111827] hover:bg-[#F8FAFC] border border-[#D1D5DB] cursor-pointer transition-all">
-                                    <UploadCloud size={13} className="text-[#1D4ED8]" />
-                                    {uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
-                                    <input
-                                      type="file"
-                                      accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                                      className="hidden"
-                                      disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
-                                      onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
-                                    />
-                                  </label>
+                        {/* Sample Statement for Part 1 */}
+                        {activePart.partNumber === 1 && ETS_PART_DIRECTIONS[1].sampleStatement && (
+                          <div className="p-3 rounded-[2px] bg-white border border-[#D1D5DB] text-xs text-[#374151] space-y-1">
+                            <span className="font-semibold text-[#111827] block text-xs">
+                              Ví dụ câu mẫu tham khảo (Sample Statement):
+                            </span>
+                            <p className="m-0 italic text-[#4B5563]">
+                              {ETS_PART_DIRECTIONS[1].sampleStatement}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Audio Format Note for Teacher/Admin */}
+                        <div className="p-3 rounded-[2px] bg-[#EFF6FF] border border-[#BFDBFE] text-xs flex items-center gap-2 text-[#111827]">
+                          <Volume2 size={16} className="text-[#1D4ED8] shrink-0" />
+                          <div>
+                            <strong className="text-[#111111]">Quy cách định dạng file nghe và câu hỏi: </strong>
+                            <span>{ETS_PART_DIRECTIONS[activePart.partNumber].audioFormatNote}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Context Questions List */}
+                    {activePart.partNumber === 1 ? (
+                      renderPart1QuestionsBuilder()
+                    ) : activePart.partNumber === 2 ? (
+                      renderPart2QuestionsBuilder()
+                    ) : activePart.partNumber === 3 ? (
+                      renderPart3QuestionsBuilder()
+                    ) : activePart.partNumber === 4 ? (
+                      renderPart4QuestionsBuilder()
+                    ) : activePart.partNumber === 5 ? (
+                      renderPart5QuestionsBuilder()
+                    ) : activePart.partNumber === 6 ? (
+                      renderPart6QuestionsBuilder()
+                    ) : activePart.partNumber === 7 ? (
+                      renderPart7QuestionsBuilder()
+                    ) : (
+                      <div className="space-y-6">
+                        {activePart.contextQuestions.map((cq, cqIdx) => {
+                          let countBefore = 0;
+                          for (let i = 0; i < cqIdx; i++) {
+                            countBefore += (activePart.contextQuestions[i]?.questions?.length || 0);
+                          }
+                          let startQ = 1;
+                          if (activePart.partNumber === 1) startQ = cqIdx + 1;
+                          else if (activePart.partNumber === 2) startQ = cqIdx + 7;
+                          else if (activePart.partNumber === 3) startQ = 32 + cqIdx * 3;
+                          else if (activePart.partNumber === 4) startQ = 71 + cqIdx * 3;
+                          else if (activePart.partNumber === 5) startQ = 101 + cqIdx;
+                          else if (activePart.partNumber === 6) startQ = 131 + countBefore;
+                          else if (activePart.partNumber === 7) startQ = 147 + countBefore;
+                          const endQ = startQ + Math.max(0, (cq.questions?.length || 1) - 1);
+
+                          return (
+                            <div
+                              key={cqIdx}
+                              className="p-4 rounded-[2px] border border-[#D1D5DB] bg-[#F8FAFC] relative space-y-4"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-xs text-[#111827] flex items-center gap-1.5">
+                                  <Layers size={14} className="text-[#1D4ED8]" />
+                                  {activePart.partNumber === 1
+                                    ? `Câu hỏi tranh #${cqIdx + 1} (File nghe và Ảnh riêng lẻ)`
+                                    : activePart.partNumber === 2
+                                      ? `Câu hỏi #${cqIdx + 7} (File nghe riêng lẻ · 3 lựa chọn A, B, C)`
+                                      : activePart.partNumber === 3
+                                        ? `Đoạn hội thoại #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 File Audio phát chung cho 3 câu hỏi`
+                                        : activePart.partNumber === 4
+                                          ? `Bài nói ngắn #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 File Audio phát chung cho 3 câu hỏi`
+                                          : activePart.partNumber === 5
+                                            ? `Câu hỏi #${startQ} (Ngữ pháp và Từ vựng độc lập)`
+                                            : activePart.partNumber === 6
+                                              ? `Bài đọc điền khuyết #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · 1 Đoạn văn có ${cq.questions?.length || 4} chỗ trống`
+                                              : `Bài đọc hiểu #${cqIdx + 1} (Câu ${startQ} - ${endQ}) · ${cq.questions?.length || 0} câu hỏi`}
+                                </span>
+
+                                {activePart.contextQuestions.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveContextQuestion(activePartIndex, cqIdx)}
+                                    className="text-xs text-[#B91C1C] hover:text-[#991B1B] font-semibold inline-flex items-center gap-1"
+                                  >
+                                    <Trash2 size={13} /> Xóa cụm này
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Audio & Image URLs (Only for Parts that need them) */}
+                              {activePart.partNumber <= 4 && (
+                                <div className={`grid gap-4 ${activePart.partNumber === 2 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+                                  {/* Audio URL & Upload */}
+                                  <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                      <label className="block text-xs font-semibold text-[#374151]">
+                                        {activePart.partNumber <= 2
+                                          ? `File Audio cho Câu hỏi này (MP3 riêng lẻ):`
+                                          : `File Audio phát chung cho 3 câu hỏi này (MP3 dính liền):`}
+                                      </label>
+                                      <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-white text-[#111827] hover:bg-[#F8FAFC] border border-[#D1D5DB] cursor-pointer transition-all">
+                                        <UploadCloud size={13} className="text-[#1D4ED8]" />
+                                        {uploadingKey === `${activePartIndex}-${cqIdx}-audio` ? 'Đang tải lên...' : 'Tải MP3 từ máy'}
+                                        <input
+                                          type="file"
+                                          accept="audio/mpeg,audio/wav,audio/x-wav,audio/mp4,.mp3,.wav,.m4a"
+                                          className="hidden"
+                                          disabled={uploadingKey === `${activePartIndex}-${cqIdx}-audio`}
+                                          onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'audio')}
+                                        />
+                                      </label>
+                                    </div>
+                                    <div className="relative">
+                                      <Volume2
+                                        size={16}
+                                        className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="https://.../audio.mp3 hoặc bấm nút tải MP3 ở trên"
+                                        value={cq.audioUrl || ''}
+                                        onChange={(e) =>
+                                          handleUpdateContextField(
+                                            activePartIndex,
+                                            cqIdx,
+                                            'audioUrl',
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-full pl-9 pr-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
+                                      />
+                                    </div>
+                                    {cq.audioUrl && (
+                                      <audio
+                                        src={cq.audioUrl}
+                                        controls
+                                        className="w-full h-8 mt-2 rounded-[2px]"
+                                      />
+                                    )}
+                                  </div>
+
+                                  {/* Image URL & Upload */}
+                                  {activePart.partNumber !== 2 && (
+                                    <div>
+                                      <div className="flex items-center justify-between mb-1">
+                                        <label className="block text-xs font-semibold text-[#374151]">
+                                          {activePart.partNumber === 1
+                                            ? 'Hình ảnh tranh mô tả (Bắt buộc cho Part 1):'
+                                            : 'Hình ảnh biểu đồ / bảng biểu (Graphic Questions nếu có):'}
+                                        </label>
+                                        <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-semibold bg-white text-[#111827] hover:bg-[#F8FAFC] border border-[#D1D5DB] cursor-pointer transition-all">
+                                          <UploadCloud size={13} className="text-[#1D4ED8]" />
+                                          {uploadingKey === `${activePartIndex}-${cqIdx}-image` ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
+                                          <input
+                                            type="file"
+                                            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                                            className="hidden"
+                                            disabled={uploadingKey === `${activePartIndex}-${cqIdx}-image`}
+                                            onChange={(e) => handleFileUpload(e, activePartIndex, cqIdx, 'image')}
+                                          />
+                                        </label>
+                                      </div>
+                                      <div className="relative">
+                                        <ImageIcon
+                                          size={16}
+                                          className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
+                                        />
+                                        <input
+                                          type="text"
+                                          placeholder="https://.../image.jpg hoặc bấm nút tải ảnh ở trên"
+                                          value={cq.imageUrl || ''}
+                                          onChange={(e) =>
+                                            handleUpdateContextField(
+                                              activePartIndex,
+                                              cqIdx,
+                                              'imageUrl',
+                                              e.target.value
+                                            )
+                                          }
+                                          className="w-full pl-9 pr-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
+                                        />
+                                      </div>
+                                      {cq.imageUrl && (
+                                        <img
+                                          src={cq.imageUrl}
+                                          alt="Minh họa câu hỏi"
+                                          className="h-20 object-contain mt-2 border border-[#D1D5DB] rounded-[2px] bg-white p-1"
+                                          onError={(e) => (e.target.style.display = 'none')}
+                                        />
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="relative">
-                                  <ImageIcon
-                                    size={16}
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="https://.../image.jpg hoặc bấm nút tải ảnh ở trên"
-                                    value={cq.imageUrl || ''}
+                              )}
+
+                              {/* Paragraph Reading (Part 6, 7) */}
+                              {activePart.partNumber >= 6 && (
+                                <div>
+                                  <label className="block text-xs font-semibold text-[#374151] mb-1">
+                                    Đoạn văn đọc hiểu (Reading Passage / Paragraph):
+                                  </label>
+                                  <textarea
+                                    rows={4}
+                                    placeholder="Nhập nội dung đoạn văn, email, thông báo, bài báo..."
+                                    value={cq.paragraph || ''}
                                     onChange={(e) =>
                                       handleUpdateContextField(
                                         activePartIndex,
                                         cqIdx,
-                                        'imageUrl',
+                                        'paragraph',
                                         e.target.value
                                       )
                                     }
-                                    className="w-full pl-9 pr-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
+                                    className="w-full p-3 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
                                   />
                                 </div>
-                                {cq.imageUrl && (
-                                  <img
-                                    src={cq.imageUrl}
-                                    alt="Minh họa câu hỏi"
-                                    className="h-20 object-contain mt-2 border border-[#D1D5DB] rounded-[2px] bg-white p-1"
-                                    onError={(e) => (e.target.style.display = 'none')}
+                              )}
+
+                              {/* Transcript (Part 1, 2, 3, 4) */}
+                              {activePart.partNumber <= 4 && (
+                                <div>
+                                  <label className="block text-xs font-semibold text-[#374151] mb-1">
+                                    Lời thoại nghe (Audio Transcript):
+                                  </label>
+                                  <textarea
+                                    rows={2}
+                                    placeholder="Lời thoại của người nói trong đoạn ghi âm..."
+                                    value={cq.transcript || ''}
+                                    onChange={(e) =>
+                                      handleUpdateContextField(
+                                        activePartIndex,
+                                        cqIdx,
+                                        'transcript',
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full p-2.5 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
                                   />
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                </div>
+                              )}
 
-                        {/* Paragraph Reading (Part 6, 7) */}
-                        {activePart.partNumber >= 6 && (
-                          <div>
-                            <label className="block text-xs font-semibold text-[#374151] mb-1">
-                              Đoạn văn đọc hiểu (Reading Passage / Paragraph):
-                            </label>
-                            <textarea
-                              rows={4}
-                              placeholder="Nhập nội dung đoạn văn, email, thông báo, bài báo..."
-                              value={cq.paragraph || ''}
-                              onChange={(e) =>
-                                handleUpdateContextField(
-                                  activePartIndex,
-                                  cqIdx,
-                                  'paragraph',
-                                  e.target.value
-                                )
-                              }
-                              className="w-full p-3 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
-                            />
-                          </div>
-                        )}
-
-                        {/* Transcript (Part 1, 2, 3, 4) */}
-                        {activePart.partNumber <= 4 && (
-                          <div>
-                            <label className="block text-xs font-semibold text-[#374151] mb-1">
-                              Lời thoại nghe (Audio Transcript):
-                            </label>
-                            <textarea
-                              rows={2}
-                              placeholder="Lời thoại của người nói trong đoạn ghi âm..."
-                              value={cq.transcript || ''}
-                              onChange={(e) =>
-                                handleUpdateContextField(
-                                  activePartIndex,
-                                  cqIdx,
-                                  'transcript',
-                                  e.target.value
-                                )
-                              }
-                              className="w-full p-2.5 rounded-[2px] border border-[#D1D5DB] text-xs bg-white outline-none"
-                            />
-                          </div>
-                        )}
-
-                        {/* Questions List Inside This Context */}
-                        <div className="pt-3 border-t border-[#D1D5DB] space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-[#374151]">
-                              {activePart.partNumber === 1
-                                ? 'Câu hỏi mô tả tranh:'
-                                : activePart.partNumber === 2
-                                  ? 'Câu hỏi phản hồi (Chỉ 3 đáp án A, B, C):'
-                                  : activePart.partNumber === 3 || activePart.partNumber === 4
-                                    ? `Danh sách câu hỏi của bài nghe này (${cq.questions.length} câu - Chuẩn ETS: 3 câu):`
-                                    : activePart.partNumber === 5
-                                      ? 'Câu hỏi điền khuyết ngữ pháp / từ vựng:'
-                                      : activePart.partNumber === 6
-                                        ? `Danh sách câu hỏi của đoạn văn này (${cq.questions.length} câu - Chuẩn ETS: 4 câu):`
-                                        : `Danh sách câu hỏi đọc hiểu (${cq.questions.length} câu):`}
-                            </span>
-
-                            {activePart.partNumber !== 1 && activePart.partNumber !== 2 && activePart.partNumber !== 5 && (
-                              <button
-                                type="button"
-                                onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
-                                className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1"
-                              >
-                                <Plus size={13} /> + Thêm câu hỏi vào bài này
-                              </button>
-                            )}
-                          </div>
-
-                          {cq.questions.map((q, qIdx) => {
-                            const itemQNum = startQ + qIdx;
-                            return (
-                              <div
-                                key={qIdx}
-                                className="bg-white p-4 rounded-[2px] border border-[#D1D5DB] space-y-3"
-                              >
+                              {/* Questions List Inside This Context */}
+                              <div className="pt-3 border-t border-[#D1D5DB] space-y-4">
                                 <div className="flex items-center justify-between">
-                                  <span className="font-semibold text-xs text-[#111827] bg-[#F8FAFC] border border-[#D1D5DB] px-2.5 py-1 rounded-[2px]">
-                                    Câu hỏi #{itemQNum}
+                                  <span className="text-xs font-semibold text-[#374151]">
+                                    {activePart.partNumber === 1
+                                      ? 'Câu hỏi mô tả tranh:'
+                                      : activePart.partNumber === 2
+                                        ? 'Câu hỏi phản hồi (Chỉ 3 đáp án A, B, C):'
+                                        : activePart.partNumber === 3 || activePart.partNumber === 4
+                                          ? `Danh sách câu hỏi của bài nghe này (${cq.questions.length} câu - Chuẩn ETS: 3 câu):`
+                                          : activePart.partNumber === 5
+                                            ? 'Câu hỏi điền khuyết ngữ pháp / từ vựng:'
+                                            : activePart.partNumber === 6
+                                              ? `Danh sách câu hỏi của đoạn văn này (${cq.questions.length} câu - Chuẩn ETS: 4 câu):`
+                                              : `Danh sách câu hỏi đọc hiểu (${cq.questions.length} câu):`}
                                   </span>
-                                  {cq.questions.length > 1 && (
+
+                                  {activePart.partNumber !== 1 && activePart.partNumber !== 2 && activePart.partNumber !== 5 && (
                                     <button
                                       type="button"
-                                      onClick={() =>
-                                        handleRemoveQuestion(activePartIndex, cqIdx, qIdx)
-                                      }
-                                      className="text-xs text-[#B91C1C] hover:text-[#991B1B]"
-                                      title="Xóa câu hỏi này"
+                                      onClick={() => handleAddQuestion(activePartIndex, cqIdx)}
+                                      className="text-xs font-semibold text-[#1D4ED8] hover:underline inline-flex items-center gap-1"
                                     >
-                                      <Trash2 size={13} />
+                                      <Plus size={13} /> + Thêm câu hỏi vào bài này
                                     </button>
                                   )}
                                 </div>
 
-                                {/* Question Content */}
-                                <div>
-                                  <input
-                                    type="text"
-                                    required
-                                    placeholder="Nhập nội dung câu hỏi (ví dụ: What is the purpose of the email?)..."
-                                    value={q.questionContent || ''}
-                                    onChange={(e) =>
-                                      handleUpdateQuestionField(
-                                        activePartIndex,
-                                        cqIdx,
-                                        qIdx,
-                                        'questionContent',
-                                        e.target.value
-                                      )
-                                    }
-                                    className="w-full px-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs font-semibold text-[#111111] outline-none focus:border-[#1D4ED8]"
-                                  />
-                                </div>
+                                {cq.questions.map((q, qIdx) => {
+                                  const itemQNum = startQ + qIdx;
+                                  return (
+                                    <div
+                                      key={qIdx}
+                                      className="bg-white p-4 rounded-[2px] border border-[#D1D5DB] space-y-3"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-semibold text-xs text-[#111827] bg-[#F8FAFC] border border-[#D1D5DB] px-2.5 py-1 rounded-[2px]">
+                                          Câu hỏi #{itemQNum}
+                                        </span>
+                                        {cq.questions.length > 1 && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleRemoveQuestion(activePartIndex, cqIdx, qIdx)
+                                            }
+                                            className="text-xs text-[#B91C1C] hover:text-[#991B1B]"
+                                            title="Xóa câu hỏi này"
+                                          >
+                                            <Trash2 size={13} />
+                                          </button>
+                                        )}
+                                      </div>
 
-                                {/* ETS Part 2 Notice */}
-                                {activePart.partNumber === 2 && (
-                                  <div className="p-2 rounded-[2px] bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E3A8A] text-[11px] font-medium flex items-center gap-1.5">
-                                    <Info size={14} className="text-[#1D4ED8] shrink-0" />
-                                    <span>
-                                      <strong>Quy chuẩn ETS Part 2:</strong> Phần Hỏi - Đáp chỉ có <strong>3 lựa chọn A, B, C</strong>. Lựa chọn D được tự động ẩn theo đúng cấu trúc bài thi thực tế.
-                                    </span>
-                                  </div>
-                                )}
-
-                                {/* Options A, B, C, D (Part 2 only has A, B, C) */}
-                                <div className={`grid gap-2.5 text-xs ${activePart.partNumber === 2 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-[#374151] w-4">A.</span>
-                                    <input
-                                      type="text"
-                                      required
-                                      placeholder="Nội dung lựa chọn A"
-                                      value={q.optionA || ''}
-                                      onChange={(e) =>
-                                        handleUpdateQuestionField(
-                                          activePartIndex,
-                                          cqIdx,
-                                          qIdx,
-                                          'optionA',
-                                          e.target.value
-                                        )
-                                      }
-                                      className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
-                                    />
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-[#374151] w-4">B.</span>
-                                    <input
-                                      type="text"
-                                      required
-                                      placeholder="Nội dung lựa chọn B"
-                                      value={q.optionB || ''}
-                                      onChange={(e) =>
-                                        handleUpdateQuestionField(
-                                          activePartIndex,
-                                          cqIdx,
-                                          qIdx,
-                                          'optionB',
-                                          e.target.value
-                                        )
-                                      }
-                                      className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
-                                    />
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-[#374151] w-4">C.</span>
-                                    <input
-                                      type="text"
-                                      placeholder="Nội dung lựa chọn C"
-                                      value={q.optionC || ''}
-                                      onChange={(e) =>
-                                        handleUpdateQuestionField(
-                                          activePartIndex,
-                                          cqIdx,
-                                          qIdx,
-                                          'optionC',
-                                          e.target.value
-                                        )
-                                      }
-                                      className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
-                                    />
-                                  </div>
-
-                                  {activePart.partNumber !== 2 && (
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-[#374151] w-4">D.</span>
-                                      <input
-                                        type="text"
-                                        placeholder="Nội dung lựa chọn D"
-                                        value={q.optionD || ''}
-                                        onChange={(e) =>
-                                          handleUpdateQuestionField(
-                                            activePartIndex,
-                                            cqIdx,
-                                            qIdx,
-                                            'optionD',
-                                            e.target.value
-                                          )
-                                        }
-                                        className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Correct Answer & Explanation */}
-                                <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-[#E5E7EB]">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-[#374151]">Đáp án đúng:</span>
-                                    {(activePart.partNumber === 2 ? ['A', 'B', 'C'] : ['A', 'B', 'C', 'D']).map((opt) => {
-                                      const isCorrect = (q.correctAnswer || 'A') === opt;
-                                      return (
-                                        <button
-                                          key={opt}
-                                          type="button"
-                                          onClick={() =>
+                                      {/* Question Content */}
+                                      <div>
+                                        <input
+                                          type="text"
+                                          required
+                                          placeholder="Nhập nội dung câu hỏi (ví dụ: What is the purpose of the email?)..."
+                                          value={q.questionContent || ''}
+                                          onChange={(e) =>
                                             handleUpdateQuestionField(
                                               activePartIndex,
                                               cqIdx,
                                               qIdx,
-                                              'correctAnswer',
-                                              opt
+                                              'questionContent',
+                                              e.target.value
                                             )
                                           }
-                                          className={`w-7 h-7 rounded-[2px] font-semibold text-xs border transition-all ${isCorrect
-                                            ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
-                                            : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
-                                            }`}
-                                        >
-                                          {opt}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
+                                          className="w-full px-3 py-2 rounded-[2px] border border-[#D1D5DB] text-xs font-semibold text-[#111111] outline-none focus:border-[#1D4ED8]"
+                                        />
+                                      </div>
 
-                                  <div className="flex-1 min-w-[200px]">
-                                    <input
-                                      type="text"
-                                      placeholder="Lời giải thích / Dịch nghĩa..."
-                                      value={q.explanation || ''}
-                                      onChange={(e) =>
-                                        handleUpdateQuestionField(
-                                          activePartIndex,
-                                          cqIdx,
-                                          qIdx,
-                                          'explanation',
-                                          e.target.value
-                                        )
-                                      }
-                                      className="w-full px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] text-xs outline-none"
-                                    />
-                                  </div>
-                                </div>
+                                      {/* ETS Part 2 Notice */}
+                                      {activePart.partNumber === 2 && (
+                                        <div className="p-2 rounded-[2px] bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E3A8A] text-[11px] font-medium flex items-center gap-1.5">
+                                          <Info size={14} className="text-[#1D4ED8] shrink-0" />
+                                          <span>
+                                            <strong>Quy chuẩn ETS Part 2:</strong> Phần Hỏi - Đáp chỉ có <strong>3 lựa chọn A, B, C</strong>. Lựa chọn D được tự động ẩn theo đúng cấu trúc bài thi thực tế.
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {/* Options A, B, C, D (Part 2 only has A, B, C) */}
+                                      <div className={`grid gap-2.5 text-xs ${activePart.partNumber === 2 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-semibold text-[#374151] w-4">A.</span>
+                                          <input
+                                            type="text"
+                                            required
+                                            placeholder="Nội dung lựa chọn A"
+                                            value={q.optionA || ''}
+                                            onChange={(e) =>
+                                              handleUpdateQuestionField(
+                                                activePartIndex,
+                                                cqIdx,
+                                                qIdx,
+                                                'optionA',
+                                                e.target.value
+                                              )
+                                            }
+                                            className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
+                                          />
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-semibold text-[#374151] w-4">B.</span>
+                                          <input
+                                            type="text"
+                                            required
+                                            placeholder="Nội dung lựa chọn B"
+                                            value={q.optionB || ''}
+                                            onChange={(e) =>
+                                              handleUpdateQuestionField(
+                                                activePartIndex,
+                                                cqIdx,
+                                                qIdx,
+                                                'optionB',
+                                                e.target.value
+                                              )
+                                            }
+                                            className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
+                                          />
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-semibold text-[#374151] w-4">C.</span>
+                                          <input
+                                            type="text"
+                                            placeholder="Nội dung lựa chọn C"
+                                            value={q.optionC || ''}
+                                            onChange={(e) =>
+                                              handleUpdateQuestionField(
+                                                activePartIndex,
+                                                cqIdx,
+                                                qIdx,
+                                                'optionC',
+                                                e.target.value
+                                              )
+                                            }
+                                            className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
+                                          />
+                                        </div>
+
+                                        {activePart.partNumber !== 2 && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="font-semibold text-[#374151] w-4">D.</span>
+                                            <input
+                                              type="text"
+                                              placeholder="Nội dung lựa chọn D"
+                                              value={q.optionD || ''}
+                                              onChange={(e) =>
+                                                handleUpdateQuestionField(
+                                                  activePartIndex,
+                                                  cqIdx,
+                                                  qIdx,
+                                                  'optionD',
+                                                  e.target.value
+                                                )
+                                              }
+                                              className="flex-1 px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] outline-none focus:border-[#1D4ED8]"
+                                            />
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Correct Answer & Explanation */}
+                                      <div className="flex items-center justify-between flex-wrap gap-3 pt-2 border-t border-[#E5E7EB]">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs font-semibold text-[#374151]">Đáp án đúng:</span>
+                                          {(activePart.partNumber === 2 ? ['A', 'B', 'C'] : ['A', 'B', 'C', 'D']).map((opt) => {
+                                            const isCorrect = (q.correctAnswer || 'A') === opt;
+                                            return (
+                                              <button
+                                                key={opt}
+                                                type="button"
+                                                onClick={() =>
+                                                  handleUpdateQuestionField(
+                                                    activePartIndex,
+                                                    cqIdx,
+                                                    qIdx,
+                                                    'correctAnswer',
+                                                    opt
+                                                  )
+                                                }
+                                                className={`w-7 h-7 rounded-[2px] font-semibold text-xs border transition-all ${isCorrect
+                                                  ? 'bg-[#1D4ED8] text-white border-[#1D4ED8]'
+                                                  : 'bg-white text-[#374151] border-[#D1D5DB] hover:bg-[#F8FAFC]'
+                                                  }`}
+                                              >
+                                                {opt}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        <div className="flex-1 min-w-[200px]">
+                                          <input
+                                            type="text"
+                                            placeholder="Lời giải thích / Dịch nghĩa..."
+                                            value={q.explanation || ''}
+                                            onChange={(e) =>
+                                              handleUpdateQuestionField(
+                                                activePartIndex,
+                                                cqIdx,
+                                                qIdx,
+                                                'explanation',
+                                                e.target.value
+                                              )
+                                            }
+                                            className="w-full px-2.5 py-1.5 rounded-[2px] border border-[#D1D5DB] text-xs outline-none"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            );
-          })()}
+                    )}
+                  </div>
+                );
+              })()}
 
-          {/* Action Buttons Footer */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#D1D5DB] flex-wrap">
-            <div className="text-xs text-[#4B5563]">
-              <span className="font-semibold text-[#111827]">Mẹo:</span> Bạn có thể bấm <strong className="text-[#111827]">Lưu bản nháp</strong> hoặc nhấn{' '}
-              <kbd className="px-1.5 py-0.5 text-xs font-mono font-semibold text-[#111827] bg-white border border-[#D1D5DB] rounded-[2px]">
-                Ctrl + S
-              </kbd>{' '}
-              bất kỳ lúc nào khi chưa điền xong toàn bộ câu hỏi.
-            </div>
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                className="btn btn-outline text-xs font-semibold py-2 px-4"
-                disabled={actionLoading}
-                onClick={handleCloseBuilder}
-              >
-                Quay lại danh sách
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSaveExam(null, 'DRAFT', true)}
-                className="px-4 py-2 rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all"
-                disabled={actionLoading || isLoadingTestDetail}
-                title="Lưu bản nháp và tiếp tục soạn thảo"
-              >
-                <Clock size={14} className="text-[#4B5563]" />
-                Lưu bản nháp
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] inline-flex items-center gap-2 text-xs font-semibold cursor-pointer transition-all"
-                disabled={actionLoading || isLoadingTestDetail}
-              >
-                <Save size={15} />
-                {actionLoading
-                  ? 'Đang lưu...'
-                  : formStatus === 'PUBLISHED'
-                    ? (builderMode === 'edit' ? 'Lưu và Xuất bản' : 'Xuất bản đề thi')
-                    : 'Lưu bản nháp và Thoát'}
-              </button>
-            </div>
-          </div>
+              {/* Action Buttons Footer */}
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#D1D5DB] flex-wrap">
+                <div className="text-xs text-[#4B5563]">
+                  <span className="font-semibold text-[#111827]">Mẹo:</span> Bạn có thể bấm <strong className="text-[#111827]">Lưu bản nháp</strong> hoặc nhấn{' '}
+                  <kbd className="px-1.5 py-0.5 text-xs font-mono font-semibold text-[#111827] bg-white border border-[#D1D5DB] rounded-[2px]">
+                    Ctrl + S
+                  </kbd>{' '}
+                  bất kỳ lúc nào khi chưa điền xong toàn bộ câu hỏi.
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    className="btn btn-outline text-xs font-semibold py-2 px-4"
+                    disabled={actionLoading}
+                    onClick={handleCloseBuilder}
+                  >
+                    Quay lại danh sách
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveExam(null, 'DRAFT', true)}
+                    className="px-4 py-2 rounded-[2px] bg-white hover:bg-[#F8FAFC] text-[#111827] border border-[#D1D5DB] hover:border-[#1D4ED8] text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all"
+                    disabled={actionLoading || isLoadingTestDetail}
+                    title="Lưu bản nháp và tiếp tục soạn thảo"
+                  >
+                    <Clock size={14} className="text-[#4B5563]" />
+                    Lưu bản nháp
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-[2px] bg-[#1D4ED8] hover:bg-[#1E40AF] text-white border border-[#1D4ED8] inline-flex items-center gap-2 text-xs font-semibold cursor-pointer transition-all"
+                    disabled={actionLoading || isLoadingTestDetail}
+                  >
+                    <Save size={15} />
+                    {actionLoading
+                      ? 'Đang lưu...'
+                      : formStatus === 'PUBLISHED'
+                        ? (builderMode === 'edit' ? 'Lưu và Xuất bản' : 'Xuất bản đề thi')
+                        : 'Lưu bản nháp và Thoát'}
+                  </button>
+                </div>
+              </div>
             </form>
           </div>
         </div>
@@ -6928,7 +6928,7 @@ const TestManagementPage = ({ classroomScope = '', initialTest = null }) => {
         <div className="text-center py-3">
           <AlertTriangle size={44} className="text-[#DC2626] mx-auto mb-3" />
           <h4 className="m-0 mb-2 text-base font-bold text-[#111111]">
-            {classroomId ? 'Bạn có chắc chắn muốn xóa đề lớp này?' : 'Bạn có chắc chắn muốn gỡ đề hệ thống khỏi catalog?'}
+            {classroomId ? 'Bạn có chắc chắn muốn xóa đề lớp này?' : 'Bạn có chắc chắn muốn gỡ đề khỏi website?'}
           </h4>
           <p className="m-0 mb-5 text-sm text-[#4B5563]">
             {classroomId ? (

@@ -8,7 +8,6 @@ import defaultAdminBanner from '../../assets/img/courses/thuvien.jpg';
  * paired with a clean serif heading, action controls, and AdminNavTabs.
  */
 const AdminPageHeader = ({
-  eyebrow = 'Khu vực quản trị',
   eyebrowIcon: EyebrowIcon = null,
   title,
   description,
@@ -26,10 +25,6 @@ const AdminPageHeader = ({
       <div className="mx-auto max-w-7xl px-4 pt-8 pb-5 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4 pb-6">
           <div className="max-w-3xl">
-            <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#1D4ED8]">
-              {EyebrowIcon && <EyebrowIcon size={14} aria-hidden="true" />}
-              <span>{eyebrow}</span>
-            </p>
             <h1 className="mt-2 text-3xl font-medium tracking-tight text-[#111111] sm:text-4xl">
               {title}
             </h1>

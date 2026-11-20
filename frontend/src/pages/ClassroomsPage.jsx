@@ -369,6 +369,7 @@ const ClassroomsPage = () => {
   const [pdfSubmitModal, setPdfSubmitModal] = useState({ open: false, assignment: null });
   const [pdfSubmitFile, setPdfSubmitFile] = useState(null);
   const [pdfSubmitNote, setPdfSubmitNote] = useState('');
+  const [pdfSubmitError, setPdfSubmitError] = useState('');
   const pdfSubmitInputRef = useRef(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
 
@@ -1044,9 +1045,24 @@ const ClassroomsPage = () => {
     }
   };
 
+  const MAX_CLASS_PDF_BYTES = 10 * 1024 * 1024;
+
+  const validatePdfFileSize = (file) => {
+    if (!file) return '';
+    if (file.size > MAX_CLASS_PDF_BYTES) {
+      return `Tệp “${file.name}” có dung lượng ${(file.size / (1024 * 1024)).toFixed(2)} MiB, vượt quá giới hạn tối đa 10 MiB. Vui lòng nén hoặc chọn tệp PDF nhỏ hơn 10 MiB.`;
+    }
+    return '';
+  };
+
   const handleUploadMaterial = async (event) => {
     event.preventDefault();
     if (!selectedClass || !materialFile) return;
+    const sizeErr = validatePdfFileSize(materialFile);
+    if (sizeErr) {
+      setError(sizeErr);
+      return;
+    }
     setBusy(true);
     setError('');
     setNotice('');
@@ -1244,6 +1260,13 @@ const ClassroomsPage = () => {
       setError('Vui lòng tải lên tệp PDF từ máy hoặc chọn tài liệu PDF đã có trong lớp.');
       return;
     }
+    if (isPdfMode && assignmentPdfFile) {
+      const sizeErr = validatePdfFileSize(assignmentPdfFile);
+      if (sizeErr) {
+        setError(sizeErr);
+        return;
+      }
+    }
     setBusy(true);
     setError('');
     setNotice('');
@@ -1291,6 +1314,7 @@ const ClassroomsPage = () => {
   const openPdfSubmitModal = (assignment) => {
     setPdfSubmitFile(null);
     setPdfSubmitNote(assignment?.myPdfSubmissionNote || '');
+    setPdfSubmitError('');
     if (pdfSubmitInputRef.current) pdfSubmitInputRef.current.value = '';
     setPdfSubmitModal({ open: true, assignment });
   };
@@ -1299,6 +1323,7 @@ const ClassroomsPage = () => {
     setPdfSubmitModal({ open: false, assignment: null });
     setPdfSubmitFile(null);
     setPdfSubmitNote('');
+    setPdfSubmitError('');
     if (pdfSubmitInputRef.current) pdfSubmitInputRef.current.value = '';
   };
 
@@ -1306,11 +1331,17 @@ const ClassroomsPage = () => {
     event.preventDefault();
     const targetAssignment = pdfSubmitModal.assignment;
     if (!targetAssignment || !pdfSubmitFile) {
-      setError('Vui lòng chọn tệp bài làm PDF trước khi nộp.');
+      setPdfSubmitError('Vui lòng chọn tệp bài làm PDF trước khi nộp.');
+      return;
+    }
+    const sizeErr = validatePdfFileSize(pdfSubmitFile);
+    if (sizeErr) {
+      setPdfSubmitError(sizeErr);
       return;
     }
     setBusy(true);
     setError('');
+    setPdfSubmitError('');
     setNotice('');
     try {
       const response = await classroomService.submitPdfAssignment(
@@ -1327,7 +1358,9 @@ const ClassroomsPage = () => {
         await loadAssignments(selectedClass.id);
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Không nộp được bài tập PDF.');
+      const msg = err.response?.data?.message || err.message || 'Không nộp được bài tập PDF.';
+      setPdfSubmitError(msg);
+      setError(msg);
     } finally {
       setBusy(false);
     }
@@ -5109,6 +5142,15 @@ const ClassroomsPage = () => {
             </div>
 
             <div className="mt-4 space-y-4">
+              {pdfSubmitError && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700"
+                >
+                  {pdfSubmitError}
+                </div>
+              )}
+
               {pdfSubmitModal.assignment.myPdfSubmissionId && (
                 <div className="rounded-xl border border-blue-200 bg-[#EFF6FF] px-3.5 py-2.5 text-xs text-slate-700">
                   Bạn đã nộp tệp{' '}
@@ -5124,7 +5166,18 @@ const ClassroomsPage = () => {
                   required
                   type="file"
                   accept=".pdf,application/pdf"
-                  onChange={(event) => setPdfSubmitFile(event.target.files?.[0] || null)}
+                  onChange={(event) => {
+                    const picked = event.target.files?.[0] || null;
+                    const sizeErr = validatePdfFileSize(picked);
+                    if (sizeErr) {
+                      setPdfSubmitFile(null);
+                      setPdfSubmitError(sizeErr);
+                      event.target.value = '';
+                      return;
+                    }
+                    setPdfSubmitError('');
+                    setPdfSubmitFile(picked);
+                  }}
                   className="mt-1.5 block min-h-10 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-normal normal-case text-slate-700 file:mr-2.5 file:border-0 file:bg-[#EFF6FF] file:px-3 file:py-1 file:font-semibold file:text-[#1D4ED8]"
                 />
               </label>

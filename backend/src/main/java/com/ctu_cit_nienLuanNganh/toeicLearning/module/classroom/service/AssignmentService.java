@@ -34,6 +34,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
@@ -67,6 +68,7 @@ public class AssignmentService {
     private final AuditEventService auditEventService;
     private final ClassroomEmailService classroomEmailService;
     private final CloudinaryService cloudinaryService;
+    private final TransactionTemplate transactionTemplate;
     @Autowired
     private EntityManager entityManager;
 
@@ -377,84 +379,116 @@ public class AssignmentService {
         return resultId;
     }
 
-    @Transactional
     public AssignmentResponse submitPdfAssignment(User student, String assignmentId, MultipartFile file, String note) {
         requireRole(student, ROLE_USER);
-        Assignment assignment = assignmentRepository.findByIdForUpdate(assignmentId)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        entityManager.refresh(assignment);
-        if (!Boolean.TRUE.equals(assignment.getIsActive())
-                || assignment.getTest() != null
-                || assignment.getMaterial() == null) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR);
-        }
-        boolean isApprovedMember = classMemberRepository
-                .findForUpdateByClassroomAndStudent(assignment.getClassroom().getId(), student.getId())
-                .filter(member -> APPROVED.equals(member.getStatus()))
-                .isPresent();
-        if (!isApprovedMember) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-        if (assignment.getDeadline() == null || assignment.getLatePolicy() == null) {
-            throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
-        }
-        LocalDateTime submittedAt = LocalDateTime.now();
-        boolean late = submittedAt.isAfter(assignment.getDeadline());
-        if (late && assignment.getLatePolicy() == LatePolicy.REJECT_AFTER_DEADLINE) {
-            throw new AppException(ErrorCode.VALIDATION_ERROR);
-        }
         String normalizedNote = normalizeText(note);
         if (normalizedNote != null && normalizedNote.length() > 2000) {
             throw new AppException(ErrorCode.VALIDATION_ERROR);
         }
 
-        String folder = "Resource/toeic-learning/classrooms/" + assignment.getClassroom().getId()
-                + "/submissions/" + assignment.getId();
+        // Pre-validate without holding a DB FOR UPDATE lock during Cloudinary network upload.
+        String verifiedClassroomId = transactionTemplate.execute(status -> {
+            Assignment assignment = assignmentRepository.findById(assignmentId)
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            if (!Boolean.TRUE.equals(assignment.getIsActive())
+                    || assignment.getTest() != null
+                    || assignment.getMaterial() == null) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            boolean isApprovedMember = classMemberRepository
+                    .findByClassroom_IdAndStudent_Id(assignment.getClassroom().getId(), student.getId())
+                    .filter(member -> APPROVED.equals(member.getStatus()))
+                    .isPresent();
+            if (!isApprovedMember) {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+            if (assignment.getDeadline() == null || assignment.getLatePolicy() == null) {
+                throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
+            }
+            if (LocalDateTime.now().isAfter(assignment.getDeadline())
+                    && assignment.getLatePolicy() == LatePolicy.REJECT_AFTER_DEADLINE) {
+                throw new AppException(ErrorCode.VALIDATION_ERROR);
+            }
+            return assignment.getClassroom().getId();
+        });
+
+        String folder = "Resource/toeic-learning/classrooms/" + verifiedClassroomId
+                + "/submissions/" + assignmentId;
         CloudinaryService.PrivatePdfUpload uploadedFile = cloudinaryService.uploadPrivateClassPdf(file, folder);
-        AssignmentSubmission submission = AssignmentSubmission.builder()
-                .assignment(assignment)
-                .student(student)
-                .fileUrl(uploadedFile.secureUrl())
-                .cloudinaryPublicId(uploadedFile.publicId())
-                .fileFormat("pdf")
-                .originalFileName(uploadedFile.originalFileName())
-                .contentType(CONTENT_TYPE_PDF)
-                .sizeBytes(uploadedFile.sizeBytes())
-                .studentNote(normalizedNote)
-                .deadlineSnapshot(assignment.getDeadline())
-                .late(late)
-                .build();
+
+        List<String> oldPublicIdsToDelete = new ArrayList<>();
         try {
-            List<AssignmentSubmission> previousSubmissions = assignmentSubmissionRepository
-                    .findByAssignment_IdAndStudent_IdOrderByCreatedAtDesc(assignment.getId(), student.getId());
-            AssignmentSubmission saved = assignmentSubmissionRepository.save(submission);
-            if (!previousSubmissions.isEmpty()) {
-                List<String> oldPublicIds = previousSubmissions.stream()
-                        .map(AssignmentSubmission::getCloudinaryPublicId)
-                        .filter(id -> id != null && !id.isBlank())
-                        .toList();
-                assignmentSubmissionRepository.deleteAll(previousSubmissions);
-                assignmentSubmissionRepository.flush();
-                for (String oldPublicId : oldPublicIds) {
-                    cloudinaryService.deletePrivateClassPdfQuietly(oldPublicId);
+            AssignmentResponse response = transactionTemplate.execute(status -> {
+                Assignment assignment = assignmentRepository.findByIdForUpdate(assignmentId)
+                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                entityManager.refresh(assignment);
+                if (!Boolean.TRUE.equals(assignment.getIsActive())
+                        || assignment.getTest() != null
+                        || assignment.getMaterial() == null) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR);
                 }
+                boolean isApprovedMember = classMemberRepository
+                        .findForUpdateByClassroomAndStudent(assignment.getClassroom().getId(), student.getId())
+                        .filter(member -> APPROVED.equals(member.getStatus()))
+                        .isPresent();
+                if (!isApprovedMember) {
+                    throw new AppException(ErrorCode.UNAUTHORIZED);
+                }
+                if (assignment.getDeadline() == null || assignment.getLatePolicy() == null) {
+                    throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
+                }
+                LocalDateTime submittedAt = LocalDateTime.now();
+                boolean late = submittedAt.isAfter(assignment.getDeadline());
+                if (late && assignment.getLatePolicy() == LatePolicy.REJECT_AFTER_DEADLINE) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR);
+                }
+
+                AssignmentSubmission submission = AssignmentSubmission.builder()
+                        .assignment(assignment)
+                        .student(student)
+                        .fileUrl(uploadedFile.secureUrl())
+                        .cloudinaryPublicId(uploadedFile.publicId())
+                        .fileFormat("pdf")
+                        .originalFileName(uploadedFile.originalFileName())
+                        .contentType(CONTENT_TYPE_PDF)
+                        .sizeBytes(uploadedFile.sizeBytes())
+                        .studentNote(normalizedNote)
+                        .deadlineSnapshot(assignment.getDeadline())
+                        .late(late)
+                        .build();
+                List<AssignmentSubmission> previousSubmissions = assignmentSubmissionRepository
+                        .findByAssignment_IdAndStudent_IdOrderByCreatedAtDesc(assignment.getId(), student.getId());
+                AssignmentSubmission saved = assignmentSubmissionRepository.save(submission);
+                if (!previousSubmissions.isEmpty()) {
+                    for (AssignmentSubmission prev : previousSubmissions) {
+                        if (prev.getCloudinaryPublicId() != null && !prev.getCloudinaryPublicId().isBlank()) {
+                            oldPublicIdsToDelete.add(prev.getCloudinaryPublicId());
+                        }
+                    }
+                    assignmentSubmissionRepository.deleteAll(previousSubmissions);
+                    assignmentSubmissionRepository.flush();
+                }
+                auditEventService.record(student, "ASSIGNMENT_PDF_SUBMITTED", "ASSIGNMENT_SUBMISSION", saved.getId(),
+                        "assignmentId=" + assignment.getId() + "; late=" + late);
+                if (assignment.getClassroom().getTeacher() != null) {
+                    notificationRepository.save(Notification.builder()
+                            .user(assignment.getClassroom().getTeacher())
+                            .title("Học viên vừa nộp bài tập PDF")
+                            .content("Học viên " + student.getUserName() + " vừa nộp bài PDF cho bài tập \""
+                                    + assignment.getTitle() + "\" trong lớp \"" + assignment.getClassroom().getClassName() + "\".")
+                            .type("ASSIGNMENT_PDF_SUBMITTED")
+                            .link("/classrooms")
+                            .isRead(false)
+                            .build());
+                }
+                return toResponse(assignment, null, saved, true);
+            });
+            for (String oldPublicId : oldPublicIdsToDelete) {
+                cloudinaryService.deletePrivateClassPdfQuietly(oldPublicId);
             }
-            auditEventService.record(student, "ASSIGNMENT_PDF_SUBMITTED", "ASSIGNMENT_SUBMISSION", saved.getId(),
-                    "assignmentId=" + assignment.getId() + "; late=" + late);
-            if (assignment.getClassroom().getTeacher() != null) {
-                notificationRepository.save(Notification.builder()
-                        .user(assignment.getClassroom().getTeacher())
-                        .title("Học viên vừa nộp bài tập PDF")
-                        .content("Học viên " + student.getUserName() + " vừa nộp bài PDF cho bài tập \""
-                                + assignment.getTitle() + "\" trong lớp \"" + assignment.getClassroom().getClassName() + "\".")
-                        .type("ASSIGNMENT_PDF_SUBMITTED")
-                        .link("/classrooms")
-                        .isRead(false)
-                        .build());
-            }
-            return toResponse(assignment, null, saved, true);
+            return response;
         } catch (RuntimeException exception) {
-            cloudinaryService.deletePrivateClassPdf(uploadedFile.publicId());
+            cloudinaryService.deletePrivateClassPdfQuietly(uploadedFile.publicId());
             throw exception;
         }
     }

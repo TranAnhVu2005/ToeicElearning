@@ -475,8 +475,8 @@ const AdminDashboardPage = () => {
       <AdminPageHeader
         eyebrow="Khu vực quản trị"
         eyebrowIcon={Activity}
-        title="Tổng quan hoạt động"
-        description="Theo dõi hiện diện gần đây, nhật ký thao tác và các lượt làm bài đã được máy chủ ghi nhận."
+        title="QUẢN TRỊ WEBSITE"
+        description="Theo dõi đăng nhập gần đây, nhật ký thao tác và các lượt làm bài,..."
         actions={
           <button
             type="button"
@@ -634,9 +634,6 @@ const AdminDashboardPage = () => {
                     className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-slate-50/90 sm:flex-row sm:items-center sm:justify-between sm:px-6"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[2px] border border-slate-200 bg-[#EFF6FF] text-[#1D4ED8]">
-                        {React.createElement(actionMeta.icon, { size: 17, 'aria-hidden': true })}
-                      </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-semibold text-[#111111] sm:text-base">
