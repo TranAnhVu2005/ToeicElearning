@@ -8,6 +8,14 @@
 - **Chưa xác minh tích hợp**: phụ thuộc MySQL, Google, Cloudinary, PayOS, Gmail SMTP, HTTPS/proxy hoặc môi trường triển khai.
 - **Ngoài scope đã chốt**: là đề xuất trong docs; không tự triển khai nếu chủ dự án chưa duyệt.
 
+## Rà soát bảo mật 2026-11-20
+
+- **Đã sửa trong source:** bỏ fallback JWT signing key và Cloudinary API credentials khỏi `application.properties`; private exam media không còn ghi local khi Cloudinary lỗi; public local-media handler từ chối `public_id` đã đăng ký là authenticated; `prod` yêu cầu cấu hình exact CORS origins và frontend URL qua environment.
+- **Việc vận hành cần làm:** rotate Cloudinary API secret từng nằm trong source, kiểm tra lịch sử Git và secrets ở môi trường deploy, rồi cấu hình `JWT_SECRET`, Cloudinary credentials, `APP_CORS_ALLOWED_ORIGINS` và `FRONTEND_URL` ở môi trường phù hợp. Dữ liệu private media fallback cũ có thể cần tải lại lên Cloudinary.
+- **Kiểm chứng:** chưa chạy compile, test suite, integration test, DB migration hay pentest trong lượt rà này. Các thay đổi mới chỉ được rà soát tĩnh.
+- **Nạp biến môi trường local:** `application.properties` có `spring.config.import=optional:file:.env[.properties],optional:file:backend/.env[.properties]` để Spring Boot tự đọc `backend/.env` khi chạy local (dù working directory là `backend/` hay thư mục gốc). `backend/.env` đã nằm trong `.gitignore`; không commit file này.
+- **Giới hạn audit:** đây là rà soát source theo luồng rủi ro chính, không phải audit độc lập/pentest và không chứng nhận an toàn production. Còn cần rà quyền từng route, cấu hình reverse proxy/HTTPS, frontend XSS/CSP, dependency vulnerabilities, backup và môi trường thực tế.
+
 ## Đối chiếu yêu cầu lõi
 
 | Nhóm | Dấu hiệu code hiện tại | Trạng thái thực tế |
@@ -434,4 +442,4 @@
   3. **Dọn tệp cũ khi học viên nộp lại bài PDF (`submitPdfAssignment`), tách khóa DB khỏi upload Cloudinary và mở rộng regex `CloudinaryService`:** Khi học viên nộp lại bài PDF mới, tự động xóa bản ghi và tệp PDF nộp cũ trên Cloudinary; dùng `TransactionTemplate` trong `MaterialService.upload` và `AssignmentService.submitPdfAssignment` để không giữ khóa `SELECT ... FOR UPDATE` trong suốt thời gian tải tệp lên Cloudinary (tránh lỗi MySQL `Lock wait timeout exceeded`); cập nhật regex `readAndValidateClassPdf` và `deletePrivateClassPdf` hỗ trợ cả thư mục `/materials` và `/submissions/{assignmentId}`.
   4. **Giao diện (`ClassroomsPage.jsx`):** Đổi nhãn nút từ `Ẩn` / `Ẩn bài` sang **`Xóa tài liệu`** / **`Xóa bài`** kèm hộp thoại xác nhận rõ ràng trên cả tab **Bảng tin** và **Bài tập trên lớp**.
   5. **Kiểm chứng kỹ thuật (2026-11-20):** Backend `test-compile`, Frontend `oxlint` (0 errors) và `vite build` đều **PASS (exit 0)**.
-- 2026-11-20 (Đợt 4): Căn chỉnh đồng đều thanh bộ lọc trang **Quản lý giao dịch PayOS** ([PaymentManagementPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/admin/PaymentManagementPage.jsx)): chuyển grid 6 cột bằng nhau sang lưới theo tỷ lệ (`xl:grid-cols-[minmax(220px,1.4fr)_minmax(140px,1fr)_minmax(150px,1fr)_minmax(145px,1fr)_minmax(145px,1fr)_auto]`), thêm `items-end`, `whitespace-nowrap` cho toàn bộ nhãn để không bị rớt 2 dòng (`NGƯỜI TRẢ / EMAIL / MÃ GD`) và đồng bộ chiều cao `h-[42px]` cho toàn bộ ô nhập liệu, select và nút `Tìm kiếm`. Frontend `oxlint` (0 errors) và `vite build` **PASS (exit 0)**.
+- 2026-11-20 (Đợt 4): Căn chỉnh đồng đều thanh bộ lọc 2 tầng trên trang **Quản lý giao dịch PayOS** ([PaymentManagementPage.jsx](file:///d:/All/Information%20Technology%20%20-%20CTU/CurrentSemester/CT446E-NienLuanNganhCNTT/TOEIC_LEARNING/frontend/src/pages/admin/PaymentManagementPage.jsx)): hàng trên là ô tìm kiếm từ khóa (`Người trả / Email / Mã GD`) kéo hết chiều ngang; hàng dưới là 4 bộ lọc (`Trạng thái`, `Loại sản phẩm`, `Từ ngày`, `Đến ngày`) chia đều cột kèm cụm nút `Tìm kiếm` và **`Đặt lại`** đồng bộ chiều cao `h-[42px]` và căn đáy `items-end`. Frontend `oxlint` (0 errors) và `vite build` **PASS (exit 0)**.

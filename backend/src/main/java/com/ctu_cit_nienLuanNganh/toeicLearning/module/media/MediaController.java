@@ -71,6 +71,14 @@ public class MediaController {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
         String relativePath = uri.substring(index + prefix.length());
+        String publicId = relativePath;
+        int extensionIndex = publicId.lastIndexOf('.');
+        if (extensionIndex > publicId.lastIndexOf('/')) {
+            publicId = publicId.substring(0, extensionIndex);
+        }
+        if (examMediaAssetService.isRegisteredPrivateAsset(publicId)) {
+            throw new AppException(ErrorCode.FILE_NOT_FOUND);
+        }
         Path file = cloudinaryService.resolveLocalMediaFile(relativePath);
         try {
             byte[] content = Files.readAllBytes(file);

@@ -309,22 +309,6 @@ public class CloudinaryService {
         } catch (Exception exception) {
             log.warn("Cloudinary private exam media upload failed (folder={}, exceptionType={}, reason={}).",
                     folder, exception.getClass().getSimpleName(), classifyCloudinaryFailure(exception));
-            if (isNetworkOrDnsFailure(exception)) {
-                String ext = detectExtension(bytes, folder.endsWith("/audios"));
-                String relativePath = requestedPublicId + "." + ext;
-                try {
-                    Path targetFile = LOCAL_UPLOAD_ROOT.resolve(relativePath).normalize();
-                    if (!targetFile.startsWith(LOCAL_UPLOAD_ROOT)) {
-                        throw new AppException(ErrorCode.VALIDATION_ERROR);
-                    }
-                    Files.createDirectories(targetFile.getParent());
-                    Files.write(targetFile, bytes);
-                    String url = buildLocalMediaUrl(relativePath);
-                    return new PrivateMediaUpload(url, requestedPublicId, ext, "authenticated");
-                } catch (IOException ioException) {
-                    throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
-                }
-            }
             throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
@@ -337,11 +321,6 @@ public class CloudinaryService {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
         long expiresAt = Instant.now().getEpochSecond() + EXAM_MEDIA_DOWNLOAD_TTL_SECONDS;
-        String localRelativePath = publicId + "." + format;
-        Path localTarget = LOCAL_UPLOAD_ROOT.resolve(localRelativePath).normalize();
-        if (localTarget.startsWith(LOCAL_UPLOAD_ROOT) && Files.isRegularFile(localTarget)) {
-            return new PrivateDownload(buildLocalMediaUrl(localRelativePath), expiresAt);
-        }
         try {
             String url = cloudinary.privateDownload(publicId, format, ObjectUtils.asMap(
                     "resource_type", resourceType, "type", "authenticated", "attachment", false, "expires_at", expiresAt

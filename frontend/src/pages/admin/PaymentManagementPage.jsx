@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, CreditCard, LoaderCircle, RefreshCw, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, CreditCard, LoaderCircle, RefreshCw, RotateCcw, Search } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import AdminPageHeader from '../../components/common/AdminPageHeader';
 import paymentsBanner from '../../assets/img/courses/biasach.jpg';
@@ -48,6 +48,9 @@ const PaymentManagementPage = () => {
   const requestGeneration = useRef(0);
   const detailRequestGeneration = useRef(0);
   const invalidDateRange = Boolean(filters.fromDate && filters.toDate && filters.fromDate > filters.toDate);
+  const hasActiveFilters = Boolean(
+    keywordDraft.trim() || filters.keyword || filters.status || filters.productType || filters.fromDate || filters.toDate
+  );
 
   const loadPayments = useCallback(async () => {
     const requestId = ++requestGeneration.current;
@@ -106,6 +109,13 @@ const PaymentManagementPage = () => {
     setFilters((current) => ({ ...current, keyword: keywordDraft.trim() }));
   };
 
+  const handleResetFilters = () => {
+    setKeywordDraft('');
+    setPage(1);
+    setError('');
+    setFilters({ keyword: '', status: '', productType: '', fromDate: '', toDate: '' });
+  };
+
   const togglePaymentDetails = async (paymentId) => {
     if (expandedPaymentId === paymentId) {
       detailRequestGeneration.current += 1;
@@ -141,8 +151,8 @@ const PaymentManagementPage = () => {
       <AdminPageHeader
         eyebrow="Khu vực quản trị"
         eyebrowIcon={CreditCard}
-        title="Lịch sử thanh toán PayOS"
-        description="Tra cứu giao dịch đã ghi nhận trong hệ thống. Trạng thái chỉ do Webhook thanh toán PayOS đã xác minh cập nhật."
+        title="Lịch sử thanh toán"
+        description="Tra cứu giao dịch đã ghi nhận trong hệ thống."
         bannerImage={paymentsBanner}
         actions={
           <button
@@ -157,9 +167,6 @@ const PaymentManagementPage = () => {
       />
 
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="mb-5 border border-slate-200 bg-white p-4 text-xs text-slate-600">
-          Giao dịch cũ có thể chưa lưu loại sản phẩm. Đây là màn tra cứu chỉ đọc; mọi thay đổi trạng thái được đồng bộ từ Webhook PayOS.
-        </div>
 
         {error && (
           <div role="alert" className="mb-5 border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
@@ -169,91 +176,106 @@ const PaymentManagementPage = () => {
 
         <form
           onSubmit={handleSearch}
-          className="mb-6 grid grid-cols-1 items-end gap-3 border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(220px,1.4fr)_minmax(140px,1fr)_minmax(150px,1fr)_minmax(145px,1fr)_minmax(145px,1fr)_auto]"
+          className="mb-6 space-y-3 border border-slate-200 bg-white p-4"
         >
-          <label className="flex flex-col sm:col-span-2 lg:col-span-1">
-            <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
+          <label className="block w-full">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-700">
               Người trả / Email / Mã GD
             </span>
             <input
               value={keywordDraft}
               onChange={(event) => setKeywordDraft(event.target.value)}
               maxLength={120}
-              placeholder="Nhập tên, email hoặc mã GD..."
-              className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              placeholder="Nhập tên, email hoặc mã giao dịch cần tìm..."
+              className="h-[42px] w-full border border-slate-300 bg-white px-3.5 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
             />
           </label>
-          <label className="flex flex-col">
-            <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
-              Trạng thái
-            </span>
-            <select
-              value={filters.status}
-              onChange={(event) => {
-                setPage(1);
-                setFilters((current) => ({ ...current, status: event.target.value }));
-              }}
-              className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-            >
-              <option value="">Tất cả</option>
-              <option value="PENDING">Đang xử lý</option>
-              <option value="SUCCESS">Thành công</option>
-              <option value="FAILED">Thất bại</option>
-              <option value="CANCELLED">Đã hủy</option>
-              <option value="EXPIRED">Hết hạn</option>
-            </select>
-          </label>
-          <label className="flex flex-col">
-            <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
-              Loại sản phẩm
-            </span>
-            <select
-              value={filters.productType}
-              onChange={(event) => {
-                setPage(1);
-                setFilters((current) => ({ ...current, productType: event.target.value }));
-              }}
-              className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-            >
-              <option value="">Tất cả</option>
-              <option value="TEACHER_APPLICATION">Đăng ký giáo viên</option>
-              <option value="TEST_VIP">Mua đề VIP</option>
-            </select>
-          </label>
-          <label className="flex flex-col">
-            <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
-              Từ ngày
-            </span>
-            <input
-              type="date"
-              value={filters.fromDate}
-              onChange={(event) => {
-                setPage(1);
-                setFilters((current) => ({ ...current, fromDate: event.target.value }));
-              }}
-              className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-            />
-          </label>
-          <label className="flex flex-col">
-            <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
-              Đến ngày
-            </span>
-            <input
-              type="date"
-              value={filters.toDate}
-              onChange={(event) => {
-                setPage(1);
-                setFilters((current) => ({ ...current, toDate: event.target.value }));
-              }}
-              className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
-            />
-          </label>
-          <button
-            disabled={invalidDateRange}
-            className="editorial-button-primary inline-flex h-[42px] items-center justify-center gap-2 whitespace-nowrap px-5 text-sm font-semibold disabled:opacity-50"
-          >
-            <Search size={16} /> Tìm kiếm
-          </button>
+
+          <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
+            <label className="flex flex-col">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Trạng thái
+              </span>
+              <select
+                value={filters.status}
+                onChange={(event) => {
+                  setPage(1);
+                  setFilters((current) => ({ ...current, status: event.target.value }));
+                }}
+                className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              >
+                <option value="">Tất cả</option>
+                <option value="PENDING">Đang xử lý</option>
+                <option value="SUCCESS">Thành công</option>
+                <option value="FAILED">Thất bại</option>
+                <option value="CANCELLED">Đã hủy</option>
+                <option value="EXPIRED">Hết hạn</option>
+              </select>
+            </label>
+            <label className="flex flex-col">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Loại sản phẩm
+              </span>
+              <select
+                value={filters.productType}
+                onChange={(event) => {
+                  setPage(1);
+                  setFilters((current) => ({ ...current, productType: event.target.value }));
+                }}
+                className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              >
+                <option value="">Tất cả</option>
+                <option value="TEACHER_APPLICATION">Đăng ký giáo viên</option>
+                <option value="TEST_VIP">Mua đề VIP</option>
+              </select>
+            </label>
+            <label className="flex flex-col">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Từ ngày
+              </span>
+              <input
+                type="date"
+                value={filters.fromDate}
+                onChange={(event) => {
+                  setPage(1);
+                  setFilters((current) => ({ ...current, fromDate: event.target.value }));
+                }}
+                className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              />
+            </label>
+            <label className="flex flex-col">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-slate-700">
+                Đến ngày
+              </span>
+              <input
+                type="date"
+                value={filters.toDate}
+                onChange={(event) => {
+                  setPage(1);
+                  setFilters((current) => ({ ...current, toDate: event.target.value }));
+                }}
+                className="h-[42px] w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#1D4ED8]"
+              />
+            </label>
+            <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+              <button
+                type="submit"
+                disabled={invalidDateRange}
+                className="editorial-button-primary inline-flex h-[42px] flex-1 items-center justify-center gap-2 whitespace-nowrap px-4 text-sm font-semibold disabled:opacity-50 lg:flex-none"
+              >
+                <Search size={16} /> Tìm kiếm
+              </button>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                disabled={!hasActiveFilters && page === 1}
+                title="Đặt lại toàn bộ bộ lọc"
+                className="editorial-button-secondary inline-flex h-[42px] items-center justify-center gap-1.5 whitespace-nowrap bg-white px-3.5 text-sm font-semibold disabled:opacity-50"
+              >
+                <RotateCcw size={15} /> Đặt lại
+              </button>
+            </div>
+          </div>
         </form>
         {invalidDateRange && (
           <p role="alert" className="-mt-3 mb-5 border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
@@ -309,13 +331,12 @@ const PaymentManagementPage = () => {
                           <td className="px-4 py-3 font-semibold tabular-nums text-slate-900">{formatVnd(row.amount)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className={`inline-block border px-2 py-0.5 text-xs font-semibold ${
-                                row.status === 'SUCCESS'
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-                                  : row.status === 'FAILED' || row.status === 'CANCELLED' || row.status === 'EXPIRED'
-                                    ? 'border-red-200 bg-red-50 text-red-700'
-                                    : 'border-amber-200 bg-amber-50 text-amber-800'
-                              }`}
+                              className={`inline-block border px-2 py-0.5 text-xs font-semibold ${row.status === 'SUCCESS'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                : row.status === 'FAILED' || row.status === 'CANCELLED' || row.status === 'EXPIRED'
+                                  ? 'border-red-200 bg-red-50 text-red-700'
+                                  : 'border-amber-200 bg-amber-50 text-amber-800'
+                                }`}
                             >
                               {statusLabel[row.status] || row.status || 'Chưa xác định'}
                             </span>

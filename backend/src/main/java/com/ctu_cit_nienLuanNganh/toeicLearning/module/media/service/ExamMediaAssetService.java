@@ -48,6 +48,13 @@ public class ExamMediaAssetService {
     }
 
     @Transactional
+    public boolean isRegisteredPrivateAsset(String publicId) {
+        return publicId != null && assetRepository.findByPublicId(publicId)
+                .filter(asset -> "authenticated".equals(asset.getDeliveryType()))
+                .isPresent();
+    }
+
+    @Transactional
     public void forget(String publicId) {
         if (publicId != null && !publicId.isBlank()) assetRepository.deleteByPublicId(publicId);
     }

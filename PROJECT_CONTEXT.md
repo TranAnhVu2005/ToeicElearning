@@ -61,6 +61,7 @@
 
 ## 5. Bảo mật, Cơ sở dữ liệu & Kiểm chứng
 - **Bảo mật (`docs/06_SECURITY_SPEC.md`)**: Deny-by-default; JWT kèm `authVersion`; tài khoản bị khóa trả `403 USER_ACCOUNT_LOCKED` (code 2009); Google OIDC RS256/JWK; khóa bi quan dùng native `SELECT ... FOR UPDATE`; rate limit lưu hash bucket trong `auth_login_attempt`; audit lưu `audit_event`.
+- **Rà soát bảo mật 2026-11-20**: đã bỏ credential mặc định khỏi `application.properties`, bắt buộc `JWT_SECRET`, chặn public local-media route phục vụ asset exam đăng ký delivery authenticated và bỏ local fallback cho private exam upload. Profile prod yêu cầu `APP_CORS_ALLOWED_ORIGINS` và `FRONTEND_URL`. Cần rotate Cloudinary API secret từng có trong source, kiểm tra Git/deploy secrets và tải lại private media cũ nếu đã fallback local. Chưa chạy kiểm thử/pentest lượt này.
 - **SQL & Migration**: Cài mới dùng `backend/toeic_learning_fresh_install.sql` (đồng bộ 23 bảng, tích hợp PayOS và 20 bộ đề `PUBLISHED`: `ETS TOEIC 2026 - TEST 01..10` & `YBM TOEIC 2026 - TEST 01..10`); nâng cấp DB hiện có dùng `backend/migrations/`. Không chạy `database_script.sql` / `database_script_20de.sql` vì chứa `DROP DATABASE`.
 - **Trạng thái kiểm chứng gần nhất (2026-11-20)**:
   - Backend `.\backend\mvnw.cmd -f .\backend\pom.xml test-compile "-Dmaven.compiler.useIncrementalCompilation=false" -DskipTests`: **PASS (exit 0)**.
