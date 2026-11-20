@@ -101,9 +101,9 @@ const TeacherApplicationPage = () => {
                 Trở thành giáo viên
               </h1>
               <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#4B5563]">
-                Thanh toán phí đăng ký{' '}
-                <strong className="font-semibold tabular-nums text-[#111111]">2.000 ₫</strong> qua PayOS để gửi hồ sơ
-                xét duyệt. Quyền giáo viên sẽ được kích hoạt ngay sau khi quản trị viên phê duyệt.
+                Thanh toán phí đăng ký chỉ{' '}
+                <strong className="font-semibold tabular-nums text-[red]">2.000 ₫</strong> qua PayOS để gửi hồ sơ
+                xét duyệt. Bạn sẽ trở thành giáo viên ngay sau khi quản trị viên phê duyệt.
               </p>
             </div>
             <button
@@ -147,10 +147,9 @@ const TeacherApplicationPage = () => {
                       </p>
                     </div>
                     <span
-                      className={`rounded-[2px] border px-3 py-1 text-xs font-semibold ${
-                        paymentStatusStyle[application.paymentStatus] ||
+                      className={`rounded-[2px] border px-3 py-1 text-xs font-semibold ${paymentStatusStyle[application.paymentStatus] ||
                         'border-[#D1D5DB] bg-[#F8FAFC] text-[#374151]'
-                      }`}
+                        }`}
                     >
                       Thanh toán: {paymentStatusText[application.paymentStatus] || 'Chưa tạo'}
                     </span>
@@ -220,11 +219,6 @@ const TeacherApplicationPage = () => {
                   </label>
 
                   <div className="flex flex-col gap-4 border-t border-[#E5E7EB] pt-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs leading-relaxed text-[#5B6472]">
-                      Mức phí xét duyệt giáo viên là{' '}
-                      <strong className="font-semibold tabular-nums text-[#111827]">2.000 ₫</strong>. Trạng thái thanh
-                      toán được xác nhận tự động qua PayOS.
-                    </p>
                     <button
                       type="submit"
                       disabled={submitting}
@@ -234,7 +228,7 @@ const TeacherApplicationPage = () => {
                       <span>
                         {application?.status === 'PENDING_PAYMENT'
                           ? 'Thanh toán 2.000 ₫ qua PayOS'
-                          : 'Gửi hồ sơ và thanh toán 2.000 ₫ qua PayOS'}
+                          : 'Gửi hồ sơ và thanh toán'}
                       </span>
                     </button>
                   </div>
@@ -245,7 +239,7 @@ const TeacherApplicationPage = () => {
             {/* Right Sidebar: Process Guide */}
             <aside className="rounded-[2px] border border-[#D1D5DB] bg-white/92 p-6 backdrop-blur-sm">
               <h2 className="border-b border-[#E5E7EB] pb-3 text-xs font-semibold uppercase tracking-wider text-[#374151]">
-                Quy trình xét duyệt
+                Hướng dẫn quy trình xét duyệt
               </h2>
               <ol className="mt-4 space-y-4 text-sm">
                 <li className="flex gap-3">
@@ -253,8 +247,8 @@ const TeacherApplicationPage = () => {
                   <div>
                     <p className="font-semibold text-[#111111]">Gửi hồ sơ và thanh toán</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-[#5B6472]">
-                      Điền giới thiệu ngắn và hoàn tất phí xét duyệt{' '}
-                      <span className="tabular-nums font-semibold text-[#111827]">2.000 ₫</span> qua cổng PayOS.
+                      Điền giới thiệu ngắn và hoàn tất phí xét duyệt chỉ{' '}
+                      <span className="tabular-nums font-semibold text-[red]">2.000 ₫</span>
                     </p>
                   </div>
                 </li>

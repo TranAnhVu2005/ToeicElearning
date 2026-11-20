@@ -15,6 +15,11 @@ public class AssignmentResponse {
     String instructions;
     String testId;
     String testTitle;
+    String materialId;
+    String materialTitle;
+    String materialFileName;
+    Long materialSizeBytes;
+    Boolean materialDownloadable;
     LocalDateTime deadline;
     LatePolicy latePolicy;
     Boolean active;

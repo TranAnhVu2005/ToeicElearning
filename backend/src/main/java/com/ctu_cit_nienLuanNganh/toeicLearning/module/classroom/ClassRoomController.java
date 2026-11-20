@@ -58,12 +58,13 @@ public class ClassRoomController {
             @PathVariable String classroomId,
             @RequestParam("title") String title,
             @RequestParam("file") MultipartFile file,
+            @RequestParam(name = "notify", defaultValue = "true") boolean notify,
             HttpServletRequest httpRequest) {
         String clientIp = httpRequest.getRemoteAddr();
         rateLimitService.checkAllowed("class-pdf-upload", clientIp, currentUser.getId(), 30, 10);
         rateLimitService.recordAttempt("class-pdf-upload", clientIp, currentUser.getId(), 30, 10);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Tải tài liệu lớp thành công",
-                materialService.upload(currentUser, classroomId, title, file)));
+                materialService.upload(currentUser, classroomId, title, file, notify)));
     }
 
     @GetMapping("/{classroomId}/materials/{materialId}/download")

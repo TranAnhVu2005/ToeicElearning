@@ -466,8 +466,8 @@ const Navbar = () => {
                         {isAdmin
                           ? 'Quản trị viên'
                           : isTeacher
-                            ? 'Giảng viên'
-                            : 'Học viên'}
+                            ? 'Giáo viên'
+                            : 'Học sinh'}
                       </span>
 
                     </div>

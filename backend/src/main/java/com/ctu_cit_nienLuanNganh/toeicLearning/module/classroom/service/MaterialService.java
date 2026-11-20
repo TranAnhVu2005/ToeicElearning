@@ -55,6 +55,11 @@ public class MaterialService {
 
     @Transactional
     public MaterialResponse upload(User currentUser, String classroomId, String title, MultipartFile file) {
+        return upload(currentUser, classroomId, title, file, true);
+    }
+
+    @Transactional
+    public MaterialResponse upload(User currentUser, String classroomId, String title, MultipartFile file, boolean notifyStudents) {
         Classroom classroom = classroomRepository.findByIdForUpdate(classroomId)
                 .filter(found -> found.getTeacher().getId().equals(currentUser.getId()))
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
@@ -84,18 +89,20 @@ public class MaterialService {
         try {
             Material saved = materialRepository.save(material);
             auditEventService.record(currentUser, "CLASS_MATERIAL_UPLOADED", "MATERIAL", saved.getId(), "format=pdf");
-            List<User> approvedStudents = classMemberRepository
-                    .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)
-                    .stream()
-                    .map(ClassMember::getStudent)
-                    .toList();
-            notificationService.createNotifications(
-                    approvedStudents,
-                    "Tài liệu học tập mới trong lớp " + classroom.getClassName(),
-                    "Giáo viên " + currentUser.getUserName() + " vừa đăng tài liệu PDF mới: \"" + saved.getTitle() + "\".",
-                    "CLASSROOM_MATERIAL",
-                    "/classrooms"
-            );
+            if (notifyStudents) {
+                List<User> approvedStudents = classMemberRepository
+                        .findByClassroom_IdAndStatusOrderByJoinedAtAsc(classroom.getId(), APPROVED)
+                        .stream()
+                        .map(ClassMember::getStudent)
+                        .toList();
+                notificationService.createNotifications(
+                        approvedStudents,
+                        "Tài liệu học tập mới trong lớp " + classroom.getClassName(),
+                        "Giáo viên " + currentUser.getUserName() + " vừa đăng tài liệu PDF mới: \"" + saved.getTitle() + "\".",
+                        "CLASSROOM_MATERIAL",
+                        "/classrooms"
+                );
+            }
             return toResponse(saved);
         } catch (RuntimeException exception) {
             cloudinaryService.deletePrivateClassPdf(uploadedFile.publicId());

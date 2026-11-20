@@ -182,11 +182,13 @@ CREATE TABLE assignment (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     class_id VARCHAR(36) NOT NULL,
     test_id VARCHAR(36),
+    material_id VARCHAR(36),
     external_file_url VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_assign_class FOREIGN KEY (class_id) REFERENCES classroom(id) ON DELETE CASCADE,
-    CONSTRAINT fk_assign_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE SET NULL
+    CONSTRAINT fk_assign_test FOREIGN KEY (test_id) REFERENCES test(id) ON DELETE SET NULL,
+    CONSTRAINT fk_assign_material FOREIGN KEY (material_id) REFERENCES material(id) ON DELETE SET NULL
 );
 
 -- ==============================================================================

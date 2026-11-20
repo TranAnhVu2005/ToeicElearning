@@ -40,6 +40,10 @@ public class Assignment extends BaseCreatedUpdatedEntity {
     @JoinColumn(name = "test_id")
     private Test test;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_id")
+    private Material material;
+
     @Column(name = "external_file_url")
     private String externalFileUrl;
 }

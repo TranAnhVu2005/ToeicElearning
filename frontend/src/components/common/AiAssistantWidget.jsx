@@ -756,20 +756,20 @@ const AiAssistantWidget = () => {
       let activeQuestion =
         overrideContext.question !== undefined ? overrideContext.question : focusedQuestion;
 
-        if (textForQuestionMatch && activeResult?.questions?.length) {
-          const normalizedMatchText = normalizeSpokenVietnameseNumbers(textForQuestionMatch);
-          const match = normalizedMatchText.match(/(?:câu|cau|question|q|#)\s*(?:số|so)?\s*(\d{1,3})\b/i);
-          if (match) {
-            const parsedNum = Number(match[1]);
-            const matchedFromPrompt = activeResult.questions.find(
-              (q) => Number(q.questionNumber) === parsedNum
-            );
-            if (matchedFromPrompt) {
-              activeQuestion = matchedFromPrompt;
-              setFocusedQuestion(matchedFromPrompt);
-            }
+      if (textForQuestionMatch && activeResult?.questions?.length) {
+        const normalizedMatchText = normalizeSpokenVietnameseNumbers(textForQuestionMatch);
+        const match = normalizedMatchText.match(/(?:câu|cau|question|q|#)\s*(?:số|so)?\s*(\d{1,3})\b/i);
+        if (match) {
+          const parsedNum = Number(match[1]);
+          const matchedFromPrompt = activeResult.questions.find(
+            (q) => Number(q.questionNumber) === parsedNum
+          );
+          if (matchedFromPrompt) {
+            activeQuestion = matchedFromPrompt;
+            setFocusedQuestion(matchedFromPrompt);
           }
         }
+      }
 
       const routeResultIdMatch = location.pathname.match(/^\/results\/([^/?#]+)/i);
       const resolvedResultId =
@@ -1720,17 +1720,6 @@ const AiAssistantWidget = () => {
       {/* Floating Trigger Button featuring Nuna the Puppy Mascot */}
       {!isOpen && (
         <div className="ai-assistant-launcher fixed right-5 bottom-5 z-40 flex flex-col items-end gap-2">
-          {examResult && (
-            <div className="toby-speech-nudge hidden items-center gap-2 rounded-2xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-lg sm:flex">
-              <img
-                src={TOBY_IMAGES.encouragement}
-                alt="Nuna khích lệ"
-                className="h-7 w-9 object-contain"
-              />
-              <span>Hỏi Nuna giải thích từng câu trong bài này</span>
-            </div>
-          )}
-
           <button
             type="button"
             onClick={() => {

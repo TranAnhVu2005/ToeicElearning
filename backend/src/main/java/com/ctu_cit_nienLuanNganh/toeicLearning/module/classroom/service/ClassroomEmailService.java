@@ -63,7 +63,14 @@ public class ClassroomEmailService {
         String className = safe(classroom.getClassName());
         String teacherName = safe(teacher.getUserName());
         String assignmentTitle = safe(assignment.getTitle());
-        String testTitle = assignment.getTest() != null ? safe(assignment.getTest().getTitleTest()) : "Đề thi TOEIC";
+        String attachmentLabel = assignment.getTest() != null ? "Đề thi đính kèm" : "Tệp bài tập PDF đính kèm";
+        String attachmentTitle = assignment.getTest() != null
+                ? safe(assignment.getTest().getTitleTest())
+                : (assignment.getMaterial() != null
+                        ? safe(assignment.getMaterial().getOriginalFileName() != null
+                                ? assignment.getMaterial().getOriginalFileName()
+                                : assignment.getMaterial().getTitle())
+                        : "Bài tập PDF");
         String instructions = assignment.getInstructions() != null && !assignment.getInstructions().isBlank()
                 ? safe(assignment.getInstructions())
                 : "Giáo viên không đính kèm hướng dẫn bổ sung. Hãy hoàn thành bài tập đúng hạn.";
@@ -92,11 +99,11 @@ public class ClassroomEmailService {
                     "<p style=\"margin:0 0 10px;color:#3c4043;font-size:14px;line-height:1.6;\">Xin chào <strong>" + studentName + "</strong>,</p>"
                             + "<p style=\"margin:0 0 12px;color:#3c4043;font-size:14px;line-height:1.6;\">" + instructions + "</p>"
                             + "<div style=\"background:#f8f9fa;border-left:4px solid #1967d2;padding:12px 14px;margin:14px 0;\">"
-                            + "<div style=\"font-size:12px;color:#5f6368;text-transform:uppercase;letter-spacing:0.06em;\">Đề thi đính kèm</div>"
-                            + "<div style=\"font-size:14px;font-weight:700;color:#202124;margin-top:2px;\">" + testTitle + "</div>"
+                            + "<div style=\"font-size:12px;color:#5f6368;text-transform:uppercase;letter-spacing:0.06em;\">" + attachmentLabel + "</div>"
+                            + "<div style=\"font-size:14px;font-weight:700;color:#202124;margin-top:2px;\">" + attachmentTitle + "</div>"
                             + "<div style=\"font-size:13px;color:#d93025;font-weight:600;margin-top:6px;\">⏰ Hạn nộp: " + deadlineText + "</div>"
                             + "</div>",
-                    "Mở bài tập ngay",
+                    assignment.getTest() != null ? "Mở bài tập ngay" : "Mở lớp học xem file PDF",
                     actionUrl,
                     "Hoặc truy cập bảng tin lớp học tại: " + classroomUrl
             );

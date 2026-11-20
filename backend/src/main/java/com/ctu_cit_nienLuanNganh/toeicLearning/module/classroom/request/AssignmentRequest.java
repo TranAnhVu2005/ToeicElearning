@@ -20,8 +20,11 @@ public class AssignmentRequest {
     @Size(max = 5000)
     private String instructions;
 
-    @NotBlank
+    @Size(max = 64)
     private String testId;
+
+    @Size(max = 64)
+    private String materialId;
 
     @NotNull
     @Future

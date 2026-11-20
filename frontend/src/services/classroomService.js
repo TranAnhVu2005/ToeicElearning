@@ -21,10 +21,11 @@ export const classroomService = {
     params: status ? { status } : {},
   })).data,
   getMaterials: async (classroomId) => (await apiClient.get(`/classrooms/${classroomId}/materials`)).data,
-  uploadMaterial: async (classroomId, title, file) => {
+  uploadMaterial: async (classroomId, title, file, notify = true) => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('file', file);
+    formData.append('notify', String(notify));
     return (await apiClient.post(`/classrooms/${classroomId}/materials`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })).data;

@@ -7,6 +7,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.common.service.AuditEventService;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Assignment;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.ClassMember;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Classroom;
+import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Material;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Notification;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.Test;
 import com.ctu_cit_nienLuanNganh.toeicLearning.entity.TestResult;
@@ -19,6 +20,7 @@ import com.ctu_cit_nienLuanNganh.toeicLearning.module.classroom.request.Assignme
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.AssignmentRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassMemberRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.ClassroomRepository;
+import com.ctu_cit_nienLuanNganh.toeicLearning.repository.MaterialRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.NotificationRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestRepository;
 import com.ctu_cit_nienLuanNganh.toeicLearning.repository.TestResultRepository;
@@ -43,6 +45,7 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final ClassroomRepository classroomRepository;
     private final ClassMemberRepository classMemberRepository;
+    private final MaterialRepository materialRepository;
     private final TestRepository testRepository;
     private final TestResultRepository testResultRepository;
     private final NotificationRepository notificationRepository;
@@ -54,10 +57,17 @@ public class AssignmentService {
     @Transactional
     public AssignmentResponse create(User teacher, String classroomId, AssignmentRequest request) {
         Classroom classroom = requireOwnedClassroom(teacher, classroomId);
-        Test test = requireAssignableTest(request.getTestId(), classroom);
+        String testId = normalizeText(request.getTestId());
+        String materialId = normalizeText(request.getMaterialId());
+        if (testId == null && materialId == null) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        Test test = testId == null ? null : requireAssignableTest(testId, classroom);
+        Material material = materialId == null ? null : requireAssignableMaterial(materialId, classroom);
         Assignment assignment = Assignment.builder()
                 .classroom(classroom)
                 .test(test)
+                .material(material)
                 .title(request.getTitle().trim())
                 .instructions(normalizeText(request.getInstructions()))
                 .deadline(request.getDeadline())
@@ -65,7 +75,9 @@ public class AssignmentService {
                 .isActive(true)
                 .build();
         Assignment saved = assignmentRepository.save(assignment);
-        auditEventService.record(teacher, "ASSIGNMENT_CREATED", "ASSIGNMENT", saved.getId(), "active=true; latePolicy=" + saved.getLatePolicy());
+        auditEventService.record(teacher, "ASSIGNMENT_CREATED", "ASSIGNMENT", saved.getId(),
+                "active=true; latePolicy=" + saved.getLatePolicy()
+                        + "; type=" + (test != null ? "TEST" : "PDF"));
         String formattedDeadline = saved.getDeadline() != null ? saved.getDeadline().format(DEADLINE_FMT) : "Chưa đặt";
         List<User> approvedStudents = notifyApprovedMembers(classroom, "Bài tập mới trong lớp " + classroom.getClassName(),
                 "Giáo viên " + teacher.getUserName() + " vừa giao bài tập \"" + saved.getTitle()
@@ -100,10 +112,17 @@ public class AssignmentService {
     @Transactional
     public AssignmentResponse update(User teacher, String assignmentId, AssignmentRequest request) {
         Assignment assignment = requireOwnedAssignmentForUpdate(teacher, assignmentId);
-        Test test = requireAssignableTest(request.getTestId(), assignment.getClassroom());
+        String testId = normalizeText(request.getTestId());
+        String materialId = normalizeText(request.getMaterialId());
+        if (testId == null && materialId == null) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        Test test = testId == null ? null : requireAssignableTest(testId, assignment.getClassroom());
+        Material material = materialId == null ? null : requireAssignableMaterial(materialId, assignment.getClassroom());
         List<TestResult> submitted = testResultRepository.findByAssignmentIdOrderByCreatedAtDesc(assignmentId);
-        if (!submitted.isEmpty() && (assignment.getTest() == null
-                || !Objects.equals(assignment.getTest().getId(), test.getId()))) {
+        String oldTestId = assignment.getTest() == null ? null : assignment.getTest().getId();
+        String newTestId = test == null ? null : test.getId();
+        if (!submitted.isEmpty() && !Objects.equals(oldTestId, newTestId)) {
             throw new AppException(ErrorCode.DATA_INTEGRITY_VIOLATION);
         }
         var previousDeadline = assignment.getDeadline();
@@ -114,6 +133,7 @@ public class AssignmentService {
         assignment.setDeadline(request.getDeadline());
         assignment.setLatePolicy(request.getLatePolicy());
         assignment.setTest(test);
+        assignment.setMaterial(material);
         Assignment saved = assignmentRepository.save(assignment);
         auditEventService.record(teacher, "ASSIGNMENT_UPDATED", "ASSIGNMENT", saved.getId(),
                 "deadline=" + previousDeadline + "->" + saved.getDeadline()
@@ -317,6 +337,11 @@ public class AssignmentService {
         return test;
     }
 
+    private Material requireAssignableMaterial(String materialId, Classroom classroom) {
+        return materialRepository.findByIdAndClassroom_IdAndActiveTrue(materialId, classroom.getId())
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+    }
+
     private TestResult latestResult(String assignmentId, String studentId) {
         List<TestResult> results = testResultRepository
                 .findByAssignmentIdAndUserIdOrderByCreatedAtDesc(assignmentId, studentId);
@@ -332,13 +357,23 @@ public class AssignmentService {
         boolean late = latest != null && (latest.getAssignmentLate() != null
                 ? latest.getAssignmentLate()
                 : submittedAt != null && deadlineSnapshot != null && submittedAt.isAfter(deadlineSnapshot));
-        String status = latest == null ? (LocalDateTime.now().isAfter(assignment.getDeadline()) ? "MISSING" : "NOT_SUBMITTED")
-                : (latest.getTeacherComment() != null && !latest.getTeacherComment().isBlank() ? "GRADED" : late ? "LATE" : "SUBMITTED");
+        String status = assignment.getTest() == null
+                ? null
+                : (latest == null ? (LocalDateTime.now().isAfter(assignment.getDeadline()) ? "MISSING" : "NOT_SUBMITTED")
+                : (latest.getTeacherComment() != null && !latest.getTeacherComment().isBlank() ? "GRADED" : late ? "LATE" : "SUBMITTED"));
+        Material material = assignment.getMaterial() != null && Boolean.TRUE.equals(assignment.getMaterial().getActive())
+                ? assignment.getMaterial()
+                : null;
         return AssignmentResponse.builder()
                 .id(assignment.getId()).classroomId(assignment.getClassroom().getId())
                 .title(assignment.getTitle()).instructions(assignment.getInstructions())
                 .testId(assignment.getTest() == null ? null : assignment.getTest().getId())
                 .testTitle(assignment.getTest() == null ? null : assignment.getTest().getTitleTest())
+                .materialId(material == null ? null : material.getId())
+                .materialTitle(material == null ? null : material.getTitle())
+                .materialFileName(material == null ? null : material.getOriginalFileName())
+                .materialSizeBytes(material == null ? null : material.getSizeBytes())
+                .materialDownloadable(material != null && material.getCloudinaryPublicId() != null && material.getFileFormat() != null)
                 .deadline(assignment.getDeadline()).latePolicy(assignment.getLatePolicy())
                 .active(assignment.getIsActive())
                 .createdAt(assignment.getCreatedAt())
