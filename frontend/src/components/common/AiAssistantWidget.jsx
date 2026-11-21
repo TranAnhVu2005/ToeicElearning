@@ -216,8 +216,8 @@ const PLATFORM_QUICK_TOPICS = [
     prompt: 'Tính năng luyện nghe chép chính tả (Dictation) trên trang web hoạt động như thế nào và có những phím tắt gì?',
   },
   {
-    label: 'Lớp học và Tài liệu PDF',
-    prompt: 'Hệ thống Lớp học trực tuyến, tính năng Xem trước PDF trực tiếp và Mời học viên qua Gmail hoạt động như thế nào?',
+    label: 'Lớp học và Bài tập PDF',
+    prompt: 'Hệ thống Lớp học trực tuyến hỗ trợ giao bài tập PDF, học viên nộp bài PDF, xem trước PDF và chấm điểm như thế nào?',
   },
   {
     label: 'Đề thi VIP và Đăng ký Giáo viên',
@@ -1543,37 +1543,6 @@ const AiAssistantWidget = () => {
     [inputValue, loading, primeTtsAudioElement, sendMessage, stopVoiceInput, voiceState]
   );
 
-  const handleSwitchVoiceMode = useCallback(
-    (nextMode) => {
-      if (voiceState !== 'idle') return;
-      setVoiceError(null);
-      if (nextMode === 'gemini') {
-        if (!voiceCapabilities.hasMediaRecorder) {
-          setVoiceError({ message: 'Trình duyệt của bạn không hỗ trợ ghi âm MediaRecorder.' });
-          return;
-        }
-        if (!isAuthenticated) {
-          setVoiceError({
-            message: 'Chế độ Ghi âm gửi trực tiếp cho AI chỉ dành cho người dùng đã đăng nhập.',
-            actionLabel: 'Đăng nhập ngay',
-            actionType: 'login',
-          });
-          return;
-        }
-        setVoiceMode('gemini');
-      } else {
-        if (!voiceCapabilities.hasWebSpeech) {
-          setVoiceError({
-            message: 'Trình duyệt hiện tại không hỗ trợ nhận diện nhanh Web Speech API.',
-          });
-          return;
-        }
-        setVoiceMode('browser');
-      }
-    },
-    [isAuthenticated, voiceCapabilities.hasMediaRecorder, voiceCapabilities.hasWebSpeech, voiceState]
-  );
-
   const handleToggleAutoSpeak = useCallback(() => {
     setAutoSpeakOnVoice((prev) => {
       const next = !prev;
@@ -2212,9 +2181,7 @@ const AiAssistantWidget = () => {
                   title={
                     voiceState !== 'idle'
                       ? 'Dừng và Gửi câu hỏi giọng nói'
-                      : voiceMode === 'gemini'
-                        ? 'Nhấn để ghi âm gửi AI nghe song ngữ'
-                        : 'Nhấn để nói (nhận diện nhanh)'
+                      : 'Nhấn để nói câu hỏi với Nuna'
                   }
                   className={`ai-mic-btn inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center transition-all disabled:cursor-not-allowed ${voiceState !== 'idle' ? 'is-active' : ''}`}
                 >
@@ -2237,38 +2204,6 @@ const AiAssistantWidget = () => {
 
             <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1.5 px-1 text-[11px] text-slate-500">
               <div className="flex flex-wrap items-center gap-1">
-                {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
-                  <div className="ai-voice-mode-group inline-flex items-center p-0.5">
-                    {voiceCapabilities.hasWebSpeech && (
-                      <button
-                        type="button"
-                        disabled={voiceState !== 'idle'}
-                        onClick={() => handleSwitchVoiceMode('browser')}
-                        title="Nhận diện giọng nói nhanh trực tiếp trên trình duyệt"
-                        className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'browser' ? 'is-active' : ''}`}
-                      >
-                        Nhanh
-                      </button>
-                    )}
-
-                    {voiceCapabilities.hasMediaRecorder && (
-                      <button
-                        type="button"
-                        disabled={voiceState !== 'idle'}
-                        onClick={() => handleSwitchVoiceMode('gemini')}
-                        title={
-                          isAuthenticated
-                            ? 'Ghi âm gửi trực tiếp cho AI nghe hiểu song ngữ Việt–Anh'
-                            : 'Cần đăng nhập để dùng chế độ ghi âm gửi AI'
-                        }
-                        className={`ai-voice-segment-btn cursor-pointer transition-all disabled:opacity-50 ${voiceMode === 'gemini' ? 'is-active' : ''}`}
-                      >
-                        AI Song ngữ
-                      </button>
-                    )}
-                  </div>
-                )}
-
                 {(voiceCapabilities.hasWebSpeech || voiceCapabilities.hasMediaRecorder) && (
                   <button
                     type="button"

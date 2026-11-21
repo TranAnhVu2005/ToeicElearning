@@ -82,20 +82,20 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             4. Khi người dùng hỏi về thông tin trang web hoặc cách sử dụng hệ thống **TOEIC Learning**, hướng dẫn chính xác 100% theo các chức năng thực tế hiện có của website:
                - **Kho đề thi (`/courses`)**: Gồm ngân hàng **20 bộ đề thi chính thức** (`ETS TOEIC 2026 - TEST 01` đến `TEST 10` và `YBM TOEIC 2026 - TEST 01` đến `TEST 10`, đủ 200 câu/đề). Hỗ trợ tìm kiếm theo tên, lọc theo Gói đề (`Tất cả`, `Đề có sẵn / Miễn phí`, `Đề có phí / VIP`), Cấu trúc đề (`Full Test 200 câu`, `Listening Part 1–4`, `Reading Part 5–7`), Sắp xếp (`Mới nhất`, `Cũ nhất`, `Tên A–Z`, `Tên Z–A`), phân trang 10 đề/trang.
                - **Chi tiết đề thi (`/courses/:testId`)** gồm 4 tab chuyên biệt:
-                 + *Luyện tập từng phần (Part)*: Chọn 1 hoặc nhiều Part tùy ý (Part 1–7), chọn giới hạn thời gian linh hoạt (5–120 phút hoặc không giới hạn).
+                 + *Luyện tập từng phần (Part)*: Chọn 1 hoặc nhiều Part tùy ý (Part 1–7), tự nhập giới hạn thời gian tùy ý từ **1 đến 300 phút** (hoặc để trống / nhập `0` để làm không giới hạn thời gian).
                  + *Làm Full Test (120 phút / 200 câu)*: Làm bài thi đầy đủ 200 câu, chấm điểm quy đổi ước tính `10–990` (`Listening 5–495`, `Reading 5–495`).
-                 + *Nghe chép chính tả (`Dictation` — `/courses/:testId/dictation`)*: Luyện nghe sâu Part 1–4 theo từng vế câu (`.`, `,`, `;`, `:`, `?`, `!`), che các từ phía sau bằng `*****`, nhấn `Enter` (`Ctrl + Enter`) để kiểm tra kết quả, tự ẩn đáp án khi gõ tiếp, nút `Skip` bỏ qua vế khó, chỉnh tốc độ phát audio `0.5x–2.0x`.
+                 + *Nghe chép chính tả (`Dictation` — `/courses/:testId/dictation`)*: Luyện nghe sâu Part 1–4 theo từng vế câu (`.`, `,`, `;`, `:`, `?`, `!`), che các từ phía sau bằng `*****`, nhấn `Enter` (`Ctrl + Enter`) để kiểm tra kết quả, tự ẩn đáp án khi gõ tiếp, nút **Bỏ qua vế**, **Hiển thị từ gợi ý đến dấu câu**, chỉnh tốc độ phát `0.5×–2.0×`.
                  + *Thảo luận và Lịch sử đề thi*: Xem lịch sử các lần làm đề này và bình luận trao đổi (`TestComment` — thêm/sửa/xóa bình luận).
                - **Phòng thi tự động lưu phiên (`/courses/:testId/take` — `Resumable Exam Session`)**: Tự động lưu đáp án nháp hai lớp (`sessionStorage` + máy chủ theo thời gian thực); khi lỡ nhấn F5, tải lại trang hoặc rớt mạng tạm thời sẽ tự động khôi phục đúng thời gian còn lại, câu đã chọn và câu cắm cờ đánh dấu (`Flag`). Chỉ khi chủ động bấm "Thoát phòng thi" và xác nhận rời bài không nộp thì phiên nháp mới bị hủy.
                - **Xem lại bài thi (`/results/:resultId`)**: Xem lại điểm số, độ chính xác từng Part, lời thoại `Transcript`, bản dịch `Translation`, lời giải chi tiết, bảng điều hướng 200 câu bên phải, bấm **"Luyện lại câu sai"** để tạo đề ôn tập riêng từ các câu sai/bỏ trống, và hỏi **Nuna AI** từng câu.
                - **Đề thi VIP và Thanh toán qua PayOS (`/payment/result`)**: Mỗi đề VIP có mức giá VND riêng do Admin thiết lập; mua **1 lần duy nhất** bằng quét mã QR VietQR qua cổng **PayOS** (xác thực tự động qua Webhook PayOS và đồng bộ trạng thái đơn hàng) để mở khóa **vĩnh viễn** đề thi đó.
                - **Hệ thống Lớp học trực tuyến (`/classrooms`)**: Gồm 4 tab **Bảng tin (`Stream`)**, **Bài tập trên lớp (`Classwork`)**, **Mọi người (`People`)**, **Điểm số (`Grades`)**:
-                 + *Dành cho Học viên*: Tham gia lớp bằng **Mã tham gia lớp (`Class Code`)** hoặc bấm trực tiếp từ **Email lời mời trong Gmail** (`/classrooms?joinCode=...`). Theo dõi bảng tin, hạn nộp sắp tới, **Xem trước tài liệu PDF trực tiếp ngay trên trình duyệt** (nút *"Xem trước"*) hoặc **Tải PDF**, làm bài tập giáo viên giao (hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`), xem điểm và nhận xét của giáo viên.
-                 + *Dành cho Giáo viên (`ROLE_TEACHER`)*: Tạo/cập nhật lớp học, xoay mã tham gia lớp, **Mời học viên hàng loạt qua danh sách Gmail** (tự động thêm và duyệt thẳng `APPROVED` vào lớp nếu Gmail đã có tài khoản học viên, đồng thời gửi email lời mời kèm mã lớp), **Đăng thông báo lên Bảng tin** (gửi thông báo in-app + gửi Gmail cho cả lớp), **Tải tài liệu PDF private** (≤ 10 MiB/file, quota 512 MiB/lớp, hỗ trợ xem trước trực tiếp), **Tạo đề thi riêng cho lớp**, **Giao bài tập** (tự động gửi thông báo Gmail kèm nút *"Mở bài tập ngay"* cho học viên), xem thống kê bảng điểm và chấm nhận xét bài làm.
+                 + *Dành cho Học viên*: Tham gia lớp bằng **Mã tham gia lớp (`Class Code`)** hoặc bấm trực tiếp từ **Email lời mời trong Gmail** (`/classrooms?joinCode=...`). Theo dõi bảng tin, hạn nộp sắp tới, **Xem trước tài liệu PDF trực tiếp ngay trên trình duyệt** hoặc **Tải PDF**; làm **bài tập Đề thi TOEIC** hoặc **bài tập dạng file PDF** (xem/tải đề PDF, tải lên bài làm PDF ≤ 10 MiB kèm ghi chú, hỗ trợ nộp lại bản mới tự động thay thế bản cũ, tôn trọng hạn nộp và chính sách nộp trễ), và theo dõi điểm số cùng nhận xét của giáo viên tại tab **Điểm số**.
+                 + *Dành cho Giáo viên (`ROLE_TEACHER`)*: Tạo/cập nhật lớp học, **Tuỳ chỉnh giao diện lớp** (8 màu chủ đề, ảnh bìa mẫu hoặc tải ảnh bìa riêng), xoay mã tham gia lớp, **Mời học viên hàng loạt qua danh sách Gmail** (tự động duyệt thẳng `APPROVED` nếu Gmail đã có tài khoản học viên), **Đăng thông báo lên Bảng tin** (in-app + Gmail), **Tải tài liệu PDF private** (≤ 10 MiB/file, quota 512 MiB/lớp, tách biệt với PDF đính kèm bài tập), **Tạo đề thi riêng cho lớp**, **Giao bài tập** theo 2 hình thức (**Đề thi TOEIC** hoặc **Tệp bài tập PDF**, tự động gửi Gmail cho học viên), xem trước/tải bài nộp PDF và **chấm điểm (`0–990`, tuỳ chọn) + gửi nhận xét** tại tab **Điểm số**, và **Xóa vĩnh viễn bài tập / tài liệu** kèm tự động dọn sạch tệp PDF liên quan trên Cloudinary.
                - **Đăng ký trở thành Giáo viên (`/teacher/application`)**: Gửi hồ sơ giới thiệu kinh nghiệm/mục tiêu giảng dạy và thanh toán phí xét duyệt **2.000 ₫** qua **PayOS** (nếu mã QR cũ hết hạn có thể bấm tạo lại mã QR PayOS mới ngay trên trang). Sau khi thanh toán xác nhận, hồ sơ chuyển sang `PENDING_REVIEW` chờ Admin phê duyệt để cấp quyền `ROLE_TEACHER`.
                - **Hồ sơ cá nhân (`/profile`) và Thông báo (`/notifications`)**: Theo dõi **Streak**, **Kỷ lục chuỗi ngày học**, **Điểm tích lũy cao nhất (`/ 990`)**, cập nhật thông tin/ảnh đại diện, đổi mật khẩu (hoặc đặt mật khẩu cục bộ cho tài khoản Google), xem **Lịch sử làm bài (`?tab=history`)**, **Lịch sử thanh toán PayOS (`?tab=payments`)**, và quản lý hộp thư thông báo 6 danh mục tại `/notifications`.
-               - **Quản trị viên (`/admin/**` — dành cho `ROLE_ADMIN`)**: Dashboard thống kê người dùng đang online và biểu đồ lượt thi (`/admin/dashboard`), Quản trị đề thi (`/admin/tests`), Quản lý người dùng (`/admin/users`), Quản lý giao dịch PayOS (`/admin/payments`), Duyệt hồ sơ giáo viên (`/admin/teacher-applications`).
-               - **Hỏi đáp bằng giọng nói và Đọc câu trả lời (`Nuna AI Voice`)**: Người học có thể bấm nút **Micro** ngay trên khung chat Nuna để đặt câu hỏi bằng giọng nói theo 2 chế độ: **Nhận diện nhanh trên trình duyệt** (Web Speech API, hỗ trợ `VI`/`EN` cho mọi người dùng trên Chrome/Edge) hoặc **Ghi âm gửi AI nghe song ngữ** (dành cho tài khoản đã đăng nhập qua `POST /api/ai/voice-chat`, hỗ trợ cả Safari/Firefox và câu hỏi pha Việt–Anh), kèm nút **Loa** đọc thành tiếng và tùy chọn tự động đọc phản hồi sau khi hỏi bằng micro.
+               - **Quản trị viên (`/admin/**` — dành cho `ROLE_ADMIN`)**: Dashboard thống kê người dùng đang online và biểu đồ lượt thi (`/admin/dashboard`), Quản trị đề thi toàn màn hình (`/admin/tests`, hỗ trợ lưu bản nháp `Ctrl+S`, mẫu đề nhanh và sửa tại chỗ bảo toàn lịch sử), Quản lý người dùng (`/admin/users`), Quản lý giao dịch PayOS (`/admin/payments`, thanh lọc 2 tầng kèm nút Đặt lại), Duyệt hồ sơ giáo viên (`/admin/teacher-applications`).
+               - **Hỏi đáp bằng giọng nói và Đọc câu trả lời (`Nuna AI Voice`)**: Người học chỉ cần bấm **1 nút Micro duy nhất** ngay trên khung chat Nuna (kèm nút chọn nhanh `Tiếng Việt` / `Tiếng Anh`), hệ thống mặc định nhận diện nhanh trực tiếp trên trình duyệt và tự động chuyển ngầm sang ghi âm gửi AI (`POST /api/ai/voice-chat`) khi trình duyệt không hỗ trợ hoặc gặp lỗi; đi kèm nút **Đọc / Dừng** phát giọng đọc tự nhiên từ máy chủ (`POST /api/ai/tts`, dự phòng `SpeechSynthesis`) và tùy chọn **Tự đọc**.
             5. Không bao giờ tiết lộ khóa cấu hình, API key hay thông tin nhạy cảm của máy chủ.
             """;
 
@@ -1356,21 +1356,23 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     - **Kiểm tra theo từng vế câu:** Hệ thống tự động tách lời thoại theo dấu câu (`.`, `,`, `;`, `:`, `?`, `!`) và che các từ phía sau bằng `*****` để bạn tập trung nghe từng cụm.
                     - **Phím tắt tiện lợi:**
                       + Nhấn **`Enter`** (hoặc **`Ctrl + Enter`**) hoặc bấm **"Kiểm tra kết quả"** để đối chiếu những từ vừa gõ (các từ đúng trong vế được tô xanh lá).
-                      + Khi bạn bấm chuột hoặc gõ tiếp vào ô nhập liệu, khung kết quả tự động ẩn đi để bạn liền mạch hoàn thiện câu theo trí nhớ; có nút **`Skip` (Bỏ qua vế này)** khi gặp từ khó.
-                    - **Điều khiển âm thanh:** Hỗ trợ chỉnh tốc độ phát từ **`0.5x` đến `2.0x`**, nghe lại từng câu và xem lời thoại (`Transcript`) + bản dịch (`Translation`).
+                      + Khi bạn bấm chuột hoặc gõ tiếp vào ô nhập liệu, khung kết quả tự động ẩn đi để bạn liền mạch hoàn thiện câu theo trí nhớ; có nút **Bỏ qua vế** khi gặp từ khó và tùy chọn **Hiển thị từ gợi ý đến dấu câu**.
+                    - **Điều khiển âm thanh:** Hỗ trợ chỉnh tốc độ phát từ **`0.5×` đến `2.0×`**, nghe lại từng câu và xem lời thoại (`Transcript`) + bản dịch (`Translation`).
                     """;
         }
 
-        if (lower.contains("pdf") || lower.contains("xem trước") || lower.contains("preview") || lower.contains("tài liệu")) {
+        if (lower.contains("pdf") || lower.contains("xem trước") || lower.contains("preview") || lower.contains("tài liệu") || lower.contains("nộp bài")) {
             return """
-                    ### Xem trước và Tải Tài liệu PDF trong Lớp học (`/classrooms`)
+                    ### Tài liệu PDF và Bài tập dạng PDF trong Lớp học (`/classrooms`)
                     
-                    Trên hệ thống **Lớp học (`/classrooms`)**, Giảng viên và Học viên đã được duyệt (`APPROVED`) có thể thao tác trực tiếp với tài liệu PDF của lớp:
-                    - **Xem trước trực tiếp trên web (Preview PDF):**
-                      + Tại tab **Bảng tin** hoặc tab **Bài tập trên lớp**, mỗi tài liệu PDF đều có nút **"Xem trước"** nằm ngay cạnh nút **"Tải PDF"**.
-                      + Khi bấm **"Xem trước"**, hệ thống mở ngay cửa sổ trình đọc PDF trực tiếp trên trình duyệt mà không cần tải file về máy trước.
-                    - **Tải PDF về máy:** Bấm nút **"Tải PDF"** để nhận liên kết tải bảo mật (có hiệu lực 5 phút).
-                    - **Dành cho Giảng viên:** Tải lên file PDF tối đa **10 MiB/file** (dung lượng lưu trữ tối đa **512 MiB/lớp**); khi đăng tài liệu mới, học viên trong lớp sẽ nhận được thông báo tự động.
+                    Trên hệ thống **Lớp học (`/classrooms`)**, Giáo viên và Học viên đã được duyệt (`APPROVED`) có đầy đủ tính năng với tệp PDF:
+                    - **Tài liệu lớp học (tách biệt với bài tập):**
+                      + Giáo viên tải lên tài liệu PDF private tối đa **10 MiB/tệp** (quota **512 MiB/lớp**); khi xóa tài liệu, tệp PDF trên Cloudinary cũng tự động được xóa theo.
+                      + Học viên và Giáo viên bấm **"Xem trước"** để mở trình đọc PDF trực tiếp trên trình duyệt hoặc bấm **"Tải PDF"** (liên kết tải bảo mật có hiệu lực 5 phút).
+                    - **Giao bài tập dạng file PDF và Học viên nộp bài PDF:**
+                      + Khi giao bài tập, Giáo viên có thể chọn **Đề thi TOEIC** hoặc **Giao bài tập dạng file PDF** (tải tệp PDF mới hoặc chọn tài liệu đã có; tệp PDF đính kèm bài tập được tách riêng, không lặp lại trong mục Tài liệu lớp học).
+                      + Học viên bấm **"Xem đề PDF"** / **"Tải đề PDF"** và bấm **"Nộp bài PDF"** (tệp bài làm PDF ≤ 10 MiB kèm ghi chú, hỗ trợ **Nộp lại bài PDF** tự động thay thế bản cũ và tôn trọng hạn nộp).
+                      + Giáo viên vào tab **Điểm số (`Grades`)** để **Xem trước bài làm PDF**, **Tải bài làm PDF**, chấm **Điểm số (`0–990`, tuỳ chọn)** và gửi **Nhận xét** cho từng học viên. Khi xóa bài tập, toàn bộ tệp PDF đính kèm và bài nộp PDF liên quan cũng được dọn sạch trên Cloudinary.
                     """;
         }
 
@@ -1409,13 +1411,13 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     ### Hệ thống Lớp học trực tuyến (`/classrooms`) và Đăng ký Giáo viên
                     
                     Giao diện **Lớp học (`/classrooms`)** gồm **4 tab** trực quan:
-                    1. **Bảng tin (`Stream`):** Hiển thị thông tin lớp, **Mã lớp (`Class Code`)**, hộp **Sắp đến hạn** (các bài tập đến hạn trong 7 ngày), luồng thông báo của Giảng viên và danh sách bài tập/tài liệu mới đăng.
+                    1. **Bảng tin (`Stream`):** Hiển thị thông tin lớp, tuỳ chỉnh màu chủ đề và ảnh bìa lớp, **Mã lớp (`Class Code`)**, hộp **Sắp đến hạn**, luồng thông báo của Giáo viên và danh sách bài tập/tài liệu mới đăng.
                     2. **Bài tập trên lớp (`Classwork`):**
-                       - Làm bài tập được giao (Đề hệ thống hoặc Đề riêng của lớp) theo hạn nộp (`Deadline` — hỗ trợ chế độ chặn nộp sau hạn hoặc cho phép nộp muộn có gắn nhãn `Nộp muộn`).
-                       - **Xem trước trực tiếp trên web (Preview PDF)** hoặc **Tải PDF** tài liệu bài giảng.
-                       - Giảng viên có thể tạo **Đề thi riêng cho lớp** và **Giao bài tập mới** (tự động gửi thông báo Gmail cho cả lớp).
-                    3. **Mọi người (`People`):** Xem danh sách Giảng viên và Học viên; Giảng viên có thể **Mời học viên hàng loạt qua Gmail**, duyệt (`APPROVED`), chặn (`BLOCKED`) hoặc gỡ thành viên.
-                    4. **Điểm số (`Grades` — dành cho Giảng viên):** Thống kê tổng quan số bài đã nộp/nộp trễ/chưa nộp/điểm trung bình, xem chi tiết bài làm của từng học viên và gửi **nhận xét chấm bài**.
+                       - Giáo viên có thể giao bài tập theo 2 hình thức: **Đề thi TOEIC** (đề hệ thống hoặc đề riêng của lớp) hoặc **Tệp bài tập PDF** (≤ 10 MiB, tự động gửi thông báo Gmail cho cả lớp).
+                       - Học viên xem/tải đề PDF, làm bài thi trực tuyến hoặc **Nộp bài PDF** (≤ 10 MiB kèm ghi chú, hỗ trợ nộp lại) theo hạn nộp (`Deadline`) và chính sách nộp trễ.
+                       - Giáo viên có thể **Xóa vĩnh viễn bài tập hoặc tài liệu PDF** (tự động xóa luôn tệp PDF liên quan trên Cloudinary).
+                    3. **Mọi người (`People`):** Xem danh sách Giáo viên và Học viên; Giáo viên có thể **Mời học viên hàng loạt qua Gmail**, duyệt (`APPROVED`), chặn (`BLOCKED`) hoặc gỡ thành viên.
+                    4. **Điểm số (`Grades`):** Giáo viên xem thống kê nộp bài, mở bài làm TOEIC hoặc **Xem trước bài nộp PDF**, chấm **Điểm số (`0–990`)** và gửi **Nhận xét**; Học viên xem sổ điểm cá nhân, bài đã nộp và nhận xét của giáo viên.
                     """;
         }
 
@@ -1465,9 +1467,9 @@ public class AiAssistantServiceImpl implements AiAssistantService {
                     
                     Dành cho tài khoản Quản trị viên để vận hành toàn bộ nền tảng:
                     - **Dashboard (`/admin/dashboard`):** Theo dõi số người dùng đang hoạt động trực tuyến (heartbeat 5 phút), thống kê lượt bắt đầu/nộp bài theo ngày và tháng, và tra cứu nhật ký bảo mật (`Audit Events`).
-                    - **Quản trị Đề thi (`/admin/tests`):** Thêm đề mới, sửa nội dung đề tại chỗ (bảo toàn lịch sử làm bài của học viên), cập nhật nhanh tên/ảnh bìa/trạng thái xuất bản và thiết lập giá VND cho **Đề VIP**.
+                    - **Quản trị Đề thi (`/admin/tests`):** Giao diện soạn đề toàn màn hình, hỗ trợ lưu tạm `localStorage`, nút **Lưu bản nháp** (`Ctrl+S`), mẫu đề nhanh, sửa nội dung đề tại chỗ (bảo toàn lịch sử làm bài của học viên), cập nhật nhanh tên/ảnh bìa/trạng thái xuất bản và thiết lập giá VND cho **Đề VIP**.
                     - **Quản lý Người dùng (`/admin/users`):** Tìm kiếm, phân trang và khóa/mở khóa tài khoản (thu hồi phiên đăng nhập tức thì qua `authVersion`).
-                    - **Quản lý Giao dịch PayOS (`/admin/payments`):** Tra cứu mã đơn `payosOrderCode`, người thanh toán, số tiền, loại sản phẩm (`TEST_VIP` / `TEACHER_APPLICATION`) và trạng thái đối soát.
+                    - **Quản lý Giao dịch PayOS (`/admin/payments`):** Thanh lọc 2 tầng theo tên/email/mã GD `payosOrderCode`, trạng thái, loại sản phẩm (`TEST_VIP` / `TEACHER_APPLICATION`), khoảng ngày và nút **Đặt lại**.
                     - **Duyệt Hồ sơ Giáo viên (`/admin/teacher-applications`):** Xem hồ sơ đã hoàn tất thanh toán phí xét duyệt (`PENDING_REVIEW`), phê duyệt cấp quyền `ROLE_TEACHER` hoặc từ chối kèm lý do.
                     """;
         }

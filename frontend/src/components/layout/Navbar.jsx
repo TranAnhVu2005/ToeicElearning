@@ -361,7 +361,7 @@ const Navbar = () => {
                     <div className="mt-3 grid grid-cols-2 gap-2 text-center">
                       <div className="border border-blue-100 bg-[#EFF6FF]/70 p-2.5">
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1D4ED8]">
-                          <Trophy size={12} /> Kỷ lục Streak
+                          Kỷ lục Streak
                         </span>
                         <p className="mt-0.5 text-base font-bold tabular-nums text-slate-900">
                           {highestStreak} ngày
@@ -369,7 +369,7 @@ const Navbar = () => {
                       </div>
                       <div className="border border-emerald-100 bg-emerald-50/70 p-2.5">
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800">
-                          <Sparkles size={12} /> Điểm cao nhất
+                          Điểm cao nhất
                         </span>
                         <p className="mt-0.5 text-base font-bold tabular-nums text-slate-900">
                           {bestScore} / 990
